@@ -78,6 +78,17 @@
                   Remove image
                 </button>
               </div>
+              <!-- Quote Preview -->
+              <div v-if="quotePost" class="compose-quote-preview">
+                <div class="quote-card">
+                  <p class="quote-author">{{ quotePost.author }}</p>
+                  <p class="quote-text">{{ quotePost.text?.slice(0, 120) }}{{ quotePost.text?.length > 120 ? '...' : '' }}</p>
+                </div>
+                <button type="button" class="btn-ghost remove-image-btn" @click="quotePost = null">
+                  <span class="material-symbols-outlined">close</span>
+                  Remove quote
+                </button>
+              </div>
               <div class="compose-footer">
                 <div class="compose-tools">
                   <button type="button" class="btn-ghost image-option" @click="openImagePicker('gallery')">
@@ -130,6 +141,11 @@
 
             <!-- Post Content -->
             <div class="post-content">
+              <!-- Reposted indicator -->
+              <p v-if="post.repostedFrom" class="reposted-label">
+                <span class="material-symbols-outlined" style="font-size:14px">repeat</span>
+                {{ user?.name || 'You' }} reposted from {{ post.repostedFrom }}
+              </p>
               <p class="post-text">{{ post.text }}</p>
 
               <!-- Image post -->
@@ -167,6 +183,13 @@
                   {{ link.label }}
                 </a>
               </div>
+
+              <!-- Quoted Post Embed -->
+              <div v-if="post.quotedPost" class="quoted-post-embed">
+                <p class="quoted-author">{{ post.quotedPost.author }}</p>
+                <p class="quoted-text">{{ post.quotedPost.text }}</p>
+                <img v-if="post.quotedPost.imageUrl" :src="post.quotedPost.imageUrl" class="quoted-image" alt="Quoted post image" />
+              </div>
             </div>
 
             <!-- Post Reactions Bar -->
@@ -189,13 +212,24 @@
                   <span class="material-symbols-outlined">chat_bubble</span>
                   {{ post.commentList?.length || 0 }}
                 </button>
-                <button class="action-btn retweet-btn" :class="{ retweeted: post.retweetedByMe }" @click="handleRetweet(post)">
-                  <span class="material-symbols-outlined">repeat</span>
-                  {{ post.retweetCount || 0 }}
-                </button>
-                <button class="action-btn repost-btn" @click="handleRepost(post)">
-                  <span class="material-symbols-outlined">edit_note</span>
-                </button>
+                <div class="retweet-wrap">
+                  <button class="action-btn retweet-btn" :class="{ retweeted: post.retweetedByMe }" @click="toggleRetweetMenu(post.id)">
+                    <span class="material-symbols-outlined">repeat</span>
+                    {{ post.retweetCount || 0 }}
+                  </button>
+                  <Transition name="dropdown">
+                    <div v-if="retweetMenuId === post.id" class="retweet-popup">
+                      <button class="dropdown-item" @click="handleRetweet(post)">
+                        <span class="material-symbols-outlined">repeat</span>
+                        Repost
+                      </button>
+                      <button class="dropdown-item" @click="handleQuote(post)">
+                        <span class="material-symbols-outlined">edit_note</span>
+                        Quote
+                      </button>
+                    </div>
+                  </Transition>
+                </div>
                 <button class="action-btn">
                   <span class="material-symbols-outlined">share</span>
                 </button>
@@ -304,6 +338,7 @@ const showCompose = ref(false)
 const newPost        = ref('')
 const newComments    = ref({})
 const composeMode    = ref('text')
+const quotePost      = ref(null)
 const imageInput     = ref(null)
 const cameraInput    = ref(null)
 const selectedImage  = ref(null)
@@ -312,9 +347,16 @@ const selectedImageFile = ref(null)
 const reactionEmojis = ['👍', '❤️', '🔥', '🚀', '🎉']
 
 const openMenuId = ref(null)
+const retweetMenuId = ref(null)
 
 function togglePostMenu(postId) {
   openMenuId.value = openMenuId.value === postId ? null : postId
+  retweetMenuId.value = null
+}
+
+function toggleRetweetMenu(postId) {
+  retweetMenuId.value = retweetMenuId.value === postId ? null : postId
+  openMenuId.value = null
 }
 
 function handleRetweet(post) {
@@ -323,44 +365,39 @@ function handleRetweet(post) {
     post.retweetedByMe = false
     post.retweetCount = (post.retweetCount || 1) - 1
   } else {
-    // Retweet
+    // Repost (plain retweet — no added text)
     post.retweetedByMe = true
     post.retweetCount = (post.retweetCount || 0) + 1
-    const retweet = {
+    const repost = {
       id: Date.now(),
       author: user.value?.name || 'You',
       time: 'Just now',
       category: user.value?.role || 'Developer',
-      text: `🔁 Retweeted from ${post.author}: "${post.text}"`,
-      type: 'text',
+      text: post.text,
+      type: post.type,
+      imageUrl: post.imageUrl,
+      imageCaption: post.imageCaption,
+      code: post.code,
+      filename: post.filename,
+      links: post.links,
       reactions: {},
       commentList: [],
       showComments: false,
       retweetCount: 0,
+      repostedFrom: post.author,
     }
-    feedStore.addPost(retweet)
+    feedStore.addPost(repost)
   }
+  retweetMenuId.value = null
   openMenuId.value = null
 }
 
-function handleRepost(post) {
-  const repost = {
-    id: Date.now(),
-    author: user.value?.name || 'You',
-    time: 'Just now',
-    category: user.value?.role || 'Developer',
-    text: post.text,
-    type: post.type,
-    imageUrl: post.imageUrl,
-    imageCaption: post.imageCaption,
-    code: post.code,
-    filename: post.filename,
-    links: post.links,
-    reactions: {},
-    commentList: [],
-    showComments: false,
-  }
-  feedStore.addPost(repost)
+function handleQuote(post) {
+  // Open compose modal pre-filled with a quote reference
+  newPost.value = ''
+  quotePost.value = post
+  showCompose.value = true
+  retweetMenuId.value = null
   openMenuId.value = null
 }
 
@@ -432,10 +469,11 @@ function closeCompose() {
   showCompose.value = false
   clearSelectedImage()
   composeMode.value = 'text'
+  quotePost.value = null
 }
 
 function submitPost() {
-  if (!newPost.value.trim() && !selectedImage.value) return
+  if (!newPost.value.trim() && !selectedImage.value && !quotePost.value) return
   const post = {
     id:          Date.now(),
     author:      user.value?.name || 'You',
@@ -456,10 +494,21 @@ function submitPost() {
     post.type = 'text'
   }
 
+  // Attach quote if quoting
+  if (quotePost.value) {
+    post.quotedPost = {
+      author: quotePost.value.author,
+      text: quotePost.value.text,
+      type: quotePost.value.type,
+      imageUrl: quotePost.value.imageUrl,
+    }
+  }
+
   feedStore.addPost(post)
   newPost.value = ''
   clearSelectedImage()
   composeMode.value = 'text'
+  quotePost.value = null
   showCompose.value = false
 }
 
@@ -818,6 +867,100 @@ function submitComment(post, e) {
 .retweet-btn:hover { color: #00ba7c; }
 
 .repost-btn:hover { color: var(--primary); }
+
+/* ── Retweet Popup (X-style) ── */
+.retweet-wrap { position: relative; }
+
+.retweet-popup {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  min-width: 140px;
+  padding: 0.4rem;
+  background: var(--surface-container-high);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-bottom: 0.5rem;
+}
+
+/* ── Reposted Label ── */
+.reposted-label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  margin-bottom: 0.4rem;
+}
+
+/* ── Quoted Post Embed ── */
+.quoted-post-embed {
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  padding: 0.75rem;
+  background: var(--surface-container-low);
+  margin-top: 0.5rem;
+}
+
+.quoted-author {
+  font-family: var(--font-headline);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--on-surface);
+  margin-bottom: 0.25rem;
+}
+
+.quoted-text {
+  font-size: 0.82rem;
+  color: var(--on-surface-variant);
+  line-height: 1.5;
+}
+
+.quoted-image {
+  width: 100%;
+  max-height: 150px;
+  object-fit: cover;
+  border-radius: var(--radius-md, 8px);
+  margin-top: 0.5rem;
+}
+
+/* ── Compose Quote Preview ── */
+.compose-quote-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.quote-card {
+  flex: 1;
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  padding: 0.6rem 0.75rem;
+  background: var(--surface-container-low);
+}
+
+.quote-card .quote-author {
+  font-family: var(--font-headline);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--on-surface);
+  margin-bottom: 0.2rem;
+}
+
+.quote-card .quote-text {
+  font-size: 0.78rem;
+  color: var(--on-surface-variant);
+  line-height: 1.4;
+}
 
 /* ── Comments ── */
 .post-comments {
