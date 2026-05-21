@@ -212,24 +212,13 @@
                   <span class="material-symbols-outlined">chat_bubble</span>
                   {{ post.commentList?.length || 0 }}
                 </button>
-                <div class="retweet-wrap">
-                  <button class="action-btn retweet-btn" :class="{ retweeted: post.retweetedByMe }" @click="toggleRetweetMenu(post.id)">
-                    <span class="material-symbols-outlined">repeat</span>
-                    {{ post.retweetCount || 0 }}
-                  </button>
-                  <Transition name="dropdown">
-                    <div v-if="retweetMenuId === post.id" class="retweet-popup">
-                      <button class="dropdown-item" @click="handleRetweet(post)">
-                        <span class="material-symbols-outlined">repeat</span>
-                        Repost
-                      </button>
-                      <button class="dropdown-item" @click="handleQuote(post)">
-                        <span class="material-symbols-outlined">edit_note</span>
-                        Quote
-                      </button>
-                    </div>
-                  </Transition>
-                </div>
+                <button class="action-btn retweet-btn" :class="{ retweeted: post.retweetedByMe }" @click="handleRetweet(post)" title="Retweet">
+                  <span class="material-symbols-outlined">repeat</span>
+                  {{ post.retweetCount || 0 }}
+                </button>
+                <button class="action-btn repost-btn" @click="handleQuote(post)" title="Repost with quote">
+                  <span class="material-symbols-outlined">edit_note</span>
+                </button>
                 <button class="action-btn">
                   <span class="material-symbols-outlined">share</span>
                 </button>
@@ -347,16 +336,9 @@ const selectedImageFile = ref(null)
 const reactionEmojis = ['👍', '❤️', '🔥', '🚀', '🎉']
 
 const openMenuId = ref(null)
-const retweetMenuId = ref(null)
 
 function togglePostMenu(postId) {
   openMenuId.value = openMenuId.value === postId ? null : postId
-  retweetMenuId.value = null
-}
-
-function toggleRetweetMenu(postId) {
-  retweetMenuId.value = retweetMenuId.value === postId ? null : postId
-  openMenuId.value = null
 }
 
 function handleRetweet(post) {
@@ -388,7 +370,6 @@ function handleRetweet(post) {
     }
     feedStore.addPost(repost)
   }
-  retweetMenuId.value = null
   openMenuId.value = null
 }
 
@@ -397,7 +378,6 @@ function handleQuote(post) {
   newPost.value = ''
   quotePost.value = post
   showCompose.value = true
-  retweetMenuId.value = null
   openMenuId.value = null
 }
 
@@ -867,27 +847,6 @@ function submitComment(post, e) {
 .retweet-btn:hover { color: #00ba7c; }
 
 .repost-btn:hover { color: var(--primary); }
-
-/* ── Retweet Popup (X-style) ── */
-.retweet-wrap { position: relative; }
-
-.retweet-popup {
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 100;
-  min-width: 140px;
-  padding: 0.4rem;
-  background: var(--surface-container-high);
-  border: 1px solid var(--outline-variant);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  margin-bottom: 0.5rem;
-}
 
 /* ── Reposted Label ── */
 .reposted-label {
