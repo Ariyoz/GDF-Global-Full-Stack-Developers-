@@ -27,7 +27,7 @@
         <RouterLink to="/admin/analytics" class="admin-nav-link" :class="{ active: $route.path === '/admin/analytics' }">
           <span class="material-symbols-outlined">analytics</span> Platform Analytics
         </RouterLink>
-        <RouterLink to="/settings" class="admin-nav-link" :class="{ active: $route.path === '/settings' }">
+        <RouterLink to="/admin/settings" class="admin-nav-link" :class="{ active: $route.path === '/admin/settings' }">
           <span class="material-symbols-outlined">settings</span> Settings
         </RouterLink>
       </nav>

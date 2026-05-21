@@ -50,9 +50,13 @@ const SafetyReportView   = () => import('@/views/SafetyReport/SafetyReportView.v
 const PlansView          = () => import('@/views/Plans/PlansView.vue')
 
 // ── Admin Views ──
-const AdminDashboardView  = () => import('@/views/Admin/AdminDashboardView.vue')
-const AdminUsersView      = () => import('@/views/Admin/AdminUsersView.vue')
-const AdminModerationView = () => import('@/views/Admin/AdminModerationView.vue')
+const AdminDashboardView    = () => import('@/views/Admin/AdminDashboardView.vue')
+const AdminUsersView        = () => import('@/views/Admin/AdminUsersView.vue')
+const AdminModerationView   = () => import('@/views/Admin/AdminModerationView.vue')
+const AdminSettingsView     = () => import('@/views/Admin/AdminSettingsView.vue')
+const AdminReportsView      = () => import('@/views/Admin/AdminReportsView.vue')
+const AdminVerificationView = () => import('@/views/Admin/AdminVerificationView.vue')
+const AdminAnalyticsView    = () => import('@/views/Admin/AdminAnalyticsView.vue')
 
 // ── Error ──
 const NotFoundView = () => import('@/views/NotFound.vue')
@@ -165,9 +169,13 @@ const routes = [
     component: AdminLayout,
     meta: { requiresAuth: true, requiresAdmin: true },
     children: [
-      { path: '',           name: 'admin',            component: AdminDashboardView },
-      { path: 'users',      name: 'admin-users',      component: AdminUsersView },
-      { path: 'moderation', name: 'admin-moderation', component: AdminModerationView },
+      { path: '',             name: 'admin',              component: AdminDashboardView },
+      { path: 'users',        name: 'admin-users',        component: AdminUsersView },
+      { path: 'moderation',   name: 'admin-moderation',   component: AdminModerationView },
+      { path: 'reports',      name: 'admin-reports',      component: AdminReportsView },
+      { path: 'verification', name: 'admin-verification', component: AdminVerificationView },
+      { path: 'analytics',    name: 'admin-analytics',    component: AdminAnalyticsView },
+      { path: 'settings',     name: 'admin-settings',     component: AdminSettingsView },
     ],
   },
 
