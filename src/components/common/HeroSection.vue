@@ -74,22 +74,21 @@ function handleSearch() {
 <style scoped>
 /* ── Hero Section ── */
 .hero-section {
-  min-height: 100svh;
+  min-height: auto;
   display: flex;
   align-items: center;
   position: relative;
   overflow: hidden;
   background: var(--background);
-  /* mobile: tighter top padding since navbar is 72px */
-  padding: 5rem 1.25rem 3rem;
+  padding: 3rem 1.25rem 3rem;
 }
 
 @media (min-width: 640px) {
-  .hero-section { padding: 7rem 1.5rem 4rem; }
+  .hero-section { padding: 4rem 1.5rem 4rem; }
 }
 
 @media (min-width: 1024px) {
-  .hero-section { padding: 8rem 2rem 5rem; }
+  .hero-section { padding: 5rem 2rem 5rem; }
 }
 
 /* Background orbs */
