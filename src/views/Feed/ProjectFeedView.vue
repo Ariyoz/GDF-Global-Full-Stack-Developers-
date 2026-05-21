@@ -124,17 +124,27 @@
                   <p class="post-meta">{{ post.time }} · {{ post.category }}</p>
                 </div>
               </div>
-              <button
-                v-if="post.author === (user?.name || 'You')"
-                class="btn-ghost icon-only delete-post-btn"
-                title="Delete post"
-                @click="deletePost(post.id)"
-              >
-                <span class="material-symbols-outlined">delete</span>
-              </button>
-              <button v-else class="btn-ghost icon-only">
-                <span class="material-symbols-outlined">more_horiz</span>
-              </button>
+              <div class="post-menu-wrap">
+                <button class="btn-ghost icon-only" @click="togglePostMenu(post.id)">
+                  <span class="material-symbols-outlined">more_horiz</span>
+                </button>
+                <Transition name="dropdown">
+                  <div v-if="openMenuId === post.id" class="post-dropdown">
+                    <button class="dropdown-item" @click="handleRetweet(post)">
+                      <span class="material-symbols-outlined">repeat</span>
+                      Retweet
+                    </button>
+                    <button class="dropdown-item" @click="handleRepost(post)">
+                      <span class="material-symbols-outlined">forward</span>
+                      Repost
+                    </button>
+                    <button class="dropdown-item dropdown-item--danger" @click="deletePost(post.id)">
+                      <span class="material-symbols-outlined">delete</span>
+                      Delete Post
+                    </button>
+                  </div>
+                </Transition>
+              </div>
             </div>
 
             <!-- Post Content -->
@@ -299,6 +309,7 @@ const { posts } = storeToRefs(feedStore)
 
 function deletePost(postId) {
   feedStore.deletePost(postId)
+  openMenuId.value = null
 }
 
 const showCompose = ref(false)
@@ -310,6 +321,49 @@ const selectedImage  = ref(null)
 const selectedImageFile = ref(null)
 
 const reactionEmojis = ['👍', '❤️', '🔥', '🚀', '🎉']
+
+const openMenuId = ref(null)
+
+function togglePostMenu(postId) {
+  openMenuId.value = openMenuId.value === postId ? null : postId
+}
+
+function handleRetweet(post) {
+  const retweet = {
+    id: Date.now(),
+    author: user.value?.name || 'You',
+    time: 'Just now',
+    category: user.value?.role || 'Developer',
+    text: `🔁 Retweeted from ${post.author}: "${post.text}"`,
+    type: 'text',
+    reactions: {},
+    commentList: [],
+    showComments: false,
+  }
+  feedStore.addPost(retweet)
+  openMenuId.value = null
+}
+
+function handleRepost(post) {
+  const repost = {
+    id: Date.now(),
+    author: user.value?.name || 'You',
+    time: 'Just now',
+    category: user.value?.role || 'Developer',
+    text: post.text,
+    type: post.type,
+    imageUrl: post.imageUrl,
+    imageCaption: post.imageCaption,
+    code: post.code,
+    filename: post.filename,
+    links: post.links,
+    reactions: {},
+    commentList: [],
+    showComments: false,
+  }
+  feedStore.addPost(repost)
+  openMenuId.value = null
+}
 
 const userInitials = computed(() => {
   const name = user.value?.name || 'GFD'
@@ -852,6 +906,53 @@ function submitComment(post, e) {
 
 .delete-post-btn { color: var(--on-surface-variant); }
 .delete-post-btn:hover { color: #ef4444; background: rgba(239,68,68,0.08); }
+
+/* ── Post Menu Dropdown ── */
+.post-menu-wrap { position: relative; }
+
+.post-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 100;
+  min-width: 160px;
+  padding: 0.4rem;
+  background: var(--surface-container-high);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.75rem;
+  background: none;
+  border: none;
+  border-radius: var(--radius-md, 8px);
+  font-family: var(--font-headline);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--on-surface);
+  cursor: pointer;
+  transition: background 0.12s ease;
+  text-align: left;
+  width: 100%;
+}
+.dropdown-item:hover { background: var(--surface-container); }
+.dropdown-item .material-symbols-outlined { font-size: 18px; color: var(--on-surface-variant); }
+
+.dropdown-item--danger { color: #ef4444; }
+.dropdown-item--danger:hover { background: rgba(239,68,68,0.08); }
+.dropdown-item--danger .material-symbols-outlined { color: #ef4444; }
+
+/* Dropdown transition */
+.dropdown-enter-active, .dropdown-leave-active { transition: opacity 0.15s ease, transform 0.15s ease; }
+.dropdown-enter-from, .dropdown-leave-to { opacity: 0; transform: translateY(-4px) scale(0.95); }
 
 /* ── Right Sidebar ── */
 .sidebar-section-title {
