@@ -119,14 +119,6 @@
                 </button>
                 <Transition name="dropdown">
                   <div v-if="openMenuId === post.id" class="post-dropdown">
-                    <button class="dropdown-item" @click="handleRetweet(post)">
-                      <span class="material-symbols-outlined">repeat</span>
-                      Retweet
-                    </button>
-                    <button class="dropdown-item" @click="handleRepost(post)">
-                      <span class="material-symbols-outlined">forward</span>
-                      Repost
-                    </button>
                     <button class="dropdown-item dropdown-item--danger" @click="deletePost(post.id)">
                       <span class="material-symbols-outlined">delete</span>
                       Delete Post
@@ -200,6 +192,9 @@
                 <button class="action-btn retweet-btn" :class="{ retweeted: post.retweetedByMe }" @click="handleRetweet(post)">
                   <span class="material-symbols-outlined">repeat</span>
                   {{ post.retweetCount || 0 }}
+                </button>
+                <button class="action-btn repost-btn" @click="handleRepost(post)">
+                  <span class="material-symbols-outlined">edit_note</span>
                 </button>
                 <button class="action-btn">
                   <span class="material-symbols-outlined">share</span>
@@ -821,6 +816,8 @@ function submitComment(post, e) {
 .retweet-btn.retweeted { color: #00ba7c; }
 .retweet-btn.retweeted .material-symbols-outlined { color: #00ba7c; }
 .retweet-btn:hover { color: #00ba7c; }
+
+.repost-btn:hover { color: var(--primary); }
 
 /* ── Comments ── */
 .post-comments {
