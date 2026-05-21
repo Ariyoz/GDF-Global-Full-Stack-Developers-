@@ -1,0 +1,204 @@
+/* ══════════════════════════════════════════
+   GFD Design System — Light Mode (default)
+   ══════════════════════════════════════════ */
+:root {
+  /* ── Brand Primary (Purple) ── */
+  --primary:                  #630ed4;
+  --primary-container:        #7c3aed;
+  --on-primary:               #ffffff;
+  --on-primary-container:     #ede0ff;
+  --primary-fixed:            #eaddff;
+  --primary-fixed-dim:        #d2bbff;
+  --on-primary-fixed:         #25005a;
+  --on-primary-fixed-variant: #5a00c6;
+  --inverse-primary:          #d2bbff;
+
+  /* ── Surface Scale ── */
+  --surface:                  #f9f9ff;
+  --surface-bright:           #f9f9ff;
+  --surface-dim:              #d3daea;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low:    #f0f3ff;
+  --surface-container:        #e7eefe;
+  --surface-container-high:   #e2e8f8;
+  --surface-container-highest:#dce2f3;
+  --surface-variant:          #dce2f3;
+  --surface-tint:             #732ee4;
+  --inverse-surface:          #2a313d;
+  --inverse-on-surface:       #ebf1ff;
+
+  /* ── On-Surface ── */
+  --on-surface:               #151c27;
+  --on-surface-variant:       #4a4455;
+  --on-background:            #151c27;
+  --background:               #f9f9ff;
+
+  /* ── Secondary ── */
+  --secondary:                #5e5e5e;
+  --on-secondary:             #ffffff;
+  --secondary-container:      #e2e2e2;
+  --on-secondary-container:   #646464;
+  --secondary-fixed:          #e2e2e2;
+  --secondary-fixed-dim:      #c6c6c6;
+  --on-secondary-fixed:       #1b1b1b;
+  --on-secondary-fixed-variant:#474747;
+
+  /* ── Tertiary ── */
+  --tertiary:                 #7d3d00;
+  --on-tertiary:              #ffffff;
+  --tertiary-container:       #a15100;
+  --on-tertiary-container:    #ffe0cd;
+  --tertiary-fixed:           #ffdcc6;
+  --tertiary-fixed-dim:       #ffb784;
+  --on-tertiary-fixed:        #301400;
+  --on-tertiary-fixed-variant:#713700;
+
+  /* ── Outline ── */
+  --outline:                  #7b7487;
+  --outline-variant:          #ccc3d8;
+
+  /* ── Error ── */
+  --error:                    #ba1a1a;
+  --on-error:                 #ffffff;
+  --error-container:          #ffdad6;
+  --on-error-container:       #93000a;
+
+  /* ── Glass ── */
+  --glass-bg:             rgba(255, 255, 255, 0.85);
+  --glass-bg-hover:       rgba(255, 255, 255, 0.95);
+  --glass-border:         #F3F4F6;
+  --glass-border-primary: rgba(124, 58, 237, 0.3);
+  --glass-blur:           blur(20px);
+  --glass-blur-heavy:     blur(40px);
+
+  /* ── Shadows ── */
+  --shadow-sm:        0px 4px 20px rgba(0,0,0,0.03), 0px 10px 40px rgba(0,0,0,0.04);
+  --shadow-md:        0px 8px 32px rgba(0,0,0,0.08);
+  --shadow-lg:        0px 20px 60px rgba(0,0,0,0.12);
+  --shadow-primary:   0px 8px 32px rgba(99, 14, 212, 0.2);
+  --shadow-primary-lg:0px 20px 60px rgba(99, 14, 212, 0.15);
+
+  /* ── Typography ── */
+  --font-headline: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body:     'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono:     'Geist Mono', 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* ── Spacing (8px scale) ── */
+  --space-xs:      4px;
+  --space-sm:      12px;
+  --space-base:    8px;
+  --space-md:      24px;
+  --space-lg:      48px;
+  --space-xl:      80px;
+  --space-gutter:  24px;
+  --container-max: 1280px;
+  --section-py:    clamp(3rem, 6vw, 5rem);
+
+  /* ── Radius ── */
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --radius-lg:   12px;
+  --radius-xl:   16px;
+  --radius-2xl:  24px;
+  --radius-full: 9999px;
+
+  /* ── Transitions ── */
+  --transition-fast:   all 0.15s ease;
+  --transition-base:   all 0.25s ease;
+  --transition-slow:   all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ── Gradients ── */
+  --gradient-primary: linear-gradient(135deg, #630ed4 0%, #7c3aed 100%);
+  --gradient-hero:    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(99,14,212,0.08) 0%, transparent 70%);
+  --gradient-text:    linear-gradient(135deg, #630ed4 0%, #7c3aed 100%);
+
+  /* ── Misc ── */
+  --bar-height: 50%;
+}
+
+/* ══════════════════════════════════════════
+   GFD Design System — Dark Mode
+   Applied when <html data-theme="dark">
+   ══════════════════════════════════════════ */
+[data-theme="dark"] {
+  /* ── Brand Primary — slightly brighter in dark ── */
+  --primary:                  #a855f7;
+  --primary-container:        #7c3aed;
+  --on-primary:               #ffffff;
+  --on-primary-container:     #ede0ff;
+  --primary-fixed:            #2d1060;
+  --primary-fixed-dim:        #3d1a80;
+  --on-primary-fixed:         #e9d5ff;
+  --on-primary-fixed-variant: #c4b5fd;
+  --inverse-primary:          #630ed4;
+
+  /* ── Surface Scale — dark ── */
+  --surface:                  #0f0f13;
+  --surface-bright:           #1a1a24;
+  --surface-dim:              #08080c;
+  --surface-container-lowest: #111118;  /* slightly lighter than pure black */
+  --surface-container-low:    #16161f;
+  --surface-container:        #1c1c28;
+  --surface-container-high:   #222230;
+  --surface-container-highest:#2a2a38;
+  --surface-variant:          #252530;
+  --surface-tint:             #a855f7;
+  /* inverse-surface in dark = a deep dark card (not light) */
+  --inverse-surface:          #1a1a2e;
+  --inverse-on-surface:       #e8e8f0;
+
+  /* ── On-Surface — dark ── */
+  --on-surface:               #e8e8f0;
+  --on-surface-variant:       #a0a0bc;
+  --on-background:            #e8e8f0;
+  --background:               #0d0d14;
+
+  /* ── Secondary — dark ── */
+  --secondary:                #9898b0;
+  --on-secondary:             #0a0a0f;
+  --secondary-container:      #252530;
+  --on-secondary-container:   #9898b0;
+  --secondary-fixed:          #252530;
+  --secondary-fixed-dim:      #1e1e28;
+  --on-secondary-fixed:       #e8e8f0;
+  --on-secondary-fixed-variant:#c0c0d8;
+
+  /* ── Tertiary — dark ── */
+  --tertiary:                 #fb923c;
+  --on-tertiary:              #0a0a0f;
+  --tertiary-container:       #7c2d12;
+  --on-tertiary-container:    #fed7aa;
+  --tertiary-fixed:           #431407;
+  --tertiary-fixed-dim:       #7c2d12;
+  --on-tertiary-fixed:        #fed7aa;
+  --on-tertiary-fixed-variant:#fb923c;
+
+  /* ── Outline — dark ── */
+  --outline:                  #4a4a60;
+  --outline-variant:          #2a2a38;
+
+  /* ── Error — dark ── */
+  --error:                    #f87171;
+  --on-error:                 #0a0a0f;
+  --error-container:          #7f1d1d;
+  --on-error-container:       #fecaca;
+
+  /* ── Glass — dark ── */
+  --glass-bg:             rgba(18, 18, 26, 0.85);
+  --glass-bg-hover:       rgba(24, 24, 36, 0.95);
+  --glass-border:         rgba(255, 255, 255, 0.07);
+  --glass-border-primary: rgba(168, 85, 247, 0.25);
+
+  /* ── Shadows — dark (more pronounced) ── */
+  --shadow-sm:        0px 4px 20px rgba(0,0,0,0.3), 0px 10px 40px rgba(0,0,0,0.4);
+  --shadow-md:        0px 8px 32px rgba(0,0,0,0.5);
+  --shadow-lg:        0px 20px 60px rgba(0,0,0,0.7);
+  --shadow-primary:   0px 8px 32px rgba(168, 85, 247, 0.25);
+  --shadow-primary-lg:0px 20px 60px rgba(168, 85, 247, 0.2);
+
+  /* ── Gradients — dark ── */
+  --gradient-primary: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+  --gradient-hero:    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(168,85,247,0.15) 0%, transparent 70%);
+  --gradient-text:    linear-gradient(135deg, #a855f7 0%, #c084fc 100%);
+}

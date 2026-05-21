@@ -1,0 +1,503 @@
+/* ── GFD Utility Classes — Light Mode ── */
+
+/* ── Buttons ── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-family: var(--font-headline);
+  font-weight: 500;
+  font-size: 0.875rem;
+  letter-spacing: 0.01em;
+  border: none;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: var(--transition-spring);
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(99, 14, 212, 0.2);
+}
+
+.btn-primary:hover {
+  background: var(--primary-container);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 32px rgba(99, 14, 212, 0.3);
+  color: var(--on-primary);
+}
+
+.btn-primary:active {
+  transform: scale(0.97);
+}
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  color: var(--on-surface);
+  font-family: var(--font-headline);
+  font-weight: 500;
+  font-size: 0.875rem;
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: var(--transition-base);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn-outline:hover {
+  background: var(--surface-container-low);
+  border-color: var(--outline);
+  color: var(--on-surface);
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  color: var(--on-surface-variant);
+  font-family: var(--font-headline);
+  font-weight: 500;
+  font-size: 0.875rem;
+  border: none;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  text-decoration: none;
+}
+
+.btn-ghost:hover {
+  color: var(--primary);
+  background: var(--surface-container-low);
+}
+
+/* ── Badges / Chips ── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  background: var(--surface-container);
+  color: var(--on-surface-variant);
+  font-family: var(--font-headline);
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: var(--radius-full);
+  border: none;
+}
+
+/* Colored chip variants — use slightly higher opacity so they're visible in dark mode too */
+.chip-primary {
+  background: rgba(99, 14, 212, 0.12);
+  color: var(--primary);
+}
+
+.chip-success {
+  background: rgba(22, 163, 74, 0.12);
+  color: #16a34a;
+}
+
+.chip-error {
+  background: rgba(186, 26, 26, 0.12);
+  color: var(--error);
+}
+
+.chip-warning {
+  background: rgba(161, 81, 0, 0.12);
+  color: var(--tertiary);
+}
+
+/* ── Section Layout ── */
+.section-gfd {
+  padding: var(--section-py) var(--space-gutter);
+  position: relative;
+}
+
+.container-gfd {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--space-gutter);
+}
+
+/* ── Dividers ── */
+/* Uses design token so it adapts to dark mode automatically */
+.divider-gfd {
+  height: 1px;
+  background: var(--outline-variant);
+  border: none;
+  margin: 0;
+}
+
+/* ── Status Dots ── */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.status-dot-green  { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,0.5); }
+.status-dot-primary{ background: var(--primary); }
+.status-dot-error  { background: var(--error); }
+
+/* ── Loading Skeleton ── */
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-container) 25%, var(--surface-container-high) 50%, var(--surface-container) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-md);
+}
+
+/* ── Glow Orbs ── */
+.glow-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Glow orb — slightly stronger in dark mode via override below */
+.glow-orb-primary {
+  background: radial-gradient(circle, rgba(99, 14, 212, 0.12) 0%, transparent 70%);
+}
+
+[data-theme="dark"] .glow-orb-primary {
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.18) 0%, transparent 70%);
+}
+
+/* Grid pattern — adapts to dark mode via override */
+.grid-pattern {
+  background-image:
+    linear-gradient(rgba(99,14,212,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99,14,212,0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+[data-theme="dark"] .grid-pattern {
+  background-image:
+    linear-gradient(rgba(168,85,247,0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(168,85,247,0.07) 1px, transparent 1px);
+}
+
+/* ── Progress Bar ── */
+.progress-bar {
+  width: 100%;
+  height: 2px;
+  background: var(--surface-container-high);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: var(--radius-full);
+  transition: width 0.6s ease;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .section-gfd { padding: 2.5rem 1.25rem; }
+  .text-headline-xl { font-size: 2rem; }
+}
+
+/* ── Global responsive improvements ── */
+html, body, #app {
+  min-width: 0;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+img, picture, svg, video, iframe {
+  max-width: 100%;
+  height: auto;
+}
+
+button, input, textarea, select {
+  min-width: 0;
+}
+
+.glass-card,
+.glass-card-static,
+.card,
+.section-card {
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .container-gfd {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .btn-primary,
+  .btn-outline,
+  .btn-ghost {
+    width: 100%;
+    justify-content: center;
+    white-space: normal;
+  }
+}
+
+/* ══════════════════════════════════════
+   Dark Mode Overrides
+   ══════════════════════════════════════ */
+
+/* Buttons adapt via CSS variables automatically.
+   Only override what doesn't inherit correctly. */
+
+[data-theme="dark"] .btn-outline {
+  border-color: var(--outline-variant);
+  color: var(--on-surface);
+}
+
+[data-theme="dark"] .btn-outline:hover {
+  background: rgba(168,85,247,0.1);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+[data-theme="dark"] .btn-ghost {
+  color: var(--on-surface-variant);
+}
+
+[data-theme="dark"] .btn-ghost:hover {
+  background: rgba(168,85,247,0.08);
+  color: var(--primary);
+}
+
+/* Chips */
+[data-theme="dark"] .chip {
+  background: var(--surface-container-high);
+  color: var(--on-surface-variant);
+}
+
+[data-theme="dark"] .chip-primary {
+  background: rgba(168,85,247,0.15);
+  color: var(--primary);
+}
+
+/* Skeleton */
+[data-theme="dark"] .skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-container) 25%,
+    var(--surface-container-high) 50%,
+    var(--surface-container) 75%
+  );
+}
+
+/* Progress bar track */
+[data-theme="dark"] .progress-bar {
+  background: var(--surface-container-high);
+}
+
+/* Divider */
+[data-theme="dark"] .divider-gfd {
+  background: var(--outline-variant);
+}
+
+/* Status dot */
+[data-theme="dark"] .status-dot-green {
+  box-shadow: 0 0 8px rgba(34,197,94,0.6);
+}
+
+/* ══════════════════════════════════════
+   Dark Mode — Navbar & Dashboard Topnav
+   These MUST be global (not scoped) to
+   override the component's own styles.
+   ══════════════════════════════════════ */
+
+/* ── Landing page navbar ── */
+[data-theme="dark"] .navbar-gfd {
+  background: #16161f !important;
+  border-bottom-color: rgba(168, 85, 247, 0.15) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+[data-theme="dark"] .navbar-gfd.navbar-scrolled {
+  box-shadow: 0 2px 24px rgba(0, 0, 0, 0.5) !important;
+  border-bottom-color: rgba(168, 85, 247, 0.25) !important;
+}
+
+/* Logo */
+[data-theme="dark"] .navbar-gfd .logo-text {
+  color: #ffffff !important;
+}
+
+/* Desktop nav links */
+[data-theme="dark"] .navbar-gfd .nav-link {
+  color: rgba(255, 255, 255, 0.72) !important;
+}
+[data-theme="dark"] .navbar-gfd .nav-link:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+}
+[data-theme="dark"] .navbar-gfd .nav-link-active {
+  color: #a855f7 !important;
+  background: rgba(168, 85, 247, 0.12) !important;
+  font-weight: 600;
+}
+
+/* Icon buttons */
+[data-theme="dark"] .navbar-gfd .icon-btn {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+[data-theme="dark"] .navbar-gfd .icon-btn:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Hamburger toggle */
+[data-theme="dark"] .navbar-gfd .navbar-toggle {
+  color: #ffffff !important;
+}
+[data-theme="dark"] .navbar-gfd .navbar-toggle:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Sign In / Sign Out ghost */
+[data-theme="dark"] .navbar-gfd .nav-signin,
+[data-theme="dark"] .navbar-gfd .nav-signout {
+  color: rgba(255, 255, 255, 0.85) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+[data-theme="dark"] .navbar-gfd .nav-signin:hover,
+[data-theme="dark"] .navbar-gfd .nav-signout:hover {
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.45) !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+}
+
+/* Avatar */
+[data-theme="dark"] .navbar-gfd .nav-avatar {
+  border-color: rgba(168, 85, 247, 0.45) !important;
+  background: rgba(168, 85, 247, 0.15) !important;
+}
+
+/* Mobile drawer */
+[data-theme="dark"] .navbar-gfd .mobile-menu {
+  background: #16161f !important;
+  border-top-color: rgba(168, 85, 247, 0.15) !important;
+}
+
+[data-theme="dark"] .navbar-gfd .mobile-nav-link {
+  color: rgba(255, 255, 255, 0.75) !important;
+}
+[data-theme="dark"] .navbar-gfd .mobile-nav-link:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+}
+[data-theme="dark"] .navbar-gfd .mobile-nav-link-active {
+  color: #a855f7 !important;
+  background: rgba(168, 85, 247, 0.12) !important;
+}
+
+[data-theme="dark"] .navbar-gfd .mobile-actions {
+  border-top-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .navbar-gfd .mobile-action-outline {
+  color: rgba(255, 255, 255, 0.85) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  background: transparent !important;
+}
+[data-theme="dark"] .navbar-gfd .mobile-action-outline:hover {
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  background: rgba(255, 255, 255, 0.07) !important;
+}
+
+/* ── Dashboard topnav ── */
+[data-theme="dark"] .dash-topnav {
+  background: #16161f !important;
+  border-bottom-color: rgba(168, 85, 247, 0.15) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+[data-theme="dark"] .dash-topnav .dash-logo {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .dash-topnav .dash-topnav-link {
+  color: rgba(255, 255, 255, 0.65) !important;
+}
+[data-theme="dark"] .dash-topnav .dash-topnav-link:hover,
+[data-theme="dark"] .dash-topnav .dash-topnav-link.active {
+  color: #a855f7 !important;
+  border-bottom-color: #a855f7 !important;
+}
+
+[data-theme="dark"] .dash-topnav .icon-btn {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+[data-theme="dark"] .dash-topnav .icon-btn:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .dash-topnav .topnav-user-pill {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+[data-theme="dark"] .dash-topnav .topnav-username {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .dash-topnav .dash-signout-btn {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+[data-theme="dark"] .dash-topnav .dash-signout-btn:hover {
+  color: #f87171 !important;
+  background: rgba(248, 113, 113, 0.1) !important;
+}
+
+/* ── Dashboard sidebar ── */
+[data-theme="dark"] .dash-sidebar {
+  background: #13131c !important;
+  border-right-color: rgba(168, 85, 247, 0.1) !important;
+}
+
+[data-theme="dark"] .dash-sidebar .sidebar-link {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+[data-theme="dark"] .dash-sidebar .sidebar-link:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+[data-theme="dark"] .dash-sidebar .sidebar-link-active {
+  background: rgba(168, 85, 247, 0.15) !important;
+  color: #a855f7 !important;
+}
+
+/* ── Mobile bottom nav ── */
+[data-theme="dark"] .mobile-bottom-nav {
+  background: #16161f !important;
+  border-top-color: rgba(168, 85, 247, 0.12) !important;
+  box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] .mobile-bottom-nav .bottom-nav-item {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+[data-theme="dark"] .mobile-bottom-nav .bottom-nav-item.active {
+  color: #a855f7 !important;
+}

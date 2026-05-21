@@ -1,0 +1,31 @@
+@import "tailwindcss";
+@import "bootstrap/dist/css/bootstrap.min.css";
+@import "./variables.css";
+@import "./glassmorphism.css";
+@import "./animations.css";
+@import "./typography.css";
+@import "./utilities.css";
+
+/* ── Smooth theme transition for all elements ── */
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+  transition-duration: 0.25s;
+  transition-timing-function: ease;
+}
+
+/* But don't slow down animations/transforms */
+.animate-fade-in-up,
+.animate-fade-in,
+.animate-slide-left,
+.animate-slide-right,
+.animate-scale-in,
+.animate-float,
+.hover-lift,
+.glass-card,
+.btn-primary,
+.btn-outline,
+.btn-ghost {
+  transition-property: opacity, transform, background-color, border-color, color, box-shadow;
+}

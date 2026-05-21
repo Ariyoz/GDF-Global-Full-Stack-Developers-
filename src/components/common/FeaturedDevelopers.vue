@@ -1,0 +1,317 @@
+<template>
+  <section class="section-gfd featured-section">
+    <div class="container-gfd">
+      <!-- Header -->
+      <div class="section-top">
+        <div>
+          <h2 class="text-headline-lg">Featured Developers</h2>
+          <p class="text-body-md" style="margin-top:0.25rem">Top-rated full-stack talent currently available for hire.</p>
+        </div>
+        <RouterLink to="/explore" class="view-all-link">
+          View all
+          <span class="material-symbols-outlined" style="font-size:16px">arrow_forward</span>
+        </RouterLink>
+      </div>
+
+      <!-- Grid -->
+      <div class="devs-grid">
+        <div
+          v-for="(dev, i) in developers"
+          :key="dev.name"
+          class="dev-card glass-card animate-fade-in-up"
+          :class="`delay-${i * 100}`"
+        >
+          <!-- Card Header -->
+          <div class="dev-card-header">
+            <div class="dev-avatar">
+              <span class="dev-initials">{{ initials(dev.name) }}</span>
+              <span v-if="dev.available" class="dev-online-dot" />
+            </div>
+            <div class="dev-meta">
+              <h3 class="dev-name">{{ dev.name }}</h3>
+              <p class="dev-role">{{ dev.role }}</p>
+            </div>
+          </div>
+
+          <!-- Tags -->
+          <div class="dev-tags">
+            <span v-for="tag in dev.tags" :key="tag" class="chip">{{ tag }}</span>
+          </div>
+
+          <!-- Bio -->
+          <p class="dev-bio">{{ dev.bio }}</p>
+
+          <!-- Footer -->
+          <div class="dev-footer">
+            <div class="dev-stats">
+              <span class="dev-stat">
+                <span class="material-symbols-outlined" style="font-size:13px;color:#f59e0b;font-variation-settings:'FILL' 1">star</span>
+                {{ dev.rating }}
+              </span>
+              <span class="dev-stat">
+                <span class="material-symbols-outlined" style="font-size:13px;color:var(--outline)">work</span>
+                {{ dev.projects }} projects
+              </span>
+            </div>
+            <div class="dev-footer-actions">
+              <RouterLink to="/explore" class="btn-view">
+                <span class="material-symbols-outlined" style="font-size:14px">person</span>
+                Portfolio
+              </RouterLink>
+              <RouterLink to="/hire" class="btn-hire">
+                <span class="material-symbols-outlined" style="font-size:14px">handshake</span>
+                Hire
+              </RouterLink>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</template>
+
+<script setup>
+const developers = [
+  {
+    name: 'Marcus Chen',
+    role: 'Senior Full-Stack Lead',
+    bio: 'Building scalable microservices and intuitive frontend experiences for high-growth tech startups.',
+    tags: ['React', 'Go', 'AWS', 'PostgreSQL'],
+    rating: '4.9',
+    projects: 34,
+    available: true,
+  },
+  {
+    name: 'Elena Rodriguez',
+    role: 'Next.js Specialist',
+    bio: 'Expert in crafting performant, SEO-optimized web applications with a focus on UI/UX precision.',
+    tags: ['TypeScript', 'Prisma', 'Tailwind'],
+    rating: '5.0',
+    projects: 28,
+    available: true,
+  },
+  {
+    name: 'Alex Rivera',
+    role: 'Python & Django Expert',
+    bio: 'Specializing in complex data architecture and API development for fintech and healthtech.',
+    tags: ['Python', 'PostgreSQL', 'Docker'],
+    rating: '4.8',
+    projects: 41,
+    available: false,
+  },
+]
+
+function initials(name) {
+  return name.split(' ').map(n => n[0]).join('').toUpperCase()
+}
+</script>
+
+<style scoped>
+/* Subtle tinted background — adapts to dark mode via CSS variable */
+.featured-section { background: var(--surface-container-low); }
+
+/* Section header */
+.section-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.view-all-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-family: var(--font-headline);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--primary);
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+}
+.view-all-link:hover { text-decoration: underline; }
+
+/* Grid — 1 col mobile, 3 col desktop */
+.devs-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .devs-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 1024px) {
+  .devs-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* Card */
+.dev-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  padding: 1.25rem;
+}
+
+/* Card header */
+.dev-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.dev-avatar {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-lg);
+  background: var(--primary-fixed);
+  border: 1px solid rgba(99,14,212,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.dev-initials {
+  font-family: var(--font-headline);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.dev-online-dot {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  background: #22c55e;
+  border-radius: 50%;
+  border: 2px solid var(--surface-container-lowest);
+}
+
+.dev-meta { min-width: 0; }
+
+.dev-name {
+  font-family: var(--font-headline);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--on-surface);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dev-role {
+  font-family: var(--font-headline);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--primary);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Tags */
+.dev-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+/* Bio */
+.dev-bio {
+  font-size: 0.875rem;
+  color: var(--on-surface-variant);
+  line-height: 1.55;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Footer */
+.dev-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding-top: 0.625rem;
+  border-top: 1px solid var(--outline-variant);
+}
+
+.dev-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.dev-stat {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-headline);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  white-space: nowrap;
+}
+
+/* Action buttons — side by side, equal width, compact */
+.dev-footer-actions {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.btn-view,
+.btn-hire {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.45rem 0.5rem;
+  border-radius: var(--radius-lg);
+  font-family: var(--font-headline);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: var(--transition-base);
+  white-space: nowrap;
+  border: none;
+}
+
+/* Portfolio — outlined style */
+.btn-view {
+  background: var(--surface-container-high);
+  border: 1px solid var(--outline-variant);
+  color: var(--on-surface);
+}
+.btn-view:hover {
+  background: var(--surface-container-highest);
+  border-color: var(--outline);
+  color: var(--on-surface);
+}
+
+/* Hire — primary purple */
+.btn-hire {
+  background: var(--primary);
+  color: var(--on-primary);
+  box-shadow: 0 2px 10px rgba(99,14,212,0.25);
+}
+.btn-hire:hover {
+  background: var(--primary-container);
+  color: var(--on-primary);
+  transform: translateY(-1px);
+}
+</style>
