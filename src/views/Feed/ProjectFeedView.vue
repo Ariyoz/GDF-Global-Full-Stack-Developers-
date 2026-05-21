@@ -41,15 +41,15 @@
             </button>
           </div>
           <div class="create-post-actions">
-            <button class="post-action-type">
+            <button class="post-action-type" @click="showCompose = true; composeMode = 'photo'">
               <span class="material-symbols-outlined" style="color:var(--primary)">image</span>
               Photo
             </button>
-            <button class="post-action-type">
+            <button class="post-action-type" @click="showCompose = true; composeMode = 'snippet'">
               <span class="material-symbols-outlined" style="color:var(--primary)">code</span>
               Snippet
             </button>
-            <button class="post-action-type">
+            <button class="post-action-type" @click="showCompose = true; composeMode = 'demo'">
               <span class="material-symbols-outlined" style="color:var(--primary)">videocam</span>
               Demo
             </button>
@@ -90,7 +90,11 @@
                 <div class="compose-tools">
                   <button type="button" class="btn-ghost image-option" @click="openImagePicker('gallery')">
                     <span class="material-symbols-outlined">photo_library</span>
-                    Photo
+                    Gallery
+                  </button>
+                  <button type="button" class="btn-ghost image-option" @click="openImagePicker('camera')">
+                    <span class="material-symbols-outlined">photo_camera</span>
+                    Camera
                   </button>
                   <button type="button" class="btn-ghost image-option" @click="selectSnippet">
                     <span class="material-symbols-outlined">code</span>
@@ -101,6 +105,7 @@
                     Demo
                   </button>
                   <input ref="imageInput" type="file" accept="image/*" class="hidden-file-input" @change="handleImageChange" />
+                  <input ref="cameraInput" type="file" accept="image/*" capture="environment" class="hidden-file-input" @change="handleImageChange" />
                 </div>
                 <button class="btn-primary" :disabled="!newPost.trim() && !selectedImage" @click="submitPost">Post</button>
               </div>
@@ -317,6 +322,7 @@ const newPost        = ref('')
 const newComments    = ref({})
 const composeMode    = ref('text')
 const imageInput     = ref(null)
+const cameraInput    = ref(null)
 const selectedImage  = ref(null)
 const selectedImageFile = ref(null)
 
@@ -401,10 +407,13 @@ function toggleReaction(post, emoji) {
   }
 }
 
-function openImagePicker() {
-  if (!imageInput.value) return
+function openImagePicker(source) {
   composeMode.value = 'photo'
-  imageInput.value.click()
+  if (source === 'camera' && cameraInput.value) {
+    cameraInput.value.click()
+  } else if (imageInput.value) {
+    imageInput.value.click()
+  }
 }
 
 function selectSnippet() {
