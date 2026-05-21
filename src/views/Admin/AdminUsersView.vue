@@ -204,12 +204,12 @@ function statusTextClass(status) {
 .user-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
 @media (min-width: 768px) { .user-stats { grid-template-columns: repeat(4, 1fr); } }
 
-.user-stat-card { display: flex; align-items: center; gap: 1rem; padding: 1.25rem; border-radius: var(--radius-xl); }
+.user-stat-card { display: flex; align-items: center; gap: 0.75rem; padding: 1rem; border-radius: var(--radius-xl); }
 
-.ustat-icon-wrap { width: 48px; height: 48px; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.ustat-icon { font-size: 24px; }
-.ustat-label { font-size: 0.75rem; color: var(--on-surface-variant); font-family: var(--font-headline); }
-.ustat-value { font-family: var(--font-headline); font-size: 1.375rem; font-weight: 700; color: var(--on-surface); }
+.ustat-icon-wrap { width: 42px; height: 42px; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.ustat-icon { font-size: 22px; }
+.ustat-label { font-size: 0.7rem; color: var(--on-surface-variant); font-family: var(--font-headline); margin-bottom: 0.15rem; }
+.ustat-value { font-family: var(--font-headline); font-size: 1.2rem; font-weight: 700; color: var(--on-surface); line-height: 1.2; }
 
 /* Tabs */
 .user-tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--outline-variant); overflow-x: auto; scrollbar-width: none; }

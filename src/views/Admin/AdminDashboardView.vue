@@ -185,7 +185,7 @@ const trafficData = [
 .admin-stat-card {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.875rem;
   padding: 1.25rem;
   position: relative;
 }
@@ -202,15 +202,18 @@ const trafficData = [
 
 .stat-icon { font-size: 22px; }
 
-.stat-info { flex: 1; }
-.stat-label { font-size: 0.75rem; color: var(--on-surface-variant); font-family: var(--font-headline); }
-.stat-value { font-family: var(--font-headline); font-size: 1.375rem; font-weight: 700; color: var(--on-surface); letter-spacing: -0.02em; }
+.stat-info { flex: 1; min-width: 0; }
+.stat-label { font-size: 0.72rem; color: var(--on-surface-variant); font-family: var(--font-headline); margin-bottom: 0.2rem; }
+.stat-value { font-family: var(--font-headline); font-size: 1.25rem; font-weight: 700; color: var(--on-surface); letter-spacing: -0.02em; line-height: 1.2; }
 
 .stat-change {
+  position: absolute;
+  top: 0.875rem;
+  right: 0.875rem;
   font-family: var(--font-headline);
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  padding: 0.2rem 0.5rem;
+  padding: 0.15rem 0.4rem;
   border-radius: var(--radius-sm);
 }
 

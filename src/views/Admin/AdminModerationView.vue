@@ -270,10 +270,10 @@ function refreshQueue() {
 
 .mod-stat-card { display: flex; align-items: center; gap: 0.75rem; padding: 1rem; border-radius: var(--radius-xl); }
 
-.mstat-icon-wrap { width: 40px; height: 40px; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.mstat-icon { font-size: 20px; }
-.mstat-label { font-size: 0.7rem; color: var(--on-surface-variant); font-family: var(--font-headline); }
-.mstat-value { font-family: var(--font-headline); font-size: 1.125rem; font-weight: 700; color: var(--on-surface); }
+.mstat-icon-wrap { width: 42px; height: 42px; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.mstat-icon { font-size: 22px; }
+.mstat-label { font-size: 0.7rem; color: var(--on-surface-variant); font-family: var(--font-headline); margin-bottom: 0.15rem; }
+.mstat-value { font-family: var(--font-headline); font-size: 1.2rem; font-weight: 700; color: var(--on-surface); line-height: 1.2; }
 
 /* Tabs */
 .mod-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--outline-variant); overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
