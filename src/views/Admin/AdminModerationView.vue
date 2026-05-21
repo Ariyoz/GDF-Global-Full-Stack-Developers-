@@ -258,7 +258,8 @@ function refreshQueue() {
 </script>
 
 <style scoped>
-.admin-moderation-view { display: flex; flex-direction: column; gap: 1.25rem; background: var(--background); min-height: 100vh; padding: 1.5rem; }
+.admin-moderation-view { display: flex; flex-direction: column; gap: 1rem; background: var(--background); min-height: 100vh; padding: 1rem; }
+@media (min-width: 768px) { .admin-moderation-view { padding: 1.5rem; gap: 1.25rem; } }
 
 .page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .header-actions { display: flex; gap: 0.75rem; }
@@ -267,33 +268,35 @@ function refreshQueue() {
 .mod-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
 @media (min-width: 768px) { .mod-stats { grid-template-columns: repeat(4, 1fr); } }
 
-.mod-stat-card { display: flex; align-items: center; gap: 1rem; padding: 1.25rem; border-radius: var(--radius-xl); }
+.mod-stat-card { display: flex; align-items: center; gap: 0.75rem; padding: 1rem; border-radius: var(--radius-xl); }
 
-.mstat-icon-wrap { width: 48px; height: 48px; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.mstat-icon { font-size: 24px; }
-.mstat-label { font-size: 0.75rem; color: var(--on-surface-variant); font-family: var(--font-headline); }
-.mstat-value { font-family: var(--font-headline); font-size: 1.375rem; font-weight: 700; color: var(--on-surface); }
+.mstat-icon-wrap { width: 40px; height: 40px; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.mstat-icon { font-size: 20px; }
+.mstat-label { font-size: 0.7rem; color: var(--on-surface-variant); font-family: var(--font-headline); }
+.mstat-value { font-family: var(--font-headline); font-size: 1.125rem; font-weight: 700; color: var(--on-surface); }
 
 /* Tabs */
-.mod-tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--outline-variant); overflow-x: auto; scrollbar-width: none; }
+.mod-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--outline-variant); overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .mod-tabs::-webkit-scrollbar { display: none; }
 
 .mod-tab {
-  display: flex; align-items: center; gap: 0.4rem;
-  padding: 0.625rem 1rem;
+  display: flex; align-items: center; gap: 0.3rem;
+  padding: 0.625rem 0.75rem;
   background: none; border: none; border-bottom: 2px solid transparent;
-  font-family: var(--font-headline); font-size: 0.875rem; font-weight: 500;
+  font-family: var(--font-headline); font-size: 0.8rem; font-weight: 500;
   color: var(--on-surface-variant); cursor: pointer; white-space: nowrap;
   transition: all 0.15s ease; margin-bottom: -1px;
+  flex-shrink: 0;
 }
 .mod-tab:hover { color: var(--primary); }
 .mod-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
 
 .tab-badge {
-  min-width: 18px; height: 18px; border-radius: var(--radius-full);
+  min-width: 16px; height: 16px; border-radius: var(--radius-full);
   background: var(--error); color: white;
-  font-size: 0.65rem; font-weight: 700;
-  display: flex; align-items: center; justify-content: center; padding: 0 4px;
+  font-size: 0.6rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; padding: 0 3px;
+  flex-shrink: 0;
 }
 
 /* Queue */
@@ -349,9 +352,9 @@ function refreshQueue() {
 }
 
 /* Actions */
-.mod-item-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; padding-top: 0.5rem; border-top: 1px solid var(--outline-variant); }
+.mod-item-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; padding-top: 0.5rem; border-top: 1px solid var(--outline-variant); }
 
-.mod-action-btn { font-size: 0.82rem; padding: 0.5rem 1rem; display: inline-flex; align-items: center; gap: 0.35rem; }
+.mod-action-btn { font-size: 0.78rem; padding: 0.45rem 0.75rem; display: inline-flex; align-items: center; gap: 0.3rem; }
 .mod-action-btn.warn { border-color: #f59e0b; color: #f59e0b; }
 .mod-action-btn.warn:hover { background: rgba(245,158,11,0.08); }
 .mod-action-btn.danger { background: var(--error); color: white; border: none; }
