@@ -124,7 +124,15 @@
                   <p class="post-meta">{{ post.time }} · {{ post.category }}</p>
                 </div>
               </div>
-              <button class="btn-ghost icon-only">
+              <button
+                v-if="post.author === (user?.name || 'You')"
+                class="btn-ghost icon-only delete-post-btn"
+                title="Delete post"
+                @click="deletePost(post.id)"
+              >
+                <span class="material-symbols-outlined">delete</span>
+              </button>
+              <button v-else class="btn-ghost icon-only">
                 <span class="material-symbols-outlined">more_horiz</span>
               </button>
             </div>
@@ -225,6 +233,14 @@
                   placeholder="Write a comment..." 
                   @keyup.enter="submitComment(post, $event)"
                 />
+                <button
+                  class="comment-send-btn"
+                  :disabled="!newComments[post.id]?.trim()"
+                  @click="submitComment(post, $event)"
+                  title="Send comment"
+                >
+                  <span class="material-symbols-outlined">send</span>
+                </button>
               </div>
             </div>
           </article>
@@ -280,6 +296,10 @@ const authStore = useAuthStore()
 const feedStore = useFeedStore()
 const { user }  = storeToRefs(authStore)
 const { posts } = storeToRefs(feedStore)
+
+function deletePost(postId) {
+  feedStore.deletePost(postId)
+}
 
 const showCompose = ref(false)
 const newPost        = ref('')
@@ -817,6 +837,21 @@ function submitComment(post, e) {
   color: var(--on-surface); outline: none;
 }
 .comment-input:focus { border-color: var(--primary); }
+
+.comment-send-btn {
+  flex-shrink: 0;
+  width: 34px; height: 34px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--primary); color: var(--on-primary);
+  border: none; border-radius: var(--radius-full);
+  cursor: pointer; transition: opacity 0.15s ease;
+}
+.comment-send-btn:hover:not(:disabled) { opacity: 0.85; }
+.comment-send-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.comment-send-btn .material-symbols-outlined { font-size: 17px; }
+
+.delete-post-btn { color: var(--on-surface-variant); }
+.delete-post-btn:hover { color: #ef4444; background: rgba(239,68,68,0.08); }
 
 /* ── Right Sidebar ── */
 .sidebar-section-title {

@@ -70,5 +70,10 @@ export const useFeedStore = defineStore('feed', () => {
     posts.value.unshift(post)
   }
 
-  return { posts, addPost }
+  // Remove a post by id
+  function deletePost(postId) {
+    posts.value = posts.value.filter(p => p.id !== postId)
+  }
+
+  return { posts, addPost, deletePost }
 })
