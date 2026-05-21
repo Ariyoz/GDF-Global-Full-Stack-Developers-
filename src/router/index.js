@@ -50,8 +50,9 @@ const SafetyReportView   = () => import('@/views/SafetyReport/SafetyReportView.v
 const PlansView          = () => import('@/views/Plans/PlansView.vue')
 
 // ── Admin Views ──
-const AdminDashboardView = () => import('@/views/Admin/AdminDashboardView.vue')
-const AdminUsersView     = () => import('@/views/Admin/AdminUsersView.vue')
+const AdminDashboardView  = () => import('@/views/Admin/AdminDashboardView.vue')
+const AdminUsersView      = () => import('@/views/Admin/AdminUsersView.vue')
+const AdminModerationView = () => import('@/views/Admin/AdminModerationView.vue')
 
 // ── Error ──
 const NotFoundView = () => import('@/views/NotFound.vue')
@@ -164,8 +165,9 @@ const routes = [
     component: DashboardLayout,
     meta: { requiresAuth: true, requiresAdmin: true },
     children: [
-      { path: '',      name: 'admin',       component: AdminDashboardView },
-      { path: 'users', name: 'admin-users', component: AdminUsersView },
+      { path: '',           name: 'admin',            component: AdminDashboardView },
+      { path: 'users',      name: 'admin-users',      component: AdminUsersView },
+      { path: 'moderation', name: 'admin-moderation', component: AdminModerationView },
     ],
   },
 

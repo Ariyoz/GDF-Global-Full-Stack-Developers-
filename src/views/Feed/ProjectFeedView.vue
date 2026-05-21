@@ -218,6 +218,7 @@
                 </button>
                 <button class="action-btn repost-btn" @click="handleQuote(post)" title="Repost with quote">
                   <span class="material-symbols-outlined">edit_note</span>
+                  {{ post.retweetCount || 0 }}
                 </button>
                 <button class="action-btn">
                   <span class="material-symbols-outlined">share</span>
@@ -379,6 +380,8 @@ function handleQuote(post) {
   quotePost.value = post
   showCompose.value = true
   openMenuId.value = null
+  // Increment repost count on the original post
+  post.retweetCount = (post.retweetCount || 0) + 1
 }
 
 const userInitials = computed(() => {
