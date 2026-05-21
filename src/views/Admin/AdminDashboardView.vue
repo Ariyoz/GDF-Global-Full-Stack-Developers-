@@ -1,169 +1,123 @@
 <template>
-  <div class="admin-view">
-    <!-- Admin Sidebar -->
-    <aside class="admin-sidebar">
-      <div class="admin-sidebar-inner">
-        <div class="admin-logo">
-          <span class="material-symbols-outlined" style="color:var(--primary)">shield</span>
-          <span class="admin-logo-text">GFD Admin</span>
-        </div>
-        <nav class="admin-nav">
-          <p class="admin-nav-section">Management</p>
-          <RouterLink to="/admin" class="admin-nav-link active">
-            <span class="material-symbols-outlined">dashboard</span> Dashboard
-          </RouterLink>
-          <RouterLink to="/admin/users" class="admin-nav-link">
-            <span class="material-symbols-outlined">group</span> Users
-          </RouterLink>
-          <RouterLink to="/admin/moderation" class="admin-nav-link">
-            <span class="material-symbols-outlined">gavel</span> Moderation
-          </RouterLink>
-          <RouterLink to="/admin/reports" class="admin-nav-link">
-            <span class="material-symbols-outlined">flag</span> Reports
-          </RouterLink>
-          <RouterLink to="/admin/verification" class="admin-nav-link">
-            <span class="material-symbols-outlined">verified</span> Verification
-          </RouterLink>
-          <div class="admin-nav-divider" />
-          <p class="admin-nav-section">Systems</p>
-          <RouterLink to="/admin/analytics" class="admin-nav-link">
-            <span class="material-symbols-outlined">analytics</span> Platform Analytics
-          </RouterLink>
-          <RouterLink to="/settings" class="admin-nav-link">
-            <span class="material-symbols-outlined">settings</span> Settings
-          </RouterLink>
-        </nav>
-        <div class="admin-server-status glass-card-static">
-          <div class="server-status-row">
-            <span class="status-dot status-dot-green" />
-            <span class="server-status-label">Server Status</span>
-          </div>
-          <p class="server-status-desc">All systems operational. Latency: 42ms</p>
-        </div>
+  <div class="admin-dashboard-content">
+    <!-- Header -->
+    <div class="admin-page-header">
+      <div>
+        <h1 class="text-headline-lg">Platform Overview</h1>
+        <p class="text-body-md" style="margin-top:0.25rem">Monitor growth, manage user reports, and verify credentials.</p>
       </div>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="admin-main">
-      <!-- Header -->
-      <div class="admin-page-header">
-        <div>
-          <h1 class="text-headline-lg">Platform Overview</h1>
-          <p class="text-body-md" style="margin-top:0.25rem">Monitor growth, manage user reports, and verify credentials.</p>
-        </div>
-        <div class="admin-header-actions">
-          <button class="btn-outline">
-            <span class="material-symbols-outlined" style="font-size:18px">download</span>
-            Export Data
-          </button>
-          <button class="btn-primary">
-            <span class="material-symbols-outlined" style="font-size:18px">add</span>
-            New Broadcast
-          </button>
-        </div>
+      <div class="admin-header-actions">
+        <button class="btn-outline">
+          <span class="material-symbols-outlined" style="font-size:18px">download</span>
+          Export Data
+        </button>
+        <button class="btn-primary">
+          <span class="material-symbols-outlined" style="font-size:18px">add</span>
+          New Broadcast
+        </button>
       </div>
+    </div>
 
-      <!-- Stats Grid -->
-      <div class="admin-stats-grid">
-        <div v-for="stat in platformStats" :key="stat.label" class="admin-stat-card glass-card">
-          <div class="stat-icon-wrap" :style="{ background: stat.bg }">
-            <span class="material-symbols-outlined stat-icon" :style="{ color: stat.color }">{{ stat.icon }}</span>
-          </div>
-          <div class="stat-info">
-            <p class="stat-label">{{ stat.label }}</p>
-            <h3 class="stat-value">{{ stat.value }}</h3>
-          </div>
-          <span class="stat-change" :class="stat.positive ? 'positive' : 'neutral'">{{ stat.change }}</span>
+    <!-- Stats Grid -->
+    <div class="admin-stats-grid">
+      <div v-for="stat in platformStats" :key="stat.label" class="admin-stat-card glass-card">
+        <div class="stat-icon-wrap" :style="{ background: stat.bg }">
+          <span class="material-symbols-outlined stat-icon" :style="{ color: stat.color }">{{ stat.icon }}</span>
         </div>
+        <div class="stat-info">
+          <p class="stat-label">{{ stat.label }}</p>
+          <h3 class="stat-value">{{ stat.value }}</h3>
+        </div>
+        <span class="stat-change" :class="stat.positive ? 'positive' : 'neutral'">{{ stat.change }}</span>
       </div>
+    </div>
 
-      <!-- Content Grid -->
-      <div class="admin-content-grid">
-        <!-- Activity Table -->
-        <div class="glass-card-static admin-table-card">
-          <div class="table-card-header">
-            <h2 class="text-headline-md" style="font-size:1.1rem">Recent Activity</h2>
-            <a href="#" class="view-all-link">View All</a>
-          </div>
-          <div class="admin-table-wrap">
-            <table class="admin-table">
-              <thead>
-                <tr>
-                  <th>User</th>
-                  <th>Event</th>
-                  <th>Flag</th>
-                  <th>Status</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="row in activityRows" :key="row.user">
-                  <td>
-                    <div class="table-user">
-                      <div class="table-avatar">{{ row.user[0] }}</div>
-                      <div>
-                        <p class="table-user-name">{{ row.user }}</p>
-                        <p class="table-user-role">{{ row.role }}</p>
-                      </div>
+    <!-- Content Grid -->
+    <div class="admin-content-grid">
+      <!-- Activity Table -->
+      <div class="glass-card-static admin-table-card">
+        <div class="table-card-header">
+          <h2 class="text-headline-md" style="font-size:1.1rem">Recent Activity</h2>
+          <RouterLink to="/admin/moderation" class="view-all-link">View All</RouterLink>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Event</th>
+                <th>Flag</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in activityRows" :key="row.user">
+                <td>
+                  <div class="table-user">
+                    <div class="table-avatar">{{ row.user[0] }}</div>
+                    <div>
+                      <p class="table-user-name">{{ row.user }}</p>
+                      <p class="table-user-role">{{ row.role }}</p>
                     </div>
-                  </td>
-                  <td class="table-event">{{ row.event }}</td>
-                  <td>
-                    <span class="table-flag" :class="row.flagClass">{{ row.flag }}</span>
-                  </td>
-                  <td>
-                    <div class="table-status">
-                      <span class="status-dot" :class="row.statusDot" />
-                      {{ row.status }}
-                    </div>
-                  </td>
-                  <td>
-                    <button class="btn-ghost icon-only">
-                      <span class="material-symbols-outlined" style="font-size:18px">more_vert</span>
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                  </div>
+                </td>
+                <td class="table-event">{{ row.event }}</td>
+                <td>
+                  <span class="table-flag" :class="row.flagClass">{{ row.flag }}</span>
+                </td>
+                <td>
+                  <div class="table-status">
+                    <span class="status-dot" :class="row.statusDot" />
+                    {{ row.status }}
+                  </div>
+                </td>
+                <td>
+                  <button class="btn-ghost icon-only">
+                    <span class="material-symbols-outlined" style="font-size:18px">more_vert</span>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Right Panel -->
+      <div class="admin-right-panel">
+        <!-- Verification Queue -->
+        <div class="glass-card-static admin-panel-card">
+          <h3 class="panel-title">Verification Queue</h3>
+          <div class="queue-list">
+            <div v-for="item in verificationQueue" :key="item.label" class="queue-item">
+              <div class="queue-item-left">
+                <span class="material-symbols-outlined queue-icon" :style="{ color: item.color }">{{ item.icon }}</span>
+                <span class="queue-label">{{ item.label }}</span>
+              </div>
+              <span class="queue-count">{{ item.count }}</span>
+            </div>
           </div>
         </div>
 
-        <!-- Right Panel -->
-        <div class="admin-right-panel">
-          <!-- Verification Queue -->
-          <div class="glass-card-static admin-panel-card">
-            <h3 class="panel-title">Verification Queue</h3>
-            <div class="queue-list">
-              <div v-for="item in verificationQueue" :key="item.label" class="queue-item">
-                <div class="queue-item-left">
-                  <span class="material-symbols-outlined queue-icon" :style="{ color: item.color }">{{ item.icon }}</span>
-                  <span class="queue-label">{{ item.label }}</span>
-                </div>
-                <span class="queue-count">{{ item.count }}</span>
+        <!-- Traffic Chart -->
+        <div class="glass-card-static admin-panel-card">
+          <h3 class="panel-title">Traffic Peak</h3>
+          <p class="panel-sub">Last 24 Hours</p>
+          <div class="traffic-chart">
+            <div v-for="(bar, i) in trafficData" :key="i" class="traffic-bar-col">
+              <div class="traffic-bar-wrap">
+                <div class="traffic-bar" :style="{ height: bar.pct + '%', opacity: bar.active ? 1 : 0.25 }" />
               </div>
             </div>
           </div>
-
-          <!-- Traffic Chart -->
-          <div class="glass-card-static admin-panel-card">
-            <h3 class="panel-title">Traffic Peak</h3>
-            <p class="panel-sub">Last 24 Hours</p>
-            <div class="traffic-chart">
-              <div v-for="(bar, i) in trafficData" :key="i" class="traffic-bar-col">
-                <div class="traffic-bar-wrap">
-                  <div class="traffic-bar" :style="{ height: bar.pct + '%', opacity: bar.active ? 1 : 0.25 }" />
-                </div>
-              </div>
-            </div>
-            <div class="traffic-labels">
-              <span>00:00</span>
-              <span>12:00</span>
-              <span>23:59</span>
-            </div>
+          <div class="traffic-labels">
+            <span>00:00</span>
+            <span>12:00</span>
+            <span>23:59</span>
           </div>
         </div>
       </div>
-    </main>
+    </div>
   </div>
 </template>
 
@@ -198,102 +152,14 @@ const trafficData = [
 </script>
 
 <style scoped>
-.admin-view {
-  display: flex;
-  min-height: 100vh;
-  background: var(--background);
-}
-
-/* Sidebar */
-.admin-sidebar {
-  display: none;
-  width: 240px;
-  flex-shrink: 0;
-  background: var(--surface-container-lowest);
-  border-right: 1px solid var(--outline-variant);
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  overflow-y: auto;
-}
-
-@media (min-width: 768px) { .admin-sidebar { display: block; } }
-
-.admin-sidebar-inner {
-  padding: 1.25rem;
+.admin-dashboard-content {
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
-.admin-logo {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0;
-}
-
-.admin-logo-text {
-  font-family: var(--font-headline);
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--on-surface);
-}
-
-.admin-nav { display: flex; flex-direction: column; gap: 0.125rem; flex: 1; }
-
-.admin-nav-section {
-  font-family: var(--font-headline);
-  font-size: 0.65rem;
-  font-weight: 700;
-  color: var(--on-surface-variant);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 0.5rem 0.5rem 0.25rem;
-}
-
-.admin-nav-link {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: var(--radius-lg);
-  font-family: var(--font-headline);
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--on-surface-variant);
-  text-decoration: none;
-  transition: all 0.15s ease;
-}
-
-.admin-nav-link:hover { background: var(--surface-container-low); color: var(--on-surface); }
-.admin-nav-link.active { background: rgba(168,85,247,0.08); color: var(--primary); font-weight: 700; }
-.admin-nav-link .material-symbols-outlined { font-size: 20px; }
-
-.admin-nav-divider { height: 1px; background: var(--outline-variant); margin: 0.5rem 0; }
-
-.admin-server-status { padding: 0.875rem; border-radius: var(--radius-lg); margin-top: auto; }
-
-.server-status-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.25rem;
-}
-
-.server-status-label { font-family: var(--font-headline); font-size: 0.8rem; font-weight: 700; color: var(--on-surface); }
-.server-status-desc  { font-size: 0.75rem; color: var(--on-surface-variant); }
-
-/* Main */
-.admin-main {
-  flex: 1;
-  padding: 1.5rem;
-  overflow-y: auto;
-  max-width: 1200px;
-}
-
-@media (min-width: 768px) { .admin-main { padding: 2rem; } }
+@media (min-width: 768px) { .admin-dashboard-content { padding: 2rem; } }
 
 .admin-page-header {
   display: flex;

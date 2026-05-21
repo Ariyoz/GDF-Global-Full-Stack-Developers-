@@ -27,7 +27,7 @@ const INITIAL_MOCK_USERS = [
       id: 2,
       name: 'GFD Tester',
       email: 'gdf@gmail.com',
-      role: 'developer',
+      role: 'admin',
       jobTitle: 'Test Account',
       location: '',
       bio: 'Default tester account for GFD platform.',

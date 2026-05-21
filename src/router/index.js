@@ -5,7 +5,7 @@ import { useAuthStore } from '@/store/auth'
 const DefaultLayout   = () => import('@/layouts/DefaultLayout.vue')
 const AuthLayout      = () => import('@/layouts/AuthLayout.vue')
 const DashboardLayout = () => import('@/layouts/DashboardLayout.vue')
-// Admin uses DashboardLayout (sidebar already has admin links)
+const AdminLayout     = () => import('@/layouts/AdminLayout.vue')
 
 // ── Public Views ──
 const HomeView             = () => import('@/views/Home/HomeView.vue')
@@ -162,7 +162,7 @@ const routes = [
   // ── Admin Routes ──
   {
     path: '/admin',
-    component: DashboardLayout,
+    component: AdminLayout,
     meta: { requiresAuth: true, requiresAdmin: true },
     children: [
       { path: '',           name: 'admin',            component: AdminDashboardView },

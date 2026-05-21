@@ -18,6 +18,21 @@
         <span class="sidebar-icon">{{ item.icon }}</span>
         <span>{{ item.label }}</span>
       </RouterLink>
+
+      <!-- Admin links (only for admin users) -->
+      <template v-if="authStore.isAdmin">
+        <div class="sidebar-divider" />
+        <RouterLink
+          v-for="item in adminNavItems"
+          :key="item.to"
+          :to="item.to"
+          class="sidebar-link sidebar-link-admin"
+          active-class="sidebar-link-active"
+        >
+          <span class="sidebar-icon">{{ item.icon }}</span>
+          <span>{{ item.label }}</span>
+        </RouterLink>
+      </template>
     </nav>
 
     <div class="sidebar-footer">
@@ -56,6 +71,10 @@ const navItems = [
   { to: '/dashboard',          icon: '⊞', label: 'Overview' },
   { to: '/dashboard/requests', icon: '📋', label: 'My Requests' },
   { to: '/dashboard/profile',  icon: '◉', label: 'Profile' },
+]
+
+const adminNavItems = [
+  { to: '/admin', icon: '🛡️', label: 'Admin Panel' },
 ]
 
 async function handleLogout() {
@@ -155,6 +174,16 @@ async function handleLogout() {
 }
 
 .sidebar-icon { font-size: 1rem; }
+
+.sidebar-divider {
+  height: 1px;
+  background: var(--glass-border);
+  margin: 0.5rem 0;
+}
+
+.sidebar-link-admin {
+  color: var(--gfd-gray-600);
+}
 
 .sidebar-footer {
   padding: 1rem 1.25rem;
