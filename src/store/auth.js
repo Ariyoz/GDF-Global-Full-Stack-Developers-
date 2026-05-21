@@ -20,6 +20,22 @@ const INITIAL_MOCK_USERS = [
       website: 'https://gfd.io',
     },
   },
+  {
+    email: 'gdf@gmail.com',
+    password: 'gdf12345',
+    user: {
+      id: 2,
+      name: 'GFD Tester',
+      email: 'gdf@gmail.com',
+      role: 'developer',
+      jobTitle: 'Test Account',
+      location: '',
+      bio: 'Default tester account for GFD platform.',
+      github: '',
+      linkedin: '',
+      website: '',
+    },
+  },
 ]
 
 const MOCK_TOKEN = 'gfd_mock_token_dev_2024'
@@ -27,7 +43,15 @@ const MOCK_TOKEN = 'gfd_mock_token_dev_2024'
 function loadMockUsers() {
   try {
     const stored = JSON.parse(localStorage.getItem('gfd_mock_users') || 'null')
-    return Array.isArray(stored) ? stored : INITIAL_MOCK_USERS
+    if (!Array.isArray(stored)) return INITIAL_MOCK_USERS
+    // Merge: keep stored users but ensure all INITIAL_MOCK_USERS are present
+    const merged = [...stored]
+    for (const initial of INITIAL_MOCK_USERS) {
+      if (!merged.find(u => u.email === initial.email)) {
+        merged.push(initial)
+      }
+    }
+    return merged
   } catch {
     return INITIAL_MOCK_USERS
   }
