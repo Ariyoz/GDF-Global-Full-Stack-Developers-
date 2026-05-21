@@ -245,12 +245,17 @@ button, input, textarea, select {
     padding-right: 1rem;
   }
 
-  .btn-primary,
-  .btn-outline,
-  .btn-ghost {
+  /* Only make buttons full-width when they are direct children of
+     a flex column or a standalone context — NOT inside grids or
+     flex-row containers like nav bars, card footers, etc. */
+  .hero-ctas .btn-primary,
+  .hero-ctas .btn-outline,
+  .cta-actions .btn-primary,
+  .cta-actions .btn-outline,
+  .services-cta .btn-primary,
+  .services-cta .btn-outline {
     width: 100%;
     justify-content: center;
-    white-space: normal;
   }
 }
 

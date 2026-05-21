@@ -71,7 +71,7 @@ const benefits = [
 <style scoped>
 .community-section { background: var(--background); }
 
-/* Stats — 2 cols mobile, 4 cols desktop */
+/* Stats — always 2×2 grid on mobile, 4 cols on desktop */
 .community-stats {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -87,24 +87,30 @@ const benefits = [
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.3rem;
-  padding: 1.25rem 1rem;
+  gap: 0.5rem;
+  padding: 1.5rem 1rem;
   text-align: center;
+  /* Ensure the card fills its grid cell */
+  width: 100%;
+  min-height: 110px;
+  justify-content: center;
 }
 
 .cstat-value {
   font-family: var(--font-headline);
-  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-size: clamp(1.75rem, 5vw, 2.25rem);
   font-weight: 800;
   color: var(--primary);
   letter-spacing: -0.03em;
+  line-height: 1;
 }
 
 .cstat-label {
   font-family: var(--font-headline);
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   color: var(--on-surface-variant);
   font-weight: 500;
+  line-height: 1.3;
 }
 
 /* Benefits — 1 col mobile, 2 col tablet, 3 col desktop */
