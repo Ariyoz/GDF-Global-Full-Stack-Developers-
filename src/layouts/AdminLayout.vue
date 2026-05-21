@@ -9,7 +9,9 @@
         <span class="material-symbols-outlined" style="color:var(--primary);font-size:20px">shield</span>
         <span class="mobile-logo-text">GFD Admin</span>
       </div>
-      <div style="width:36px" />
+      <button class="mobile-menu-btn" @click="toggle">
+        <span class="material-symbols-outlined">{{ isDark ? 'light_mode' : 'dark_mode' }}</span>
+      </button>
     </header>
 
     <!-- Overlay -->
@@ -30,8 +32,10 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { useTheme } from '@/composables/useTheme'
 import AdminSidebar from '@/components/layout/AdminSidebar.vue'
 
+const { isDark, toggle } = useTheme()
 const sidebarOpen = ref(false)
 const route = useRoute()
 

@@ -36,6 +36,12 @@
           <span class="material-symbols-outlined">settings</span> Settings
         </RouterLink>
       </nav>
+      <div class="admin-theme-toggle">
+        <button class="theme-toggle-btn" @click="toggle">
+          <span class="material-symbols-outlined" style="font-size:18px">{{ isDark ? 'light_mode' : 'dark_mode' }}</span>
+          <span>{{ isDark ? 'Light Mode' : 'Dark Mode' }}</span>
+        </button>
+      </div>
       <div class="admin-server-status glass-card-static">
         <div class="server-status-row">
           <span class="status-dot status-dot-green" />
@@ -48,10 +54,14 @@
 </template>
 
 <script setup>
+import { useTheme } from '@/composables/useTheme'
+
 defineProps({
   open: { type: Boolean, default: false }
 })
 defineEmits(['navigate'])
+
+const { isDark, toggle } = useTheme()
 </script>
 
 <style scoped>
@@ -157,7 +167,27 @@ defineEmits(['navigate'])
 
 .admin-nav-divider { height: 1px; background: var(--outline-variant); margin: 0.5rem 0; }
 
-.admin-server-status { padding: 0.875rem; border-radius: var(--radius-lg); margin-top: auto; }
+.admin-server-status { padding: 0.875rem; border-radius: var(--radius-lg); }
+
+.admin-theme-toggle { margin-top: auto; }
+
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  background: var(--surface-container-low);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  font-family: var(--font-headline);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--on-surface-variant);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.theme-toggle-btn:hover { background: var(--surface-container); color: var(--on-surface); }
 
 .server-status-row {
   display: flex;
