@@ -1,33 +1,38 @@
 <template>
-  <aside class="admin-sidebar">
+  <aside class="admin-sidebar" :class="{ open }">
     <div class="admin-sidebar-inner">
-      <div class="admin-logo">
-        <span class="material-symbols-outlined" style="color:var(--primary)">shield</span>
-        <span class="admin-logo-text">GFD Admin</span>
+      <div class="admin-sidebar-top">
+        <div class="admin-logo">
+          <span class="material-symbols-outlined" style="color:var(--primary)">shield</span>
+          <span class="admin-logo-text">GFD Admin</span>
+        </div>
+        <button class="sidebar-close-btn" @click="$emit('navigate')">
+          <span class="material-symbols-outlined">close</span>
+        </button>
       </div>
       <nav class="admin-nav">
         <p class="admin-nav-section">Management</p>
-        <RouterLink to="/admin" class="admin-nav-link" :class="{ active: $route.path === '/admin' }">
+        <RouterLink to="/admin" class="admin-nav-link" :class="{ active: $route.path === '/admin' }" @click="$emit('navigate')">
           <span class="material-symbols-outlined">dashboard</span> Dashboard
         </RouterLink>
-        <RouterLink to="/admin/users" class="admin-nav-link" :class="{ active: $route.path === '/admin/users' }">
+        <RouterLink to="/admin/users" class="admin-nav-link" :class="{ active: $route.path === '/admin/users' }" @click="$emit('navigate')">
           <span class="material-symbols-outlined">group</span> Users
         </RouterLink>
-        <RouterLink to="/admin/moderation" class="admin-nav-link" :class="{ active: $route.path === '/admin/moderation' }">
+        <RouterLink to="/admin/moderation" class="admin-nav-link" :class="{ active: $route.path === '/admin/moderation' }" @click="$emit('navigate')">
           <span class="material-symbols-outlined">gavel</span> Moderation
         </RouterLink>
-        <RouterLink to="/admin/reports" class="admin-nav-link" :class="{ active: $route.path === '/admin/reports' }">
+        <RouterLink to="/admin/reports" class="admin-nav-link" :class="{ active: $route.path === '/admin/reports' }" @click="$emit('navigate')">
           <span class="material-symbols-outlined">flag</span> Reports
         </RouterLink>
-        <RouterLink to="/admin/verification" class="admin-nav-link" :class="{ active: $route.path === '/admin/verification' }">
+        <RouterLink to="/admin/verification" class="admin-nav-link" :class="{ active: $route.path === '/admin/verification' }" @click="$emit('navigate')">
           <span class="material-symbols-outlined">verified</span> Verification
         </RouterLink>
         <div class="admin-nav-divider" />
         <p class="admin-nav-section">Systems</p>
-        <RouterLink to="/admin/analytics" class="admin-nav-link" :class="{ active: $route.path === '/admin/analytics' }">
+        <RouterLink to="/admin/analytics" class="admin-nav-link" :class="{ active: $route.path === '/admin/analytics' }" @click="$emit('navigate')">
           <span class="material-symbols-outlined">analytics</span> Platform Analytics
         </RouterLink>
-        <RouterLink to="/admin/settings" class="admin-nav-link" :class="{ active: $route.path === '/admin/settings' }">
+        <RouterLink to="/admin/settings" class="admin-nav-link" :class="{ active: $route.path === '/admin/settings' }" @click="$emit('navigate')">
           <span class="material-symbols-outlined">settings</span> Settings
         </RouterLink>
       </nav>
@@ -36,26 +41,50 @@
           <span class="status-dot status-dot-green" />
           <span class="server-status-label">Server Status</span>
         </div>
-        <p class="server-status-desc">All systems operational. Latency: 42ms</p>
+        <p class="server-status-desc">All systems operational</p>
       </div>
     </div>
   </aside>
 </template>
 
+<script setup>
+defineProps({
+  open: { type: Boolean, default: false }
+})
+defineEmits(['navigate'])
+</script>
+
 <style scoped>
 .admin-sidebar {
-  display: none;
-  width: 240px;
+  width: 260px;
   flex-shrink: 0;
   background: var(--surface-container-lowest);
   border-right: 1px solid var(--outline-variant);
-  position: sticky;
-  top: 0;
-  height: 100vh;
   overflow-y: auto;
+  z-index: 400;
+
+  /* Mobile: off-screen drawer */
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  transform: translateX(-100%);
+  transition: transform 0.25s ease;
 }
 
-@media (min-width: 768px) { .admin-sidebar { display: block; } }
+.admin-sidebar.open {
+  transform: translateX(0);
+}
+
+/* Desktop: static sidebar */
+@media (min-width: 768px) {
+  .admin-sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    transform: none;
+  }
+}
 
 .admin-sidebar-inner {
   padding: 1.25rem;
@@ -63,6 +92,12 @@
   flex-direction: column;
   height: 100%;
   gap: 1rem;
+}
+
+.admin-sidebar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .admin-logo {
@@ -78,6 +113,17 @@
   font-weight: 700;
   color: var(--on-surface);
 }
+
+.sidebar-close-btn {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: none; border-radius: var(--radius-lg);
+  color: var(--on-surface-variant); cursor: pointer;
+  transition: background 0.15s ease;
+}
+.sidebar-close-btn:hover { background: var(--surface-container); }
+
+@media (min-width: 768px) { .sidebar-close-btn { display: none; } }
 
 .admin-nav { display: flex; flex-direction: column; gap: 0.125rem; flex: 1; }
 
@@ -95,7 +141,7 @@
   display: flex;
   align-items: center;
   gap: 0.625rem;
-  padding: 0.5rem 0.75rem;
+  padding: 0.6rem 0.75rem;
   border-radius: var(--radius-lg);
   font-family: var(--font-headline);
   font-size: 0.875rem;
