@@ -29,6 +29,11 @@
       <GfdButton type="submit" variant="primary" :loading="loading" full>
         Sign In
       </GfdButton>
+
+      <div class="tester-hint">
+        <span class="material-symbols-outlined" style="font-size:15px;">info</span>
+        Test account: <strong>gdf@gmail.com</strong> / <strong>gdf12345</strong>
+      </div>
     </form>
 
     <p class="auth-footer">
@@ -67,7 +72,7 @@ const authStore = useAuthStore()
 const uiStore   = useUiStore()
 
 const loading = ref(false)
-const form    = reactive({ email: '', password: '' })
+const form    = reactive({ email: 'gdf@gmail.com', password: 'gdf12345' })
 const errors  = reactive({ email: '', password: '' })
 
 function validate() {
@@ -197,4 +202,19 @@ async function handleLogin() {
   color: var(--primary);
   background: rgba(99,14,212,0.03);
 }
+
+.tester-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  justify-content: center;
+  font-size: 0.78rem;
+  color: var(--on-surface-variant);
+  background: var(--surface-container-lowest);
+  border: 1px dashed var(--outline-variant);
+  border-radius: var(--radius-lg);
+  padding: 0.5rem 0.75rem;
+  margin-top: 0.25rem;
+}
+.tester-hint strong { color: var(--primary); }
 </style>
