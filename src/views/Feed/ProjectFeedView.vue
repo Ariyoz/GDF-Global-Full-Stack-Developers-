@@ -45,14 +45,6 @@
               <span class="material-symbols-outlined" style="color:var(--primary)">image</span>
               Photo
             </button>
-            <button class="post-action-type" @click="showCompose = true; composeMode = 'snippet'">
-              <span class="material-symbols-outlined" style="color:var(--primary)">code</span>
-              Snippet
-            </button>
-            <button class="post-action-type" @click="showCompose = true; composeMode = 'demo'">
-              <span class="material-symbols-outlined" style="color:var(--primary)">videocam</span>
-              Demo
-            </button>
           </div>
         </div>
 
@@ -95,14 +87,6 @@
                   <button type="button" class="btn-ghost image-option" @click="openImagePicker('camera')">
                     <span class="material-symbols-outlined">photo_camera</span>
                     Camera
-                  </button>
-                  <button type="button" class="btn-ghost image-option" @click="selectSnippet">
-                    <span class="material-symbols-outlined">code</span>
-                    Snippet
-                  </button>
-                  <button type="button" class="btn-ghost image-option" @click="selectDemo">
-                    <span class="material-symbols-outlined">videocam</span>
-                    Demo
                   </button>
                   <input ref="imageInput" type="file" accept="image/*" class="hidden-file-input" @change="handleImageChange" />
                   <input ref="cameraInput" type="file" accept="image/*" capture="environment" class="hidden-file-input" @change="handleImageChange" />
@@ -212,6 +196,10 @@
                 <button class="action-btn" @click="post.showComments = !post.showComments">
                   <span class="material-symbols-outlined">chat_bubble</span>
                   {{ post.commentList?.length || 0 }}
+                </button>
+                <button class="action-btn retweet-btn" :class="{ retweeted: post.retweetedByMe }" @click="handleRetweet(post)">
+                  <span class="material-symbols-outlined">repeat</span>
+                  {{ post.retweetCount || 0 }}
                 </button>
                 <button class="action-btn">
                   <span class="material-symbols-outlined">share</span>
@@ -335,18 +323,28 @@ function togglePostMenu(postId) {
 }
 
 function handleRetweet(post) {
-  const retweet = {
-    id: Date.now(),
-    author: user.value?.name || 'You',
-    time: 'Just now',
-    category: user.value?.role || 'Developer',
-    text: `🔁 Retweeted from ${post.author}: "${post.text}"`,
-    type: 'text',
-    reactions: {},
-    commentList: [],
-    showComments: false,
+  if (post.retweetedByMe) {
+    // Undo retweet
+    post.retweetedByMe = false
+    post.retweetCount = (post.retweetCount || 1) - 1
+  } else {
+    // Retweet
+    post.retweetedByMe = true
+    post.retweetCount = (post.retweetCount || 0) + 1
+    const retweet = {
+      id: Date.now(),
+      author: user.value?.name || 'You',
+      time: 'Just now',
+      category: user.value?.role || 'Developer',
+      text: `🔁 Retweeted from ${post.author}: "${post.text}"`,
+      type: 'text',
+      reactions: {},
+      commentList: [],
+      showComments: false,
+      retweetCount: 0,
+    }
+    feedStore.addPost(retweet)
   }
-  feedStore.addPost(retweet)
   openMenuId.value = null
 }
 
@@ -416,20 +414,6 @@ function openImagePicker(source) {
   }
 }
 
-function selectSnippet() {
-  composeMode.value = 'snippet'
-  if (!newPost.value.trim()) {
-    newPost.value = 'const example = "Your code snippet here"\nconsole.log(example);'
-  }
-}
-
-function selectDemo() {
-  composeMode.value = 'demo'
-  if (!newPost.value.trim()) {
-    newPost.value = 'https://your-demo-link.com'
-  }
-}
-
 function handleImageChange(event) {
   const file = event.target.files?.[0]
   if (!file) return
@@ -466,25 +450,13 @@ function submitPost() {
     reactions:   {},
     commentList: [],
     showComments: false,
+    retweetCount: 0,
   }
 
   if (selectedImage.value) {
     post.type = 'image'
     post.imageUrl = selectedImage.value
     post.imageCaption = newPost.value.trim() || 'Shared an update with an image.'
-  } else if (composeMode.value === 'snippet') {
-    post.type = 'code'
-    post.filename = 'snippet.js'
-    post.code = newPost.value
-  } else if (composeMode.value === 'demo') {
-    post.type = 'text'
-    post.links = [
-      {
-        label: 'Live Demo',
-        icon: 'videocam',
-        href: newPost.value.trim() || '#',
-      },
-    ]
   } else {
     post.type = 'text'
   }
@@ -845,6 +817,10 @@ function submitComment(post, e) {
 }
 .action-btn:hover { color: var(--primary); }
 .action-btn .material-symbols-outlined { font-size: 18px; }
+
+.retweet-btn.retweeted { color: #00ba7c; }
+.retweet-btn.retweeted .material-symbols-outlined { color: #00ba7c; }
+.retweet-btn:hover { color: #00ba7c; }
 
 /* ── Comments ── */
 .post-comments {
