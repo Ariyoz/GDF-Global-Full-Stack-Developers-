@@ -22,10 +22,9 @@ const app = createApp(App)
 const pinia = createPinia()
 app.use(pinia)
 app.use(router)
+app.mount('#app')
 
-// Initialize Supabase auth state before mounting
+// Initialize Supabase auth state after mount (non-blocking)
 import { useAuthStore } from './store/auth'
 const authStore = useAuthStore()
-authStore.init().then(() => {
-  app.mount('#app')
-})
+authStore.init()

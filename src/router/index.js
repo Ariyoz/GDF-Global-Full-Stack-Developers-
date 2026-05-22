@@ -199,9 +199,16 @@ const router = createRouter({
 router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore()
 
-  // Wait for auth to initialize
+  // Wait for auth to initialize (max 3 seconds)
   if (!authStore.initialized) {
-    await authStore.init()
+    await Promise.race([
+      new Promise(resolve => {
+        const check = setInterval(() => {
+          if (authStore.initialized) { clearInterval(check); resolve() }
+        }, 50)
+      }),
+      new Promise(resolve => setTimeout(resolve, 3000)),
+    ])
   }
 
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
