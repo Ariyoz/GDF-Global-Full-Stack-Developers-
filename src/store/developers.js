@@ -1,4 +1,4 @@
-// ── Developers Store — Demo ──
+// ── Developers Store — Real Backend ──
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { profilesService } from '@/services/profiles.service'
@@ -9,11 +9,11 @@ export const useDevelopersStore = defineStore('developers', () => {
   const error = ref(null)
   const total = ref(0)
 
-  async function fetchDevelopers({ page = 1, limit = 20, search, skills } = {}) {
+  async function fetchDevelopers({ page = 1, limit = 20, search, skills, location, experience_level } = {}) {
     loading.value = true
     error.value = null
     try {
-      const { data, count } = await profilesService.listDevelopers({ page, limit, search, skills })
+      const { data, count } = await profilesService.listDevelopers({ page, limit, search, skills, location, experience_level })
       all.value = data || []
       total.value = count || 0
     } catch (err) {

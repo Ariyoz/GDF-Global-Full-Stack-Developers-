@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import http from '@/services/http'
 import { API_ENDPOINTS } from '@/config/api'
+import { websocketService } from '@/services/websocket.service'
 
 const { auth, users } = API_ENDPOINTS
 
@@ -34,6 +35,9 @@ export const useAuthStore = defineStore('auth', () => {
           user.value = JSON.parse(storedUser)
           profile.value = JSON.parse(storedUser)
         }
+
+        // Connect WebSocket
+        websocketService.connect(token)
 
         // Try to fetch fresh profile in background (don't block)
         http.get(users.me).then(data => {
@@ -141,6 +145,9 @@ export const useAuthStore = defineStore('auth', () => {
       // Fetch full profile in background (don't block login)
       fetchProfile().catch(() => {})
 
+      // Connect WebSocket for real-time updates
+      websocketService.connect(data.access_token)
+
       return data
     } catch (err) {
       error.value = err.response?.data?.detail || err.message || 'Invalid email or password'
@@ -205,6 +212,7 @@ export const useAuthStore = defineStore('auth', () => {
     } catch {
       // Ignore logout errors
     }
+    websocketService.disconnect()
     clearSession()
   }
 

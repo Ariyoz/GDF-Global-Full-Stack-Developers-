@@ -1,7 +1,8 @@
-// ── Messaging Store — Demo ──
+// ── Messaging Store — Real Backend ──
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { messagingService } from '@/services/messaging.service'
+import { websocketService } from '@/services/websocket.service'
 import { useAuthStore } from '@/store/auth'
 
 export const useMessagingStore = defineStore('messaging', () => {
@@ -10,7 +11,43 @@ export const useMessagingStore = defineStore('messaging', () => {
   const messages = ref([])
   const unreadCount = ref(0)
   const loading = ref(false)
-  let subscription = null
+  const typingUsers = ref({}) // { conversationId: [userId, ...] }
+
+  // Listen for WebSocket events
+  websocketService.onEvent((event) => {
+    if (event.type === 'message_sent') {
+      // New message received
+      if (activeConversation.value?.id === event.data?.conversation_id) {
+        messages.value.push({
+          id: Date.now(),
+          content: event.data.content_preview,
+          sender_id: event.data.sender_id,
+          created_at: new Date().toISOString(),
+          is_read: false,
+          mine: false,
+        })
+      }
+      unreadCount.value++
+      fetchConversations() // Refresh conversation list
+    }
+
+    if (event.type === 'typing_start') {
+      const convId = event.data?.conversation_id
+      if (convId) {
+        if (!typingUsers.value[convId]) typingUsers.value[convId] = []
+        if (!typingUsers.value[convId].includes(event.from)) {
+          typingUsers.value[convId].push(event.from)
+        }
+      }
+    }
+
+    if (event.type === 'typing_stop') {
+      const convId = event.data?.conversation_id
+      if (convId && typingUsers.value[convId]) {
+        typingUsers.value[convId] = typingUsers.value[convId].filter(id => id !== event.from)
+      }
+    }
+  })
 
   async function fetchConversations() {
     const authStore = useAuthStore()
@@ -18,20 +55,15 @@ export const useMessagingStore = defineStore('messaging', () => {
     loading.value = true
     try {
       const data = await messagingService.getConversations(authStore.user.id)
-      conversations.value = data.map(c => {
-        const other = c.participant_1 === authStore.user.id ? c.participant2 : c.participant1
-        return {
-          id: c.id,
-          name: other?.full_name || 'User',
-          avatar: other?.avatar,
-          initials: (other?.full_name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2),
-          lastMessage: c.last_message || '',
-          time: c.last_message_at ? new Date(c.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
-          unread: 0,
-          online: false,
-          otherId: other?.id,
-        }
-      })
+      conversations.value = data.map(c => ({
+        id: c.id,
+        name: c.name || 'Conversation',
+        avatar: c.avatar,
+        lastMessage: c.last_message_content || '',
+        time: c.last_message_at ? new Date(c.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
+        unread: 0,
+        type: c.type,
+      }))
     } catch (err) {
       console.error('Failed to fetch conversations:', err)
     } finally {
@@ -46,25 +78,15 @@ export const useMessagingStore = defineStore('messaging', () => {
       const data = await messagingService.getMessages(conversationId)
       messages.value = data.map(m => ({
         id: m.id,
-        text: m.content,
+        content: m.content,
         time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        mine: m.sender_id === authStore.user.id,
-        sender: m.sender,
+        mine: m.sender_id === authStore.user?.id,
+        sender_id: m.sender_id,
+        message_type: m.message_type,
+        media_url: m.media_url,
+        is_read: m.is_read,
+        created_at: m.created_at,
       }))
-
-      // Mark as read
-      await messagingService.markAsRead(conversationId, authStore.user.id)
-
-      // Subscribe to new messages
-      if (subscription) subscription.unsubscribe()
-      subscription = messagingService.subscribeToMessages(conversationId, (newMsg) => {
-        messages.value.push({
-          id: newMsg.id,
-          text: newMsg.content,
-          time: new Date(newMsg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          mine: newMsg.sender_id === authStore.user.id,
-        })
-      })
     } catch (err) {
       console.error('Failed to fetch messages:', err)
     } finally {
@@ -72,11 +94,38 @@ export const useMessagingStore = defineStore('messaging', () => {
     }
   }
 
-  async function sendMessage(content) {
+  async function sendMessage(content, type = 'text', mediaUrl = null) {
     if (!activeConversation.value) return
     const authStore = useAuthStore()
     try {
-      await messagingService.sendMessage(activeConversation.value.id, authStore.user.id, content)
+      const result = await messagingService.sendMessage(
+        activeConversation.value.id,
+        authStore.user.id,
+        content,
+        type,
+        mediaUrl,
+      )
+
+      // Add to local messages immediately
+      messages.value.push({
+        id: result?.id || Date.now(),
+        content,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        mine: true,
+        sender_id: authStore.user.id,
+        message_type: type,
+        media_url: mediaUrl,
+        is_read: false,
+        created_at: new Date().toISOString(),
+      })
+
+      // Send via WebSocket for instant delivery
+      websocketService.send({
+        type: 'message',
+        conversation_id: activeConversation.value.id,
+        content,
+        to: activeConversation.value.otherUserId,
+      })
     } catch (err) {
       console.error('Failed to send message:', err)
     }
@@ -98,8 +147,29 @@ export const useMessagingStore = defineStore('messaging', () => {
     if (conv) fetchMessages(conv.id)
   }
 
+  function sendTyping() {
+    if (activeConversation.value) {
+      websocketService.send({
+        type: 'typing_start',
+        conversation_id: activeConversation.value.id,
+        to: activeConversation.value.otherUserId,
+      })
+    }
+  }
+
+  function sendStopTyping() {
+    if (activeConversation.value) {
+      websocketService.send({
+        type: 'typing_stop',
+        conversation_id: activeConversation.value.id,
+        to: activeConversation.value.otherUserId,
+      })
+    }
+  }
+
   return {
-    conversations, activeConversation, messages, unreadCount, loading,
-    fetchConversations, fetchMessages, sendMessage, startConversation, setActiveConversation,
+    conversations, activeConversation, messages, unreadCount, loading, typingUsers,
+    fetchConversations, fetchMessages, sendMessage, startConversation,
+    setActiveConversation, sendTyping, sendStopTyping,
   }
 })

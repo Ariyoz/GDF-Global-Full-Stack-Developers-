@@ -47,10 +47,10 @@
           <span class="material-symbols-outlined" style="font-size:18px;">handshake</span>
           Hire {{ dev.name.split(' ')[0] }}
         </RouterLink>
-        <RouterLink to="/messaging" class="btn-outline">
+        <button class="btn-outline" @click="startMessage">
           <span class="material-symbols-outlined" style="font-size:18px;">chat</span>
           Message
-        </RouterLink>
+        </button>
       </div>
     </div>
 
@@ -217,11 +217,14 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useDevelopersStore } from '@/store/developers'
 import { useAuthStore } from '@/store/auth'
+import { messagingService } from '@/services/messaging.service'
+import { profilesService } from '@/services/profiles.service'
 
 const route    = useRoute()
+const router   = useRouter()
 const devStore = useDevelopersStore()
 const authStore = useAuthStore()
 
@@ -261,9 +264,25 @@ const isOwnProfile = computed(() => {
 })
 
 function toggleFollow() {
-  isFollowing.value = !isFollowing.value
-  followerCount.value = isFollowing.value ? followerCount.value + 1 : Math.max(followerCount.value - 1, 0)
+  if (isFollowing.value) {
+    profilesService.unfollow(route.params.id).catch(() => {})
+    isFollowing.value = false
+    followerCount.value = Math.max(followerCount.value - 1, 0)
+  } else {
+    profilesService.follow(route.params.id).catch(() => {})
+    isFollowing.value = true
+    followerCount.value++
+  }
   localStorage.setItem('gfd_following_' + route.params.id, isFollowing.value.toString())
+}
+
+async function startMessage() {
+  try {
+    const conv = await messagingService.startConversation(authStore.user?.id, route.params.id)
+    router.push('/messaging')
+  } catch {
+    router.push('/messaging')
+  }
 }
 
 function handleFileUpload(e) {

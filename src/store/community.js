@@ -1,7 +1,8 @@
-// ── Community Store — Demo ──
+// ── Community Store — Real Backend ──
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { profilesService } from '@/services/profiles.service'
+import { jobsService } from '@/services/jobs.service'
 
 export const useCommunityStore = defineStore('community', () => {
   const members = ref([])
@@ -23,10 +24,8 @@ export const useCommunityStore = defineStore('community', () => {
   }
 
   async function fetchJobs() {
-    // Will be populated when jobs are created
     loading.value = true
     try {
-      const { jobsService } = await import('@/services/jobs.service')
       const { data } = await jobsService.list({ limit: 10 })
       jobs.value = data || []
     } catch (err) {
