@@ -15,7 +15,6 @@ export const githubService = {
     return res.json()
   },
 
-  // Save GitHub profile (demo — no-op)
   async saveProfile(userId, githubData) {
     return {
       user_id: userId,
@@ -30,7 +29,6 @@ export const githubService = {
     }
   },
 
-  // Save repositories (demo — no-op)
   async saveRepositories(userId, repos) {
     return repos.map(repo => ({
       user_id: userId,
@@ -45,20 +43,16 @@ export const githubService = {
     }))
   },
 
-  // Get stored GitHub profile (demo — returns null)
   async getProfile() {
     return null
   },
 
-  // Get stored repositories (demo — returns empty)
   async getRepositories() {
     return []
   },
 
-  // Toggle featured repository (demo — no-op)
   async toggleFeatured() {},
 
-  // Full sync
   async syncGitHubData(userId, username) {
     const [profile, repos] = await Promise.all([
       this.fetchGitHubProfile(username),

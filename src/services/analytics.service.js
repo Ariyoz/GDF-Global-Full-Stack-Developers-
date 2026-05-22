@@ -2,7 +2,7 @@
 
 export const analyticsService = {
   async getProfileViews() {
-    return 42
+    return 0
   },
 
   async getWeeklyViews() {
@@ -11,7 +11,7 @@ export const analyticsService = {
     const days = []
     for (let i = 6; i >= 0; i--) {
       const idx = (today - i + 7) % 7
-      days.push({ label: dayNames[idx], views: Math.floor(Math.random() * 15) + 2 })
+      days.push({ label: dayNames[idx], views: 0 })
     }
     return days
   },
@@ -19,10 +19,10 @@ export const analyticsService = {
   async logProfileView() {},
 
   async getJobRequestCount() {
-    return 5
+    return 0
   },
 
   async getPostCount() {
-    return 8
+    return 0
   },
 }
