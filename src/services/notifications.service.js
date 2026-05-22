@@ -1,17 +1,27 @@
-// ── Notifications Service — Demo ──
+// ── Notifications Service — Real Backend ──
+import http from './http'
+import { API_ENDPOINTS } from '@/config/api'
+
+const { notifications } = API_ENDPOINTS
 
 export const notificationsService = {
-  async getAll() {
-    return []
+  async getAll(userId, { limit = 50 } = {}) {
+    const data = await http.get(`${notifications.list}?limit=${limit}`)
+    return data.notifications || []
   },
 
   async getUnreadCount() {
-    return 0
+    const data = await http.get(notifications.unread)
+    return data.count || 0
   },
 
-  async markAsRead() {},
+  async markAsRead(notificationId) {
+    return http.patch(notifications.markRead(notificationId))
+  },
 
-  async markAllAsRead() {},
+  async markAllAsRead() {
+    return http.patch(notifications.markAllRead)
+  },
 
   subscribeToNotifications() {
     return { unsubscribe: () => {} }

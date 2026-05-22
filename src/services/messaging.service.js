@@ -1,26 +1,26 @@
-// ── Messaging Service — Demo ──
+// ── Messaging Service — Real Backend ──
+import http from './http'
+import { API_ENDPOINTS } from '@/config/api'
+
+const { messages } = API_ENDPOINTS
 
 export const messagingService = {
-  async getConversations() {
-    return []
+  async getConversations(userId) {
+    const data = await http.get(messages.conversations)
+    return data.conversations || []
   },
 
-  async getMessages() {
-    return []
+  async getMessages(conversationId) {
+    const data = await http.get(messages.messages(conversationId))
+    return data.messages || []
   },
 
   async sendMessage(conversationId, senderId, content) {
-    return {
-      id: 'msg-' + Date.now(),
-      conversation_id: conversationId,
-      sender_id: senderId,
-      content,
-      created_at: new Date().toISOString(),
-    }
+    return http.post(messages.send(conversationId), { content })
   },
 
   async startConversation(userId, otherUserId) {
-    return { id: 'conv-' + Date.now(), participant_1: userId, participant_2: otherUserId }
+    return http.post(messages.conversations, { participant_ids: [otherUserId] })
   },
 
   async markAsRead() {},

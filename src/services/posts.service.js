@@ -1,44 +1,41 @@
-// ── Community Posts Service — Demo ──
+// ── Community Posts Service — Real Backend ──
+import http from './http'
+import { API_ENDPOINTS } from '@/config/api'
+
+const { feed } = API_ENDPOINTS
 
 export const postsService = {
-  async getFeed() {
-    return { data: [], count: 0 }
+  async getFeed({ page = 1, limit = 20 } = {}) {
+    const data = await http.get(`${feed.list}?page=${page}&limit=${limit}`)
+    return { data: data.posts || [], count: data.posts?.length || 0 }
   },
 
   async create(postData) {
-    return {
-      id: 'post-' + Date.now(),
-      ...postData,
-      likes: 0,
-      comment_count: 0,
-      created_at: new Date().toISOString(),
-      author: { id: postData.author_id, full_name: 'User', avatar: '', role: 'developer' },
-    }
+    return http.post(feed.create, postData)
   },
 
-  async delete() {},
+  async delete(postId) {
+    return http.delete(feed.byId(postId))
+  },
 
-  async like() {},
+  async like(postId) {
+    return http.post(feed.like(postId))
+  },
 
-  async unlike() {},
+  async unlike(postId) {
+    return http.delete(feed.like(postId))
+  },
 
   async hasLiked() {
     return false
   },
 
-  async getComments() {
+  async getComments(postId) {
     return []
   },
 
   async addComment(postId, authorId, content) {
-    return {
-      id: 'comment-' + Date.now(),
-      post_id: postId,
-      author_id: authorId,
-      content,
-      created_at: new Date().toISOString(),
-      author: { id: authorId, full_name: 'User', avatar: '' },
-    }
+    return http.post(feed.comment(postId), { content })
   },
 
   async deleteComment() {},

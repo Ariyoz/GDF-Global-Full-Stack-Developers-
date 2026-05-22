@@ -1,7 +1,9 @@
-// ── Analytics Service — Demo ──
+// ── Analytics Service — Real Backend ──
+import http from './http'
 
 export const analyticsService = {
   async getProfileViews() {
+    // TODO: implement when backend has profile views endpoint
     return 0
   },
 
