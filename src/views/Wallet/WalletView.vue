@@ -12,14 +12,14 @@
       <div class="balance-glow" />
       <div class="balance-content">
         <p class="balance-label">Total Balance</p>
-        <p class="balance-amount">$4,280.00</p>
+        <p class="balance-amount">$0.00</p>
         <p class="balance-sub">Available for withdrawal</p>
       </div>
       <div class="balance-stats">
         <div class="bstat">
           <span class="material-symbols-outlined bstat-icon">trending_up</span>
           <div>
-            <p class="bstat-value">$2,400</p>
+            <p class="bstat-value">$0</p>
             <p class="bstat-label">This month</p>
           </div>
         </div>
@@ -27,7 +27,7 @@
         <div class="bstat">
           <span class="material-symbols-outlined bstat-icon">account_balance</span>
           <div>
-            <p class="bstat-value">$12,840</p>
+            <p class="bstat-value">$0</p>
             <p class="bstat-label">All time</p>
           </div>
         </div>
@@ -118,22 +118,16 @@ const quickActions = [
 ]
 
 const chartData = [
-  { label: 'Mon', pct: 30,  amount: 200 },
-  { label: 'Tue', pct: 60,  amount: 400 },
-  { label: 'Wed', pct: 45,  amount: 300 },
-  { label: 'Thu', pct: 100, amount: 800 },
-  { label: 'Fri', pct: 55,  amount: 350 },
-  { label: 'Sat', pct: 20,  amount: 150 },
-  { label: 'Sun', pct: 30,  amount: 200 },
+  { label: 'Mon', pct: 0, amount: 0 },
+  { label: 'Tue', pct: 0, amount: 0 },
+  { label: 'Wed', pct: 0, amount: 0 },
+  { label: 'Thu', pct: 0, amount: 0 },
+  { label: 'Fri', pct: 0, amount: 0 },
+  { label: 'Sat', pct: 0, amount: 0 },
+  { label: 'Sun', pct: 0, amount: 0 },
 ]
 
-const transactions = ref([
-  { id: 1, icon: 'payments',      color: '#16a34a',         bg: 'rgba(22,163,74,0.08)',  name: 'Project Payment',   desc: 'FinTrack Dashboard',   date: 'Jun 14, 2024', amount: '800.00',  positive: true,  status: 'Completed', statusVariant: 'success' },
-  { id: 2, icon: 'work',          color: 'var(--primary)',  bg: 'rgba(99,14,212,0.08)',  name: 'Job Bonus',         desc: 'ShopFlow Mobile',      date: 'Jun 12, 2024', amount: '200.00',  positive: true,  status: 'Completed', statusVariant: 'success' },
-  { id: 3, icon: 'arrow_upward',  color: 'var(--error)',    bg: 'rgba(186,26,26,0.08)',  name: 'Withdrawal',        desc: 'Bank Transfer',        date: 'Jun 10, 2024', amount: '500.00',  positive: false, status: 'Completed', statusVariant: 'success' },
-  { id: 4, icon: 'payments',      color: '#16a34a',         bg: 'rgba(22,163,74,0.08)',  name: 'Project Payment',   desc: 'MedConnect Portal',    date: 'Jun 8, 2024',  amount: '1200.00', positive: true,  status: 'Pending',   statusVariant: 'warning' },
-  { id: 5, icon: 'star',          color: '#f59e0b',         bg: 'rgba(245,158,11,0.08)', name: 'Referral Bonus',    desc: 'New member referral',  date: 'Jun 5, 2024',  amount: '50.00',   positive: true,  status: 'Completed', statusVariant: 'success' },
-])
+const transactions = ref([])
 </script>
 
 <style scoped>

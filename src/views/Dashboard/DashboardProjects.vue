@@ -122,50 +122,7 @@ const statusTabs = [
   { value: 'completed', label: 'Completed',  count: 0 },
 ]
 
-const projects = ref([
-  {
-    id: 1,
-    name: 'FinTrack Dashboard',
-    desc: 'Real-time financial analytics platform for SMEs with live data visualization.',
-    type: 'Full Stack',
-    status: 'Active',
-    statusVariant: 'success',
-    progress: 75,
-    deadline: 'Jun 30, 2024',
-    team: 3,
-    icon: 'analytics',
-    gradient: 'linear-gradient(135deg,#630ed4,#7c3aed)',
-    statusKey: 'active',
-  },
-  {
-    id: 2,
-    name: 'ShopFlow Mobile',
-    desc: 'Cross-platform e-commerce app with 50k+ users and real-time inventory sync.',
-    type: 'Mobile App',
-    status: 'In Review',
-    statusVariant: 'warning',
-    progress: 40,
-    deadline: 'Jul 15, 2024',
-    team: 2,
-    icon: 'shopping_cart',
-    gradient: 'linear-gradient(135deg,#7c3aed,#a855f7)',
-    statusKey: 'review',
-  },
-  {
-    id: 3,
-    name: 'MedConnect Portal',
-    desc: 'Healthcare management system for clinics with patient records and scheduling.',
-    type: 'Web App',
-    status: 'Pending',
-    statusVariant: 'default',
-    progress: 10,
-    deadline: 'Aug 1, 2024',
-    team: 4,
-    icon: 'local_hospital',
-    gradient: 'linear-gradient(135deg,#5e5e5e,#7b7487)',
-    statusKey: 'pending',
-  },
-])
+const projects = ref([])
 
 const filteredProjects = computed(() => {
   if (activeStatus.value === 'all') return projects.value

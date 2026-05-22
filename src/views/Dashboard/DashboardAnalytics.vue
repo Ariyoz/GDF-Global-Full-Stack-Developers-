@@ -88,29 +88,23 @@ import { ref } from 'vue'
 const period = ref('7')
 
 const kpis = [
-  { icon: 'visibility',   color: 'var(--primary)',  bg: 'rgba(99,14,212,0.08)',  label: 'Profile Views',  value: '12,480', change: '+18%', positive: true },
-  { icon: 'ads_click',    color: '#16a34a',          bg: 'rgba(22,163,74,0.08)', label: 'Click Rate',     value: '4.7%',   change: '+0.4%', positive: true },
-  { icon: 'work',         color: 'var(--tertiary)',  bg: 'rgba(161,81,0,0.08)',  label: 'Job Requests',   value: '23',     change: '+5',    positive: true },
-  { icon: 'payments',     color: '#f59e0b',          bg: 'rgba(245,158,11,0.08)',label: 'Earnings',       value: '$4,280', change: '+12%',  positive: true },
+  { icon: 'visibility',   color: 'var(--primary)',  bg: 'rgba(99,14,212,0.08)',  label: 'Profile Views',  value: '0', change: '—', positive: false },
+  { icon: 'ads_click',    color: '#16a34a',          bg: 'rgba(22,163,74,0.08)', label: 'Click Rate',     value: '0%',   change: '—', positive: false },
+  { icon: 'work',         color: 'var(--tertiary)',  bg: 'rgba(161,81,0,0.08)',  label: 'Job Requests',   value: '0',     change: '—',    positive: false },
+  { icon: 'payments',     color: '#f59e0b',          bg: 'rgba(245,158,11,0.08)',label: 'Earnings',       value: '$0', change: '—',  positive: false },
 ]
 
 const chartData = [
-  { label: 'Mon', views: 45, clicks: 30 },
-  { label: 'Tue', views: 72, clicks: 55 },
-  { label: 'Wed', views: 58, clicks: 40 },
-  { label: 'Thu', views: 88, clicks: 70 },
-  { label: 'Fri', views: 65, clicks: 50 },
-  { label: 'Sat', views: 40, clicks: 25 },
-  { label: 'Sun', views: 55, clicks: 35 },
+  { label: 'Mon', views: 0, clicks: 0 },
+  { label: 'Tue', views: 0, clicks: 0 },
+  { label: 'Wed', views: 0, clicks: 0 },
+  { label: 'Thu', views: 0, clicks: 0 },
+  { label: 'Fri', views: 0, clicks: 0 },
+  { label: 'Sat', views: 0, clicks: 0 },
+  { label: 'Sun', views: 0, clicks: 0 },
 ]
 
-const activityRows = [
-  { id: 1, icon: 'visibility',  color: 'var(--primary)', bg: 'rgba(99,14,212,0.08)',  event: 'Profile View',    source: 'Google Search',  date: 'Jun 14',  value: '—',      positive: false },
-  { id: 2, icon: 'work',        color: '#16a34a',         bg: 'rgba(22,163,74,0.08)', event: 'Job Request',     source: 'Direct',         date: 'Jun 14',  value: '+1',     positive: true },
-  { id: 3, icon: 'payments',    color: '#f59e0b',         bg: 'rgba(245,158,11,0.08)',event: 'Payment',         source: 'FinTrack',       date: 'Jun 13',  value: '+$800',  positive: true },
-  { id: 4, icon: 'star',        color: '#f59e0b',         bg: 'rgba(245,158,11,0.08)',event: 'New Review',      source: 'ShopFlow',       date: 'Jun 12',  value: '5★',     positive: true },
-  { id: 5, icon: 'person_add',  color: 'var(--primary)', bg: 'rgba(99,14,212,0.08)',  event: 'New Follower',    source: 'Community',      date: 'Jun 11',  value: '+1',     positive: true },
-]
+const activityRows = []
 </script>
 
 <style scoped>
