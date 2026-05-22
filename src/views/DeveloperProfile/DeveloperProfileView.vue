@@ -20,6 +20,9 @@
             <h1 class="profile-name">
               {{ dev.name }}
               <span class="material-symbols-outlined verified-icon" style="font-variation-settings:'FILL' 1;">verified</span>
+              <RouterLink v-if="isOwnProfile" to="/dashboard/profile" class="btn-edit-round" title="Edit Profile">
+                <span class="material-symbols-outlined" style="font-size:16px;">edit</span>
+              </RouterLink>
             </h1>
             <p class="profile-role">{{ dev.role }}</p>
             <p class="profile-location">
@@ -28,28 +31,26 @@
             </p>
           </div>
         </div>
-        <div class="profile-actions">
-          <button
-            class="btn-follow"
-            :class="{ following: isFollowing }"
-            @click="toggleFollow"
-          >
-            <span class="material-symbols-outlined" style="font-size:18px;">{{ isFollowing ? 'person_remove' : 'person_add' }}</span>
-            {{ isFollowing ? 'Following' : 'Follow' }}
-          </button>
-          <RouterLink :to="`/hire?dev=${dev.id}&name=${encodeURIComponent(dev.name)}`" class="btn-primary">
-            <span class="material-symbols-outlined" style="font-size:18px;">handshake</span>
-            Hire {{ dev.name.split(' ')[0] }}
-          </RouterLink>
-          <RouterLink to="/messaging" class="btn-outline">
-            <span class="material-symbols-outlined" style="font-size:18px;">chat</span>
-            Message
-          </RouterLink>
-          <RouterLink v-if="isOwnProfile" to="/dashboard/profile" class="btn-outline">
-            <span class="material-symbols-outlined" style="font-size:18px;">edit</span>
-            Edit Profile
-          </RouterLink>
-        </div>
+      </div>
+
+      <!-- Action Buttons — always visible below header -->
+      <div class="profile-actions">
+        <button
+          class="btn-follow"
+          :class="{ following: isFollowing }"
+          @click="toggleFollow"
+        >
+          <span class="material-symbols-outlined" style="font-size:18px;">{{ isFollowing ? 'person_remove' : 'person_add' }}</span>
+          {{ isFollowing ? 'Following' : 'Follow' }}
+        </button>
+        <RouterLink :to="`/hire?dev=${dev.id}&name=${encodeURIComponent(dev.name)}`" class="btn-primary">
+          <span class="material-symbols-outlined" style="font-size:18px;">handshake</span>
+          Hire {{ dev.name.split(' ')[0] }}
+        </RouterLink>
+        <RouterLink to="/messaging" class="btn-outline">
+          <span class="material-symbols-outlined" style="font-size:18px;">chat</span>
+          Message
+        </RouterLink>
       </div>
     </div>
 
@@ -489,7 +490,33 @@ function initials(name) {
   margin-top: 0.35rem;
 }
 
-.profile-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.profile-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding-top: 1rem;
+  padding-bottom: 1.5rem;
+}
+
+.btn-edit-round {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface-container);
+  border: 1px solid var(--outline-variant);
+  color: var(--on-surface-variant);
+  text-decoration: none;
+  transition: var(--transition-fast);
+  margin-left: 0.25rem;
+}
+.btn-edit-round:hover {
+  background: rgba(99,14,212,0.1);
+  border-color: var(--primary);
+  color: var(--primary);
+}
 
 .btn-follow {
   display: inline-flex;
