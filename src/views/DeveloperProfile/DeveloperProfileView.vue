@@ -100,11 +100,13 @@
         <div class="glass-card-static main-card">
           <div class="main-card-header">
             <h3 class="aside-title">Portfolio Projects</h3>
-            <a href="#" class="view-all-link">
+            <a v-if="dev.projects.length" href="#" class="view-all-link">
               View All <span class="material-symbols-outlined" style="font-size:16px;">arrow_forward</span>
             </a>
           </div>
-          <div class="portfolio-grid">
+
+          <!-- Portfolio Items -->
+          <div v-if="dev.projects.length || portfolioItems.length" class="portfolio-grid">
             <div v-for="project in dev.projects" :key="project.name" class="portfolio-card">
               <div class="portfolio-thumb" :style="{ background: project.gradient }">
                 <span class="material-symbols-outlined portfolio-icon">{{ project.icon }}</span>
@@ -114,6 +116,67 @@
               </div>
               <h4 class="portfolio-name">{{ project.name }}</h4>
               <p class="portfolio-desc">{{ project.desc }}</p>
+            </div>
+
+            <!-- User-uploaded portfolio items -->
+            <div v-for="item in portfolioItems" :key="item.id" class="portfolio-card">
+              <a v-if="item.type === 'link'" :href="item.url" target="_blank" rel="noopener" class="portfolio-thumb portfolio-thumb--link">
+                <span class="material-symbols-outlined portfolio-icon">link</span>
+                <div class="portfolio-hover">
+                  <span class="portfolio-hover-btn">Open Link</span>
+                </div>
+              </a>
+              <div v-else-if="item.type === 'image'" class="portfolio-thumb portfolio-thumb--img">
+                <img :src="item.url" :alt="item.name" class="portfolio-img" />
+                <div class="portfolio-hover">
+                  <span class="portfolio-hover-btn">View Image</span>
+                </div>
+              </div>
+              <div v-else class="portfolio-thumb portfolio-thumb--file">
+                <span class="material-symbols-outlined portfolio-icon">description</span>
+                <div class="portfolio-hover">
+                  <a :href="item.url" target="_blank" class="portfolio-hover-btn">Open PDF</a>
+                </div>
+              </div>
+              <h4 class="portfolio-name">{{ item.name }}</h4>
+              <p class="portfolio-desc">{{ item.type === 'link' ? item.url : item.type.toUpperCase() }}</p>
+              <button v-if="isOwnProfile" class="portfolio-remove" @click="removePortfolioItem(item.id)">
+                <span class="material-symbols-outlined" style="font-size:16px;">close</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Empty state -->
+          <div v-if="!dev.projects.length && !portfolioItems.length" class="portfolio-empty">
+            <span class="material-symbols-outlined" style="font-size:2.5rem;color:var(--on-surface-variant);">folder_open</span>
+            <p>No portfolio items yet.</p>
+          </div>
+
+          <!-- Upload section (own profile only) -->
+          <div v-if="isOwnProfile" class="portfolio-upload-section">
+            <div class="upload-divider" />
+            <h4 class="upload-title">Add to Portfolio</h4>
+            <div class="upload-options">
+              <!-- File upload (PDF/Image) -->
+              <label class="upload-btn">
+                <span class="material-symbols-outlined" style="font-size:18px;">upload_file</span>
+                Upload File
+                <input type="file" accept=".pdf,image/*" class="upload-input-hidden" @change="handleFileUpload" />
+              </label>
+              <!-- Link input -->
+              <div class="upload-link-row">
+                <input
+                  v-model="portfolioLink"
+                  type="url"
+                  class="upload-link-input"
+                  placeholder="https://your-project-link.com"
+                  @keydown.enter.prevent="addPortfolioLink"
+                />
+                <button type="button" class="upload-link-btn" @click="addPortfolioLink" :disabled="!portfolioLink.trim()">
+                  <span class="material-symbols-outlined" style="font-size:18px;">add_link</span>
+                  Add
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -163,6 +226,21 @@ const devStore = useDevelopersStore()
 const authStore = useAuthStore()
 
 const isFollowing = ref(false)
+const portfolioItems = ref([])
+const portfolioLink = ref('')
+
+// Load saved portfolio items from localStorage
+function loadPortfolio() {
+  try {
+    const stored = localStorage.getItem('gfd_portfolio_' + route.params.id)
+    if (stored) portfolioItems.value = JSON.parse(stored)
+  } catch { /* ignore */ }
+}
+loadPortfolio()
+
+function savePortfolio() {
+  localStorage.setItem('gfd_portfolio_' + route.params.id, JSON.stringify(portfolioItems.value))
+}
 
 // Check if this is the logged-in user's own profile
 const isOwnProfile = computed(() => {
@@ -171,6 +249,41 @@ const isOwnProfile = computed(() => {
 
 function toggleFollow() {
   isFollowing.value = !isFollowing.value
+}
+
+function handleFileUpload(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  const isImage = file.type.startsWith('image/')
+  const url = URL.createObjectURL(file)
+  portfolioItems.value.push({
+    id: 'pf-' + Date.now(),
+    name: file.name,
+    type: isImage ? 'image' : 'pdf',
+    url,
+  })
+  savePortfolio()
+  e.target.value = ''
+}
+
+function addPortfolioLink() {
+  const link = portfolioLink.value.trim()
+  if (!link) return
+  // Basic URL validation
+  const url = link.startsWith('http') ? link : 'https://' + link
+  portfolioItems.value.push({
+    id: 'pf-' + Date.now(),
+    name: new URL(url).hostname.replace('www.', ''),
+    type: 'link',
+    url,
+  })
+  savePortfolio()
+  portfolioLink.value = ''
+}
+
+function removePortfolioItem(id) {
+  portfolioItems.value = portfolioItems.value.filter(i => i.id !== id)
+  savePortfolio()
 }
 
 // Load the developer profile — use auth profile if it's the logged-in user
@@ -575,4 +688,161 @@ function initials(name) {
   padding: 0;
 }
 .post-action-btn:hover { color: var(--primary); }
+
+/* Portfolio Upload */
+.portfolio-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  text-align: center;
+  color: var(--on-surface-variant);
+  font-size: 0.875rem;
+}
+
+.portfolio-thumb--link,
+.portfolio-thumb--file {
+  background: linear-gradient(135deg, #1a0840, #2a1060);
+  text-decoration: none;
+}
+
+.portfolio-thumb--img {
+  background: var(--surface-container);
+  position: relative;
+  overflow: hidden;
+}
+
+.portfolio-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  inset: 0;
+}
+
+.portfolio-card {
+  position: relative;
+}
+
+.portfolio-remove {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: rgba(0,0,0,0.6);
+  border: none;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.portfolio-card:hover .portfolio-remove { opacity: 1; }
+
+.portfolio-upload-section {
+  margin-top: 1.5rem;
+}
+
+.upload-divider {
+  height: 1px;
+  background: var(--outline-variant);
+  margin-bottom: 1.25rem;
+}
+
+.upload-title {
+  font-family: var(--font-headline);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--on-surface);
+  margin-bottom: 1rem;
+}
+
+.upload-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.625rem 1.25rem;
+  background: var(--surface-container-lowest);
+  border: 1.5px dashed var(--outline-variant);
+  border-radius: var(--radius-lg);
+  font-family: var(--font-headline);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  width: fit-content;
+}
+.upload-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(99,14,212,0.03);
+}
+
+.upload-input-hidden {
+  display: none;
+}
+
+.upload-link-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.upload-link-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.625rem 0.875rem;
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--on-surface);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+.upload-link-input:focus {
+  border-color: var(--primary);
+}
+.upload-link-input::placeholder {
+  color: var(--outline);
+}
+
+.upload-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.625rem 1rem;
+  background: var(--primary);
+  border: none;
+  border-radius: var(--radius-lg);
+  font-family: var(--font-headline);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  white-space: nowrap;
+}
+.upload-link-btn:hover { background: rgba(99,14,212,0.85); }
+.upload-link-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Responsive portfolio grid */
+@media (max-width: 640px) {
+  .portfolio-grid { grid-template-columns: 1fr; }
+  .upload-link-row { flex-direction: column; }
+  .upload-link-input { min-width: 0; }
+}
 </style>
