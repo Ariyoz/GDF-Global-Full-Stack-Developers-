@@ -6,10 +6,13 @@
       <aside class="feed-sidebar">
         <div class="glass-card-static sidebar-card">
           <div class="sidebar-profile">
-            <div class="sidebar-avatar">{{ userInitials }}</div>
+            <div class="sidebar-avatar">
+              <img v-if="user?.avatar" :src="user.avatar" alt="" class="sidebar-avatar-img" />
+              <span v-else>{{ userInitials }}</span>
+            </div>
             <div>
-              <p class="sidebar-name">{{ user?.name || 'Developer' }}</p>
-              <p class="sidebar-role">{{ user?.role || 'Member' }}</p>
+              <p class="sidebar-name">{{ user?.full_name || 'Developer' }}</p>
+              <p class="sidebar-role">@{{ user?.username || 'member' }}</p>
             </div>
           </div>
           <div class="divider-gfd" style="margin:1rem 0" />
@@ -60,8 +63,11 @@
               </div>
               <div class="compose-body">
                 <div class="compose-user">
-                  <div class="post-avatar-sm">{{ userInitials }}</div>
-                  <p class="compose-name">{{ user?.name || 'Developer' }}</p>
+                  <div class="post-avatar-sm">
+                    <img v-if="user?.avatar" :src="user.avatar" alt="" class="post-avatar-img" />
+                    <span v-else>{{ userInitials }}</span>
+                  </div>
+                  <p class="compose-name">{{ user?.full_name || 'Developer' }}</p>
                 </div>
                 <textarea
                   v-model="newPost"
@@ -117,14 +123,14 @@
           >
             <!-- Post Header -->
             <div class="post-header">
-              <div class="post-author-info">
+              <div class="post-author-info" @click="goToProfile(post.author?.id)">
                 <div class="post-avatar">
                   <img v-if="post.author?.avatar" :src="post.author.avatar" :alt="post.author.full_name" class="post-avatar-img" />
                   <span v-else>{{ getInitials(post.author?.full_name || post.author) }}</span>
                 </div>
                 <div>
                   <p class="post-author-name">{{ post.author?.full_name || post.author }}</p>
-                  <p class="post-meta">{{ formatTime(post.created_at || post.time) }} · {{ post.author?.username || post.category || '' }}</p>
+                  <p class="post-meta">@{{ post.author?.username || '' }} · {{ formatTime(post.created_at) }}</p>
                 </div>
               </div>
               <div class="post-menu-wrap">
@@ -144,107 +150,64 @@
 
             <!-- Post Content -->
             <div class="post-content">
-              <!-- Reposted indicator -->
-              <p v-if="post.repostedFrom" class="reposted-label">
-                <span class="material-symbols-outlined" style="font-size:14px">repeat</span>
-                {{ user?.name || 'You' }} reposted from {{ post.repostedFrom }}
-              </p>
-              <p class="post-text">{{ post.content || post.text }}</p>
+              <p v-if="post.content" class="post-text">{{ post.content }}</p>
 
-              <!-- Image post -->
-              <div v-if="post.type === 'image'" class="post-image-wrap">
-                <img v-if="post.imageUrl" :src="post.imageUrl" alt="Post image" class="post-image" />
-                <div v-else class="post-image-placeholder">
-                  <span class="material-symbols-outlined" style="font-size:3rem;color:var(--outline)">image</span>
-                  <p style="font-size:0.8rem;color:var(--on-surface-variant);margin-top:0.5rem">{{ post.imageCaption }}</p>
-                </div>
-                <p v-if="post.imageCaption" class="post-image-caption">{{ post.imageCaption }}</p>
+              <!-- Media (images/videos) — shown BELOW text -->
+              <div v-if="post.media_urls && post.media_urls.length" class="post-media">
+                <img
+                  v-for="(url, idx) in post.media_urls"
+                  :key="idx"
+                  :src="url"
+                  alt="Post media"
+                  class="post-image"
+                />
               </div>
 
-              <!-- Code post -->
-              <div v-if="post.type === 'code'" class="post-code-block">
+              <!-- Code snippet -->
+              <div v-if="post.code_snippet" class="post-code-block">
                 <div class="code-header">
-                  <span class="code-filename">{{ post.filename }}</span>
-                  <button class="btn-ghost icon-only" style="padding:0.2rem">
-                    <span class="material-symbols-outlined" style="font-size:16px">content_copy</span>
-                  </button>
+                  <span class="code-filename">{{ post.code_language || 'code' }}</span>
                 </div>
-                <pre class="code-content"><code>{{ post.code }}</code></pre>
+                <pre class="code-content"><code>{{ post.code_snippet }}</code></pre>
               </div>
 
-              <!-- Links -->
-              <div v-if="post.links" class="post-links">
-                <a
-                  v-for="link in post.links"
-                  :key="link.label"
-                  :href="link.href || '#'"
-                  class="post-link-btn"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <span class="material-symbols-outlined" style="font-size:16px">{{ link.icon }}</span>
-                  {{ link.label }}
-                </a>
-              </div>
-
-              <!-- Quoted Post Embed -->
-              <div v-if="post.quotedPost" class="quoted-post-embed">
-                <p class="quoted-author">{{ post.quotedPost.author }}</p>
-                <p class="quoted-text">{{ post.quotedPost.text }}</p>
-                <img v-if="post.quotedPost.imageUrl" :src="post.quotedPost.imageUrl" class="quoted-image" alt="Quoted post image" />
+              <!-- Hashtags -->
+              <div v-if="post.hashtags && post.hashtags.length" class="post-hashtags">
+                <span v-for="tag in post.hashtags" :key="tag" class="hashtag">#{{ tag }}</span>
               </div>
             </div>
 
-            <!-- Post Reactions Bar -->
-            <div class="post-reactions-bar">
-              <div class="reaction-emojis">
-                <button
-                  v-for="emoji in reactionEmojis"
-                  :key="emoji"
-                  class="emoji-btn"
-                  :class="{ active: (post.reactions?.[emoji] || []).includes(authStore.user?.uid) }"
-                  @click="toggleReaction(post, emoji)"
-                  :title="emoji"
-                >
-                  <span class="emoji">{{ emoji }}</span>
-                  <span v-if="post.reactions?.[emoji]?.length > 0" class="emoji-count">{{ post.reactions[emoji].length }}</span>
-                </button>
-              </div>
-              <div class="post-actions">
-                <button class="action-btn" @click="post.showComments = !post.showComments">
-                  <span class="material-symbols-outlined">chat_bubble</span>
-                  {{ post.commentList?.length || 0 }}
-                </button>
-                <button class="action-btn retweet-btn" :class="{ retweeted: post.retweetedByMe }" @click="handleRetweet(post)" title="Retweet">
-                  <span class="material-symbols-outlined">repeat</span>
-                  {{ post.retweetCount || 0 }}
-                </button>
-                <button class="action-btn repost-btn" @click="handleQuote(post)" title="Repost with quote">
-                  <span class="material-symbols-outlined">edit_note</span>
-                  {{ post.retweetCount || 0 }}
-                </button>
-                <button class="action-btn">
-                  <span class="material-symbols-outlined">share</span>
-                </button>
-              </div>
+            <!-- Post Actions Bar (Twitter/X style) -->
+            <div class="post-actions-bar">
+              <button class="action-btn" @click="post.showComments = !post.showComments">
+                <span class="material-symbols-outlined">chat_bubble_outline</span>
+                <span v-if="post.comment_count" class="action-count">{{ post.comment_count }}</span>
+              </button>
+              <button class="action-btn repost-btn" :class="{ active: post.is_reposted }" @click="handleRetweet(post)">
+                <span class="material-symbols-outlined">repeat</span>
+                <span v-if="post.repost_count" class="action-count">{{ post.repost_count }}</span>
+              </button>
+              <button class="action-btn like-btn" :class="{ active: post.is_liked }" @click="toggleLike(post)">
+                <span class="material-symbols-outlined" :class="{ filled: post.is_liked }">favorite</span>
+                <span v-if="post.like_count" class="action-count">{{ post.like_count }}</span>
+              </button>
+              <button class="action-btn bookmark-btn" :class="{ active: post.is_bookmarked }" @click="toggleBookmark(post)">
+                <span class="material-symbols-outlined" :class="{ filled: post.is_bookmarked }">bookmark</span>
+              </button>
+              <button class="action-btn" @click="sharePost(post)">
+                <span class="material-symbols-outlined">share</span>
+              </button>
             </div>
 
             <!-- Comments Section -->
             <div v-if="post.showComments" class="post-comments">
-              <!-- Comments List -->
               <div v-if="post.commentList?.length" class="comments-list">
                 <div v-for="comment in post.commentList" :key="comment.id" class="comment-item">
-                  <div class="comment-avatar">{{ comment.author[0] }}</div>
+                  <div class="comment-avatar">{{ getInitials(comment.author) }}</div>
                   <div class="comment-content">
-                    <div class="comment-header">
-                      <p class="comment-author">{{ comment.author }}</p>
-                      <p class="comment-time">{{ comment.time }}</p>
-                    </div>
-                    <p class="comment-text">{{ comment.text }}</p>
-                    <div class="comment-actions">
-                      <button class="comment-action">Like</button>
-                      <button class="comment-action">Reply</button>
-                    </div>
+                    <p class="comment-author">{{ comment.author }}</p>
+                    <p class="comment-text">{{ comment.text || comment.content }}</p>
+                    <p class="comment-time">{{ comment.time || formatTime(comment.created_at) }}</p>
                   </div>
                 </div>
               </div>
@@ -314,6 +277,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
 import { useFeedStore }  from '@/store/feed'
 
@@ -324,12 +288,40 @@ const { posts } = storeToRefs(feedStore)
 // Use profile for display
 const user = computed(() => authStore.profile || { full_name: authStore.user?.email || 'User', role: 'member' })
 
+const router = typeof useRouter !== 'undefined' ? useRouter() : null
+
 // Fetch feed on mount
 onMounted(() => {
   if (authStore.isAuthenticated) {
     feedStore.fetchFeed(true)
   }
 })
+
+function goToProfile(userId) {
+  if (userId) window.location.href = `/developer/${userId}`
+}
+
+function toggleLike(post) {
+  if (post.is_liked) {
+    feedStore.unlikePost(post.id)
+  } else {
+    feedStore.likePost(post.id)
+  }
+}
+
+function toggleBookmark(post) {
+  if (!post.is_bookmarked) {
+    feedStore.bookmarkPost(post.id)
+  }
+}
+
+function sharePost(post) {
+  if (navigator.share) {
+    navigator.share({ title: 'GFD Post', text: post.content, url: window.location.origin + '/feed/' + post.id })
+  } else {
+    navigator.clipboard.writeText(window.location.origin + '/feed/' + post.id)
+  }
+}
 
 function deletePost(postId) {
   feedStore.deletePost(postId)
@@ -579,6 +571,13 @@ function submitComment(post, e) {
   font-size: 1rem; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.sidebar-avatar-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-full);
 }
 
 .sidebar-name { font-family: var(--font-headline); font-size: 0.9rem; font-weight: 700; color: var(--on-surface); }
@@ -798,49 +797,107 @@ function submitComment(post, e) {
 }
 .post-link-btn:nth-child(2):hover { background: var(--surface-container); }
 
-/* ── Reactions Bar — mobile-first ── */
-.post-reactions-bar {
+/* ── Twitter/X Style Actions Bar ── */
+.post-actions-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.625rem 1rem;
+  padding: 0.5rem 1rem;
   border-top: 1px solid var(--outline-variant);
-  background: var(--surface-container-lowest);
-  flex-wrap: nowrap;
+  max-width: 400px;
+}
+
+.post-actions-bar .action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.6rem;
+  background: none;
+  border: none;
+  border-radius: var(--radius-full);
+  font-family: var(--font-headline);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--on-surface-variant);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.post-actions-bar .action-btn:hover {
+  background: rgba(99,14,212,0.08);
+  color: var(--primary);
+}
+
+.post-actions-bar .action-btn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.post-actions-bar .action-count {
+  font-size: 0.75rem;
+}
+
+.post-actions-bar .like-btn.active {
+  color: #e91e63;
+}
+.post-actions-bar .like-btn:hover {
+  background: rgba(233,30,99,0.08);
+  color: #e91e63;
+}
+
+.post-actions-bar .repost-btn.active {
+  color: #00c853;
+}
+.post-actions-bar .repost-btn:hover {
+  background: rgba(0,200,83,0.08);
+  color: #00c853;
+}
+
+.post-actions-bar .bookmark-btn.active {
+  color: var(--primary);
+}
+
+.material-symbols-outlined.filled {
+  font-variation-settings: 'FILL' 1;
+}
+
+/* ── Post Media ── */
+.post-media {
+  margin-top: 0.75rem;
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
-.reaction-emojis {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  overflow-x: auto;
-  scrollbar-width: none;
-  flex-shrink: 1;
-  min-width: 0;
-  -webkit-overflow-scrolling: touch;
-}
-.reaction-emojis::-webkit-scrollbar { display: none; }
-
-.emoji-btn {
-  display: inline-flex; align-items: center; gap: 0.2rem;
-  padding: 0.3rem 0.5rem;
-  background: var(--surface-container);
+.post-media img {
+  width: 100%;
+  max-height: 500px;
+  object-fit: cover;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--outline-variant);
-  border-radius: var(--radius-full);
-  cursor: pointer; transition: all 0.15s ease;
-  flex-shrink: 0; /* don't shrink — scroll instead */
-  white-space: nowrap;
 }
-.emoji-btn:hover { background: var(--primary); border-color: var(--primary); }
-.emoji-btn.active { background: var(--primary-fixed); border-color: var(--primary); }
 
-.emoji { font-size: 0.9rem; line-height: 1; }
+/* ── Hashtags ── */
+.post-hashtags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
 
-.emoji-count {
-  font-family: var(--font-headline); font-size: 0.65rem; font-weight: 600;
-  color: var(--on-surface-variant);
+.hashtag {
+  font-family: var(--font-headline);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+}
+.hashtag:hover { text-decoration: underline; }
+
+/* ── Post Author Clickable ── */
+.post-author-info {
+  cursor: pointer;
+}
+.post-author-info:hover .post-author-name {
+  text-decoration: underline;
 }
 .emoji-btn.active .emoji-count { color: var(--primary); }
 
