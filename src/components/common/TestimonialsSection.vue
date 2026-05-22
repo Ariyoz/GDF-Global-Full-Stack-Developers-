@@ -33,14 +33,7 @@
 </template>
 
 <script setup>
-const testimonials = [
-  { name: 'James Carter',  role: 'CEO, LaunchPad Startup',    quote: 'GFD delivered our MVP in 6 weeks. The quality was exceptional and the team communication was flawless. Highly recommend.' },
-  { name: 'Amara Osei',    role: 'Product Manager, FinTech',  quote: 'Working with GFD felt like having an in-house team. They understood our vision and executed it perfectly.' },
-  { name: 'Lena Müller',   role: 'Founder, E-Commerce Brand', quote: 'Our new platform increased conversions by 40%. The UI/UX work from GFD is simply world-class.' },
-  { name: 'David Kim',     role: 'CTO, SaaS Platform',        quote: 'The backend architecture GFD built handles 100k+ users without breaking a sweat. Incredible engineering.' },
-  { name: 'Sofia Reyes',   role: 'Developer, GFD Community',  quote: 'Joining GFD community was the best career decision I made. The mentorship and opportunities are unmatched.' },
-  { name: 'Omar Hassan',   role: 'Startup Founder',           quote: 'From design to deployment in 8 weeks. GFD is the real deal — professional, fast, and genuinely talented.' },
-]
+const testimonials = []
 </script>
 
 <style scoped>

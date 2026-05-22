@@ -74,11 +74,7 @@ const query     = ref('')
 
 const suggestions = ['Vue.js', 'React', 'Node.js', 'Python', 'Full Stack', 'Mobile Dev', 'UI/UX']
 
-const suggestedDevs = [
-  { name: 'Marcus Chen',     role: 'Senior Full-Stack Lead' },
-  { name: 'Elena Rodriguez', role: 'Next.js Specialist' },
-  { name: 'Alex Rivera',     role: 'Python & Django Expert' },
-]
+const suggestedDevs = []
 
 function handleSearch() {
   if (query.value.trim()) {

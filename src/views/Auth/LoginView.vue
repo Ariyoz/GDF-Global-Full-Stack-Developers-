@@ -29,11 +29,6 @@
       <GfdButton type="submit" variant="primary" :loading="loading" full>
         Sign In
       </GfdButton>
-
-      <div class="tester-hint">
-        <span class="material-symbols-outlined" style="font-size:15px;">info</span>
-        Test account: <strong>gdf@gmail.com</strong> / <strong>gdf12345</strong>
-      </div>
     </form>
 
     <p class="auth-footer">
@@ -46,11 +41,11 @@
     </div>
 
     <div class="social-grid">
-      <button class="social-btn" type="button">
+      <button class="social-btn" type="button" @click="loginWithGitHub">
         <span class="material-symbols-outlined" style="font-size:18px;">hub</span>
         GitHub
       </button>
-      <button class="social-btn" type="button">
+      <button class="social-btn" type="button" @click="loginWithGoogle">
         <span style="font-size:14px;font-weight:700;color:#4285f4;">G</span>
         Google
       </button>
@@ -72,7 +67,7 @@ const authStore = useAuthStore()
 const uiStore   = useUiStore()
 
 const loading = ref(false)
-const form    = reactive({ email: 'gdf@gmail.com', password: 'gdf12345' })
+const form    = reactive({ email: '', password: '' })
 const errors  = reactive({ email: '', password: '' })
 
 function validate() {
@@ -94,6 +89,22 @@ async function handleLogin() {
     uiStore.showError(authStore.error || 'Login failed. Please try again.')
   } finally {
     loading.value = false
+  }
+}
+
+async function loginWithGitHub() {
+  try {
+    await authStore.loginWithProvider('github')
+  } catch {
+    uiStore.showError('GitHub login failed')
+  }
+}
+
+async function loginWithGoogle() {
+  try {
+    await authStore.loginWithProvider('google')
+  } catch {
+    uiStore.showError('Google login failed')
   }
 }
 </script>

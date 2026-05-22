@@ -71,35 +71,7 @@
 </template>
 
 <script setup>
-const developers = [
-  {
-    name: 'Marcus Chen',
-    role: 'Senior Full-Stack Lead',
-    bio: 'Building scalable microservices and intuitive frontend experiences for high-growth tech startups.',
-    tags: ['React', 'Go', 'AWS', 'PostgreSQL'],
-    rating: '4.9',
-    projects: 34,
-    available: true,
-  },
-  {
-    name: 'Elena Rodriguez',
-    role: 'Next.js Specialist',
-    bio: 'Expert in crafting performant, SEO-optimized web applications with a focus on UI/UX precision.',
-    tags: ['TypeScript', 'Prisma', 'Tailwind'],
-    rating: '5.0',
-    projects: 28,
-    available: true,
-  },
-  {
-    name: 'Alex Rivera',
-    role: 'Python & Django Expert',
-    bio: 'Specializing in complex data architecture and API development for fintech and healthtech.',
-    tags: ['Python', 'PostgreSQL', 'Docker'],
-    rating: '4.8',
-    projects: 41,
-    available: false,
-  },
-]
+const developers = []
 
 function initials(name) {
   return name.split(' ').map(n => n[0]).join('').toUpperCase()

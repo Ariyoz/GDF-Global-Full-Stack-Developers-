@@ -143,12 +143,14 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { adminService } from '@/services/admin.service'
 
 const activeTab    = ref('all')
 const roleFilter   = ref('')
 const statusFilter = ref('')
 const searchQuery  = ref('')
+const loading      = ref(false)
 
 const tabs = [
   { value: 'all',          label: 'All Users',            badge: null },
@@ -157,14 +159,47 @@ const tabs = [
   { value: 'permissions',  label: 'Permissions',           badge: null },
 ]
 
-const userStats = [
+const userStats = ref([
   { icon: 'group',          label: 'Total Users',     value: '0', color: 'var(--on-primary-fixed)', bg: 'var(--primary-fixed)' },
   { icon: 'verified_user',  label: 'Verified Pros',   value: '0', color: 'var(--primary)',          bg: 'var(--surface-container-high)' },
   { icon: 'pending_actions',label: 'Pending Review',  value: '0', color: 'var(--tertiary)',          bg: 'var(--tertiary-fixed)',        valueColor: 'var(--tertiary)' },
-  { icon: 'block',          label: 'Flagged',         value: '0', color: 'var(--on-error-container)',bg: 'var(--error-container)',       valueColor: 'var(--error)' },
-]
+  { icon: 'block',          label: 'Suspended',       value: '0', color: 'var(--on-error-container)',bg: 'var(--error-container)',       valueColor: 'var(--error)' },
+])
 
 const users = ref([])
+const totalUsers = ref(0)
+
+async function fetchUsers() {
+  loading.value = true
+  try {
+    const status = activeTab.value === 'suspended' ? 'suspended' : statusFilter.value || undefined
+    const { users: data, total } = await adminService.listUsers({
+      search: searchQuery.value || undefined,
+      role: roleFilter.value || undefined,
+      status,
+    })
+    users.value = data.map(u => ({
+      id: u.id,
+      name: u.full_name || u.email,
+      email: u.email,
+      role: u.role || 'developer',
+      joined: new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      skillDots: [],
+      status: u.status || 'active',
+      statusLabel: u.status === 'active' ? 'Active' : u.status === 'suspended' ? 'Suspended' : 'Pending',
+    }))
+    totalUsers.value = total
+
+    userStats.value[0].value = String(total)
+  } catch (err) {
+    console.error('Failed to fetch users:', err)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(fetchUsers)
+watch([activeTab, roleFilter, statusFilter, searchQuery], fetchUsers)
 
 const filteredUsers = computed(() => {
   let list = users.value

@@ -65,14 +65,7 @@ const tabs = [
   { value: 'mentions', label: 'Mentions', count: 1 },
 ]
 
-const notifications = ref([
-  { id: 1, icon: 'work',          color: 'var(--primary)',  bg: 'rgba(99,14,212,0.08)',  title: 'New Job Request',       desc: 'James Carter sent you a project request for a React Native app.',  time: '2 minutes ago',  read: false, type: 'all' },
-  { id: 2, icon: 'payments',      color: '#16a34a',         bg: 'rgba(22,163,74,0.08)',  title: 'Payment Received',      desc: 'You received $800 for the FinTrack Dashboard project.',             time: '1 hour ago',     read: false, type: 'all' },
-  { id: 3, icon: 'alternate_email', color: 'var(--tertiary)', bg: 'rgba(161,81,0,0.08)', title: 'You were mentioned',    desc: 'Amara Osei mentioned you in a comment on the ShopFlow project.',   time: '3 hours ago',    read: false, type: 'mentions' },
-  { id: 4, icon: 'star',          color: '#f59e0b',         bg: 'rgba(245,158,11,0.08)', title: 'New Review',            desc: 'Lena Müller left you a 5-star review. "Exceptional work!"',        time: '5 hours ago',    read: false, type: 'all' },
-  { id: 5, icon: 'person_add',    color: 'var(--primary)',  bg: 'rgba(99,14,212,0.08)',  title: 'New Follower',          desc: 'David Kim started following your profile.',                        time: 'Yesterday',      read: true,  type: 'all' },
-  { id: 6, icon: 'check_circle',  color: '#16a34a',         bg: 'rgba(22,163,74,0.08)',  title: 'Project Completed',     desc: 'MedConnect Portal has been marked as completed.',                  time: '2 days ago',     read: true,  type: 'all' },
-])
+const notifications = ref([])
 
 const filteredNotifs = computed(() => {
   if (activeTab.value === 'unread')   return notifications.value.filter(n => !n.read)

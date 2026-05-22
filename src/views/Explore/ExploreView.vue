@@ -162,11 +162,15 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { SKILL_TAGS } from '@/constants'
 import { useDevelopersStore } from '@/store/developers'
 
 const devStore    = useDevelopersStore()
+
+onMounted(() => {
+  devStore.fetchDevelopers()
+})
 const searchQuery = ref('')
 const activeRole  = ref('All')
 const sortBy      = ref('rating')

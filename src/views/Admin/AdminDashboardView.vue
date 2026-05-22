@@ -122,13 +122,16 @@
 </template>
 
 <script setup>
-const platformStats = [
-  { icon: 'person_add', label: 'Total Users',       value: '0', change: '—',  positive: false, color: 'var(--primary)',  bg: 'rgba(168,85,247,0.1)' },
-  { icon: 'work',       label: 'Active Jobs',        value: '0', change: '—',  positive: false, color: 'var(--tertiary)', bg: 'rgba(251,146,60,0.1)' },
-  { icon: 'payments',   label: 'Revenue (Monthly)',  value: '$0', change: '—', positive: false, color: 'var(--primary-container)', bg: 'rgba(99,14,212,0.08)' },
-]
+import { ref, onMounted } from 'vue'
+import { adminService } from '@/services/admin.service'
 
-const activityRows = []
+const platformStats = ref([
+  { icon: 'person_add', label: 'Total Users',  value: '0', change: '—', positive: false, color: 'var(--primary)',  bg: 'rgba(168,85,247,0.1)' },
+  { icon: 'work',       label: 'Active Jobs',  value: '0', change: '—', positive: false, color: 'var(--tertiary)', bg: 'rgba(251,146,60,0.1)' },
+  { icon: 'article',    label: 'Total Posts',   value: '0', change: '—', positive: false, color: 'var(--primary-container)', bg: 'rgba(99,14,212,0.08)' },
+])
+
+const activityRows = ref([])
 
 const verificationQueue = [
   { icon: 'fingerprint', label: 'Identity Docs',  count: 0, color: 'var(--primary)' },
@@ -145,6 +148,28 @@ const trafficData = [
   { pct: 0, active: false },
   { pct: 0, active: false },
 ]
+
+onMounted(async () => {
+  try {
+    const analytics = await adminService.getAnalytics()
+    platformStats.value[0].value = String(analytics.totalUsers)
+    platformStats.value[1].value = String(analytics.activeJobs)
+    platformStats.value[2].value = String(analytics.totalPosts)
+
+    const recent = await adminService.getRecentActivity(5)
+    activityRows.value = recent.map(u => ({
+      user: u.full_name || u.email,
+      role: u.role || 'developer',
+      event: 'Registered',
+      flag: u.status === 'active' ? 'Active' : u.status,
+      flagClass: u.status === 'active' ? 'flag-neutral' : 'flag-error',
+      status: u.status === 'active' ? 'Active' : 'Pending',
+      statusDot: u.status === 'active' ? 'status-dot-green' : 'status-dot-warning',
+    }))
+  } catch (err) {
+    console.error('Failed to load admin analytics:', err)
+  }
+})
 </script>
 
 <style scoped>

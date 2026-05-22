@@ -104,35 +104,9 @@ const activeConv = ref(null)
 const newMessage = ref('')
 const messagesEl = ref(null)
 
-const conversations = ref([
-  { id: 1, initials: 'JC', name: 'James Carter',  time: '2m ago',  lastMessage: 'Can you start Monday?', unread: 2, online: true },
-  { id: 2, initials: 'AO', name: 'Amara Osei',    time: '1h ago',  lastMessage: 'Looks great, thanks!',  unread: 0, online: false },
-  { id: 3, initials: 'LM', name: 'Lena Müller',   time: '3h ago',  lastMessage: 'Send me the proposal.', unread: 1, online: true },
-  { id: 4, initials: 'DK', name: 'David Kim',     time: 'Yesterday', lastMessage: 'Perfect, let\'s go!', unread: 0, online: false },
-])
+const conversations = ref([])
 
-const messagesByConv = ref({
-  1: [
-    { id: 1, text: 'Hi! I saw your profile and I\'m interested in hiring you.', time: '10:00am', mine: false },
-    { id: 2, text: 'Thanks for reaching out! I\'d love to hear more about the project.', time: '10:02am', mine: true },
-    { id: 3, text: 'It\'s a full-stack web app. Can you start Monday?', time: '10:05am', mine: false },
-  ],
-  2: [
-    { id: 1, text: 'The design looks amazing!', time: 'Yesterday', mine: false },
-    { id: 2, text: 'Glad you like it! Let me know if you need any changes.', time: 'Yesterday', mine: true },
-    { id: 3, text: 'Looks great, thanks!', time: 'Yesterday', mine: false },
-  ],
-  3: [
-    { id: 1, text: 'I need a UI/UX designer for my startup.', time: '3h ago', mine: false },
-    { id: 2, text: 'Sure! Send me the project brief and I\'ll prepare a proposal.', time: '3h ago', mine: true },
-    { id: 3, text: 'Send me the proposal.', time: '2h ago', mine: false },
-  ],
-  4: [
-    { id: 1, text: 'We need a backend engineer for 3 months.', time: 'Yesterday', mine: false },
-    { id: 2, text: 'I\'m available. What\'s the tech stack?', time: 'Yesterday', mine: true },
-    { id: 3, text: 'Perfect, let\'s go!', time: 'Yesterday', mine: false },
-  ],
-})
+const messagesByConv = ref({})
 
 const filteredConvs = computed(() => {
   if (!search.value) return conversations.value

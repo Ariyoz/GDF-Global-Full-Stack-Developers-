@@ -1,35 +1,46 @@
-// ── Client Requests Store ──
+// ── Service Requests Store — Supabase ──
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { requestsService } from '@/services/requests.service'
+import { supabase } from '@/lib/supabase'
 
 export const useRequestsStore = defineStore('requests', () => {
   const requests = ref([])
-  const current  = ref(null)
-  const loading  = ref(false)
-  const error    = ref(null)
+  const current = ref(null)
+  const loading = ref(false)
+  const error = ref(null)
 
   async function submitRequest(data) {
     loading.value = true
-    error.value   = null
+    error.value = null
     try {
-      const res = await requestsService.submit(data)
-      return res
+      const { data: result, error: err } = await supabase
+        .from('service_requests')
+        .insert(data)
+        .select()
+        .single()
+      if (err) throw err
+      return result
     } catch (err) {
-      error.value = err.response?.data?.message || 'Submission failed'
+      error.value = err.message || 'Submission failed'
       throw err
     } finally {
       loading.value = false
     }
   }
 
-  async function fetchRequests(params) {
+  async function fetchRequests(userId) {
     loading.value = true
+    error.value = null
     try {
-      const res = await requestsService.getAll(params)
-      requests.value = res.data || res
+      const { data, error: err } = await supabase
+        .from('service_requests')
+        .select('*')
+        .eq('client_id', userId)
+        .order('created_at', { ascending: false })
+      if (err) throw err
+      requests.value = data || []
     } catch (err) {
-      error.value = err.response?.data?.message || 'Failed to load requests'
+      error.value = err.message
     } finally {
       loading.value = false
     }
@@ -38,8 +49,13 @@ export const useRequestsStore = defineStore('requests', () => {
   async function fetchById(id) {
     loading.value = true
     try {
-      const res = await requestsService.getById(id)
-      current.value = res
+      const { data, error: err } = await supabase
+        .from('service_requests')
+        .select('*')
+        .eq('id', id)
+        .single()
+      if (err) throw err
+      current.value = data
     } finally {
       loading.value = false
     }

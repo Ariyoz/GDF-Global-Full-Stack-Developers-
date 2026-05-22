@@ -86,11 +86,7 @@
 </template>
 
 <script setup>
-const mobileProjects = [
-  { title: 'Vortex Analytics Engine', desc: 'Real-time data visualization for cloud-native infrastructure.', badge: "EDITOR'S CHOICE", gradient: 'linear-gradient(135deg,#1a0840 0%,#630ed4 100%)' },
-  { title: 'Prism Design System',     desc: 'Comprehensive design system for enterprise SaaS.',             badge: null,             gradient: 'linear-gradient(135deg,#2a1060 0%,#1a0840 100%)' },
-  { title: 'Nexus Core API',          desc: 'High-throughput payment processing API for fintech.',           badge: null,             gradient: 'linear-gradient(135deg,#1a0840 0%,#0d0520 100%)' },
-]
+const mobileProjects = []
 </script>
 
 <style scoped>

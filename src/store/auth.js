@@ -1,193 +1,188 @@
-// ── Auth Store ──
+// ── Auth Store — Supabase ──
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-
-// ── Mock credentials (works without a backend) ──
-const INITIAL_MOCK_USERS = [
-  {
-    email: 'obikoyaayomikun33@gmail.com',
-    password: '@$159357Ayo',
-    user: {
-      id: 1,
-      name: 'Ayomikun Obikoya',
-      email: 'obikoyaayomikun33@gmail.com',
-      role: 'admin',
-      jobTitle: 'Founder & CEO',
-      location: 'Lagos, Nigeria',
-      bio: 'Founder & CEO of Global Full-Stack Developers.',
-      github: 'gfd-dev',
-      linkedin: 'ayomikun-obikoya',
-      website: 'https://gfd.io',
-    },
-  },
-  {
-    email: 'gdf@gmail.com',
-    password: 'gdf12345',
-    user: {
-      id: 2,
-      name: 'GFD Tester',
-      email: 'gdf@gmail.com',
-      role: 'developer',
-      jobTitle: 'Test Account',
-      location: '',
-      bio: 'Default tester account for GFD platform.',
-      github: '',
-      linkedin: '',
-      website: '',
-    },
-  },
-  {
-    email: 'gdfadmin@gmail.com',
-    password: 'gdf12345',
-    user: {
-      id: 3,
-      name: 'GFD Admin',
-      email: 'gdfadmin@gmail.com',
-      role: 'admin',
-      jobTitle: 'Platform Admin',
-      location: '',
-      bio: 'Admin account for GFD platform management.',
-      github: '',
-      linkedin: '',
-      website: '',
-    },
-  },
-]
-
-const MOCK_TOKEN = 'gfd_mock_token_dev_2024'
-
-function loadMockUsers() {
-  try {
-    const stored = JSON.parse(localStorage.getItem('gfd_mock_users') || 'null')
-    if (!Array.isArray(stored)) return INITIAL_MOCK_USERS
-    // Merge: keep stored users but ensure all INITIAL_MOCK_USERS are present
-    const merged = [...stored]
-    for (const initial of INITIAL_MOCK_USERS) {
-      if (!merged.find(u => u.email === initial.email)) {
-        merged.push(initial)
-      }
-    }
-    return merged
-  } catch {
-    return INITIAL_MOCK_USERS
-  }
-}
-
-function saveMockUsers(users) {
-  localStorage.setItem('gfd_mock_users', JSON.stringify(users))
-}
+import { supabase } from '@/lib/supabase'
+import { supabaseAuthService } from '@/services/supabase-auth.service'
+import { profilesService } from '@/services/profiles.service'
 
 export const useAuthStore = defineStore('auth', () => {
-  const user    = ref(JSON.parse(localStorage.getItem('gfd_user') || 'null'))
-  const token   = ref(localStorage.getItem('gfd_token') || null)
+  const user = ref(null)
+  const profile = ref(null)
+  const session = ref(null)
   const loading = ref(false)
-  const error   = ref(null)
-  const mockUsers = ref(loadMockUsers())
+  const error = ref(null)
+  const initialized = ref(false)
 
-  const isAuthenticated = computed(() => !!token.value)
-  const isAdmin         = computed(() => user.value?.role === 'admin' || user.value?.role === 'ADMIN')
-  const isDeveloper     = computed(() => user.value?.role === 'developer' || user.value?.role === 'DEVELOPER')
+  const isAuthenticated = computed(() => !!session.value)
+  const isAdmin = computed(() => profile.value?.role === 'admin')
+  const isDeveloper = computed(() => profile.value?.role === 'developer')
+  const isClient = computed(() => profile.value?.role === 'client')
+  const isRecruiter = computed(() => profile.value?.role === 'recruiter')
 
-  function setSession(newToken, newUser) {
-    token.value = newToken
-    user.value  = newUser
-    if (newToken) {
-      localStorage.setItem('gfd_token', newToken)
-      localStorage.setItem('gfd_user', JSON.stringify(newUser))
-    } else {
-      localStorage.removeItem('gfd_token')
-      localStorage.removeItem('gfd_user')
-    }
-  }
-
-  async function login(credentials) {
-    loading.value = true
-    error.value   = null
-
-    // Simulate network delay
-    await new Promise(r => setTimeout(r, 600))
-
+  // Initialize auth state from Supabase session
+  async function init() {
     try {
-      const match = mockUsers.value.find(
-        u => u.email === credentials.email && u.password === credentials.password
-      )
-
-      if (match) {
-        setSession(MOCK_TOKEN, match.user)
-        return { token: MOCK_TOKEN, user: match.user }
+      const currentSession = await supabaseAuthService.getSession()
+      if (currentSession) {
+        session.value = currentSession
+        user.value = currentSession.user
+        await fetchProfile()
       }
-
-      error.value = 'Invalid email or password.'
-      throw new Error('Invalid credentials')
-    } finally {
-      loading.value = false
-    }
-  }
-
-  async function register(userData) {
-    loading.value = true
-    error.value   = null
-
-    await new Promise(r => setTimeout(r, 800))
-
-    try {
-      const existing = mockUsers.value.find(u => u.email === userData.email)
-      if (existing) {
-        error.value = 'An account with that email already exists.'
-        throw new Error('Duplicate email')
-      }
-
-      const newUser = {
-        id: Date.now(),
-        name: userData.name,
-        email: userData.email,
-        role: userData.role || 'developer',
-        jobTitle: userData.jobTitle || '',
-        location: userData.location || '',
-        bio: userData.bio || '',
-        github: userData.github || '',
-        linkedin: userData.linkedin || '',
-        website: userData.website || '',
-      }
-      mockUsers.value.push({ email: newUser.email, password: userData.password, user: newUser })
-      saveMockUsers(mockUsers.value)
-      setSession(MOCK_TOKEN + '_' + Date.now(), newUser)
-      return { token: MOCK_TOKEN, user: newUser }
     } catch (err) {
-      if (!error.value) error.value = 'Registration failed. Please try again.'
+      console.error('Auth init error:', err)
+    } finally {
+      initialized.value = true
+    }
+
+    // Listen for auth changes
+    supabaseAuthService.onAuthStateChange(async (event, newSession) => {
+      session.value = newSession
+      user.value = newSession?.user || null
+
+      if (event === 'SIGNED_IN' && newSession) {
+        await fetchProfile()
+      } else if (event === 'SIGNED_OUT') {
+        profile.value = null
+      }
+    })
+  }
+
+  // Fetch user profile from profiles table
+  async function fetchProfile() {
+    if (!user.value) return
+    try {
+      profile.value = await profilesService.getById(user.value.id)
+    } catch (err) {
+      // Profile might not exist yet (new user)
+      console.warn('Profile not found, may need setup:', err)
+    }
+  }
+
+  // Register with email/password
+  async function register({ email, password, name, role, jobTitle, location, company, bio, skills, github, linkedin, website }) {
+    loading.value = true
+    error.value = null
+    try {
+      const data = await supabaseAuthService.register({ email, password, fullName: name })
+      session.value = data.session
+      user.value = data.user
+
+      // Wait a moment for the trigger to create the profile
+      if (data.session) {
+        await new Promise(r => setTimeout(r, 500))
+
+        // Update profile with additional fields
+        const profileUpdates = {
+          role: role || 'developer',
+          bio: bio || '',
+          skills: skills || [],
+          location: location || '',
+          github_url: github ? `https://github.com/${github}` : '',
+          portfolio: website || '',
+          company: company || '',
+          experience_level: jobTitle || '',
+        }
+
+        await profilesService.update(data.user.id, profileUpdates)
+        await fetchProfile()
+      }
+
+      return data
+    } catch (err) {
+      error.value = err.message || 'Registration failed'
       throw err
     } finally {
       loading.value = false
     }
   }
 
-  async function fetchMe() {
-    // Restore user from localStorage if token exists
-    if (!token.value) return
-    const stored = localStorage.getItem('gfd_user')
-    if (stored) {
-      try { user.value = JSON.parse(stored) } catch { logout() }
+  // Login with email/password
+  async function login({ email, password }) {
+    loading.value = true
+    error.value = null
+    try {
+      const data = await supabaseAuthService.login({ email, password })
+      session.value = data.session
+      user.value = data.user
+      await fetchProfile()
+      return data
+    } catch (err) {
+      error.value = err.message || 'Invalid email or password'
+      throw err
+    } finally {
+      loading.value = false
     }
   }
 
-  async function refreshToken() {
-    // No-op for mock auth
-  }
-
-  function updateUser(updates) {
-    user.value = { ...user.value, ...updates }
-    if (token.value) {
-      localStorage.setItem('gfd_user', JSON.stringify(user.value))
+  // Login with OAuth provider (github/google)
+  async function loginWithProvider(provider) {
+    loading.value = true
+    error.value = null
+    try {
+      return await supabaseAuthService.loginWithProvider(provider)
+    } catch (err) {
+      error.value = err.message || `${provider} login failed`
+      throw err
+    } finally {
+      loading.value = false
     }
   }
 
-  function logout() {
-    setSession(null, null)
+  // Logout
+  async function logout() {
+    try {
+      await supabaseAuthService.logout()
+    } catch (err) {
+      console.error('Logout error:', err)
+    }
+    session.value = null
+    user.value = null
+    profile.value = null
+  }
+
+  // Forgot password
+  async function forgotPassword(email) {
+    loading.value = true
+    error.value = null
+    try {
+      await supabaseAuthService.forgotPassword(email)
+    } catch (err) {
+      error.value = err.message || 'Failed to send reset email'
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Update profile
+  async function updateProfile(updates) {
+    if (!user.value) return
+    try {
+      profile.value = await profilesService.update(user.value.id, updates)
+      return profile.value
+    } catch (err) {
+      error.value = err.message || 'Failed to update profile'
+      throw err
+    }
+  }
+
+  // Upload avatar
+  async function uploadAvatar(file) {
+    if (!user.value) return
+    try {
+      const url = await profilesService.uploadAvatar(user.value.id, file)
+      profile.value = { ...profile.value, avatar: url }
+      return url
+    } catch (err) {
+      error.value = err.message || 'Failed to upload avatar'
+      throw err
+    }
   }
 
   return {
-    user, token, loading, error, mockUsers,
-    isAuthenticated, isAdmin, isDeveloper,
-    login, register, fetchMe, refreshToken, logout, updateUser,
+    user, profile, session, loading, error, initialized,
+    isAuthenticated, isAdmin, isDeveloper, isClient, isRecruiter,
+    init, login, register, loginWithProvider, logout,
+    forgotPassword, fetchProfile, updateProfile, uploadAvatar,
   }
 })

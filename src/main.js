@@ -19,6 +19,13 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 })()
 
 const app = createApp(App)
-app.use(createPinia())
+const pinia = createPinia()
+app.use(pinia)
 app.use(router)
-app.mount('#app')
+
+// Initialize Supabase auth state before mounting
+import { useAuthStore } from './store/auth'
+const authStore = useAuthStore()
+authStore.init().then(() => {
+  app.mount('#app')
+})

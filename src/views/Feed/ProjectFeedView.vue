@@ -309,15 +309,24 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/store/auth'
 import { useFeedStore }  from '@/store/feed'
 
 const authStore = useAuthStore()
 const feedStore = useFeedStore()
-const { user }  = storeToRefs(authStore)
 const { posts } = storeToRefs(feedStore)
+
+// Use profile for display
+const user = computed(() => authStore.profile || { full_name: authStore.user?.email || 'User', role: 'member' })
+
+// Fetch feed on mount
+onMounted(() => {
+  if (authStore.isAuthenticated) {
+    feedStore.fetchFeed(true)
+  }
+})
 
 function deletePost(postId) {
   feedStore.deletePost(postId)
@@ -385,7 +394,7 @@ function handleQuote(post) {
 }
 
 const userInitials = computed(() => {
-  const name = user.value?.name || 'GFD'
+  const name = user.value?.full_name || user.value?.name || 'U'
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 })
 
@@ -444,39 +453,28 @@ function closeCompose() {
   quotePost.value = null
 }
 
-function submitPost() {
+async function submitPost() {
   if (!newPost.value.trim() && !selectedImage.value && !quotePost.value) return
-  const post = {
-    id:          Date.now(),
-    author:      user.value?.name || 'You',
-    time:        'Just now',
-    category:    user.value?.role || 'Developer',
-    text:        newPost.value,
-    reactions:   {},
-    commentList: [],
-    showComments: false,
-    retweetCount: 0,
-  }
 
-  if (selectedImage.value) {
-    post.type = 'image'
-    post.imageUrl = selectedImage.value
-    post.imageCaption = newPost.value.trim() || 'Shared an update with an image.'
-  } else {
-    post.type = 'text'
-  }
-
-  // Attach quote if quoting
-  if (quotePost.value) {
-    post.quotedPost = {
-      author: quotePost.value.author,
-      text: quotePost.value.text,
-      type: quotePost.value.type,
-      imageUrl: quotePost.value.imageUrl,
+  try {
+    await feedStore.addPost({
+      text: newPost.value,
+      imageUrls: selectedImage.value ? [selectedImage.value] : [],
+    })
+  } catch {
+    // If Supabase fails, add locally for now
+    const post = {
+      id: Date.now(),
+      author: { full_name: user.value?.full_name || 'You', avatar: user.value?.avatar },
+      content: newPost.value,
+      likes: 0,
+      comment_count: 0,
+      image_urls: selectedImage.value ? [selectedImage.value] : [],
+      created_at: new Date().toISOString(),
     }
+    feedStore.posts.unshift(post)
   }
 
-  feedStore.addPost(post)
   newPost.value = ''
   clearSelectedImage()
   composeMode.value = 'text'

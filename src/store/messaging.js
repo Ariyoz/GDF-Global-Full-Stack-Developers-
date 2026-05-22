@@ -1,11 +1,14 @@
+// ── Messaging Store — Supabase ──
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { supabase } from '@/lib/supabase'
 
 export const useMessagingStore = defineStore('messaging', () => {
-  const conversations       = ref([])
-  const activeConversation  = ref(null)
-  const messages            = ref([])
-  const unreadCount         = ref(0)
+  const conversations = ref([])
+  const activeConversation = ref(null)
+  const messages = ref([])
+  const unreadCount = ref(0)
+  const loading = ref(false)
 
   function setActiveConversation(conv) {
     activeConversation.value = conv
@@ -22,7 +25,7 @@ export const useMessagingStore = defineStore('messaging', () => {
   }
 
   return {
-    conversations, activeConversation, messages, unreadCount,
+    conversations, activeConversation, messages, unreadCount, loading,
     setActiveConversation, addMessage, recalcUnread,
   }
 })

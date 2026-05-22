@@ -89,14 +89,7 @@ import { PROJECT_CATEGORIES } from '@/constants'
 
 const activeFilter = ref('All')
 
-const projects = [
-  { title: 'Vortex Analytics Engine', category: 'Web App',     icon: 'analytics',      year: '2024', desc: 'Real-time data visualization for cloud-native infrastructure.', tags: ['Vue.js', 'Node.js', 'PostgreSQL'], author: 'Marcus Chen',     views: '12.4k', likes: '2.1k', gradient: 'linear-gradient(135deg,#630ed4,#7c3aed)' },
-  { title: 'ShopFlow Mobile',         category: 'Mobile App',  icon: 'shopping_cart',  year: '2024', desc: 'Cross-platform e-commerce app with 50k+ users.',               tags: ['React Native', 'Firebase'],        author: 'Elena Rodriguez', views: '8.2k',  likes: '1.4k', gradient: 'linear-gradient(135deg,#7c3aed,#a855f7)' },
-  { title: 'Prism Design System',     category: 'UI/UX Design',icon: 'design_services',year: '2024', desc: 'Comprehensive design system for enterprise SaaS products.',     tags: ['Figma', 'Design Systems'],         author: 'James Okafor',    views: '6.8k',  likes: '980',  gradient: 'linear-gradient(135deg,#2a313d,#4a4455)' },
-  { title: 'Nexus Core API',          category: 'API',         icon: 'api',            year: '2023', desc: 'High-throughput payment processing API for fintech.',           tags: ['Node.js', 'Redis', 'Stripe'],       author: 'Alex Rivera',     views: '5.1k',  likes: '720',  gradient: 'linear-gradient(135deg,#1a0840,#2a1060)' },
-  { title: 'EduLearn Platform',       category: 'SaaS',        icon: 'school',         year: '2024', desc: 'Online learning platform with 10k+ students worldwide.',       tags: ['Vue.js', 'Laravel', 'MySQL'],       author: 'Priya Sharma',    views: '9.3k',  likes: '1.6k', gradient: 'linear-gradient(135deg,#5e5e5e,#7b7487)' },
-  { title: 'MedConnect Portal',       category: 'Web App',     icon: 'local_hospital', year: '2023', desc: 'Healthcare management system for clinics and hospitals.',       tags: ['React', 'Django', 'PostgreSQL'],    author: 'Lena Müller',     views: '4.7k',  likes: '640',  gradient: 'linear-gradient(135deg,#7d3d00,#a15100)' },
-]
+const projects = []
 
 const filteredProjects = computed(() => {
   if (activeFilter.value === 'All') return projects

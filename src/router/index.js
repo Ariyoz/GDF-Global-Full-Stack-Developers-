@@ -27,6 +27,7 @@ const VerificationView     = () => import('@/views/Verification/VerificationView
 const LoginView    = () => import('@/views/Auth/LoginView.vue')
 const RegisterView = () => import('@/views/Auth/RegisterView.vue')
 const ForgotView   = () => import('@/views/Auth/ForgotPasswordView.vue')
+const AuthCallbackView = () => import('@/views/Auth/AuthCallbackView.vue')
 
 // ── Dashboard Views ──
 const DashboardHome      = () => import('@/views/Dashboard/DashboardHome.vue')
@@ -93,6 +94,7 @@ const routes = [
       { path: 'login',           name: 'login',    component: LoginView },
       { path: 'register',        name: 'register', component: RegisterView },
       { path: 'forgot-password', name: 'forgot',   component: ForgotView },
+      { path: 'callback',        name: 'auth-callback', component: AuthCallbackView },
     ],
   },
 
@@ -197,8 +199,9 @@ const router = createRouter({
 router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore()
 
-  if (authStore.token && !authStore.user) {
-    await authStore.fetchMe()
+  // Wait for auth to initialize
+  if (!authStore.initialized) {
+    await authStore.init()
   }
 
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {

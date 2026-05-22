@@ -127,32 +127,24 @@ const timeOfDay = computed(() => {
 const firstName = computed(() => user.value?.name?.split(' ')[0] || 'Developer')
 
 const chartData = [
-  { label: 'Mon', pct: 45 },
-  { label: 'Tue', pct: 72 },
-  { label: 'Wed', pct: 58 },
-  { label: 'Thu', pct: 88 },
-  { label: 'Fri', pct: 65 },
-  { label: 'Sat', pct: 40 },
-  { label: 'Sun', pct: 55 },
+  { label: 'Mon', pct: 0 },
+  { label: 'Tue', pct: 0 },
+  { label: 'Wed', pct: 0 },
+  { label: 'Thu', pct: 0 },
+  { label: 'Fri', pct: 0 },
+  { label: 'Sat', pct: 0 },
+  { label: 'Sun', pct: 0 },
 ]
 
 const engagementStats = [
-  { value: '1,284', label: 'Total Views' },
-  { value: '4.7%',  label: 'Click Rate' },
-  { value: '2m 34s', label: 'Avg Time' },
+  { value: '0', label: 'Total Views' },
+  { value: '0%',  label: 'Click Rate' },
+  { value: '—', label: 'Avg Time' },
 ]
 
-const jobRequests = [
-  { id: 1, initials: 'JC', name: 'James Carter',  role: 'Frontend Dev needed' },
-  { id: 2, initials: 'AO', name: 'Amara Osei',    role: 'Full Stack project' },
-  { id: 3, initials: 'LM', name: 'Lena Müller',   role: 'UI/UX Design work' },
-]
+const jobRequests = []
 
-const postedProjects = [
-  { id: 1, name: 'FinTrack Dashboard', desc: 'Real-time financial analytics platform.', status: 'Active', statusVariant: 'success', progress: 75, icon: 'analytics', gradient: 'linear-gradient(135deg,#630ed4,#7c3aed)' },
-  { id: 2, name: 'ShopFlow Mobile',    desc: 'Cross-platform e-commerce app.',          status: 'In Review', statusVariant: 'warning', progress: 40, icon: 'shopping_cart', gradient: 'linear-gradient(135deg,#7c3aed,#a855f7)' },
-  { id: 3, name: 'MedConnect Portal',  desc: 'Healthcare management system.',           status: 'Pending', statusVariant: 'default', progress: 10, icon: 'local_hospital', gradient: 'linear-gradient(135deg,#5e5e5e,#7b7487)' },
-]
+const postedProjects = []
 
 function copyProfileLink() {
   navigator.clipboard?.writeText(window.location.origin + '/developer/me')

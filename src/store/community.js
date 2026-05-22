@@ -1,18 +1,20 @@
+// ── Community Store — Supabase ──
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { communityService } from '@/services/community.service'
+import { profilesService } from '@/services/profiles.service'
 
 export const useCommunityStore = defineStore('community', () => {
   const members = ref([])
-  const jobs    = ref([])
+  const jobs = ref([])
   const loading = ref(false)
-  const error   = ref(null)
+  const error = ref(null)
 
   async function fetchMembers(params = {}) {
     loading.value = true
+    error.value = null
     try {
-      const res = await communityService.getMembers(params)
-      members.value = res.data || res
+      const { data } = await profilesService.listDevelopers(params)
+      members.value = data || []
     } catch (err) {
       error.value = err.message
     } finally {
@@ -20,11 +22,13 @@ export const useCommunityStore = defineStore('community', () => {
     }
   }
 
-  async function fetchJobs(params = {}) {
+  async function fetchJobs() {
+    // Will be populated when jobs are created
     loading.value = true
     try {
-      const res = await communityService.getJobs(params)
-      jobs.value = res.data || res
+      const { jobsService } = await import('@/services/jobs.service')
+      const { data } = await jobsService.list({ limit: 10 })
+      jobs.value = data || []
     } catch (err) {
       error.value = err.message
     } finally {

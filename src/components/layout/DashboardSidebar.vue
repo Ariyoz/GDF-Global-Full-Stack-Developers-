@@ -39,8 +39,8 @@
       <div class="sidebar-user">
         <div class="user-avatar">{{ userInitials }}</div>
         <div class="user-info">
-          <p class="user-name">{{ user?.name || 'Developer' }}</p>
-          <p class="user-role">{{ user?.role || 'Member' }}</p>
+          <p class="user-name">{{ authStore.profile?.full_name || authStore.user?.email || 'User' }}</p>
+          <p class="user-role">{{ authStore.profile?.role || 'Member' }}</p>
         </div>
       </div>
       <button class="btn-gfd-ghost sidebar-logout" @click="handleLogout">
@@ -53,17 +53,15 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/store/auth'
 
 const router    = useRouter()
 const authStore = useAuthStore()
-const { user }  = storeToRefs(authStore)
 
 const sidebarOpen = ref(false)
 
 const userInitials = computed(() => {
-  const name = user.value?.name || 'GFD'
+  const name = authStore.profile?.full_name || authStore.user?.email || 'U'
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 })
 
