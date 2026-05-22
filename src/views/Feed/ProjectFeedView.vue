@@ -114,6 +114,16 @@
           </div>
         </Transition>
 
+        <!-- Feed Tabs -->
+        <div class="feed-tabs">
+          <button class="feed-tab" :class="{ active: feedStore.feedType === 'explore' }" @click="switchFeedType('explore')">
+            For You
+          </button>
+          <button class="feed-tab" :class="{ active: feedStore.feedType === 'following' }" @click="switchFeedType('following')">
+            Following
+          </button>
+        </div>
+
         <!-- Feed Posts -->
         <div class="feed-posts">
           <article
@@ -232,6 +242,23 @@
               </div>
             </div>
           </article>
+
+          <!-- Loading indicator -->
+          <div v-if="feedStore.loading" class="feed-loading">
+            <span class="material-symbols-outlined spinning">progress_activity</span>
+            <p>Loading posts...</p>
+          </div>
+
+          <!-- Empty state -->
+          <div v-if="!feedStore.loading && posts.length === 0" class="feed-empty">
+            <span class="material-symbols-outlined" style="font-size:3rem;color:var(--on-surface-variant)">dynamic_feed</span>
+            <p>No posts yet. Be the first to share something!</p>
+          </div>
+
+          <!-- End of feed -->
+          <div v-if="!feedStore.hasMore && posts.length > 0" class="feed-end">
+            <p>You're all caught up!</p>
+          </div>
         </div>
       </main>
 
@@ -296,7 +323,17 @@ onMounted(() => {
   if (authStore.isAuthenticated) {
     feedStore.fetchFeed(true)
   }
+
+  // Infinite scroll
+  window.addEventListener('scroll', handleScroll)
 })
+
+function handleScroll() {
+  const scrollBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 500
+  if (scrollBottom && feedStore.hasMore && !feedStore.loading) {
+    feedStore.loadMore()
+  }
+}
 
 function goToProfile(userId) {
   if (userId) window.location.href = `/developer/${userId}`
@@ -317,11 +354,16 @@ function toggleBookmark(post) {
 }
 
 function sharePost(post) {
+  const url = window.location.origin + '/feed'
   if (navigator.share) {
-    navigator.share({ title: 'GFD Post', text: post.content, url: window.location.origin + '/feed/' + post.id })
+    navigator.share({ title: 'GFD Post', text: post.content, url })
   } else {
-    navigator.clipboard.writeText(window.location.origin + '/feed/' + post.id)
+    navigator.clipboard.writeText(url)
   }
+}
+
+function switchFeedType(type) {
+  feedStore.setFeedType(type)
 }
 
 function deletePost(postId) {
@@ -339,7 +381,7 @@ const cameraInput    = ref(null)
 const selectedImage  = ref(null)
 const selectedImageFile = ref(null)
 
-const reactionEmojis = ['👍', '❤️', '🔥', '🚀', '🎉']
+const reactionEmojis = [] // Removed — using Twitter-style actions now
 
 const openMenuId = ref(null)
 
@@ -348,45 +390,14 @@ function togglePostMenu(postId) {
 }
 
 function handleRetweet(post) {
-  if (post.retweetedByMe) {
-    // Undo retweet
-    post.retweetedByMe = false
-    post.retweetCount = (post.retweetCount || 1) - 1
-  } else {
-    // Repost (plain retweet — no added text)
-    post.retweetedByMe = true
-    post.retweetCount = (post.retweetCount || 0) + 1
-    const repost = {
-      id: Date.now(),
-      author: user.value?.name || 'You',
-      time: 'Just now',
-      category: user.value?.role || 'Developer',
-      text: post.text,
-      type: post.type,
-      imageUrl: post.imageUrl,
-      imageCaption: post.imageCaption,
-      code: post.code,
-      filename: post.filename,
-      links: post.links,
-      reactions: {},
-      commentList: [],
-      showComments: false,
-      retweetCount: 0,
-      repostedFrom: post.author,
-    }
-    feedStore.addPost(repost)
-  }
-  openMenuId.value = null
+  feedStore.repostPost(post.id)
 }
 
 function handleQuote(post) {
-  // Open compose modal pre-filled with a quote reference
   newPost.value = ''
   quotePost.value = post
   showCompose.value = true
   openMenuId.value = null
-  // Increment repost count on the original post
-  post.retweetCount = (post.retweetCount || 0) + 1
 }
 
 const userInitials = computed(() => {
@@ -521,15 +532,7 @@ function submitComment(post, e) {
   const text = newComments.value[post.id]?.trim()
   if (!text) return
 
-  if (!post.commentList) post.commentList = []
-
-  post.commentList.push({
-    id:     Date.now(),
-    author: user.value?.name || 'You',
-    time:   'Just now',
-    text,
-  })
-
+  feedStore.commentOnPost(post.id, text)
   newComments.value[post.id] = ''
 }
 </script>
@@ -880,6 +883,82 @@ function submitComment(post, e) {
 
 .material-symbols-outlined.filled {
   font-variation-settings: 'FILL' 1;
+}
+
+/* ── Feed Tabs ── */
+.feed-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--outline-variant);
+  margin-bottom: 0.5rem;
+  background: var(--surface-container-lowest);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  overflow: hidden;
+}
+
+.feed-tab {
+  flex: 1;
+  padding: 0.875rem 1rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-family: var(--font-headline);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+
+.feed-tab:hover {
+  background: rgba(99,14,212,0.04);
+  color: var(--on-surface);
+}
+
+.feed-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+/* ── Feed Loading / Empty / End ── */
+.feed-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  color: var(--on-surface-variant);
+  font-size: 0.875rem;
+}
+
+.feed-loading .spinning {
+  font-size: 2rem;
+  color: var(--primary);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.feed-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 3rem 1rem;
+  text-align: center;
+  color: var(--on-surface-variant);
+  font-size: 0.9rem;
+}
+
+.feed-end {
+  text-align: center;
+  padding: 1.5rem;
+  color: var(--on-surface-variant);
+  font-size: 0.8rem;
+  font-style: italic;
 }
 
 /* ── Post Media ── */

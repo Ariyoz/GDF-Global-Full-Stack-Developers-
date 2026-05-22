@@ -57,4 +57,8 @@ export const postsService = {
   async removeBookmark(postId) {
     return http.delete(feed.bookmark(postId))
   },
+
+  async repost(postId) {
+    return http.post(`${feed.byId(postId)}/repost`)
+  },
 }
