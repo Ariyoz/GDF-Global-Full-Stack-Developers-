@@ -37,6 +37,21 @@
     </p>
 
     <div class="auth-divider">
+      <span>or continue with</span>
+    </div>
+
+    <div class="social-grid">
+      <button class="social-btn" type="button" @click="loginWithGitHub">
+        <span class="material-symbols-outlined" style="font-size:18px;">hub</span>
+        GitHub
+      </button>
+      <button class="social-btn" type="button" @click="loginWithGoogle">
+        <span style="font-size:14px;font-weight:700;color:#4285f4;">G</span>
+        Google
+      </button>
+    </div>
+
+    <div class="auth-divider" style="margin-top:1rem;">
       <span>demo login</span>
     </div>
 
@@ -103,6 +118,22 @@ function fillDemo(type) {
     form.email = 'user@gfd.demo'
   }
   form.password = 'demo1234'
+}
+
+async function loginWithGitHub() {
+  try {
+    await authStore.loginWithProvider('github')
+  } catch {
+    uiStore.showError('GitHub login is not available in demo mode')
+  }
+}
+
+async function loginWithGoogle() {
+  try {
+    await authStore.loginWithProvider('google')
+  } catch {
+    uiStore.showError('Google login is not available in demo mode')
+  }
 }
 </script>
 
@@ -186,6 +217,34 @@ function fillDemo(type) {
 .demo-credentials {
   margin-top: 0.5rem;
   text-align: center;
+}
+
+.social-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.625rem;
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  font-family: var(--font-headline);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--on-surface);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+.social-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(99,14,212,0.03);
 }
 
 .demo-title {
