@@ -16,17 +16,11 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 onMounted(async () => {
-  // Wait for Supabase to process the OAuth callback
-  await new Promise(r => setTimeout(r, 1000))
-  await authStore.fetchProfile()
+  // Demo mode — just redirect to dashboard or login
+  await new Promise(r => setTimeout(r, 500))
 
   if (authStore.isAuthenticated) {
-    // Check if profile needs setup (no role selected yet)
-    if (!authStore.profile?.role || authStore.profile.role === 'developer') {
-      router.push('/dashboard')
-    } else {
-      router.push('/dashboard')
-    }
+    router.push('/dashboard')
   } else {
     router.push('/auth/login')
   }

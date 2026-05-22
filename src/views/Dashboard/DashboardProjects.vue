@@ -105,7 +105,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
-import { supabase } from '@/lib/supabase'
+import { jobsService } from '@/services/jobs.service'
 import GfdBadge from '@/components/ui/GfdBadge.vue'
 
 const router = useRouter()
@@ -136,13 +136,7 @@ onMounted(async () => {
   if (!userId) return
 
   try {
-    const { data, error } = await supabase
-      .from('jobs')
-      .select('*')
-      .eq('client_id', userId)
-      .order('created_at', { ascending: false })
-
-    if (error) throw error
+    const { data } = await jobsService.list({ limit: 50 })
 
     projects.value = (data || []).map(j => ({
       id: j.id,

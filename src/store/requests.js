@@ -1,7 +1,6 @@
-// ── Service Requests Store — Supabase ──
+// ── Service Requests Store — Demo ──
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { supabase } from '@/lib/supabase'
 
 export const useRequestsStore = defineStore('requests', () => {
   const requests = ref([])
@@ -13,12 +12,8 @@ export const useRequestsStore = defineStore('requests', () => {
     loading.value = true
     error.value = null
     try {
-      const { data: result, error: err } = await supabase
-        .from('service_requests')
-        .insert(data)
-        .select()
-        .single()
-      if (err) throw err
+      const result = { id: 'req-' + Date.now(), ...data, status: 'pending', created_at: new Date().toISOString() }
+      requests.value.unshift(result)
       return result
     } catch (err) {
       error.value = err.message || 'Submission failed'
@@ -28,17 +23,11 @@ export const useRequestsStore = defineStore('requests', () => {
     }
   }
 
-  async function fetchRequests(userId) {
+  async function fetchRequests() {
     loading.value = true
     error.value = null
     try {
-      const { data, error: err } = await supabase
-        .from('service_requests')
-        .select('*')
-        .eq('client_id', userId)
-        .order('created_at', { ascending: false })
-      if (err) throw err
-      requests.value = data || []
+      // Demo — return stored requests
     } catch (err) {
       error.value = err.message
     } finally {
@@ -49,13 +38,7 @@ export const useRequestsStore = defineStore('requests', () => {
   async function fetchById(id) {
     loading.value = true
     try {
-      const { data, error: err } = await supabase
-        .from('service_requests')
-        .select('*')
-        .eq('id', id)
-        .single()
-      if (err) throw err
-      current.value = data
+      current.value = requests.value.find(r => r.id === id) || null
     } finally {
       loading.value = false
     }

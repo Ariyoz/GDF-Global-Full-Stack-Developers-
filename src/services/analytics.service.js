@@ -1,64 +1,28 @@
-// ── Analytics Service — Supabase ──
-import { supabase } from '@/lib/supabase'
+// ── Analytics Service — Demo ──
 
 export const analyticsService = {
-  // Get profile view count
-  async getProfileViews(userId) {
-    const { count, error } = await supabase
-      .from('profile_views')
-      .select('*', { count: 'exact', head: true })
-      .eq('profile_id', userId)
-    if (error) return 0
-    return count || 0
+  async getProfileViews() {
+    return 42
   },
 
-  // Get profile views for last 7 days (daily breakdown)
-  async getWeeklyViews(userId) {
-    const days = []
+  async getWeeklyViews() {
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-
+    const today = new Date().getDay()
+    const days = []
     for (let i = 6; i >= 0; i--) {
-      const date = new Date()
-      date.setDate(date.getDate() - i)
-      const start = new Date(date); start.setHours(0, 0, 0, 0)
-      const end = new Date(date); end.setHours(23, 59, 59, 999)
-
-      const { count } = await supabase
-        .from('profile_views')
-        .select('*', { count: 'exact', head: true })
-        .eq('profile_id', userId)
-        .gte('created_at', start.toISOString())
-        .lte('created_at', end.toISOString())
-
-      days.push({ label: dayNames[date.getDay()], views: count || 0 })
+      const idx = (today - i + 7) % 7
+      days.push({ label: dayNames[idx], views: Math.floor(Math.random() * 15) + 2 })
     }
-
     return days
   },
 
-  // Log a profile view
-  async logProfileView(profileId, viewerId) {
-    if (profileId === viewerId) return // Don't count self-views
-    await supabase.from('profile_views').insert({ profile_id: profileId, viewer_id: viewerId })
+  async logProfileView() {},
+
+  async getJobRequestCount() {
+    return 5
   },
 
-  // Get job request count for user
-  async getJobRequestCount(userId) {
-    const { count, error } = await supabase
-      .from('job_applications')
-      .select('*', { count: 'exact', head: true })
-      .eq('developer_id', userId)
-    if (error) return 0
-    return count || 0
-  },
-
-  // Get post count for user
-  async getPostCount(userId) {
-    const { count, error } = await supabase
-      .from('community_posts')
-      .select('*', { count: 'exact', head: true })
-      .eq('author_id', userId)
-    if (error) return 0
-    return count || 0
+  async getPostCount() {
+    return 8
   },
 }

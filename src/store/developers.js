@@ -1,4 +1,4 @@
-// ── Developers Store — Supabase ──
+// ── Developers Store — Demo ──
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { profilesService } from '@/services/profiles.service'

@@ -1,114 +1,77 @@
-// ── Jobs Service ──
-import { supabase } from '@/lib/supabase'
+// ── Jobs Service — Demo ──
+
+const demoJobs = [
+  {
+    id: 'job-001',
+    title: 'Full-Stack Vue.js Developer',
+    description: 'Build a modern SaaS dashboard with Vue 3, Pinia, and TailwindCSS.',
+    status: 'open',
+    budget: '$3,000 - $5,000',
+    skills_required: ['Vue.js', 'Node.js', 'TailwindCSS'],
+    project_type: 'Web App',
+    deadline: '2025-03-01',
+    created_at: '2024-12-01T10:00:00Z',
+    client_id: 'demo-user-003',
+    client: { id: 'demo-user-003', full_name: 'Marcus Johnson', avatar: '', company: 'TechCorp' },
+  },
+  {
+    id: 'job-002',
+    title: 'React Native Mobile App',
+    description: 'Cross-platform mobile app for a fitness tracking startup.',
+    status: 'open',
+    budget: '$5,000 - $8,000',
+    skills_required: ['React Native', 'TypeScript', 'Firebase'],
+    project_type: 'Mobile App',
+    deadline: '2025-04-15',
+    created_at: '2024-12-10T14:00:00Z',
+    client_id: 'demo-user-003',
+    client: { id: 'demo-user-003', full_name: 'Marcus Johnson', avatar: '', company: 'TechCorp' },
+  },
+]
 
 export const jobsService = {
-  // List jobs
-  async list({ page = 1, limit = 20, status = 'open', search, skills } = {}) {
-    let query = supabase
-      .from('jobs')
-      .select('*, client:profiles!client_id(id, full_name, avatar, company)', { count: 'exact' })
-      .order('created_at', { ascending: false })
-      .range((page - 1) * limit, page * limit - 1)
-
-    if (status) query = query.eq('status', status)
-    if (search) query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`)
-    if (skills && skills.length) query = query.overlaps('skills_required', skills)
-
-    const { data, error, count } = await query
-    if (error) throw error
-    return { data, count }
+  async list({ page = 1, limit = 20, status, search, skills } = {}) {
+    let filtered = [...demoJobs]
+    if (status) filtered = filtered.filter(j => j.status === status)
+    if (search) filtered = filtered.filter(j => j.title.toLowerCase().includes(search.toLowerCase()))
+    if (skills && skills.length) filtered = filtered.filter(j => j.skills_required.some(s => skills.includes(s)))
+    return { data: filtered, count: filtered.length }
   },
 
-  // Get single job
   async getById(jobId) {
-    const { data, error } = await supabase
-      .from('jobs')
-      .select('*, client:profiles!client_id(id, full_name, avatar, company)')
-      .eq('id', jobId)
-      .single()
-    if (error) throw error
-    return data
+    return demoJobs.find(j => j.id === jobId) || null
   },
 
-  // Create job
   async create(jobData) {
-    const { data, error } = await supabase
-      .from('jobs')
-      .insert(jobData)
-      .select()
-      .single()
-    if (error) throw error
-    return data
+    const newJob = { id: 'job-' + Date.now(), ...jobData, created_at: new Date().toISOString() }
+    demoJobs.push(newJob)
+    return newJob
   },
 
-  // Update job
   async update(jobId, updates) {
-    const { data, error } = await supabase
-      .from('jobs')
-      .update(updates)
-      .eq('id', jobId)
-      .select()
-      .single()
-    if (error) throw error
-    return data
+    const job = demoJobs.find(j => j.id === jobId)
+    if (job) Object.assign(job, updates)
+    return job
   },
 
-  // Delete job
   async delete(jobId) {
-    const { error } = await supabase.from('jobs').delete().eq('id', jobId)
-    if (error) throw error
+    const idx = demoJobs.findIndex(j => j.id === jobId)
+    if (idx !== -1) demoJobs.splice(idx, 1)
   },
 
-  // Apply for job
   async apply(jobId, developerId, coverLetter) {
-    const { data, error } = await supabase
-      .from('job_applications')
-      .insert({ job_id: jobId, developer_id: developerId, cover_letter: coverLetter })
-      .select()
-      .single()
-    if (error) throw error
-    return data
+    return { id: 'app-' + Date.now(), job_id: jobId, developer_id: developerId, cover_letter: coverLetter, status: 'pending' }
   },
 
-  // Get applications for a job (client view)
-  async getApplications(jobId) {
-    const { data, error } = await supabase
-      .from('job_applications')
-      .select('*, developer:profiles!developer_id(id, full_name, avatar, skills, experience_level)')
-      .eq('job_id', jobId)
-      .order('created_at', { ascending: false })
-    if (error) throw error
-    return data
+  async getApplications() {
+    return []
   },
 
-  // Get my applications (developer view)
-  async getMyApplications(developerId) {
-    const { data, error } = await supabase
-      .from('job_applications')
-      .select('*, job:jobs!job_id(id, title, budget, status, client:profiles!client_id(full_name, company))')
-      .eq('developer_id', developerId)
-      .order('created_at', { ascending: false })
-    if (error) throw error
-    return data
+  async getMyApplications() {
+    return []
   },
 
-  // Save/unsave job
-  async saveJob(userId, jobId) {
-    const { error } = await supabase.from('saved_jobs').insert({ user_id: userId, job_id: jobId })
-    if (error) throw error
-  },
-
-  async unsaveJob(userId, jobId) {
-    const { error } = await supabase.from('saved_jobs').delete().eq('user_id', userId).eq('job_id', jobId)
-    if (error) throw error
-  },
-
-  async getSavedJobs(userId) {
-    const { data, error } = await supabase
-      .from('saved_jobs')
-      .select('*, job:jobs!job_id(*)')
-      .eq('user_id', userId)
-    if (error) throw error
-    return data
-  },
+  async saveJob() {},
+  async unsaveJob() {},
+  async getSavedJobs() { return [] },
 }

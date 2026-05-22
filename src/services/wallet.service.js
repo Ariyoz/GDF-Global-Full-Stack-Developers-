@@ -1,45 +1,19 @@
-// ── Wallet Service — Supabase ──
-import { supabase } from '@/lib/supabase'
+// ── Wallet Service — Demo ──
 
 export const walletService = {
-  // Get wallet for user
-  async getWallet(userId) {
-    const { data, error } = await supabase
-      .from('wallets')
-      .select('*')
-      .eq('user_id', userId)
-      .single()
-    if (error && error.code !== 'PGRST116') throw error
-    return data || { balance: 0, total_earned: 0, total_withdrawn: 0 }
+  async getWallet() {
+    return { balance: 1250.00, total_earned: 4500.00, total_withdrawn: 3250.00 }
   },
 
-  // Get transactions
-  async getTransactions(userId, { limit = 20, page = 1 } = {}) {
-    const { data, error } = await supabase
-      .from('transactions')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .range((page - 1) * limit, page * limit - 1)
-    if (error) throw error
-    return data || []
+  async getTransactions() {
+    return [
+      { id: 'tx-001', type: 'payment', amount: 500, status: 'completed', description: 'Project payment - Dashboard UI', created_at: '2024-12-15T10:00:00Z' },
+      { id: 'tx-002', type: 'withdrawal', amount: -250, status: 'completed', description: 'Withdrawal to bank', created_at: '2024-12-10T14:00:00Z' },
+      { id: 'tx-003', type: 'payment', amount: 750, status: 'completed', description: 'Project payment - API Integration', created_at: '2024-12-05T09:00:00Z' },
+    ]
   },
 
-  // Get earnings this month
-  async getMonthlyEarnings(userId) {
-    const startOfMonth = new Date()
-    startOfMonth.setDate(1)
-    startOfMonth.setHours(0, 0, 0, 0)
-
-    const { data, error } = await supabase
-      .from('transactions')
-      .select('amount')
-      .eq('user_id', userId)
-      .eq('type', 'payment')
-      .eq('status', 'completed')
-      .gte('created_at', startOfMonth.toISOString())
-    if (error) throw error
-
-    return (data || []).reduce((sum, t) => sum + Number(t.amount), 0)
+  async getMonthlyEarnings() {
+    return 1250.00
   },
 }

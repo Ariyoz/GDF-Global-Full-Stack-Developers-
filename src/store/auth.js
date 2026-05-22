@@ -1,9 +1,46 @@
-// ── Auth Store — Supabase ──
+// ── Auth Store — Demo Mode ──
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { supabase } from '@/lib/supabase'
-import { supabaseAuthService } from '@/services/supabase-auth.service'
-import { profilesService } from '@/services/profiles.service'
+
+// Demo accounts
+const DEMO_ACCOUNTS = {
+  user: {
+    id: 'demo-user-001',
+    email: 'user@gfd.demo',
+    full_name: 'Alex Developer',
+    avatar: '',
+    role: 'developer',
+    status: 'active',
+    bio: 'Full-stack developer passionate about building great products.',
+    skills: ['Vue.js', 'Node.js', 'TypeScript', 'Python', 'React'],
+    location: 'San Francisco, CA',
+    github_url: 'https://github.com/alexdev',
+    portfolio: 'https://alexdev.io',
+    company: '',
+    experience_level: 'Senior Developer',
+    username: 'alexdev',
+    created_at: '2024-01-15T10:00:00Z',
+  },
+  admin: {
+    id: 'demo-admin-001',
+    email: 'admin@gfd.demo',
+    full_name: 'GFD Admin',
+    avatar: '',
+    role: 'admin',
+    status: 'active',
+    bio: 'Platform administrator.',
+    skills: [],
+    location: 'Remote',
+    github_url: '',
+    portfolio: '',
+    company: 'GFD',
+    experience_level: '',
+    username: 'gfdadmin',
+    created_at: '2024-01-01T00:00:00Z',
+  },
+}
+
+const DEMO_PASSWORD = 'demo1234'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
@@ -19,75 +56,58 @@ export const useAuthStore = defineStore('auth', () => {
   const isClient = computed(() => profile.value?.role === 'client')
   const isRecruiter = computed(() => profile.value?.role === 'recruiter')
 
-  // Initialize auth state from Supabase session
-  async function init() {
+  // Initialize auth state from localStorage
+  function init() {
     try {
-      const currentSession = await supabaseAuthService.getSession()
-      if (currentSession) {
-        session.value = currentSession
-        user.value = currentSession.user
-        await fetchProfile()
+      const stored = localStorage.getItem('gfd_demo_session')
+      if (stored) {
+        const data = JSON.parse(stored)
+        session.value = data.session
+        user.value = data.user
+        profile.value = data.profile
       }
     } catch (err) {
       console.error('Auth init error:', err)
+      localStorage.removeItem('gfd_demo_session')
     } finally {
       initialized.value = true
     }
-
-    // Listen for auth changes
-    supabaseAuthService.onAuthStateChange(async (event, newSession) => {
-      session.value = newSession
-      user.value = newSession?.user || null
-
-      if (event === 'SIGNED_IN' && newSession) {
-        await fetchProfile()
-      } else if (event === 'SIGNED_OUT') {
-        profile.value = null
-      }
-    })
   }
 
-  // Fetch user profile from profiles table
+  // Persist session to localStorage
+  function persistSession() {
+    localStorage.setItem('gfd_demo_session', JSON.stringify({
+      session: session.value,
+      user: user.value,
+      profile: profile.value,
+    }))
+  }
+
+  // Fetch user profile (returns stored profile)
   async function fetchProfile() {
-    if (!user.value) return
-    try {
-      profile.value = await profilesService.getById(user.value.id)
-    } catch (err) {
-      // Profile might not exist yet (new user)
-      console.warn('Profile not found, may need setup:', err)
-    }
+    // Profile is already loaded from demo data
+    return profile.value
   }
 
-  // Register with email/password
-  async function register({ email, password, name, role, jobTitle, location, company, bio, skills, github, linkedin, website }) {
+  // Register (demo — just logs in as user)
+  async function register({ email, password, name, role }) {
     loading.value = true
     error.value = null
     try {
-      const data = await supabaseAuthService.register({ email, password, fullName: name })
-      session.value = data.session
-      user.value = data.user
-
-      // Wait a moment for the trigger to create the profile
-      if (data.session) {
-        await new Promise(r => setTimeout(r, 500))
-
-        // Update profile with additional fields
-        const profileUpdates = {
-          role: role || 'developer',
-          bio: bio || '',
-          skills: skills || [],
-          location: location || '',
-          github_url: github ? `https://github.com/${github}` : '',
-          portfolio: website || '',
-          company: company || '',
-          experience_level: jobTitle || '',
-        }
-
-        await profilesService.update(data.user.id, profileUpdates)
-        await fetchProfile()
+      // In demo mode, registration creates a session as the user account
+      const demoProfile = {
+        ...DEMO_ACCOUNTS.user,
+        id: 'demo-' + Date.now(),
+        email,
+        full_name: name || 'New User',
+        role: role || 'developer',
       }
 
-      return data
+      user.value = { id: demoProfile.id, email: demoProfile.email }
+      session.value = { access_token: 'demo-token-' + Date.now(), user: user.value }
+      profile.value = demoProfile
+      persistSession()
+      return { session: session.value, user: user.value }
     } catch (err) {
       error.value = err.message || 'Registration failed'
       throw err
@@ -101,11 +121,23 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true
     error.value = null
     try {
-      const data = await supabaseAuthService.login({ email, password })
-      session.value = data.session
-      user.value = data.user
-      await fetchProfile()
-      return data
+      // Check demo credentials
+      let matchedAccount = null
+
+      if (email === DEMO_ACCOUNTS.user.email && password === DEMO_PASSWORD) {
+        matchedAccount = DEMO_ACCOUNTS.user
+      } else if (email === DEMO_ACCOUNTS.admin.email && password === DEMO_PASSWORD) {
+        matchedAccount = DEMO_ACCOUNTS.admin
+      } else {
+        throw new Error('Invalid email or password. Use demo credentials.')
+      }
+
+      user.value = { id: matchedAccount.id, email: matchedAccount.email }
+      session.value = { access_token: 'demo-token-' + Date.now(), user: user.value }
+      profile.value = { ...matchedAccount }
+      persistSession()
+
+      return { session: session.value, user: user.value }
     } catch (err) {
       error.value = err.message || 'Invalid email or password'
       throw err
@@ -114,69 +146,41 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // Login with OAuth provider (github/google)
+  // Login with OAuth provider (demo — not supported)
   async function loginWithProvider(provider) {
-    loading.value = true
-    error.value = null
-    try {
-      return await supabaseAuthService.loginWithProvider(provider)
-    } catch (err) {
-      error.value = err.message || `${provider} login failed`
-      throw err
-    } finally {
-      loading.value = false
-    }
+    error.value = `OAuth login is not available in demo mode. Use demo credentials instead.`
+    throw new Error(error.value)
   }
 
   // Logout
   async function logout() {
-    try {
-      await supabaseAuthService.logout()
-    } catch (err) {
-      console.error('Logout error:', err)
-    }
     session.value = null
     user.value = null
     profile.value = null
+    localStorage.removeItem('gfd_demo_session')
   }
 
-  // Forgot password
+  // Forgot password (demo — no-op)
   async function forgotPassword(email) {
-    loading.value = true
-    error.value = null
-    try {
-      await supabaseAuthService.forgotPassword(email)
-    } catch (err) {
-      error.value = err.message || 'Failed to send reset email'
-      throw err
-    } finally {
-      loading.value = false
-    }
+    // In demo mode, just show a success message
+    return true
   }
 
   // Update profile
   async function updateProfile(updates) {
     if (!user.value) return
-    try {
-      profile.value = await profilesService.update(user.value.id, updates)
-      return profile.value
-    } catch (err) {
-      error.value = err.message || 'Failed to update profile'
-      throw err
-    }
+    profile.value = { ...profile.value, ...updates }
+    persistSession()
+    return profile.value
   }
 
-  // Upload avatar
+  // Upload avatar (demo — use object URL)
   async function uploadAvatar(file) {
     if (!user.value) return
-    try {
-      const url = await profilesService.uploadAvatar(user.value.id, file)
-      profile.value = { ...profile.value, avatar: url }
-      return url
-    } catch (err) {
-      error.value = err.message || 'Failed to upload avatar'
-      throw err
-    }
+    const url = URL.createObjectURL(file)
+    profile.value = { ...profile.value, avatar: url }
+    persistSession()
+    return url
   }
 
   return {

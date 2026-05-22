@@ -1,5 +1,4 @@
-// ── GitHub Integration Service ──
-import { supabase } from '@/lib/supabase'
+// ── GitHub Integration Service — Demo ──
 
 export const githubService = {
   // Fetch GitHub profile data from GitHub API
@@ -16,9 +15,9 @@ export const githubService = {
     return res.json()
   },
 
-  // Save GitHub profile to database
+  // Save GitHub profile (demo — no-op)
   async saveProfile(userId, githubData) {
-    const profileData = {
+    return {
       user_id: userId,
       github_id: String(githubData.id),
       username: githubData.login,
@@ -29,22 +28,11 @@ export const githubService = {
       public_repos: githubData.public_repos,
       github_url: githubData.html_url,
     }
-
-    const { data, error } = await supabase
-      .from('github_profiles')
-      .upsert(profileData, { onConflict: 'user_id' })
-      .select()
-      .single()
-    if (error) throw error
-    return data
   },
 
-  // Save repositories to database
+  // Save repositories (demo — no-op)
   async saveRepositories(userId, repos) {
-    // Delete old repos first
-    await supabase.from('github_repositories').delete().eq('user_id', userId)
-
-    const repoData = repos.map(repo => ({
+    return repos.map(repo => ({
       user_id: userId,
       repo_name: repo.name,
       description: repo.description || '',
@@ -55,60 +43,29 @@ export const githubService = {
       topics: repo.topics || [],
       updated_at: repo.updated_at,
     }))
-
-    const { data, error } = await supabase
-      .from('github_repositories')
-      .insert(repoData)
-      .select()
-    if (error) throw error
-    return data
   },
 
-  // Get stored GitHub profile
-  async getProfile(userId) {
-    const { data, error } = await supabase
-      .from('github_profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .single()
-    if (error && error.code !== 'PGRST116') throw error
-    return data
+  // Get stored GitHub profile (demo — returns null)
+  async getProfile() {
+    return null
   },
 
-  // Get stored repositories
-  async getRepositories(userId, featuredOnly = false) {
-    let query = supabase
-      .from('github_repositories')
-      .select('*')
-      .eq('user_id', userId)
-      .order('stars', { ascending: false })
-
-    if (featuredOnly) query = query.eq('is_featured', true)
-
-    const { data, error } = await query
-    if (error) throw error
-    return data
+  // Get stored repositories (demo — returns empty)
+  async getRepositories() {
+    return []
   },
 
-  // Toggle featured repository
-  async toggleFeatured(repoId, isFeatured) {
-    const { error } = await supabase
-      .from('github_repositories')
-      .update({ is_featured: isFeatured })
-      .eq('id', repoId)
-    if (error) throw error
-  },
+  // Toggle featured repository (demo — no-op)
+  async toggleFeatured() {},
 
-  // Full sync: fetch from GitHub API and save to database
+  // Full sync
   async syncGitHubData(userId, username) {
     const [profile, repos] = await Promise.all([
       this.fetchGitHubProfile(username),
       this.fetchRepositories(username),
     ])
-
     const savedProfile = await this.saveProfile(userId, profile)
     const savedRepos = await this.saveRepositories(userId, repos)
-
     return { profile: savedProfile, repositories: savedRepos }
   },
 }

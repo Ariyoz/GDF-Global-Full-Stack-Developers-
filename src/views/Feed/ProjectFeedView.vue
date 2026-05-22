@@ -462,7 +462,7 @@ async function submitPost() {
       imageUrls: selectedImage.value ? [selectedImage.value] : [],
     })
   } catch {
-    // If Supabase fails, add locally for now
+    // If service fails, add locally for now
     const post = {
       id: Date.now(),
       author: { full_name: user.value?.full_name || 'You', avatar: user.value?.avatar },

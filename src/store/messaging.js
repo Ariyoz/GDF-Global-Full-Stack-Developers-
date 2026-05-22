@@ -1,4 +1,4 @@
-// ── Messaging Store — Supabase ──
+// ── Messaging Store — Demo ──
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { messagingService } from '@/services/messaging.service'

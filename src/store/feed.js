@@ -1,4 +1,4 @@
-// ── Feed Store — Supabase ──
+// ── Feed Store — Demo ──
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { postsService } from '@/services/posts.service'

@@ -37,18 +37,22 @@
     </p>
 
     <div class="auth-divider">
-      <span>or continue with</span>
+      <span>demo login</span>
     </div>
 
-    <div class="social-grid">
-      <button class="social-btn" type="button" @click="loginWithGitHub">
-        <span class="material-symbols-outlined" style="font-size:18px;">hub</span>
-        GitHub
-      </button>
-      <button class="social-btn" type="button" @click="loginWithGoogle">
-        <span style="font-size:14px;font-weight:700;color:#4285f4;">G</span>
-        Google
-      </button>
+    <div class="demo-credentials">
+      <p class="demo-title">Demo Accounts</p>
+      <div class="demo-grid">
+        <button class="demo-btn" type="button" @click="fillDemo('user')">
+          <span class="demo-role">User</span>
+          <span class="demo-email">user@gfd.demo</span>
+        </button>
+        <button class="demo-btn demo-btn--admin" type="button" @click="fillDemo('admin')">
+          <span class="demo-role">Admin</span>
+          <span class="demo-email">admin@gfd.demo</span>
+        </button>
+      </div>
+      <p class="demo-hint">Password: <strong>demo1234</strong></p>
     </div>
   </div>
 </template>
@@ -92,20 +96,13 @@ async function handleLogin() {
   }
 }
 
-async function loginWithGitHub() {
-  try {
-    await authStore.loginWithProvider('github')
-  } catch {
-    uiStore.showError('GitHub login failed')
+function fillDemo(type) {
+  if (type === 'admin') {
+    form.email = 'admin@gfd.demo'
+  } else {
+    form.email = 'user@gfd.demo'
   }
-}
-
-async function loginWithGoogle() {
-  try {
-    await authStore.loginWithProvider('google')
-  } catch {
-    uiStore.showError('Google login failed')
-  }
+  form.password = 'demo1234'
 }
 </script>
 
@@ -186,46 +183,70 @@ async function loginWithGoogle() {
   white-space: nowrap;
 }
 
-.social-grid {
+.demo-credentials {
+  margin-top: 0.5rem;
+  text-align: center;
+}
+
+.demo-title {
+  font-family: var(--font-headline);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.demo-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
-.social-btn {
+.demo-btn {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.625rem;
+  gap: 0.25rem;
+  padding: 0.75rem 0.5rem;
   background: var(--surface-container-lowest);
   border: 1px solid var(--outline-variant);
   border-radius: var(--radius-lg);
-  font-family: var(--font-headline);
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--on-surface);
   cursor: pointer;
   transition: var(--transition-fast);
 }
-.social-btn:hover {
+.demo-btn:hover {
   border-color: var(--primary);
-  color: var(--primary);
   background: rgba(99,14,212,0.03);
 }
+.demo-btn--admin:hover {
+  border-color: #e65100;
+  background: rgba(230,81,0,0.03);
+}
 
-.tester-hint {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  justify-content: center;
+.demo-role {
+  font-family: var(--font-headline);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+.demo-btn--admin .demo-role {
+  color: #e65100;
+}
+
+.demo-email {
+  font-size: 0.72rem;
+  color: var(--on-surface-variant);
+}
+
+.demo-hint {
   font-size: 0.78rem;
   color: var(--on-surface-variant);
-  background: var(--surface-container-lowest);
-  border: 1px dashed var(--outline-variant);
-  border-radius: var(--radius-lg);
-  padding: 0.5rem 0.75rem;
-  margin-top: 0.25rem;
 }
-.tester-hint strong { color: var(--primary); }
+.demo-hint strong {
+  color: var(--primary);
+  font-weight: 600;
+}
 </style>

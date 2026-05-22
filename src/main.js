@@ -24,7 +24,7 @@ app.use(pinia)
 app.use(router)
 app.mount('#app')
 
-// Initialize Supabase auth state after mount (non-blocking)
+// Initialize auth state after mount (non-blocking)
 import { useAuthStore } from './store/auth'
 const authStore = useAuthStore()
 authStore.init()

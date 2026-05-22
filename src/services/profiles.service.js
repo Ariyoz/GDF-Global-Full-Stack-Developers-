@@ -1,100 +1,103 @@
-// ── Profiles Service ──
-import { supabase } from '@/lib/supabase'
+// ── Profiles Service — Demo ──
+
+const demoProfiles = [
+  {
+    id: 'demo-user-001',
+    email: 'user@gfd.demo',
+    full_name: 'Alex Developer',
+    username: 'alexdev',
+    avatar: '',
+    role: 'developer',
+    status: 'active',
+    bio: 'Full-stack developer passionate about building great products.',
+    skills: ['Vue.js', 'Node.js', 'TypeScript', 'Python', 'React'],
+    location: 'San Francisco, CA',
+    github_url: 'https://github.com/alexdev',
+    portfolio: 'https://alexdev.io',
+    company: '',
+    experience_level: 'Senior Developer',
+    created_at: '2024-01-15T10:00:00Z',
+  },
+  {
+    id: 'demo-user-002',
+    email: 'sarah@example.com',
+    full_name: 'Sarah Chen',
+    username: 'sarahchen',
+    avatar: '',
+    role: 'developer',
+    status: 'active',
+    bio: 'Frontend specialist with a love for design systems and accessibility.',
+    skills: ['React', 'TypeScript', 'Figma', 'CSS', 'Next.js'],
+    location: 'Toronto, Canada',
+    github_url: 'https://github.com/sarahchen',
+    portfolio: 'https://sarahchen.dev',
+    company: '',
+    experience_level: 'Mid-Level Developer',
+    created_at: '2024-02-10T08:00:00Z',
+  },
+  {
+    id: 'demo-user-003',
+    email: 'marcus@example.com',
+    full_name: 'Marcus Johnson',
+    username: 'marcusj',
+    avatar: '',
+    role: 'client',
+    status: 'active',
+    bio: 'Startup founder looking for talented developers.',
+    skills: [],
+    location: 'New York, NY',
+    github_url: '',
+    portfolio: '',
+    company: 'TechCorp',
+    experience_level: '',
+    created_at: '2024-03-05T14:00:00Z',
+  },
+]
 
 export const profilesService = {
-  // Get profile by user ID
   async getById(userId) {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
-    if (error) throw error
-    return data
+    return demoProfiles.find(p => p.id === userId) || null
   },
 
-  // Get profile by username
   async getByUsername(username) {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('username', username)
-      .single()
-    if (error) throw error
-    return data
+    return demoProfiles.find(p => p.username === username) || null
   },
 
-  // Update profile
   async update(userId, updates) {
-    const { data, error } = await supabase
-      .from('profiles')
-      .update(updates)
-      .eq('id', userId)
-      .select()
-      .single()
-    if (error) throw error
-    return data
+    const profile = demoProfiles.find(p => p.id === userId)
+    if (profile) Object.assign(profile, updates)
+    return profile
   },
 
-  // List developers
   async listDevelopers({ page = 1, limit = 20, skills, search } = {}) {
-    let query = supabase
-      .from('profiles')
-      .select('*', { count: 'exact' })
-      .eq('role', 'developer')
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
-      .range((page - 1) * limit, page * limit - 1)
-
+    let filtered = demoProfiles.filter(p => p.role === 'developer' && p.status === 'active')
     if (search) {
-      query = query.or(`full_name.ilike.%${search}%,username.ilike.%${search}%,bio.ilike.%${search}%`)
+      const q = search.toLowerCase()
+      filtered = filtered.filter(p => p.full_name.toLowerCase().includes(q) || p.username.toLowerCase().includes(q) || p.bio.toLowerCase().includes(q))
     }
-
     if (skills && skills.length) {
-      query = query.overlaps('skills', skills)
+      filtered = filtered.filter(p => p.skills.some(s => skills.includes(s)))
     }
-
-    const { data, error, count } = await query
-    if (error) throw error
-    return { data, count }
+    const start = (page - 1) * limit
+    return { data: filtered.slice(start, start + limit), count: filtered.length }
   },
 
-  // List all users (admin)
   async listAll({ page = 1, limit = 20, search, role, status } = {}) {
-    let query = supabase
-      .from('profiles')
-      .select('*', { count: 'exact' })
-      .order('created_at', { ascending: false })
-      .range((page - 1) * limit, page * limit - 1)
-
+    let filtered = [...demoProfiles]
     if (search) {
-      query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`)
+      const q = search.toLowerCase()
+      filtered = filtered.filter(p => p.full_name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q))
     }
-    if (role) query = query.eq('role', role)
-    if (status) query = query.eq('status', status)
-
-    const { data, error, count } = await query
-    if (error) throw error
-    return { data, count }
+    if (role) filtered = filtered.filter(p => p.role === role)
+    if (status) filtered = filtered.filter(p => p.status === status)
+    const start = (page - 1) * limit
+    return { data: filtered.slice(start, start + limit), count: filtered.length }
   },
 
-  // Upload avatar
   async uploadAvatar(userId, file) {
-    const fileExt = file.name.split('.').pop()
-    const filePath = `avatars/${userId}.${fileExt}`
-
-    const { error: uploadError } = await supabase.storage
-      .from('avatars')
-      .upload(filePath, file, { upsert: true })
-    if (uploadError) throw uploadError
-
-    const { data } = supabase.storage.from('avatars').getPublicUrl(filePath)
-
-    await supabase
-      .from('profiles')
-      .update({ avatar: data.publicUrl })
-      .eq('id', userId)
-
-    return data.publicUrl
+    const url = URL.createObjectURL(file)
+    const profile = demoProfiles.find(p => p.id === userId)
+    if (profile) profile.avatar = url
+    return url
   },
 }
