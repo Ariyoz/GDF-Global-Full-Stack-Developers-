@@ -1,4 +1,4 @@
-// ── Feed Store — Demo ──
+// ── Feed Store — Real Backend ──
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { postsService } from '@/services/posts.service'
@@ -23,13 +23,15 @@ export const useFeedStore = defineStore('feed', () => {
     }
 
     try {
-      const { data, count } = await postsService.getFeed({ page: page.value, limit: 20 })
+      const result = await postsService.getFeed({ page: page.value, limit: 20, feed_type: 'explore' })
+      const newPosts = result.data || []
+
       if (reset) {
-        posts.value = data
+        posts.value = newPosts
       } else {
-        posts.value.push(...data)
+        posts.value.push(...newPosts)
       }
-      hasMore.value = data.length === 20
+      hasMore.value = result.hasMore || newPosts.length === 20
       page.value++
     } catch (err) {
       error.value = err.message
@@ -45,12 +47,35 @@ export const useFeedStore = defineStore('feed', () => {
     try {
       const newPost = await postsService.create({
         content: postData.text || postData.content,
-        author_id: authStore.user.id,
-        title: postData.title || null,
-        image_urls: postData.imageUrls || [],
+        post_type: postData.post_type || 'text',
+        media_urls: postData.imageUrls || postData.media_urls || [],
+        hashtags: postData.hashtags || [],
       })
-      posts.value.unshift(newPost)
-      return newPost
+
+      // Add to top of feed with author info
+      const postForFeed = {
+        id: newPost.id,
+        content: newPost.content || postData.text || postData.content,
+        post_type: newPost.post_type || 'text',
+        media_urls: newPost.media_urls || [],
+        hashtags: newPost.hashtags || [],
+        like_count: 0,
+        comment_count: 0,
+        repost_count: 0,
+        bookmark_count: 0,
+        is_liked: false,
+        is_bookmarked: false,
+        created_at: newPost.created_at || new Date().toISOString(),
+        author: newPost.author || {
+          id: authStore.user.id || authStore.profile?.id,
+          username: authStore.profile?.username,
+          full_name: authStore.profile?.full_name,
+          avatar: authStore.profile?.avatar,
+        },
+      }
+
+      posts.value.unshift(postForFeed)
+      return postForFeed
     } catch (err) {
       error.value = err.message
       throw err
@@ -68,30 +93,43 @@ export const useFeedStore = defineStore('feed', () => {
   }
 
   async function likePost(postId) {
-    const authStore = useAuthStore()
-    if (!authStore.user) return
-
     try {
-      await postsService.like(postId, authStore.user.id)
+      await postsService.like(postId)
       const post = posts.value.find(p => p.id === postId)
-      if (post) post.likes = (post.likes || 0) + 1
+      if (post) {
+        post.like_count = (post.like_count || 0) + 1
+        post.is_liked = true
+      }
     } catch (err) {
       // Ignore duplicate like errors
     }
   }
 
   async function unlikePost(postId) {
-    const authStore = useAuthStore()
-    if (!authStore.user) return
-
     try {
-      await postsService.unlike(postId, authStore.user.id)
+      await postsService.unlike(postId)
       const post = posts.value.find(p => p.id === postId)
-      if (post) post.likes = Math.max((post.likes || 1) - 1, 0)
+      if (post) {
+        post.like_count = Math.max((post.like_count || 1) - 1, 0)
+        post.is_liked = false
+      }
     } catch (err) {
       error.value = err.message
     }
   }
 
-  return { posts, loading, error, hasMore, fetchFeed, addPost, deletePost, likePost, unlikePost }
+  async function bookmarkPost(postId) {
+    try {
+      await postsService.bookmark(postId)
+      const post = posts.value.find(p => p.id === postId)
+      if (post) {
+        post.bookmark_count = (post.bookmark_count || 0) + 1
+        post.is_bookmarked = true
+      }
+    } catch (err) {
+      // Ignore
+    }
+  }
+
+  return { posts, loading, error, hasMore, fetchFeed, addPost, deletePost, likePost, unlikePost, bookmarkPost }
 })

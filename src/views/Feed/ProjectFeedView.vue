@@ -118,10 +118,13 @@
             <!-- Post Header -->
             <div class="post-header">
               <div class="post-author-info">
-                <div class="post-avatar">{{ post.author[0] }}</div>
+                <div class="post-avatar">
+                  <img v-if="post.author?.avatar" :src="post.author.avatar" :alt="post.author.full_name" class="post-avatar-img" />
+                  <span v-else>{{ getInitials(post.author?.full_name || post.author) }}</span>
+                </div>
                 <div>
-                  <p class="post-author-name">{{ post.author }}</p>
-                  <p class="post-meta">{{ post.time }} · {{ post.category }}</p>
+                  <p class="post-author-name">{{ post.author?.full_name || post.author }}</p>
+                  <p class="post-meta">{{ formatTime(post.created_at || post.time) }} · {{ post.author?.username || post.category || '' }}</p>
                 </div>
               </div>
               <div class="post-menu-wrap">
@@ -146,7 +149,7 @@
                 <span class="material-symbols-outlined" style="font-size:14px">repeat</span>
                 {{ user?.name || 'You' }} reposted from {{ post.repostedFrom }}
               </p>
-              <p class="post-text">{{ post.text }}</p>
+              <p class="post-text">{{ post.content || post.text }}</p>
 
               <!-- Image post -->
               <div v-if="post.type === 'image'" class="post-image-wrap">
@@ -397,6 +400,24 @@ const userInitials = computed(() => {
   const name = user.value?.full_name || user.value?.name || 'U'
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 })
+
+function getInitials(name) {
+  if (!name || typeof name !== 'string') return 'U'
+  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+}
+
+function formatTime(dateStr) {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diff = (now - date) / 1000
+
+  if (diff < 60) return 'Just now'
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
 
 // Seed data is now in the store — no local posts array needed
 
@@ -649,6 +670,13 @@ function submitComment(post, e) {
   font-family: var(--font-headline); font-size: 0.875rem; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.post-avatar-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-full);
 }
 
 .post-author-name {
