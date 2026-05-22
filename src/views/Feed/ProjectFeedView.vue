@@ -161,15 +161,17 @@
             <!-- Post Content -->
             <div class="post-content">
               <p v-if="post.content" class="post-text">{{ post.content }}</p>
+              <p v-else-if="!post.media_urls?.length" class="post-text" style="color:var(--on-surface-variant);font-style:italic;">No content</p>
 
               <!-- Media (images/videos) — shown BELOW text -->
-              <div v-if="post.media_urls && post.media_urls.length" class="post-media">
+              <div v-if="post.media_urls && post.media_urls.length && post.media_urls[0]" class="post-media">
                 <img
-                  v-for="(url, idx) in post.media_urls"
+                  v-for="(url, idx) in post.media_urls.filter(u => u)"
                   :key="idx"
                   :src="url"
                   alt="Post media"
                   class="post-image"
+                  loading="lazy"
                 />
               </div>
 
