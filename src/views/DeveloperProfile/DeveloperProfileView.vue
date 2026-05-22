@@ -30,7 +30,6 @@
         </div>
         <div class="profile-actions">
           <button
-            v-if="!isOwnProfile"
             class="btn-follow"
             :class="{ following: isFollowing }"
             @click="toggleFollow"
@@ -38,15 +37,15 @@
             <span class="material-symbols-outlined" style="font-size:18px;">{{ isFollowing ? 'person_remove' : 'person_add' }}</span>
             {{ isFollowing ? 'Following' : 'Follow' }}
           </button>
-          <RouterLink v-if="!isOwnProfile" :to="`/hire?dev=${dev.id}&name=${encodeURIComponent(dev.name)}`" class="btn-primary">
+          <RouterLink :to="`/hire?dev=${dev.id}&name=${encodeURIComponent(dev.name)}`" class="btn-primary">
             <span class="material-symbols-outlined" style="font-size:18px;">handshake</span>
             Hire {{ dev.name.split(' ')[0] }}
           </RouterLink>
-          <RouterLink v-if="!isOwnProfile" to="/messaging" class="btn-outline">
+          <RouterLink to="/messaging" class="btn-outline">
             <span class="material-symbols-outlined" style="font-size:18px;">chat</span>
             Message
           </RouterLink>
-          <RouterLink v-if="isOwnProfile" to="/dashboard/profile" class="btn-primary">
+          <RouterLink v-if="isOwnProfile" to="/dashboard/profile" class="btn-outline">
             <span class="material-symbols-outlined" style="font-size:18px;">edit</span>
             Edit Profile
           </RouterLink>
@@ -226,8 +225,21 @@ const devStore = useDevelopersStore()
 const authStore = useAuthStore()
 
 const isFollowing = ref(false)
+const followerCount = ref(0)
 const portfolioItems = ref([])
 const portfolioLink = ref('')
+
+// Load follow state from localStorage
+function loadFollowState() {
+  try {
+    const stored = localStorage.getItem('gfd_following_' + route.params.id)
+    if (stored === 'true') {
+      isFollowing.value = true
+      followerCount.value = 1
+    }
+  } catch { /* ignore */ }
+}
+loadFollowState()
 
 // Load saved portfolio items from localStorage
 function loadPortfolio() {
@@ -249,6 +261,8 @@ const isOwnProfile = computed(() => {
 
 function toggleFollow() {
   isFollowing.value = !isFollowing.value
+  followerCount.value = isFollowing.value ? followerCount.value + 1 : Math.max(followerCount.value - 1, 0)
+  localStorage.setItem('gfd_following_' + route.params.id, isFollowing.value.toString())
 }
 
 function handleFileUpload(e) {
@@ -357,7 +371,7 @@ const dev = computed(() => {
 })
 
 const profileStats = computed(() => [
-  { value: dev.value.rating || '—', label: 'Rating' },
+  { value: followerCount.value, label: 'Followers' },
   { value: dev.value.projects?.length || 0, label: 'Projects' },
   { value: dev.value.available ? 'Yes' : 'No', label: 'Available' },
   { value: dev.value.verified ? '✓' : '—', label: 'Verified' },
