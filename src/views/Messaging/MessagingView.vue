@@ -18,7 +18,7 @@
           @click="selectConv(conv)"
         >
           <div class="conv-avatar">
-            {{ conv.initials }}
+            {{ (conv.name || 'C')[0] }}
             <span v-if="conv.online" class="online-dot" />
           </div>
           <div class="conv-info">
@@ -43,10 +43,10 @@
     <div class="chat-panel" :class="{ 'hidden-mobile': !activeConv }">
       <template v-if="activeConv">
         <div class="chat-header glass-card-static">
-          <button class="btn-ghost back-btn" @click="activeConv = null">
+          <button class="btn-ghost back-btn" @click="messagingStore.setActiveConversation(null)">
             <span class="material-symbols-outlined">arrow_back</span>
           </button>
-          <div class="chat-avatar">{{ activeConv.initials }}</div>
+          <div class="chat-avatar">{{ (activeConv.name || 'C')[0] }}</div>
           <div class="chat-info">
             <p class="chat-name">{{ activeConv.name }}</p>
             <p class="chat-status">
@@ -68,7 +68,7 @@
             :class="{ 'msg-mine': msg.mine }"
           >
             <div class="msg-bubble" :class="msg.mine ? 'bubble-mine' : 'bubble-theirs'">
-              {{ msg.text }}
+              {{ msg.content || msg.text }}
               <span class="msg-time">{{ msg.time }}</span>
             </div>
           </div>
@@ -80,6 +80,7 @@
             class="chat-input"
             placeholder="Type a message..."
             @keydown.enter.prevent="sendMessage"
+            @input="handleTyping"
           />
           <button class="btn-primary send-btn" @click="sendMessage" :disabled="!newMessage.trim()">
             <span class="material-symbols-outlined">send</span>
@@ -97,32 +98,36 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, onMounted } from 'vue'
+import { useMessagingStore } from '@/store/messaging'
+import { useAuthStore } from '@/store/auth'
+
+const messagingStore = useMessagingStore()
+const authStore = useAuthStore()
 
 const search     = ref('')
-const activeConv = ref(null)
 const newMessage = ref('')
 const messagesEl = ref(null)
 
-const conversations = ref([])
-
-const messagesByConv = ref({})
+// Load conversations on mount
+onMounted(() => {
+  messagingStore.fetchConversations()
+})
 
 const filteredConvs = computed(() => {
-  if (!search.value) return conversations.value
-  return conversations.value.filter(c =>
-    c.name.toLowerCase().includes(search.value.toLowerCase())
+  if (!search.value) return messagingStore.conversations
+  return messagingStore.conversations.filter(c =>
+    (c.name || '').toLowerCase().includes(search.value.toLowerCase())
   )
 })
 
-const activeMessages = computed(() => {
-  if (!activeConv.value) return []
-  return messagesByConv.value[activeConv.value.id] || []
-})
+const activeConv = computed(() => messagingStore.activeConversation)
+const activeMessages = computed(() => messagingStore.messages)
+
+const conversations = computed(() => messagingStore.conversations)
 
 function selectConv(conv) {
-  activeConv.value = conv
-  conv.unread = 0
+  messagingStore.setActiveConversation(conv)
   nextTick(() => {
     if (messagesEl.value) {
       messagesEl.value.scrollTop = messagesEl.value.scrollHeight
@@ -130,22 +135,20 @@ function selectConv(conv) {
   })
 }
 
-function sendMessage() {
+async function sendMessage() {
   if (!newMessage.value.trim() || !activeConv.value) return
-  const msgs = messagesByConv.value[activeConv.value.id]
-  if (!msgs) messagesByConv.value[activeConv.value.id] = []
-  messagesByConv.value[activeConv.value.id].push({
-    id: Date.now(),
-    text: newMessage.value.trim(),
-    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    mine: true,
-  })
-  activeConv.value.lastMessage = newMessage.value.trim()
-  activeConv.value.time = 'Just now'
+  const text = newMessage.value.trim()
   newMessage.value = ''
+
+  await messagingStore.sendMessage(text)
+
   nextTick(() => {
     if (messagesEl.value) messagesEl.value.scrollTop = messagesEl.value.scrollHeight
   })
+}
+
+function handleTyping() {
+  messagingStore.sendTyping()
 }
 </script>
 
