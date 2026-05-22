@@ -236,7 +236,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // Upload avatar
+  // Upload avatar — updates globally
   async function uploadAvatar(file) {
     if (!user.value) return
     try {
@@ -245,9 +245,12 @@ export const useAuthStore = defineStore('auth', () => {
       const data = await http.post('/uploads/avatar', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
-      profile.value = { ...profile.value, avatar: data.url }
+      // Update avatar in profile and user refs
+      const newUrl = data.url
+      if (profile.value) profile.value.avatar = newUrl
+      if (user.value) user.value.avatar = newUrl
       persistSession()
-      return data.url
+      return newUrl
     } catch (err) {
       error.value = err.response?.data?.detail || 'Failed to upload avatar'
       throw err

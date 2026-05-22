@@ -3,7 +3,14 @@
 
     <!-- Profile Header Card -->
     <div class="glass-card profile-header-card">
-      <div class="profile-avatar-lg">{{ userInitials }}</div>
+      <div class="profile-avatar-lg" @click="triggerAvatarUpload" title="Click to change photo">
+        <img v-if="profile?.avatar" :src="profile.avatar" alt="Avatar" class="avatar-img" />
+        <span v-else>{{ userInitials }}</span>
+        <div class="avatar-overlay">
+          <span class="material-symbols-outlined" style="font-size:20px;">photo_camera</span>
+        </div>
+        <input ref="avatarInput" type="file" accept="image/jpeg,image/png,image/webp" class="hidden-input" @change="handleAvatarUpload" />
+      </div>
       <div class="profile-meta">
         <h2 class="profile-name">{{ profile?.full_name || 'Developer' }}</h2>
         <p class="profile-title">{{ profile?.experience_level || profile?.role || 'Member' }}</p>
@@ -110,6 +117,39 @@ const profile = computed(() => authStore.profile)
 const saving      = ref(false)
 const skillInput  = ref('')
 const skillsFocused = ref(false)
+const avatarInput = ref(null)
+
+function triggerAvatarUpload() {
+  avatarInput.value?.click()
+}
+
+async function handleAvatarUpload(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+
+  // Validate file type
+  const allowed = ['image/jpeg', 'image/png', 'image/webp']
+  if (!allowed.includes(file.type)) {
+    uiStore.showError('Only JPG, PNG, and WEBP images are allowed')
+    return
+  }
+
+  // Validate size (5MB max)
+  if (file.size > 5 * 1024 * 1024) {
+    uiStore.showError('Image must be under 5MB')
+    return
+  }
+
+  try {
+    await authStore.uploadAvatar(file)
+    uiStore.showSuccess('Profile photo updated!')
+  } catch {
+    uiStore.showError('Failed to upload photo')
+  }
+
+  // Reset input
+  if (avatarInput.value) avatarInput.value.value = ''
+}
 
 const form = reactive({
   full_name:        profile.value?.full_name || '',
@@ -218,6 +258,37 @@ async function handleSave() {
   font-weight: 800;
   color: var(--primary);
   flex-shrink: 0;
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-xl);
+}
+
+.avatar-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  border-radius: var(--radius-xl);
+}
+
+.profile-avatar-lg:hover .avatar-overlay {
+  opacity: 1;
+}
+
+.hidden-input {
+  display: none;
 }
 
 .profile-meta { display: flex; flex-direction: column; gap: 0.3rem; flex: 1; min-width: 0; }
