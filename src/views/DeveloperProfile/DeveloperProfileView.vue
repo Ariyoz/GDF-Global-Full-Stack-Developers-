@@ -12,7 +12,8 @@
         <div class="profile-left">
           <div class="avatar-wrap">
             <div class="profile-avatar">
-              <span class="avatar-initials">{{ initials(dev.name) }}</span>
+              <img v-if="dev.avatar" :src="dev.avatar" :alt="dev.name" class="profile-avatar-img" />
+              <span v-else class="avatar-initials">{{ initials(dev.name) }}</span>
             </div>
             <span class="online-indicator" />
           </div>
@@ -181,33 +182,35 @@
           </div>
         </div>
 
-        <!-- Activity Feed -->
+        <!-- User Posts (like Twitter profile) -->
         <div class="glass-card-static main-card">
-          <h3 class="aside-title" style="margin-bottom:1.25rem;">Recent Activity</h3>
-          <div class="activity-list">
-            <div v-for="post in dev.activity" :key="post.id" class="activity-post">
-              <div class="post-header">
-                <div class="post-avatar">{{ initials(dev.name) }}</div>
+          <h3 class="aside-title" style="margin-bottom:1.25rem;">Posts</h3>
+          <div v-if="userPosts.length" class="user-posts-list">
+            <div v-for="post in userPosts" :key="post.id" class="user-post-item">
+              <div class="post-header-mini">
+                <div class="post-avatar-mini">
+                  <img v-if="dev.avatar" :src="dev.avatar" :alt="dev.name" class="post-avatar-img" />
+                  <span v-else>{{ initials(dev.name) }}</span>
+                </div>
                 <div>
-                  <p class="post-author">{{ dev.name }}</p>
-                  <p class="post-time">{{ post.time }}</p>
+                  <p class="post-author-name">{{ dev.name }}</p>
+                  <p class="post-meta-mini">@{{ dev.username }} · {{ formatTime(post.created_at) }}</p>
                 </div>
               </div>
-              <p class="post-text">{{ post.text }}</p>
-              <div class="post-actions">
-                <button class="post-action-btn">
-                  <span class="material-symbols-outlined" style="font-size:18px;">thumb_up</span>
-                  {{ post.likes }}
-                </button>
-                <button class="post-action-btn">
-                  <span class="material-symbols-outlined" style="font-size:18px;">comment</span>
-                  {{ post.comments }}
-                </button>
-                <button class="post-action-btn">
-                  <span class="material-symbols-outlined" style="font-size:18px;">share</span>
-                </button>
+              <p v-if="post.content" class="post-text-content">{{ post.content }}</p>
+              <div v-if="post.media_urls && post.media_urls.length" class="post-media-grid">
+                <img v-for="(url, idx) in post.media_urls" :key="idx" :src="url" alt="Post media" class="post-media-img" />
+              </div>
+              <div class="post-stats-mini">
+                <span>❤️ {{ post.like_count || 0 }}</span>
+                <span>💬 {{ post.comment_count || 0 }}</span>
+                <span>🔁 {{ post.repost_count || 0 }}</span>
               </div>
             </div>
+          </div>
+          <div v-else class="no-posts">
+            <span class="material-symbols-outlined" style="font-size:2.5rem;color:var(--on-surface-variant)">article</span>
+            <p style="margin-top:0.5rem;color:var(--on-surface-variant)">No posts yet</p>
           </div>
         </div>
       </div>
@@ -222,6 +225,7 @@ import { useDevelopersStore } from '@/store/developers'
 import { useAuthStore } from '@/store/auth'
 import { messagingService } from '@/services/messaging.service'
 import { profilesService } from '@/services/profiles.service'
+import http from '@/services/http'
 
 const route    = useRoute()
 const router   = useRouter()
@@ -320,9 +324,76 @@ function removePortfolioItem(id) {
   savePortfolio()
 }
 
-// Load the developer profile — use auth profile if it's the logged-in user
+// Load the developer profile from the backend API
+const profileData = ref(null)
+const userPosts = ref([])
+const loadingProfile = ref(true)
+
+async function loadProfile() {
+  loadingProfile.value = true
+  const profileId = route.params.id
+
+  try {
+    // Fetch user profile from backend
+    const data = await http.get(`/users/${profileId}`)
+    profileData.value = data
+
+    // Update follower count from backend
+    followerCount.value = data.follower_count || 0
+
+    // Check if we're following this user
+    isFollowing.value = data.is_following || false
+
+    // Fetch user's posts
+    try {
+      const feedData = await http.get(`/feed?feed_type=user&user_id=${profileId}&limit=20`)
+      userPosts.value = feedData.posts || []
+    } catch { userPosts.value = [] }
+  } catch (err) {
+    console.error('Failed to load profile:', err)
+  } finally {
+    loadingProfile.value = false
+  }
+}
+
+// Load on mount
+import { onMounted } from 'vue'
+onMounted(() => {
+  loadProfile()
+})
+
 const dev = computed(() => {
   const profileId = route.params.id
+
+  // If we fetched from backend, use that
+  if (profileData.value) {
+    const p = profileData.value
+    return {
+      id: p.id,
+      name: p.full_name || p.username || 'User',
+      username: p.username || '',
+      avatar: p.avatar || '',
+      banner: p.banner || '',
+      role: p.experience_level || p.role || 'Developer',
+      location: p.location || '',
+      bio: p.bio || '',
+      skills: Array.isArray(p.skills) ? p.skills : [],
+      tech_stack: Array.isArray(p.tech_stack) ? p.tech_stack : [],
+      github: p.github_url || '',
+      linkedin: p.linkedin_url || '',
+      website: p.portfolio_url || p.website_url || '',
+      available: p.available_for_hire !== false,
+      verified: p.is_verified || false,
+      hourly_rate: p.hourly_rate,
+      experience_level: p.experience_level || '',
+      follower_count: p.follower_count || 0,
+      following_count: p.following_count || 0,
+      post_count: p.post_count || 0,
+      experience: [],
+      projects: [],
+      activity: [],
+    }
+  }
 
   // If viewing own profile, use auth store data
   if (authStore.profile && authStore.profile.id === profileId) {
@@ -330,60 +401,40 @@ const dev = computed(() => {
     return {
       id: p.id,
       name: p.full_name || 'User',
+      username: p.username || '',
+      avatar: p.avatar || '',
       role: p.experience_level || p.role || 'Developer',
       location: p.location || '',
       bio: p.bio || '',
       skills: Array.isArray(p.skills) ? p.skills : [],
+      tech_stack: [],
       github: p.github_url || '',
       linkedin: '',
-      website: p.portfolio || '',
-      available: p.available !== false,
+      website: p.portfolio_url || '',
+      available: true,
       verified: true,
-      rating: '5.0',
-      experience: [
-        { title: p.experience_level || 'Developer', company: 'GFD Community', period: '2024–Present', desc: p.bio || '' },
-      ],
+      experience: [],
       projects: [],
       activity: [],
     }
   }
 
-  // Try loading from developers store
-  const found = devStore.getById(profileId)
-  if (found) {
-    return {
-      id: found.id,
-      name: found.full_name || found.name || 'Developer',
-      role: found.experience_level || found.role || 'Developer',
-      location: found.location || '',
-      bio: found.bio || '',
-      skills: Array.isArray(found.skills) ? found.skills : [],
-      github: found.github_url || '',
-      linkedin: '',
-      website: found.portfolio || '',
-      available: found.available !== false,
-      verified: true,
-      rating: '5.0',
-      experience: found.experience || [],
-      projects: found.projects || [],
-      activity: found.activity || [],
-    }
-  }
-
-  // Fallback — empty profile
+  // Loading state
   return {
     id: profileId || '',
-    name: 'User',
-    role: 'Developer',
+    name: 'Loading...',
+    username: '',
+    avatar: '',
+    role: '',
     location: '',
-    bio: 'No bio available.',
+    bio: '',
     skills: [],
+    tech_stack: [],
     github: '',
     linkedin: '',
     website: '',
     available: false,
     verified: false,
-    rating: '—',
     experience: [],
     projects: [],
     activity: [],
@@ -392,13 +443,26 @@ const dev = computed(() => {
 
 const profileStats = computed(() => [
   { value: followerCount.value, label: 'Followers' },
-  { value: dev.value.projects?.length || 0, label: 'Projects' },
+  { value: dev.value.following_count || 0, label: 'Following' },
+  { value: dev.value.post_count || userPosts.value.length || 0, label: 'Posts' },
   { value: dev.value.available ? 'Yes' : 'No', label: 'Available' },
-  { value: dev.value.verified ? '✓' : '—', label: 'Verified' },
 ])
 
 function initials(name) {
+  if (!name || typeof name !== 'string') return 'U'
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+}
+
+function formatTime(dateStr) {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diff = (now - date) / 1000
+  if (diff < 60) return 'Just now'
+  if (diff < 3600) return `${Math.floor(diff / 60)}m`
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h`
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d`
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 </script>
 
@@ -466,6 +530,13 @@ function initials(name) {
   font-size: 2rem;
   font-weight: 700;
   color: var(--primary);
+}
+
+.profile-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-xl);
 }
 
 .online-indicator {
@@ -748,6 +819,90 @@ function initials(name) {
   padding: 0;
 }
 .post-action-btn:hover { color: var(--primary); }
+
+/* ── User Posts on Profile ── */
+.user-posts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.user-post-item {
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--outline-variant);
+}
+.user-post-item:last-child { border-bottom: none; padding-bottom: 0; }
+
+.post-header-mini {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 0.5rem;
+}
+
+.post-avatar-mini {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  background: var(--primary-fixed);
+  color: var(--primary);
+  font-family: var(--font-headline);
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.post-avatar-mini .post-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.post-meta-mini {
+  font-size: 0.75rem;
+  color: var(--on-surface-variant);
+}
+
+.post-text-content {
+  font-size: 0.9rem;
+  color: var(--on-surface);
+  line-height: 1.5;
+  margin-bottom: 0.5rem;
+}
+
+.post-media-grid {
+  margin-top: 0.5rem;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.post-media-img {
+  width: 100%;
+  max-height: 400px;
+  object-fit: cover;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--outline-variant);
+}
+
+.post-stats-mini {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--on-surface-variant);
+}
+
+.no-posts {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  text-align: center;
+}
 
 /* Portfolio Upload */
 .portfolio-empty {
