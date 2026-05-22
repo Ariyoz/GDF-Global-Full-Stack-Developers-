@@ -37,6 +37,19 @@ export const API_ENDPOINTS = {
     trending:  '/feed/trending/hashtags',
   },
 
+  // Explore & Discovery
+  explore: {
+    developers: '/explore/developers',
+    search:     '/explore/search',
+    suggestions:'/explore/suggestions',
+    trending:   '/explore/trending',
+  },
+
+  // Direct Hiring
+  hire: {
+    send: (devId) => `/hire/${devId}`,
+  },
+
   // Projects / Hiring
   projects: {
     list:         '/projects',
