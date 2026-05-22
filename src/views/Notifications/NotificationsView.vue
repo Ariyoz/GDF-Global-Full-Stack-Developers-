@@ -58,6 +58,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/store/auth'
 import { notificationsService } from '@/services/notifications.service'
+import { websocketService } from '@/services/websocket.service'
 
 const authStore = useAuthStore()
 const activeTab = ref('all')
@@ -93,7 +94,37 @@ async function markAllRead() {
 function updateCounts() {
   tabs.value[0].count = notifications.value.length
   tabs.value[1].count = notifications.value.filter(n => !n.read).length
-  tabs.value[2].count = notifications.value.filter(n => n.type === 'mentions').length
+  tabs.value[2].count = notifications.value.filter(n => n.type === 'mention').length
+}
+
+function getNotifIcon(type) {
+  const icons = {
+    like: 'favorite',
+    comment: 'chat_bubble',
+    follow: 'person_add',
+    mention: 'alternate_email',
+    repost: 'repeat',
+    message: 'mail',
+    application_received: 'work',
+    application_accepted: 'check_circle',
+    application_rejected: 'cancel',
+    project_update: 'update',
+    system: 'info',
+    admin_alert: 'warning',
+  }
+  return icons[type] || 'notifications'
+}
+
+function timeAgo(dateStr) {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diff = (now - date) / 1000
+  if (diff < 60) return 'Just now'
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
 onMounted(async () => {
@@ -104,31 +135,35 @@ onMounted(async () => {
     const data = await notificationsService.getAll(userId)
     notifications.value = (data || []).map(n => ({
       id: n.id,
-      icon: n.type === 'message' ? 'chat' : n.type === 'job' ? 'work' : n.type === 'like' ? 'favorite' : 'notifications',
+      icon: getNotifIcon(n.type),
       color: 'var(--primary)',
       bg: 'rgba(99,14,212,0.08)',
-      title: n.message,
-      desc: '',
-      time: new Date(n.created_at).toLocaleString(),
+      title: n.title || n.message || 'Notification',
+      desc: n.body || '',
+      time: n.created_at ? timeAgo(n.created_at) : '',
       read: n.is_read,
       type: n.type || 'all',
+      action_url: n.action_url,
     }))
     updateCounts()
 
-    // Subscribe to real-time notifications
-    notificationsService.subscribeToNotifications(userId, (newNotif) => {
-      notifications.value.unshift({
-        id: newNotif.id,
-        icon: 'notifications',
-        color: 'var(--primary)',
-        bg: 'rgba(99,14,212,0.08)',
-        title: newNotif.message,
-        desc: '',
-        time: 'Just now',
-        read: false,
-        type: newNotif.type || 'all',
-      })
-      updateCounts()
+    // Subscribe to real-time notifications via WebSocket
+    websocketService.onEvent((event) => {
+      if (event.type === 'notification' && event.data) {
+        notifications.value.unshift({
+          id: event.data.id || Date.now(),
+          icon: getNotifIcon(event.data.type),
+          color: 'var(--primary)',
+          bg: 'rgba(99,14,212,0.08)',
+          title: event.data.title || 'New notification',
+          desc: event.data.body || '',
+          time: 'Just now',
+          read: false,
+          type: event.data.type || 'all',
+          action_url: event.data.action_url,
+        })
+        updateCounts()
+      }
     })
   } catch (err) {
     console.error('Failed to load notifications:', err)

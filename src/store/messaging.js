@@ -57,12 +57,13 @@ export const useMessagingStore = defineStore('messaging', () => {
       const data = await messagingService.getConversations(authStore.user.id)
       conversations.value = data.map(c => ({
         id: c.id,
-        name: c.name || 'Conversation',
+        name: c.name || 'User',
         avatar: c.avatar,
         lastMessage: c.last_message_content || '',
         time: c.last_message_at ? new Date(c.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
         unread: 0,
         type: c.type,
+        otherUserId: c.other_user_id,
       }))
     } catch (err) {
       console.error('Failed to fetch conversations:', err)

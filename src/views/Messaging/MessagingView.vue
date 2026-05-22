@@ -18,7 +18,8 @@
           @click="selectConv(conv)"
         >
           <div class="conv-avatar">
-            {{ (conv.name || 'C')[0] }}
+            <img v-if="conv.avatar" :src="conv.avatar" :alt="conv.name" class="conv-avatar-img" />
+            <span v-else>{{ (conv.name || 'U')[0] }}</span>
             <span v-if="conv.online" class="online-dot" />
           </div>
           <div class="conv-info">
@@ -27,7 +28,7 @@
               <span class="conv-time">{{ conv.time }}</span>
             </div>
             <div class="conv-bottom">
-              <span class="conv-last">{{ conv.lastMessage }}</span>
+              <span class="conv-last">{{ conv.lastMessage || 'Start chatting...' }}</span>
               <span v-if="conv.unread" class="unread-badge">{{ conv.unread }}</span>
             </div>
           </div>
@@ -46,7 +47,10 @@
           <button class="btn-ghost back-btn" @click="messagingStore.setActiveConversation(null)">
             <span class="material-symbols-outlined">arrow_back</span>
           </button>
-          <div class="chat-avatar">{{ (activeConv.name || 'C')[0] }}</div>
+          <div class="chat-avatar">
+            <img v-if="activeConv.avatar" :src="activeConv.avatar" :alt="activeConv.name" class="conv-avatar-img" />
+            <span v-else>{{ (activeConv.name || 'U')[0] }}</span>
+          </div>
           <div class="chat-info">
             <p class="chat-name">{{ activeConv.name }}</p>
             <p class="chat-status">
@@ -229,6 +233,14 @@ function handleTyping() {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.conv-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-full);
 }
 .online-dot {
   position: absolute;
