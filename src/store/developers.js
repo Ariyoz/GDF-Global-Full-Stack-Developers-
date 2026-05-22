@@ -14,7 +14,24 @@ export const useDevelopersStore = defineStore('developers', () => {
     error.value = null
     try {
       const { data, count } = await profilesService.listDevelopers({ page, limit, search, skills, location, experience_level })
-      all.value = data || []
+      // Map backend fields to what the explore template expects
+      all.value = (data || []).map(d => ({
+        id: d.id,
+        name: d.full_name || d.username || 'Developer',
+        username: d.username,
+        avatar: d.avatar,
+        role: d.experience_level || 'Developer',
+        type: d.experience_level || 'Full Stack',
+        skills: d.skills || [],
+        bio: d.bio || '',
+        location: d.location || '',
+        available: d.available_for_hire !== false,
+        rating: '5.0',
+        projects: 0,
+        hourly_rate: d.hourly_rate,
+        github_url: d.github_url,
+        follower_count: d.follower_count || 0,
+      }))
       total.value = count || 0
     } catch (err) {
       error.value = err.message

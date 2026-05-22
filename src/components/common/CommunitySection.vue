@@ -49,20 +49,40 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
 import SectionHeader from '@/components/ui/SectionHeader.vue'
+import http from '@/services/http'
 
-const communityStats = [
-  { value: '80+',  label: 'Active Developers' },
-  { value: '12+',  label: 'Countries' },
-  { value: '150+', label: 'Projects Shipped' },
-  { value: '40+',  label: 'Open Roles' },
-]
+const communityStats = ref([
+  { value: '—', label: 'Active Developers' },
+  { value: '—', label: 'Companies Hiring' },
+  { value: '—', label: 'Projects Delivered' },
+  { value: '—', label: 'Countries' },
+])
+
+onMounted(async () => {
+  try {
+    const data = await http.get('/admin/analytics')
+    communityStats.value = [
+      { value: String(data.total_users || 0), label: 'Developers' },
+      { value: String(data.total_projects || 0), label: 'Companies Hiring' },
+      { value: String(data.total_posts || 0), label: 'Projects Delivered' },
+      { value: '5+', label: 'Countries' },
+    ]
+  } catch {
+    // If not admin, try explore endpoint
+    try {
+      const devs = await http.get('/explore/developers?limit=1')
+      communityStats.value[0].value = String(devs.total || 0)
+    } catch { /* ignore */ }
+  }
+})
 
 const benefits = [
   { icon: 'handshake',     title: 'Real Collaboration',  desc: 'Work alongside senior developers on live client projects.' },
   { icon: 'trending_up',   title: 'Career Growth',       desc: 'Mentorship, code reviews, and skill development programs.' },
   { icon: 'work',          title: 'Job Opportunities',   desc: 'Access exclusive job board with vetted tech companies.' },
-  { icon: 'public',        title: 'Global Network',      desc: 'Connect with developers across 12+ countries.' },
+  { icon: 'public',        title: 'Global Network',      desc: 'Connect with developers across multiple countries.' },
   { icon: 'emoji_events',  title: 'Recognition',         desc: 'Get featured for your contributions and achievements.' },
   { icon: 'bolt',          title: 'Modern Tech Stack',   desc: 'Work with the latest tools, frameworks, and best practices.' },
 ]

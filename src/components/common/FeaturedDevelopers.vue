@@ -24,7 +24,8 @@
           <!-- Card Header -->
           <div class="dev-card-header">
             <div class="dev-avatar">
-              <span class="dev-initials">{{ initials(dev.name) }}</span>
+              <img v-if="dev.avatar" :src="dev.avatar" :alt="dev.name" class="dev-avatar-img" />
+              <span v-else class="dev-initials">{{ initials(dev.name) }}</span>
               <span v-if="dev.available" class="dev-online-dot" />
             </div>
             <div class="dev-meta">
@@ -54,11 +55,11 @@
               </span>
             </div>
             <div class="dev-footer-actions">
-              <RouterLink to="/explore" class="btn-view">
+              <RouterLink :to="`/developer/${dev.id}`" class="btn-view">
                 <span class="material-symbols-outlined" style="font-size:14px">person</span>
                 Portfolio
               </RouterLink>
-              <RouterLink to="/hire" class="btn-hire">
+              <RouterLink :to="`/hire?dev=${dev.id}&name=${encodeURIComponent(dev.name)}`" class="btn-hire">
                 <span class="material-symbols-outlined" style="font-size:14px">handshake</span>
                 Hire
               </RouterLink>
@@ -71,10 +72,33 @@
 </template>
 
 <script setup>
-const developers = []
+import { ref, onMounted } from 'vue'
+import http from '@/services/http'
+
+const developers = ref([])
+
+onMounted(async () => {
+  try {
+    const data = await http.get('/explore/developers?limit=6')
+    developers.value = (data.developers || []).map(d => ({
+      id: d.id,
+      name: d.full_name || d.username,
+      role: d.experience_level || 'Developer',
+      avatar: d.avatar,
+      tags: (d.skills || []).slice(0, 3),
+      bio: d.bio || 'Available for hire on GFD.',
+      rating: '5.0',
+      projects: 0,
+      available: d.available_for_hire !== false,
+    }))
+  } catch {
+    // Not logged in or API error — show empty
+  }
+})
 
 function initials(name) {
-  return name.split(' ').map(n => n[0]).join('').toUpperCase()
+  if (!name) return 'U'
+  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 }
 </script>
 
@@ -155,6 +179,13 @@ function initials(name) {
   font-size: 1rem;
   font-weight: 700;
   color: var(--primary);
+}
+
+.dev-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-lg);
 }
 
 .dev-online-dot {
