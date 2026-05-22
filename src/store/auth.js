@@ -27,33 +27,31 @@ export const useAuthStore = defineStore('auth', () => {
       const refreshToken = localStorage.getItem('gfd_refresh_token')
       const storedUser = localStorage.getItem('gfd_user')
 
-      if (token && storedUser) {
+      if (token) {
         session.value = { access_token: token }
-        user.value = JSON.parse(storedUser)
-        profile.value = JSON.parse(storedUser)
 
-        // Verify token is still valid by fetching profile
-        try {
-          const data = await http.get(users.me)
+        if (storedUser) {
+          user.value = JSON.parse(storedUser)
+          profile.value = JSON.parse(storedUser)
+        }
+
+        // Try to fetch fresh profile in background (don't block)
+        http.get(users.me).then(data => {
           user.value = data
           profile.value = data
           persistSession()
-        } catch {
-          // Token expired, try refresh
+        }).catch(() => {
+          // Token might be expired — try refresh silently
           if (refreshToken) {
-            try {
-              await refreshTokenFn()
-            } catch {
+            refreshTokenFn().catch(() => {
+              // Only clear if refresh also fails
               clearSession()
-            }
-          } else {
-            clearSession()
+            })
           }
-        }
+        })
       }
     } catch (err) {
       console.error('Auth init error:', err)
-      clearSession()
     } finally {
       initialized.value = true
     }
@@ -90,15 +88,18 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   // Register
-  async function register({ email, password, username, full_name, role }) {
+  async function register({ email, password, username, full_name, name, role }) {
     loading.value = true
     error.value = null
     try {
+      const displayName = full_name || name || 'User'
+      const uname = username || email.split('@')[0].replace(/[^a-zA-Z0-9_-]/g, '')
+
       const data = await http.post(auth.register, {
         email,
         password,
-        username: username || email.split('@')[0],
-        full_name: full_name || username || 'User',
+        username: uname,
+        full_name: displayName,
         role: role || 'developer',
       })
 
@@ -137,8 +138,8 @@ export const useAuthStore = defineStore('auth', () => {
       profile.value = { id: data.user_id, email, role: data.role }
       persistSession()
 
-      // Fetch full profile
-      await fetchProfile()
+      // Fetch full profile in background (don't block login)
+      fetchProfile().catch(() => {})
 
       return data
     } catch (err) {
