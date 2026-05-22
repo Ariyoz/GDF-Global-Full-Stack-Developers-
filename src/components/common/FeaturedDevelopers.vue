@@ -104,7 +104,16 @@ function initials(name) {
 
 <style scoped>
 /* Subtle tinted background — adapts to dark mode via CSS variable */
-.featured-section { background: var(--surface-container-low); }
+.featured-section {
+  background: var(--surface-container-low);
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.featured-section .container-gfd {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
 
 /* Section header */
 .section-top {
