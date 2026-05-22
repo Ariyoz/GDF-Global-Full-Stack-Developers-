@@ -46,9 +46,9 @@ export const useFeedStore = defineStore('feed', () => {
 
     try {
       const newPost = await postsService.create({
-        content: postData.text || postData.content,
-        post_type: postData.post_type || 'text',
-        media_urls: postData.imageUrls || postData.media_urls || [],
+        content: postData.content || postData.text,
+        post_type: postData.post_type || (postData.media_urls?.length ? 'image' : 'text'),
+        media_urls: postData.media_urls || [],
         hashtags: postData.hashtags || [],
       })
 

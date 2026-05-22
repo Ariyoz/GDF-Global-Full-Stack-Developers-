@@ -280,6 +280,7 @@ import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
 import { useFeedStore }  from '@/store/feed'
+import http from '@/services/http'
 
 const authStore = useAuthStore()
 const feedStore = useFeedStore()
@@ -470,19 +471,40 @@ async function submitPost() {
   if (!newPost.value.trim() && !selectedImage.value && !quotePost.value) return
 
   try {
+    let mediaUrls = []
+
+    // Upload image to Cloudinary if selected
+    if (selectedImageFile.value) {
+      try {
+        const formData = new FormData()
+        formData.append('file', selectedImageFile.value)
+        const uploadResult = await http.post('/uploads/media', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
+        if (uploadResult.url) {
+          mediaUrls.push(uploadResult.url)
+        }
+      } catch (uploadErr) {
+        console.error('Image upload failed:', uploadErr)
+      }
+    }
+
     await feedStore.addPost({
+      content: newPost.value,
       text: newPost.value,
-      imageUrls: selectedImage.value ? [selectedImage.value] : [],
+      media_urls: mediaUrls,
+      post_type: mediaUrls.length > 0 ? 'image' : 'text',
     })
   } catch {
-    // If service fails, add locally for now
+    // Fallback — add locally
     const post = {
-      id: Date.now(),
-      author: { full_name: user.value?.full_name || 'You', avatar: user.value?.avatar },
+      id: 'local-' + Date.now(),
+      author: { full_name: user.value?.full_name || 'You', avatar: user.value?.avatar, username: user.value?.username },
       content: newPost.value,
-      likes: 0,
+      like_count: 0,
       comment_count: 0,
-      image_urls: selectedImage.value ? [selectedImage.value] : [],
+      repost_count: 0,
+      media_urls: selectedImage.value ? [selectedImage.value] : [],
       created_at: new Date().toISOString(),
     }
     feedStore.posts.unshift(post)
