@@ -62,19 +62,23 @@ const communityStats = ref([
 
 onMounted(async () => {
   try {
-    const data = await http.get('/admin/analytics')
+    const devs = await http.get('/explore/developers?limit=1')
     communityStats.value = [
-      { value: String(data.total_users || 0), label: 'Developers' },
-      { value: String(data.total_projects || 0), label: 'Companies Hiring' },
-      { value: String(data.total_posts || 0), label: 'Projects Delivered' },
+      { value: String(devs.total || devs.developers?.length || 0), label: 'Developers' },
+      { value: '0', label: 'Companies Hiring' },
+      { value: '0', label: 'Projects Delivered' },
       { value: '5+', label: 'Countries' },
     ]
   } catch {
-    // If not admin, try explore endpoint
     try {
-      const devs = await http.get('/explore/developers?limit=1')
-      communityStats.value[0].value = String(devs.total || 0)
-    } catch { /* ignore */ }
+      const data = await http.get('/admin/analytics')
+      communityStats.value = [
+        { value: String(data.total_users || 0), label: 'Developers' },
+        { value: String(data.total_projects || 0), label: 'Companies Hiring' },
+        { value: String(data.total_posts || 0), label: 'Projects Delivered' },
+        { value: '5+', label: 'Countries' },
+      ]
+    } catch { /* leave defaults */ }
   }
 })
 

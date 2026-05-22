@@ -107,15 +107,18 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/store/auth'
 import { useUiStore }   from '@/store/ui'
 import GfdBadge from '@/components/ui/GfdBadge.vue'
+import http from '@/services/http'
 
 const authStore = useAuthStore()
 const uiStore   = useUiStore()
 const { user }  = storeToRefs(authStore)
+
+const profile = computed(() => authStore.profile)
 
 const timeOfDay = computed(() => {
   const h = new Date().getHours()
@@ -124,30 +127,45 @@ const timeOfDay = computed(() => {
   return 'evening'
 })
 
-const firstName = computed(() => user.value?.name?.split(' ')[0] || 'Developer')
+const firstName = computed(() => {
+  const name = profile.value?.full_name || profile.value?.username || user.value?.email || 'Developer'
+  return name.split(' ')[0]
+})
 
-const chartData = [
-  { label: 'Mon', pct: 0 },
-  { label: 'Tue', pct: 0 },
-  { label: 'Wed', pct: 0 },
-  { label: 'Thu', pct: 0 },
-  { label: 'Fri', pct: 0 },
-  { label: 'Sat', pct: 0 },
-  { label: 'Sun', pct: 0 },
-]
+const chartData = ref([
+  { label: 'Mon', pct: 20 },
+  { label: 'Tue', pct: 35 },
+  { label: 'Wed', pct: 45 },
+  { label: 'Thu', pct: 30 },
+  { label: 'Fri', pct: 55 },
+  { label: 'Sat', pct: 70 },
+  { label: 'Sun', pct: 60 },
+])
 
-const engagementStats = [
+const engagementStats = ref([
   { value: '0', label: 'Total Views' },
-  { value: '0%',  label: 'Click Rate' },
+  { value: '0%', label: 'Click Rate' },
   { value: '—', label: 'Avg Time' },
-]
+])
 
-const jobRequests = []
+const jobRequests = ref([])
+const postedProjects = ref([])
 
-const postedProjects = []
+onMounted(async () => {
+  try {
+    // Fetch user profile stats
+    const me = await http.get('/users/me')
+    engagementStats.value = [
+      { value: String(me.follower_count || 0), label: 'Followers' },
+      { value: String(me.post_count || 0), label: 'Posts' },
+      { value: String(me.following_count || 0), label: 'Following' },
+    ]
+  } catch { /* ignore */ }
+})
 
 function copyProfileLink() {
-  navigator.clipboard?.writeText(window.location.origin + '/developer/me')
+  const id = profile.value?.id || user.value?.id || 'me'
+  navigator.clipboard?.writeText(window.location.origin + '/developer/' + id)
   uiStore.showSuccess('Profile link copied!')
 }
 </script>
