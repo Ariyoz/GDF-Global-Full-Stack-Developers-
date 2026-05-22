@@ -127,7 +127,7 @@
 
       <!-- Pagination -->
       <div class="table-pagination">
-        <p class="pagination-info">Showing 1–{{ filteredUsers.length }} of 12,842 users</p>
+        <p class="pagination-info">Showing {{ filteredUsers.length }} user{{ filteredUsers.length !== 1 ? 's' : '' }}</p>
         <div class="pagination-btns">
           <button class="page-btn" disabled>
             <span class="material-symbols-outlined">chevron_left</span>
@@ -152,7 +152,7 @@ const searchQuery  = ref('')
 
 const tabs = [
   { value: 'all',          label: 'All Users',            badge: null },
-  { value: 'verification', label: 'Verification Approval', badge: 42 },
+  { value: 'verification', label: 'Verification Approval', badge: null },
   { value: 'suspended',    label: 'Suspended',             badge: null },
   { value: 'permissions',  label: 'Permissions',           badge: null },
 ]

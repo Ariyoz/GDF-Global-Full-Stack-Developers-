@@ -111,9 +111,9 @@ import { ref, computed } from 'vue'
 const activeTab = ref('pending')
 
 const tabs = [
-  { value: 'pending',  label: 'Pending Review', badge: 8 },
-  { value: 'posts',    label: 'Flagged Posts',   badge: 5 },
-  { value: 'comments', label: 'Flagged Comments', badge: 3 },
+  { value: 'pending',  label: 'Pending Review', badge: null },
+  { value: 'posts',    label: 'Flagged Posts',   badge: null },
+  { value: 'comments', label: 'Flagged Comments', badge: null },
   { value: 'resolved', label: 'Resolved',        badge: null },
 ]
 

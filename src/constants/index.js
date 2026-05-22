@@ -85,10 +85,10 @@ export const SERVICES = [
 ]
 
 export const STATS = [
-  { value: '10k+', label: 'Developers' },
-  { value: '500+', label: 'Companies Hiring' },
-  { value: '150+', label: 'Projects Delivered' },
-  { value: '12+',  label: 'Countries' },
+  { value: '0', label: 'Developers' },
+  { value: '0', label: 'Companies Hiring' },
+  { value: '0', label: 'Projects Delivered' },
+  { value: '0', label: 'Countries' },
 ]
 
 export const TEAM = {
