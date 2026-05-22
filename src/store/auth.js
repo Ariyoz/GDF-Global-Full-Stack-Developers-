@@ -1,46 +1,10 @@
-// ── Auth Store — Demo Mode ──
+// ── Auth Store — Real Backend ──
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import http from '@/services/http'
+import { API_ENDPOINTS } from '@/config/api'
 
-// Demo accounts
-const DEMO_ACCOUNTS = {
-  user: {
-    id: 'demo-user-001',
-    email: 'user@gfd.demo',
-    full_name: 'Alex Developer',
-    avatar: '',
-    role: 'developer',
-    status: 'active',
-    bio: 'Full-stack developer passionate about building great products.',
-    skills: ['Vue.js', 'Node.js', 'TypeScript', 'Python', 'React'],
-    location: 'San Francisco, CA',
-    github_url: 'https://github.com/alexdev',
-    portfolio: 'https://alexdev.io',
-    company: '',
-    experience_level: 'Senior Developer',
-    username: 'alexdev',
-    created_at: '2024-01-15T10:00:00Z',
-  },
-  admin: {
-    id: 'demo-admin-001',
-    email: 'admin@gfd.demo',
-    full_name: 'GFD Admin',
-    avatar: '',
-    role: 'admin',
-    status: 'active',
-    bio: 'Platform administrator.',
-    skills: [],
-    location: 'Remote',
-    github_url: '',
-    portfolio: '',
-    company: 'GFD',
-    experience_level: '',
-    username: 'gfdadmin',
-    created_at: '2024-01-01T00:00:00Z',
-  },
-}
-
-const DEMO_PASSWORD = 'demo1234'
+const { auth, users } = API_ENDPOINTS
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
@@ -57,59 +21,101 @@ export const useAuthStore = defineStore('auth', () => {
   const isRecruiter = computed(() => profile.value?.role === 'recruiter')
 
   // Initialize auth state from localStorage
-  function init() {
+  async function init() {
     try {
-      const stored = localStorage.getItem('gfd_demo_session')
-      if (stored) {
-        const data = JSON.parse(stored)
-        session.value = data.session
-        user.value = data.user
-        profile.value = data.profile
+      const token = localStorage.getItem('gfd_token')
+      const refreshToken = localStorage.getItem('gfd_refresh_token')
+      const storedUser = localStorage.getItem('gfd_user')
+
+      if (token && storedUser) {
+        session.value = { access_token: token }
+        user.value = JSON.parse(storedUser)
+        profile.value = JSON.parse(storedUser)
+
+        // Verify token is still valid by fetching profile
+        try {
+          const data = await http.get(users.me)
+          user.value = data
+          profile.value = data
+          persistSession()
+        } catch {
+          // Token expired, try refresh
+          if (refreshToken) {
+            try {
+              await refreshTokenFn()
+            } catch {
+              clearSession()
+            }
+          } else {
+            clearSession()
+          }
+        }
       }
     } catch (err) {
       console.error('Auth init error:', err)
-      localStorage.removeItem('gfd_demo_session')
+      clearSession()
     } finally {
       initialized.value = true
     }
   }
 
-  // Persist session to localStorage
   function persistSession() {
-    localStorage.setItem('gfd_demo_session', JSON.stringify({
-      session: session.value,
-      user: user.value,
-      profile: profile.value,
-    }))
+    if (session.value) {
+      localStorage.setItem('gfd_token', session.value.access_token)
+    }
+    if (user.value) {
+      localStorage.setItem('gfd_user', JSON.stringify(user.value))
+    }
   }
 
-  // Fetch user profile (returns stored profile)
+  function clearSession() {
+    session.value = null
+    user.value = null
+    profile.value = null
+    localStorage.removeItem('gfd_token')
+    localStorage.removeItem('gfd_refresh_token')
+    localStorage.removeItem('gfd_user')
+  }
+
+  // Fetch user profile
   async function fetchProfile() {
-    // Profile is already loaded from demo data
-    return profile.value
+    try {
+      const data = await http.get(users.me)
+      user.value = data
+      profile.value = data
+      persistSession()
+    } catch (err) {
+      console.warn('Failed to fetch profile:', err)
+    }
   }
 
-  // Register (demo — just logs in as user)
-  async function register({ email, password, name, role }) {
+  // Register
+  async function register({ email, password, username, full_name, role }) {
     loading.value = true
     error.value = null
     try {
-      // In demo mode, registration creates a session as the user account
-      const demoProfile = {
-        ...DEMO_ACCOUNTS.user,
-        id: 'demo-' + Date.now(),
+      const data = await http.post(auth.register, {
         email,
-        full_name: name || 'New User',
+        password,
+        username: username || email.split('@')[0],
+        full_name: full_name || username || 'User',
         role: role || 'developer',
-      }
+      })
 
-      user.value = { id: demoProfile.id, email: demoProfile.email }
-      session.value = { access_token: 'demo-token-' + Date.now(), user: user.value }
-      profile.value = demoProfile
+      session.value = { access_token: data.access_token }
+      localStorage.setItem('gfd_token', data.access_token)
+      localStorage.setItem('gfd_refresh_token', data.refresh_token)
+
+      user.value = { id: data.user_id, email, role: data.role }
+      profile.value = { id: data.user_id, email, role: data.role, full_name: full_name || username }
       persistSession()
-      return { session: session.value, user: user.value }
+
+      // Fetch full profile
+      await fetchProfile()
+
+      return data
     } catch (err) {
-      error.value = err.message || 'Registration failed'
+      error.value = err.response?.data?.detail || err.message || 'Registration failed'
       throw err
     } finally {
       loading.value = false
@@ -121,72 +127,136 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true
     error.value = null
     try {
-      // Check demo credentials
-      let matchedAccount = null
+      const data = await http.post(auth.login, { email, password })
 
-      if (email === DEMO_ACCOUNTS.user.email && password === DEMO_PASSWORD) {
-        matchedAccount = DEMO_ACCOUNTS.user
-      } else if (email === DEMO_ACCOUNTS.admin.email && password === DEMO_PASSWORD) {
-        matchedAccount = DEMO_ACCOUNTS.admin
-      } else {
-        throw new Error('Invalid email or password. Use demo credentials.')
-      }
+      session.value = { access_token: data.access_token }
+      localStorage.setItem('gfd_token', data.access_token)
+      localStorage.setItem('gfd_refresh_token', data.refresh_token)
 
-      user.value = { id: matchedAccount.id, email: matchedAccount.email }
-      session.value = { access_token: 'demo-token-' + Date.now(), user: user.value }
-      profile.value = { ...matchedAccount }
+      user.value = { id: data.user_id, email, role: data.role }
+      profile.value = { id: data.user_id, email, role: data.role }
       persistSession()
 
-      return { session: session.value, user: user.value }
+      // Fetch full profile
+      await fetchProfile()
+
+      return data
     } catch (err) {
-      error.value = err.message || 'Invalid email or password'
+      error.value = err.response?.data?.detail || err.message || 'Invalid email or password'
       throw err
     } finally {
       loading.value = false
     }
   }
 
-  // Login with OAuth provider (demo — not supported)
+  // Login with OAuth provider (GitHub/Google)
   async function loginWithProvider(provider) {
-    error.value = `OAuth login is not available in demo mode. Use demo credentials instead.`
-    throw new Error(error.value)
+    loading.value = true
+    error.value = null
+    try {
+      const endpoint = provider === 'github' ? auth.githubLogin : auth.googleLogin
+      const data = await http.get(endpoint)
+      // Redirect to OAuth provider
+      window.location.href = data.url
+    } catch (err) {
+      error.value = err.message || `${provider} login failed`
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // Handle OAuth callback (called from AuthCallbackView)
+  async function handleOAuthCallback(tokenData) {
+    session.value = { access_token: tokenData.access_token }
+    localStorage.setItem('gfd_token', tokenData.access_token)
+    localStorage.setItem('gfd_refresh_token', tokenData.refresh_token)
+
+    user.value = { id: tokenData.user_id, role: tokenData.role }
+    profile.value = { id: tokenData.user_id, role: tokenData.role }
+    persistSession()
+
+    await fetchProfile()
+  }
+
+  // Refresh token
+  async function refreshTokenFn() {
+    const refreshToken = localStorage.getItem('gfd_refresh_token')
+    if (!refreshToken) throw new Error('No refresh token')
+
+    const data = await http.post(auth.refresh, { refresh_token: refreshToken })
+
+    session.value = { access_token: data.access_token }
+    localStorage.setItem('gfd_token', data.access_token)
+    localStorage.setItem('gfd_refresh_token', data.refresh_token)
+
+    user.value = { ...user.value, id: data.user_id, role: data.role }
+    return data
   }
 
   // Logout
   async function logout() {
-    session.value = null
-    user.value = null
-    profile.value = null
-    localStorage.removeItem('gfd_demo_session')
+    try {
+      const refreshToken = localStorage.getItem('gfd_refresh_token')
+      if (refreshToken) {
+        await http.post(auth.logout, { refresh_token: refreshToken })
+      }
+    } catch {
+      // Ignore logout errors
+    }
+    clearSession()
   }
 
-  // Forgot password (demo — no-op)
+  // Forgot password
   async function forgotPassword(email) {
-    // In demo mode, just show a success message
-    return true
+    loading.value = true
+    error.value = null
+    try {
+      await http.post(auth.forgotPassword, { email })
+    } catch (err) {
+      error.value = err.response?.data?.detail || 'Failed to send reset email'
+      throw err
+    } finally {
+      loading.value = false
+    }
   }
 
   // Update profile
   async function updateProfile(updates) {
     if (!user.value) return
-    profile.value = { ...profile.value, ...updates }
-    persistSession()
-    return profile.value
+    try {
+      const data = await http.patch(users.me, updates)
+      profile.value = { ...profile.value, ...updates }
+      persistSession()
+      return profile.value
+    } catch (err) {
+      error.value = err.response?.data?.detail || 'Failed to update profile'
+      throw err
+    }
   }
 
-  // Upload avatar (demo — use object URL)
+  // Upload avatar
   async function uploadAvatar(file) {
     if (!user.value) return
-    const url = URL.createObjectURL(file)
-    profile.value = { ...profile.value, avatar: url }
-    persistSession()
-    return url
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const data = await http.post('/uploads/avatar', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      profile.value = { ...profile.value, avatar: data.url }
+      persistSession()
+      return data.url
+    } catch (err) {
+      error.value = err.response?.data?.detail || 'Failed to upload avatar'
+      throw err
+    }
   }
 
   return {
     user, profile, session, loading, error, initialized,
     isAuthenticated, isAdmin, isDeveloper, isClient, isRecruiter,
-    init, login, register, loginWithProvider, logout,
-    forgotPassword, fetchProfile, updateProfile, uploadAvatar,
+    init, login, register, loginWithProvider, handleOAuthCallback, logout,
+    forgotPassword, fetchProfile, updateProfile, uploadAvatar, refreshToken: refreshTokenFn,
   }
 })

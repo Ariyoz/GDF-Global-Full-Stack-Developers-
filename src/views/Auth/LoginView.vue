@@ -50,25 +50,6 @@
         Google
       </button>
     </div>
-
-    <div class="auth-divider" style="margin-top:1rem;">
-      <span>demo login</span>
-    </div>
-
-    <div class="demo-credentials">
-      <p class="demo-title">Demo Accounts</p>
-      <div class="demo-grid">
-        <button class="demo-btn" type="button" @click="fillDemo('user')">
-          <span class="demo-role">User</span>
-          <span class="demo-email">user@gfd.demo</span>
-        </button>
-        <button class="demo-btn demo-btn--admin" type="button" @click="fillDemo('admin')">
-          <span class="demo-role">Admin</span>
-          <span class="demo-email">admin@gfd.demo</span>
-        </button>
-      </div>
-      <p class="demo-hint">Password: <strong>demo1234</strong></p>
-    </div>
   </div>
 </template>
 
@@ -111,20 +92,11 @@ async function handleLogin() {
   }
 }
 
-function fillDemo(type) {
-  if (type === 'admin') {
-    form.email = 'admin@gfd.demo'
-  } else {
-    form.email = 'user@gfd.demo'
-  }
-  form.password = 'demo1234'
-}
-
 async function loginWithGitHub() {
   try {
     await authStore.loginWithProvider('github')
   } catch {
-    uiStore.showError('GitHub login is not available in demo mode')
+    uiStore.showError('GitHub login failed')
   }
 }
 
@@ -132,7 +104,7 @@ async function loginWithGoogle() {
   try {
     await authStore.loginWithProvider('google')
   } catch {
-    uiStore.showError('Google login is not available in demo mode')
+    uiStore.showError('Google login failed')
   }
 }
 </script>

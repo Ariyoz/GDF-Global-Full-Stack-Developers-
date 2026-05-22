@@ -1,8 +1,6 @@
 // ── Axios HTTP Client ──
 import axios from 'axios'
 import { API_BASE_URL, API_TIMEOUT } from '@/config/api'
-import { useAuthStore } from '@/store/auth'
-import router from '@/router'
 
 const http = axios.create({
   baseURL: API_BASE_URL,
@@ -34,15 +32,23 @@ http.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
       try {
-        const authStore = useAuthStore()
-        await authStore.refreshToken()
-        const newToken = localStorage.getItem('gfd_token')
-        originalRequest.headers.Authorization = `Bearer ${newToken}`
+        const refreshToken = localStorage.getItem('gfd_refresh_token')
+        if (!refreshToken) throw new Error('No refresh token')
+
+        const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+          refresh_token: refreshToken,
+        })
+
+        localStorage.setItem('gfd_token', data.access_token)
+        localStorage.setItem('gfd_refresh_token', data.refresh_token)
+        originalRequest.headers.Authorization = `Bearer ${data.access_token}`
         return http(originalRequest)
       } catch {
-        const authStore = useAuthStore()
-        authStore.logout()
-        router.push('/auth/login')
+        // Refresh failed — clear session and redirect to login
+        localStorage.removeItem('gfd_token')
+        localStorage.removeItem('gfd_refresh_token')
+        localStorage.removeItem('gfd_user')
+        window.location.href = '/auth/login'
         return Promise.reject(error)
       }
     }

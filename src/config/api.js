@@ -1,7 +1,7 @@
 // ── API Configuration ──
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
-export const API_TIMEOUT  = 15000
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
+export const API_TIMEOUT  = 30000
 
 export const API_ENDPOINTS = {
   // Auth
@@ -12,47 +12,77 @@ export const API_ENDPOINTS = {
     refresh:        '/auth/refresh',
     forgotPassword: '/auth/forgot-password',
     resetPassword:  '/auth/reset-password',
-    me:             '/auth/me',
+    me:             '/users/me',
+    githubLogin:    '/auth/github/login',
+    googleLogin:    '/auth/google/login',
   },
 
   // Users
   users: {
-    profile:  '/users/profile',
-    update:   '/users/profile',
-    list:     '/users',
+    me:       '/users/me',
     byId:     (id) => `/users/${id}`,
+    follow:   (id) => `/users/${id}/follow`,
+    followers:(id) => `/users/${id}/followers`,
+    following:(id) => `/users/${id}/following`,
   },
 
-  // Client Requests
-  requests: {
-    submit: '/requests',
-    list:   '/requests',
-    byId:   (id) => `/requests/${id}`,
-    update: (id) => `/requests/${id}`,
+  // Feed / Social
+  feed: {
+    list:      '/feed',
+    create:    '/feed',
+    byId:      (id) => `/feed/${id}`,
+    like:      (id) => `/feed/${id}/like`,
+    comment:   (id) => `/feed/${id}/comment`,
+    bookmark:  (id) => `/feed/${id}/bookmark`,
+    trending:  '/feed/trending/hashtags',
   },
 
-  // Community
-  community: {
-    members: '/community/members',
-    jobs:    '/community/jobs',
-    projects:'/community/projects',
-    join:    '/community/join',
-  },
-
-  // Projects / Portfolio
+  // Projects / Hiring
   projects: {
-    list:   '/projects',
-    byId:   (id) => `/projects/${id}`,
-    bySlug: (slug) => `/projects/slug/${slug}`,
+    list:         '/projects',
+    create:       '/projects',
+    byId:         (id) => `/projects/${id}`,
+    apply:        (id) => `/projects/${id}/apply`,
+    applications: (id) => `/projects/${id}/applications`,
   },
 
-  // Contact
-  contact: {
-    send: '/contact',
+  // Messaging
+  messages: {
+    conversations: '/messages/conversations',
+    messages:      (convId) => `/messages/conversations/${convId}/messages`,
+    send:          (convId) => `/messages/conversations/${convId}/messages`,
   },
 
-  // Newsletter
-  newsletter: {
-    subscribe: '/newsletter/subscribe',
+  // Notifications
+  notifications: {
+    list:       '/notifications',
+    unread:     '/notifications/unread-count',
+    markRead:   (id) => `/notifications/${id}/read`,
+    markAllRead:'/notifications/read-all',
+  },
+
+  // GitHub
+  github: {
+    sync:    '/github/sync',
+    profile: '/github/profile',
+    repos:   '/github/repos',
+  },
+
+  // Uploads
+  uploads: {
+    avatar: '/uploads/avatar',
+    banner: '/uploads/banner',
+    media:  '/uploads/media',
+    file:   '/uploads/file',
+  },
+
+  // Admin
+  admin: {
+    analytics:  '/admin/analytics',
+    users:      '/admin/users',
+    suspend:    (id) => `/admin/users/${id}/suspend`,
+    reinstate:  (id) => `/admin/users/${id}/reinstate`,
+    reports:    '/admin/reports',
+    resolveReport: (id) => `/admin/reports/${id}`,
   },
 }
