@@ -83,18 +83,22 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useAuthStore } from '@/store/auth'
+import { analyticsService } from '@/services/analytics.service'
+import { walletService } from '@/services/wallet.service'
 
+const authStore = useAuthStore()
 const period = ref('7')
 
-const kpis = [
+const kpis = ref([
   { icon: 'visibility',   color: 'var(--primary)',  bg: 'rgba(99,14,212,0.08)',  label: 'Profile Views',  value: '0', change: '—', positive: false },
   { icon: 'ads_click',    color: '#16a34a',          bg: 'rgba(22,163,74,0.08)', label: 'Click Rate',     value: '0%',   change: '—', positive: false },
   { icon: 'work',         color: 'var(--tertiary)',  bg: 'rgba(161,81,0,0.08)',  label: 'Job Requests',   value: '0',     change: '—',    positive: false },
   { icon: 'payments',     color: '#f59e0b',          bg: 'rgba(245,158,11,0.08)',label: 'Earnings',       value: '$0', change: '—',  positive: false },
-]
+])
 
-const chartData = [
+const chartData = ref([
   { label: 'Mon', views: 0, clicks: 0 },
   { label: 'Tue', views: 0, clicks: 0 },
   { label: 'Wed', views: 0, clicks: 0 },
@@ -102,9 +106,32 @@ const chartData = [
   { label: 'Fri', views: 0, clicks: 0 },
   { label: 'Sat', views: 0, clicks: 0 },
   { label: 'Sun', views: 0, clicks: 0 },
-]
+])
 
-const activityRows = []
+const activityRows = ref([])
+
+onMounted(async () => {
+  const userId = authStore.user?.id
+  if (!userId) return
+
+  try {
+    const [views, jobRequests, weeklyViews, wallet] = await Promise.all([
+      analyticsService.getProfileViews(userId),
+      analyticsService.getJobRequestCount(userId),
+      analyticsService.getWeeklyViews(userId),
+      walletService.getWallet(userId),
+    ])
+
+    kpis.value[0].value = String(views)
+    kpis.value[2].value = String(jobRequests)
+    kpis.value[3].value = `$${Number(wallet.total_earned || 0).toLocaleString()}`
+
+    // Update chart with real weekly data
+    chartData.value = weeklyViews.map(d => ({ label: d.label, views: d.views, clicks: 0 }))
+  } catch (err) {
+    console.error('Analytics load error:', err)
+  }
+})
 </script>
 
 <style scoped>

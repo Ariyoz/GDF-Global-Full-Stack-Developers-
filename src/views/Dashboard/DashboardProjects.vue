@@ -102,31 +102,72 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/store/auth'
+import { supabase } from '@/lib/supabase'
 import GfdBadge from '@/components/ui/GfdBadge.vue'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const activeStatus = ref('all')
 
-// Navigate to the project upload page
 function goToNewProject() {
   router.push({ name: 'project-upload' })
 }
 
-const statusTabs = [
-  { value: 'all',       label: 'All',        count: 3 },
-  { value: 'active',    label: 'Active',     count: 1 },
-  { value: 'review',    label: 'In Review',  count: 1 },
-  { value: 'pending',   label: 'Pending',    count: 1 },
+const statusTabs = ref([
+  { value: 'all',       label: 'All',        count: 0 },
+  { value: 'active',    label: 'Active',     count: 0 },
+  { value: 'review',    label: 'In Review',  count: 0 },
+  { value: 'pending',   label: 'Pending',    count: 0 },
   { value: 'completed', label: 'Completed',  count: 0 },
-]
+])
 
 const projects = ref([])
 
 const filteredProjects = computed(() => {
   if (activeStatus.value === 'all') return projects.value
   return projects.value.filter(p => p.statusKey === activeStatus.value)
+})
+
+onMounted(async () => {
+  const userId = authStore.user?.id
+  if (!userId) return
+
+  try {
+    const { data, error } = await supabase
+      .from('jobs')
+      .select('*')
+      .eq('client_id', userId)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+
+    projects.value = (data || []).map(j => ({
+      id: j.id,
+      name: j.title,
+      desc: j.description?.slice(0, 100) || '',
+      type: j.project_type || 'Web App',
+      status: j.status === 'open' ? 'Active' : j.status === 'in_progress' ? 'In Review' : j.status === 'completed' ? 'Completed' : 'Pending',
+      statusVariant: j.status === 'open' ? 'success' : j.status === 'in_progress' ? 'warning' : j.status === 'completed' ? 'success' : 'default',
+      statusKey: j.status === 'open' ? 'active' : j.status === 'in_progress' ? 'review' : j.status === 'completed' ? 'completed' : 'pending',
+      progress: j.status === 'completed' ? 100 : j.status === 'in_progress' ? 50 : j.status === 'open' ? 25 : 10,
+      deadline: j.deadline ? new Date(j.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—',
+      team: 0,
+      icon: 'work',
+      gradient: 'linear-gradient(135deg,#630ed4,#7c3aed)',
+    }))
+
+    // Update tab counts
+    statusTabs.value[0].count = projects.value.length
+    statusTabs.value[1].count = projects.value.filter(p => p.statusKey === 'active').length
+    statusTabs.value[2].count = projects.value.filter(p => p.statusKey === 'review').length
+    statusTabs.value[3].count = projects.value.filter(p => p.statusKey === 'pending').length
+    statusTabs.value[4].count = projects.value.filter(p => p.statusKey === 'completed').length
+  } catch (err) {
+    console.error('Failed to load projects:', err)
+  }
 })
 </script>
 

@@ -134,23 +134,23 @@ const keyMetrics = [
 ]
 
 const userGrowthData = [
-  { label: 'Mon', pct: 45 },
-  { label: 'Tue', pct: 62 },
-  { label: 'Wed', pct: 78 },
-  { label: 'Thu', pct: 55 },
-  { label: 'Fri', pct: 90 },
-  { label: 'Sat', pct: 40 },
-  { label: 'Sun', pct: 35 },
+  { label: 'Mon', pct: 0 },
+  { label: 'Tue', pct: 0 },
+  { label: 'Wed', pct: 0 },
+  { label: 'Thu', pct: 0 },
+  { label: 'Fri', pct: 0 },
+  { label: 'Sat', pct: 0 },
+  { label: 'Sun', pct: 0 },
 ]
 
 const engagementData = [
-  { label: 'Mon', pct: 60 },
-  { label: 'Tue', pct: 75 },
-  { label: 'Wed', pct: 85 },
-  { label: 'Thu', pct: 70 },
-  { label: 'Fri', pct: 95 },
-  { label: 'Sat', pct: 50 },
-  { label: 'Sun', pct: 45 },
+  { label: 'Mon', pct: 0 },
+  { label: 'Tue', pct: 0 },
+  { label: 'Wed', pct: 0 },
+  { label: 'Thu', pct: 0 },
+  { label: 'Fri', pct: 0 },
+  { label: 'Sat', pct: 0 },
+  { label: 'Sun', pct: 0 },
 ]
 
 const topSkills = []
@@ -160,12 +160,12 @@ const topProjects = []
 const geoData = []
 
 const healthMetrics = [
-  { label: 'API Response Time',  value: '42ms avg',     status: 'healthy' },
-  { label: 'Database Load',      value: '23% capacity', status: 'healthy' },
-  { label: 'Error Rate',         value: '0.02%',        status: 'healthy' },
-  { label: 'CDN Cache Hit',      value: '94.7%',        status: 'healthy' },
+  { label: 'API Response Time',  value: '—',            status: 'healthy' },
+  { label: 'Database Load',      value: '—',            status: 'healthy' },
+  { label: 'Error Rate',         value: '—',            status: 'healthy' },
+  { label: 'CDN Cache Hit',      value: '—',            status: 'healthy' },
   { label: 'Auth Service',       value: 'Operational',  status: 'healthy' },
-  { label: 'Storage Usage',      value: '67% used',     status: 'warning' },
+  { label: 'Storage Usage',      value: '—',            status: 'healthy' },
 ]
 </script>
 

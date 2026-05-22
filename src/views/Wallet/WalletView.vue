@@ -12,14 +12,14 @@
       <div class="balance-glow" />
       <div class="balance-content">
         <p class="balance-label">Total Balance</p>
-        <p class="balance-amount">$0.00</p>
+        <p class="balance-amount">${{ balance.toLocaleString('en-US', { minimumFractionDigits: 2 }) }}</p>
         <p class="balance-sub">Available for withdrawal</p>
       </div>
       <div class="balance-stats">
         <div class="bstat">
           <span class="material-symbols-outlined bstat-icon">trending_up</span>
           <div>
-            <p class="bstat-value">$0</p>
+            <p class="bstat-value">${{ monthlyEarnings.toLocaleString() }}</p>
             <p class="bstat-label">This month</p>
           </div>
         </div>
@@ -27,7 +27,7 @@
         <div class="bstat">
           <span class="material-symbols-outlined bstat-icon">account_balance</span>
           <div>
-            <p class="bstat-value">$0</p>
+            <p class="bstat-value">${{ totalEarned.toLocaleString() }}</p>
             <p class="bstat-label">All time</p>
           </div>
         </div>
@@ -105,11 +105,18 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import GfdBadge from '@/components/ui/GfdBadge.vue'
 import { useUiStore } from '@/store/ui'
+import { useAuthStore } from '@/store/auth'
+import { walletService } from '@/services/wallet.service'
 
 const uiStore = useUiStore()
+const authStore = useAuthStore()
+
+const balance = ref(0)
+const monthlyEarnings = ref(0)
+const totalEarned = ref(0)
 
 const quickActions = [
   { label: 'Withdraw',   icon: 'arrow_upward',   bg: 'rgba(99,14,212,0.08)',  color: 'var(--primary)',  handler: () => uiStore.showInfo('Withdrawal coming soon') },
@@ -117,7 +124,7 @@ const quickActions = [
   { label: 'Send',       icon: 'send',           bg: 'rgba(161,81,0,0.08)',  color: 'var(--tertiary)',  handler: () => uiStore.showInfo('Send money coming soon') },
 ]
 
-const chartData = [
+const chartData = ref([
   { label: 'Mon', pct: 0, amount: 0 },
   { label: 'Tue', pct: 0, amount: 0 },
   { label: 'Wed', pct: 0, amount: 0 },
@@ -125,9 +132,42 @@ const chartData = [
   { label: 'Fri', pct: 0, amount: 0 },
   { label: 'Sat', pct: 0, amount: 0 },
   { label: 'Sun', pct: 0, amount: 0 },
-]
+])
 
 const transactions = ref([])
+
+onMounted(async () => {
+  const userId = authStore.user?.id
+  if (!userId) return
+
+  try {
+    const [wallet, txns, monthly] = await Promise.all([
+      walletService.getWallet(userId),
+      walletService.getTransactions(userId),
+      walletService.getMonthlyEarnings(userId),
+    ])
+
+    balance.value = Number(wallet.balance || 0)
+    totalEarned.value = Number(wallet.total_earned || 0)
+    monthlyEarnings.value = monthly
+
+    transactions.value = txns.map(t => ({
+      id: t.id,
+      icon: t.type === 'payment' ? 'payments' : t.type === 'withdrawal' ? 'arrow_upward' : 'star',
+      color: t.type === 'payment' ? '#16a34a' : t.type === 'withdrawal' ? 'var(--error)' : '#f59e0b',
+      bg: t.type === 'payment' ? 'rgba(22,163,74,0.08)' : t.type === 'withdrawal' ? 'rgba(186,26,26,0.08)' : 'rgba(245,158,11,0.08)',
+      name: t.description || t.type,
+      desc: t.reference || '',
+      date: new Date(t.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      amount: Number(t.amount).toFixed(2),
+      positive: t.type !== 'withdrawal',
+      status: t.status === 'completed' ? 'Completed' : 'Pending',
+      statusVariant: t.status === 'completed' ? 'success' : 'warning',
+    }))
+  } catch (err) {
+    console.error('Wallet load error:', err)
+  }
+})
 </script>
 
 <style scoped>

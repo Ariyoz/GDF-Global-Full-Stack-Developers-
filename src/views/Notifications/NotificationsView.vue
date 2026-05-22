@@ -55,15 +55,18 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useAuthStore } from '@/store/auth'
+import { notificationsService } from '@/services/notifications.service'
 
+const authStore = useAuthStore()
 const activeTab = ref('all')
 
-const tabs = [
-  { value: 'all',      label: 'All',      count: 4 },
-  { value: 'unread',   label: 'Unread',   count: 4 },
-  { value: 'mentions', label: 'Mentions', count: 1 },
-]
+const tabs = ref([
+  { value: 'all',      label: 'All',      count: 0 },
+  { value: 'unread',   label: 'Unread',   count: 0 },
+  { value: 'mentions', label: 'Mentions', count: 0 },
+])
 
 const notifications = ref([])
 
@@ -73,18 +76,64 @@ const filteredNotifs = computed(() => {
   return notifications.value
 })
 
-function markRead(notif) {
+async function markRead(notif) {
   notif.read = true
-  const tab = tabs.find(t => t.value === 'unread')
-  if (tab) tab.count = notifications.value.filter(n => !n.read).length
-  const allTab = tabs.find(t => t.value === 'all')
-  if (allTab) allTab.count = notifications.value.filter(n => !n.read).length
+  await notificationsService.markAsRead(notif.id)
+  updateCounts()
 }
 
-function markAllRead() {
+async function markAllRead() {
+  const userId = authStore.user?.id
+  if (!userId) return
+  await notificationsService.markAllAsRead(userId)
   notifications.value.forEach(n => { n.read = true })
-  tabs.forEach(t => { t.count = 0 })
+  updateCounts()
 }
+
+function updateCounts() {
+  tabs.value[0].count = notifications.value.length
+  tabs.value[1].count = notifications.value.filter(n => !n.read).length
+  tabs.value[2].count = notifications.value.filter(n => n.type === 'mentions').length
+}
+
+onMounted(async () => {
+  const userId = authStore.user?.id
+  if (!userId) return
+
+  try {
+    const data = await notificationsService.getAll(userId)
+    notifications.value = (data || []).map(n => ({
+      id: n.id,
+      icon: n.type === 'message' ? 'chat' : n.type === 'job' ? 'work' : n.type === 'like' ? 'favorite' : 'notifications',
+      color: 'var(--primary)',
+      bg: 'rgba(99,14,212,0.08)',
+      title: n.message,
+      desc: '',
+      time: new Date(n.created_at).toLocaleString(),
+      read: n.is_read,
+      type: n.type || 'all',
+    }))
+    updateCounts()
+
+    // Subscribe to real-time notifications
+    notificationsService.subscribeToNotifications(userId, (newNotif) => {
+      notifications.value.unshift({
+        id: newNotif.id,
+        icon: 'notifications',
+        color: 'var(--primary)',
+        bg: 'rgba(99,14,212,0.08)',
+        title: newNotif.message,
+        desc: '',
+        time: 'Just now',
+        read: false,
+        type: newNotif.type || 'all',
+      })
+      updateCounts()
+    })
+  } catch (err) {
+    console.error('Failed to load notifications:', err)
+  }
+})
 </script>
 
 <style scoped>
