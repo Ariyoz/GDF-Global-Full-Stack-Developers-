@@ -125,12 +125,12 @@ import { ref } from 'vue'
 const timeRange = ref('30d')
 
 const keyMetrics = [
-  { icon: 'group',        label: 'Total Users',       value: '12,842',  change: '+12.3%', positive: true,  color: 'var(--primary)' },
-  { icon: 'article',      label: 'Total Posts',       value: '48,291',  change: '+8.7%',  positive: true,  color: '#3b82f6' },
-  { icon: 'folder_open',  label: 'Active Projects',   value: '1,847',   change: '+15.2%', positive: true,  color: '#10b981' },
-  { icon: 'handshake',    label: 'Collaborations',    value: '3,412',   change: '+22.1%', positive: true,  color: '#f59e0b' },
-  { icon: 'visibility',   label: 'Page Views (30d)',  value: '2.4M',    change: '+5.8%',  positive: true,  color: 'var(--primary)' },
-  { icon: 'timer',        label: 'Avg Session',       value: '8m 42s',  change: '-2.1%',  positive: false, color: 'var(--error)' },
+  { icon: 'group',        label: 'Total Users',       value: '0',     change: '—',     positive: false, color: 'var(--primary)' },
+  { icon: 'article',      label: 'Total Posts',       value: '0',     change: '—',     positive: false, color: '#3b82f6' },
+  { icon: 'folder_open',  label: 'Active Projects',   value: '0',     change: '—',     positive: false, color: '#10b981' },
+  { icon: 'handshake',    label: 'Collaborations',    value: '0',     change: '—',     positive: false, color: '#f59e0b' },
+  { icon: 'visibility',   label: 'Page Views (30d)',  value: '0',     change: '—',     positive: false, color: 'var(--primary)' },
+  { icon: 'timer',        label: 'Avg Session',       value: '—',     change: '—',     positive: false, color: 'var(--error)' },
 ]
 
 const userGrowthData = [
@@ -153,29 +153,11 @@ const engagementData = [
   { label: 'Sun', pct: 45 },
 ]
 
-const topSkills = [
-  { name: 'React',       count: '4,281', pct: 95 },
-  { name: 'TypeScript',  count: '3,892', pct: 87 },
-  { name: 'Node.js',     count: '3,541', pct: 79 },
-  { name: 'Python',      count: '2,987', pct: 67 },
-  { name: 'Rust',        count: '1,842', pct: 41 },
-]
+const topSkills = []
 
-const topProjects = [
-  { name: 'GFD Platform',     collaborators: '24 devs', pct: 100 },
-  { name: 'DevConnect API',   collaborators: '18 devs', pct: 75 },
-  { name: 'CodeReview Bot',   collaborators: '12 devs', pct: 50 },
-  { name: 'SkillMatch AI',    collaborators: '9 devs',  pct: 38 },
-  { name: 'OpenDeploy',       collaborators: '7 devs',  pct: 29 },
-]
+const topProjects = []
 
-const geoData = [
-  { flag: '🇺🇸', name: 'United States', users: '3,842', pct: 100 },
-  { flag: '🇳🇬', name: 'Nigeria',       users: '2,104', pct: 55 },
-  { flag: '🇮🇳', name: 'India',         users: '1,987', pct: 52 },
-  { flag: '🇬🇧', name: 'United Kingdom', users: '1,241', pct: 32 },
-  { flag: '🇩🇪', name: 'Germany',       users: '892',   pct: 23 },
-]
+const geoData = []
 
 const healthMetrics = [
   { label: 'API Response Time',  value: '42ms avg',     status: 'healthy' },

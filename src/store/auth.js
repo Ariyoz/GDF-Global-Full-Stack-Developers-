@@ -104,23 +104,10 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true
     error.value   = null
 
-    try {
-      // Try real API first
-      try {
-        const { authService } = await import('@/services/auth.service')
-        const res = await authService.login(credentials)
-        setSession(res.token, res.user)
-        return res
-      } catch (apiErr) {
-        // If API returned a proper error response (server is up but credentials wrong)
-        if (apiErr?.response) {
-          error.value = apiErr.response?.data?.error || 'Invalid email or password.'
-          throw new Error('Invalid credentials')
-        }
-        // API unreachable — fall back to mock auth
-      }
+    // Simulate network delay
+    await new Promise(r => setTimeout(r, 600))
 
-      // ── Fallback: Mock auth ──
+    try {
       const match = mockUsers.value.find(
         u => u.email === credentials.email && u.password === credentials.password
       )
@@ -141,23 +128,9 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true
     error.value   = null
 
-    try {
-      // Try real API first
-      try {
-        const { authService } = await import('@/services/auth.service')
-        const res = await authService.register(userData)
-        setSession(res.token, res.user)
-        return res
-      } catch (apiErr) {
-        // If API returned a proper error (server is up)
-        if (apiErr?.response) {
-          error.value = apiErr.response?.data?.error || 'Registration failed.'
-          throw new Error('Registration failed')
-        }
-        // API unreachable — fall back to mock
-      }
+    await new Promise(r => setTimeout(r, 800))
 
-      // ── Fallback: Mock register ──
+    try {
       const existing = mockUsers.value.find(u => u.email === userData.email)
       if (existing) {
         error.value = 'An account with that email already exists.'

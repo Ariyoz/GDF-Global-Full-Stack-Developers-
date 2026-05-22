@@ -158,19 +158,13 @@ const tabs = [
 ]
 
 const userStats = [
-  { icon: 'group',          label: 'Total Users',     value: '12,842', color: 'var(--on-primary-fixed)', bg: 'var(--primary-fixed)' },
-  { icon: 'verified_user',  label: 'Verified Pros',   value: '4,102',  color: 'var(--primary)',          bg: 'var(--surface-container-high)' },
-  { icon: 'pending_actions',label: 'Pending Review',  value: '284',    color: 'var(--tertiary)',          bg: 'var(--tertiary-fixed)',        valueColor: 'var(--tertiary)' },
-  { icon: 'block',          label: 'Flagged',         value: '12',     color: 'var(--on-error-container)',bg: 'var(--error-container)',       valueColor: 'var(--error)' },
+  { icon: 'group',          label: 'Total Users',     value: '0', color: 'var(--on-primary-fixed)', bg: 'var(--primary-fixed)' },
+  { icon: 'verified_user',  label: 'Verified Pros',   value: '0', color: 'var(--primary)',          bg: 'var(--surface-container-high)' },
+  { icon: 'pending_actions',label: 'Pending Review',  value: '0', color: 'var(--tertiary)',          bg: 'var(--tertiary-fixed)',        valueColor: 'var(--tertiary)' },
+  { icon: 'block',          label: 'Flagged',         value: '0', color: 'var(--on-error-container)',bg: 'var(--error-container)',       valueColor: 'var(--error)' },
 ]
 
-const users = ref([
-  { id: 1, name: 'Alex Rivera',    email: 'alex.riv@gfd.dev',    role: 'Full-Stack Dev',  joined: 'Oct 12, 2023', skillDots: ['active','active','active'],   status: 'active',    statusLabel: 'Active' },
-  { id: 2, name: 'Jordan Smith',   email: 'j.smith@agency.io',   role: 'Client (Pro)',    joined: 'Nov 02, 2023', skillDots: [],                             status: 'pending',   statusLabel: 'Pending Review' },
-  { id: 3, name: 'Elena Petrova',  email: 'elena.p@cloud.net',   role: 'DevOps Engineer', joined: 'Aug 19, 2023', skillDots: ['active','inactive'],          status: 'suspended', statusLabel: 'Suspended' },
-  { id: 4, name: 'Marcus Thorne',  email: 'm.thorne@vector.com', role: 'Backend Dev',     joined: 'Sep 05, 2023', skillDots: ['active','active'],            status: 'active',    statusLabel: 'Active' },
-  { id: 5, name: 'Priya Sharma',   email: 'priya@mobile.dev',    role: 'Mobile Dev',      joined: 'Dec 01, 2023', skillDots: ['active','active','active'],   status: 'active',    statusLabel: 'Active' },
-])
+const users = ref([])
 
 const filteredUsers = computed(() => {
   let list = users.value

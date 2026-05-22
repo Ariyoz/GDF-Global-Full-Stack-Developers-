@@ -97,21 +97,13 @@ const statusFilter = ref('')
 const typeFilter = ref('')
 
 const reportStats = [
-  { icon: 'report',       label: 'Open Reports',    value: '14',  color: 'var(--error)',    bg: 'var(--error-container)',  valueColor: 'var(--error)' },
-  { icon: 'search',       label: 'Investigating',   value: '6',   color: 'var(--tertiary)', bg: 'var(--tertiary-fixed)',   valueColor: 'var(--tertiary)' },
-  { icon: 'check_circle', label: 'Resolved (7d)',   value: '42',  color: 'var(--primary)',  bg: 'var(--primary-fixed)' },
-  { icon: 'timer',        label: 'Avg Resolution',  value: '4.2h', color: 'var(--on-surface-variant)', bg: 'var(--surface-container-high)' },
+  { icon: 'report',       label: 'Open Reports',    value: '0',   color: 'var(--error)',    bg: 'var(--error-container)',  valueColor: 'var(--error)' },
+  { icon: 'search',       label: 'Investigating',   value: '0',   color: 'var(--tertiary)', bg: 'var(--tertiary-fixed)',   valueColor: 'var(--tertiary)' },
+  { icon: 'check_circle', label: 'Resolved (7d)',   value: '0',   color: 'var(--primary)',  bg: 'var(--primary-fixed)' },
+  { icon: 'timer',        label: 'Avg Resolution',  value: '—',   color: 'var(--on-surface-variant)', bg: 'var(--surface-container-high)' },
 ]
 
-const reports = ref([
-  { id: 1042, type: 'user',    reason: 'Impersonation',       description: 'This user is pretending to be a well-known developer and using their photo as avatar.',                reporter: 'Marcus Chen',   target: 'FakeDev99',      time: '1 hour ago',  status: 'open',          statusLabel: 'Open' },
-  { id: 1041, type: 'post',    reason: 'Spam',                description: 'Repeated promotional content with affiliate links posted across multiple threads.',                     reporter: 'Lina Low',      target: 'CryptoKing',     time: '3 hours ago', status: 'open',          statusLabel: 'Open' },
-  { id: 1040, type: 'comment', reason: 'Harassment',          description: 'Targeted personal attacks and derogatory language directed at another community member.',               reporter: 'Sarah Koenig',  target: 'TrollAccount',   time: '5 hours ago', status: 'investigating', statusLabel: 'Investigating' },
-  { id: 1039, type: 'project', reason: 'Misleading Content',  description: 'Project claims to be open source but links to a paid product with no source code available.',           reporter: 'Alex Miller',   target: 'QuickCash Dev',  time: '8 hours ago', status: 'open',          statusLabel: 'Open' },
-  { id: 1038, type: 'user',    reason: 'Fake Credentials',    description: 'User claims to work at Google but profile details do not match any public records.',                    reporter: 'Priya Sharma',  target: 'EliteHacker',    time: '1 day ago',   status: 'investigating', statusLabel: 'Investigating' },
-  { id: 1037, type: 'post',    reason: 'Inappropriate Content', description: 'Post contains NSFW imagery that violates community guidelines.',                                     reporter: 'Jordan Smith',  target: 'RandomUser42',   time: '1 day ago',   status: 'resolved',      statusLabel: 'Resolved' },
-  { id: 1036, type: 'comment', reason: 'Hate Speech',         description: 'Comment contains discriminatory language targeting a specific ethnic group.',                            reporter: 'Elena Petrova', target: 'AnonymousUser',  time: '2 days ago',  status: 'resolved',      statusLabel: 'Resolved' },
-])
+const reports = ref([])
 
 const filteredReports = computed(() => {
   let list = reports.value

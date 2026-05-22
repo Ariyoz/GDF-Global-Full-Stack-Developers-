@@ -123,31 +123,27 @@
 
 <script setup>
 const platformStats = [
-  { icon: 'person_add', label: 'Total Users',       value: '1,284,092', change: '+12%',  positive: true,  color: 'var(--primary)',  bg: 'rgba(168,85,247,0.1)' },
-  { icon: 'work',       label: 'Active Jobs',        value: '12,431',    change: '+5.4%', positive: true,  color: 'var(--tertiary)', bg: 'rgba(251,146,60,0.1)' },
-  { icon: 'payments',   label: 'Revenue (Monthly)',  value: '$1.2M',     change: 'Stable',positive: false, color: 'var(--primary-container)', bg: 'rgba(99,14,212,0.08)' },
+  { icon: 'person_add', label: 'Total Users',       value: '0', change: '—',  positive: false, color: 'var(--primary)',  bg: 'rgba(168,85,247,0.1)' },
+  { icon: 'work',       label: 'Active Jobs',        value: '0', change: '—',  positive: false, color: 'var(--tertiary)', bg: 'rgba(251,146,60,0.1)' },
+  { icon: 'payments',   label: 'Revenue (Monthly)',  value: '$0', change: '—', positive: false, color: 'var(--primary-container)', bg: 'rgba(99,14,212,0.08)' },
 ]
 
-const activityRows = [
-  { user: 'Alex Rivera',    role: 'Senior Dev',      event: 'Job Posting Flagged',  flag: 'High Risk', flagClass: 'flag-error',   status: 'Pending',     statusDot: 'status-dot-warning' },
-  { user: 'Sarah Chen',     role: 'Verified Hiring', event: 'Account Verification', flag: 'Identity',  flagClass: 'flag-neutral', status: 'Resolved',    statusDot: 'status-dot-green' },
-  { user: "Liam O'Connell", role: 'Guest User',      event: 'Suspicious Login',     flag: 'Security',  flagClass: 'flag-error',   status: 'Investigation',statusDot: 'status-dot-warning' },
-]
+const activityRows = []
 
 const verificationQueue = [
-  { icon: 'fingerprint', label: 'Identity Docs',  count: 24,  color: 'var(--primary)' },
-  { icon: 'school',      label: 'Degree Verif.',  count: 118, color: 'var(--tertiary)' },
-  { icon: 'language',    label: 'Github Syncs',   count: 492, color: 'var(--outline)' },
+  { icon: 'fingerprint', label: 'Identity Docs',  count: 0, color: 'var(--primary)' },
+  { icon: 'school',      label: 'Degree Verif.',  count: 0, color: 'var(--tertiary)' },
+  { icon: 'language',    label: 'Github Syncs',   count: 0, color: 'var(--outline)' },
 ]
 
 const trafficData = [
-  { pct: 30, active: false },
-  { pct: 50, active: false },
-  { pct: 40, active: false },
-  { pct: 90, active: true  },
-  { pct: 70, active: false },
-  { pct: 40, active: false },
-  { pct: 20, active: false },
+  { pct: 0, active: false },
+  { pct: 0, active: false },
+  { pct: 0, active: false },
+  { pct: 0, active: false },
+  { pct: 0, active: false },
+  { pct: 0, active: false },
+  { pct: 0, active: false },
 ]
 </script>
 

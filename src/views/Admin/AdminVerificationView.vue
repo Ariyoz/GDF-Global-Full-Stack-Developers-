@@ -94,64 +94,13 @@ import { ref, computed } from 'vue'
 const categoryFilter = ref('')
 
 const verifStats = [
-  { icon: 'pending',   label: 'Pending',       value: '24',  color: 'var(--tertiary)', bg: 'var(--tertiary-fixed)' },
-  { icon: 'verified',  label: 'Approved (7d)', value: '89',  color: 'var(--primary)',  bg: 'var(--primary-fixed)' },
-  { icon: 'cancel',    label: 'Rejected (7d)', value: '7',   color: 'var(--error)',    bg: 'var(--error-container)' },
-  { icon: 'speed',     label: 'Avg Time',      value: '2.1h', color: 'var(--on-surface-variant)', bg: 'var(--surface-container-high)' },
+  { icon: 'pending',   label: 'Pending',       value: '0',  color: 'var(--tertiary)', bg: 'var(--tertiary-fixed)' },
+  { icon: 'verified',  label: 'Approved (7d)', value: '0',  color: 'var(--primary)',  bg: 'var(--primary-fixed)' },
+  { icon: 'cancel',    label: 'Rejected (7d)', value: '0',  color: 'var(--error)',    bg: 'var(--error-container)' },
+  { icon: 'speed',     label: 'Avg Time',      value: '—',  color: 'var(--on-surface-variant)', bg: 'var(--surface-container-high)' },
 ]
 
-const verificationItems = ref([
-  {
-    id: 1, user: 'Alex Rivera', email: 'alex.riv@gfd.dev', category: 'identity', categoryLabel: 'Identity',
-    submitted: '2 hours ago',
-    details: [
-      { label: 'Full Name', value: 'Alexander James Rivera' },
-      { label: 'Country', value: 'United States' },
-      { label: 'ID Type', value: 'Passport' },
-    ],
-    documents: ['passport_scan.pdf', 'selfie_verification.jpg'],
-  },
-  {
-    id: 2, user: 'Priya Sharma', email: 'priya@mobile.dev', category: 'github', categoryLabel: 'GitHub',
-    submitted: '4 hours ago',
-    details: [
-      { label: 'GitHub Username', value: '@priya-codes' },
-      { label: 'Repositories', value: '47 public repos' },
-      { label: 'Contributions', value: '1,284 in last year' },
-    ],
-    documents: [],
-  },
-  {
-    id: 3, user: 'Marcus Thorne', email: 'm.thorne@vector.com', category: 'employment', categoryLabel: 'Employment',
-    submitted: '6 hours ago',
-    details: [
-      { label: 'Company', value: 'Vector Technologies' },
-      { label: 'Position', value: 'Senior Backend Engineer' },
-      { label: 'Duration', value: 'Mar 2021 – Present' },
-    ],
-    documents: ['employment_letter.pdf'],
-  },
-  {
-    id: 4, user: 'Elena Petrova', email: 'elena.p@cloud.net', category: 'degree', categoryLabel: 'Degree',
-    submitted: '1 day ago',
-    details: [
-      { label: 'University', value: 'MIT' },
-      { label: 'Degree', value: 'M.Sc. Computer Science' },
-      { label: 'Year', value: '2020' },
-    ],
-    documents: ['degree_certificate.pdf', 'transcript.pdf'],
-  },
-  {
-    id: 5, user: 'Jordan Smith', email: 'j.smith@agency.io', category: 'identity', categoryLabel: 'Identity',
-    submitted: '1 day ago',
-    details: [
-      { label: 'Full Name', value: 'Jordan Michael Smith' },
-      { label: 'Country', value: 'United Kingdom' },
-      { label: 'ID Type', value: 'Driver License' },
-    ],
-    documents: ['license_front.jpg', 'license_back.jpg'],
-  },
-])
+const verificationItems = ref([])
 
 const filteredItems = computed(() => {
   if (!categoryFilter.value) return verificationItems.value

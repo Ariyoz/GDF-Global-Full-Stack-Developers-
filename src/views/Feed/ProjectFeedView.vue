@@ -391,20 +391,9 @@ const userInitials = computed(() => {
 
 // Seed data is now in the store — no local posts array needed
 
-const trendingSkills = [
-  { name: 'Rust', hot: true },
-  { name: 'WebAssembly', hot: false },
-  { name: 'Go', hot: false },
-  { name: 'Solidity', hot: true },
-  { name: 'Kubernetes', hot: false },
-  { name: 'Tailwind', hot: false },
-]
+const trendingSkills = []
 
-const topDevs = [
-  { name: 'Marcus Burn', projects: 324 },
-  { name: 'Lina Low',    projects: 189 },
-  { name: 'Ray Vance',   projects: 412 },
-]
+const topDevs = []
 
 function toggleReaction(post, emoji) {
   if (!post.reactions) post.reactions = {}
