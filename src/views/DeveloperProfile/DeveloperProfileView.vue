@@ -29,13 +29,26 @@
           </div>
         </div>
         <div class="profile-actions">
-          <RouterLink :to="`/hire?dev=${dev.id}&name=${encodeURIComponent(dev.name)}`" class="btn-primary">
+          <button
+            v-if="!isOwnProfile"
+            class="btn-follow"
+            :class="{ following: isFollowing }"
+            @click="toggleFollow"
+          >
+            <span class="material-symbols-outlined" style="font-size:18px;">{{ isFollowing ? 'person_remove' : 'person_add' }}</span>
+            {{ isFollowing ? 'Following' : 'Follow' }}
+          </button>
+          <RouterLink v-if="!isOwnProfile" :to="`/hire?dev=${dev.id}&name=${encodeURIComponent(dev.name)}`" class="btn-primary">
             <span class="material-symbols-outlined" style="font-size:18px;">handshake</span>
             Hire {{ dev.name.split(' ')[0] }}
           </RouterLink>
-          <RouterLink to="/messaging" class="btn-outline">
+          <RouterLink v-if="!isOwnProfile" to="/messaging" class="btn-outline">
             <span class="material-symbols-outlined" style="font-size:18px;">chat</span>
             Message
+          </RouterLink>
+          <RouterLink v-if="isOwnProfile" to="/dashboard/profile" class="btn-primary">
+            <span class="material-symbols-outlined" style="font-size:18px;">edit</span>
+            Edit Profile
           </RouterLink>
         </div>
       </div>
@@ -140,64 +153,99 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDevelopersStore } from '@/store/developers'
+import { useAuthStore } from '@/store/auth'
 
 const route    = useRoute()
 const devStore = useDevelopersStore()
+const authStore = useAuthStore()
 
-// Load the real developer from the store by route param id
+const isFollowing = ref(false)
+
+// Check if this is the logged-in user's own profile
+const isOwnProfile = computed(() => {
+  return authStore.profile?.id === route.params.id
+})
+
+function toggleFollow() {
+  isFollowing.value = !isFollowing.value
+}
+
+// Load the developer profile — use auth profile if it's the logged-in user
 const dev = computed(() => {
-  const found = devStore.getById(route.params.id)
+  const profileId = route.params.id
+
+  // If viewing own profile, use auth store data
+  if (authStore.profile && authStore.profile.id === profileId) {
+    const p = authStore.profile
+    return {
+      id: p.id,
+      name: p.full_name || 'User',
+      role: p.experience_level || p.role || 'Developer',
+      location: p.location || '',
+      bio: p.bio || '',
+      skills: Array.isArray(p.skills) ? p.skills : [],
+      github: p.github_url || '',
+      linkedin: '',
+      website: p.portfolio || '',
+      available: p.available !== false,
+      verified: true,
+      rating: '5.0',
+      experience: [
+        { title: p.experience_level || 'Developer', company: 'GFD Community', period: '2024–Present', desc: p.bio || '' },
+      ],
+      projects: [],
+      activity: [],
+    }
+  }
+
+  // Try loading from developers store
+  const found = devStore.getById(profileId)
   if (found) {
     return {
-      ...found,
-      // Ensure profile page fields exist with fallbacks
-      experience: found.experience || [
-        { title: found.role, company: 'GFD Community', period: '2023–Present', desc: found.bio },
-      ],
-      projects: found.portfolioProjects || [
-        { name: 'Portfolio Project', desc: 'View full portfolio on GitHub.', icon: 'code', gradient: 'linear-gradient(135deg,#630ed4,#7c3aed)' },
-      ],
+      id: found.id,
+      name: found.full_name || found.name || 'Developer',
+      role: found.experience_level || found.role || 'Developer',
+      location: found.location || '',
+      bio: found.bio || '',
+      skills: Array.isArray(found.skills) ? found.skills : [],
+      github: found.github_url || '',
+      linkedin: '',
+      website: found.portfolio || '',
+      available: found.available !== false,
+      verified: true,
+      rating: '5.0',
+      experience: found.experience || [],
+      projects: found.projects || [],
       activity: found.activity || [],
     }
   }
 
-  // Fallback demo profile if id not found
+  // Fallback — empty profile
   return {
-    id: route.params.id || 1,
-    name: 'Alex Rivera',
-    role: 'Senior Full-Stack Engineer',
-    location: 'San Francisco, CA',
-    bio: 'Architecting high-performance distributed systems with a focus on React, Node.js, and Cloud Infrastructure.',
-    skills: ['TypeScript', 'React/Next.js', 'Node.js', 'AWS Cloud', 'GraphQL', 'PostgreSQL'],
+    id: profileId || '',
+    name: 'User',
+    role: 'Developer',
+    location: '',
+    bio: 'No bio available.',
+    skills: [],
     github: '',
     linkedin: '',
     website: '',
-    available: true,
-    verified: true,
-    rating: '4.9',
-    experience: [
-      { title: 'Staff Engineer', company: 'CloudMatrix', period: '2021–Present', desc: 'Leading the platform engineering team focused on microservices orchestration.' },
-      { title: 'Senior Full-Stack Developer', company: 'SyncroFlow', period: '2018–2021', desc: 'Developed core real-time collaboration features using WebSockets and React.' },
-    ],
-    projects: [
-      { name: 'Lumina Analytics Engine', desc: 'Custom data visualization library for React.', icon: 'analytics', gradient: 'linear-gradient(135deg,#630ed4,#7c3aed)' },
-      { name: 'HyperNode ORM', desc: 'Type-safe database layer for high-scale apps.', icon: 'storage', gradient: 'linear-gradient(135deg,#2a313d,#4a4455)' },
-      { name: 'CloudSync API', desc: 'Real-time sync engine for distributed teams.', icon: 'cloud_sync', gradient: 'linear-gradient(135deg,#7c3aed,#a855f7)' },
-      { name: 'DevFlow CLI', desc: 'Developer productivity toolkit for teams.', icon: 'terminal', gradient: 'linear-gradient(135deg,#1a0840,#2a1060)' },
-    ],
-    activity: [
-      { id: 1, time: '2 days ago', text: 'Just released v2.4 of the Lumina engine. Reduced bundle size by 40%! 🚀', likes: 124, comments: 18 },
-      { id: 2, time: '1 week ago', text: 'Really impressed with the new React Server Components approach.', likes: 89, comments: 32 },
-    ],
+    available: false,
+    verified: false,
+    rating: '—',
+    experience: [],
+    projects: [],
+    activity: [],
   }
 })
 
 const profileStats = computed(() => [
-  { value: dev.value.rating || '5.0', label: 'Rating' },
-  { value: typeof dev.value.projects === 'number' ? dev.value.projects : dev.value.projects?.length || 0, label: 'Projects' },
+  { value: dev.value.rating || '—', label: 'Rating' },
+  { value: dev.value.projects?.length || 0, label: 'Projects' },
   { value: dev.value.available ? 'Yes' : 'No', label: 'Available' },
   { value: dev.value.verified ? '✓' : '—', label: 'Verified' },
 ])
@@ -315,6 +363,33 @@ function initials(name) {
 }
 
 .profile-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+.btn-follow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.625rem 1.25rem;
+  background: var(--surface-container-lowest);
+  border: 1.5px solid var(--primary);
+  border-radius: var(--radius-full);
+  font-family: var(--font-headline);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+.btn-follow:hover {
+  background: rgba(99,14,212,0.08);
+}
+.btn-follow.following {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.btn-follow.following:hover {
+  background: rgba(99,14,212,0.85);
+}
 
 /* Body */
 .profile-body {
