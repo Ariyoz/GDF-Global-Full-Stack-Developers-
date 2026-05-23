@@ -57,12 +57,34 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { STATS } from '@/constants'
 
 const router = useRouter()
 const searchQuery = ref('')
+
+const STATS = ref([
+  { value: '—', label: 'Developers' },
+  { value: '—', label: 'Companies Hiring' },
+  { value: '—', label: 'Projects Delivered' },
+  { value: '—', label: 'Countries' },
+])
+
+onMounted(async () => {
+  try {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1'
+    const res = await fetch(`${baseUrl}/explore/developers?limit=1`)
+    if (res.ok) {
+      const data = await res.json()
+      STATS.value = [
+        { value: String(data.total || data.developers?.length || 0), label: 'Developers' },
+        { value: '0', label: 'Companies Hiring' },
+        { value: '0', label: 'Projects Delivered' },
+        { value: '5+', label: 'Countries' },
+      ]
+    }
+  } catch { /* leave defaults */ }
+})
 
 function handleSearch() {
   if (searchQuery.value.trim()) {
