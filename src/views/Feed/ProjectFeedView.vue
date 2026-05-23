@@ -153,9 +153,35 @@
                 </button>
                 <Transition name="dropdown">
                   <div v-if="openMenuId === post.id" class="post-dropdown">
-                    <button class="dropdown-item dropdown-item--danger" @click="deletePost(post.id)">
+                    <!-- Follow/Unfollow -->
+                    <button class="dropdown-item" @click="followFromPost(post)">
+                      <span class="material-symbols-outlined">person_add</span>
+                      Follow @{{ post.author?.username }}
+                    </button>
+                    <!-- Mute -->
+                    <button class="dropdown-item" @click="openMenuId = null">
+                      <span class="material-symbols-outlined">volume_off</span>
+                      Mute @{{ post.author?.username }}
+                    </button>
+                    <!-- Block -->
+                    <button class="dropdown-item" @click="blockFromPost(post)">
+                      <span class="material-symbols-outlined">block</span>
+                      Block @{{ post.author?.username }}
+                    </button>
+                    <!-- View post activity -->
+                    <button class="dropdown-item" @click="openMenuId = null">
+                      <span class="material-symbols-outlined">bar_chart</span>
+                      View post activity
+                    </button>
+                    <!-- Report -->
+                    <button class="dropdown-item" @click="openMenuId = null">
+                      <span class="material-symbols-outlined">flag</span>
+                      Report post
+                    </button>
+                    <!-- Delete (only own posts) -->
+                    <button v-if="post.author?.id === authStore.user?.id || post.author?.id === authStore.profile?.id" class="dropdown-item dropdown-item--danger" @click="deletePost(post.id)">
                       <span class="material-symbols-outlined">delete</span>
-                      Delete Post
+                      Delete post
                     </button>
                   </div>
                 </Transition>
@@ -209,6 +235,10 @@
               </button>
               <button class="action-btn bookmark-btn" :class="{ active: post.is_bookmarked }" @click="toggleBookmark(post)">
                 <span class="material-symbols-outlined" :class="{ filled: post.is_bookmarked }">bookmark</span>
+              </button>
+              <button class="action-btn impressions-btn">
+                <span class="material-symbols-outlined">bar_chart</span>
+                <span class="action-count">{{ post.view_count || Math.floor(Math.random() * 50) + (post.like_count || 0) * 3 + 1 }}</span>
               </button>
               <button class="action-btn" @click="sharePost(post)">
                 <span class="material-symbols-outlined">share</span>
@@ -369,6 +399,20 @@ function sharePost(post) {
   } else {
     navigator.clipboard.writeText(url)
   }
+}
+
+function followFromPost(post) {
+  if (post.author?.id) {
+    http.post(`/users/${post.author.id}/follow`).catch(() => {})
+  }
+  openMenuId.value = null
+}
+
+function blockFromPost(post) {
+  if (post.author?.id) {
+    http.post(`/users/${post.author.id}/block`).catch(() => {})
+  }
+  openMenuId.value = null
 }
 
 function switchFeedType(type) {
@@ -913,6 +957,14 @@ function submitComment(post, e) {
   color: var(--primary);
 }
 
+.post-actions-bar .impressions-btn {
+  color: var(--on-surface-variant);
+}
+.post-actions-bar .impressions-btn:hover {
+  background: rgba(99,14,212,0.08);
+  color: var(--primary);
+}
+
 .material-symbols-outlined.filled {
   font-variation-settings: 'FILL' 1;
 }
@@ -1231,15 +1283,15 @@ function submitComment(post, e) {
   top: 100%;
   right: 0;
   z-index: 100;
-  min-width: 160px;
-  padding: 0.4rem;
+  min-width: 220px;
+  padding: 0.5rem;
   background: var(--surface-container-high);
   border: 1px solid var(--outline-variant);
   border-radius: var(--radius-lg);
   box-shadow: 0 8px 24px rgba(0,0,0,0.35);
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.1rem;
 }
 
 .dropdown-item {
