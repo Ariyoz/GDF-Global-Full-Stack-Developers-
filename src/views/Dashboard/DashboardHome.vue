@@ -49,9 +49,13 @@
       <div class="glass-card-static bento-card bento-narrow">
         <div class="card-header">
           <h3 class="text-label-md card-title">Job Requests</h3>
-          <span class="chip chip-primary">3 NEW</span>
+          <span v-if="jobRequests.length" class="chip chip-primary">{{ jobRequests.length }} NEW</span>
+          <span v-else class="chip">0</span>
         </div>
         <div class="requests-list">
+          <div v-if="jobRequests.length === 0" style="padding:1rem;text-align:center;color:var(--on-surface-variant);font-size:0.85rem;">
+            No job requests yet
+          </div>
           <div v-for="req in jobRequests" :key="req.id" class="req-item">
             <div class="req-avatar">{{ req.initials }}</div>
             <div class="req-info">
@@ -133,13 +137,13 @@ const firstName = computed(() => {
 })
 
 const chartData = ref([
-  { label: 'Mon', pct: 20 },
-  { label: 'Tue', pct: 35 },
-  { label: 'Wed', pct: 45 },
-  { label: 'Thu', pct: 30 },
-  { label: 'Fri', pct: 55 },
-  { label: 'Sat', pct: 70 },
-  { label: 'Sun', pct: 60 },
+  { label: 'Mon', pct: 0 },
+  { label: 'Tue', pct: 0 },
+  { label: 'Wed', pct: 0 },
+  { label: 'Thu', pct: 0 },
+  { label: 'Fri', pct: 0 },
+  { label: 'Sat', pct: 0 },
+  { label: 'Sun', pct: 0 },
 ])
 
 const engagementStats = ref([
