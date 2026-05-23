@@ -138,9 +138,13 @@
                   <img v-if="post.author?.avatar" :src="post.author.avatar" :alt="post.author.full_name" class="post-avatar-img" />
                   <span v-else>{{ getInitials(post.author?.full_name || post.author) }}</span>
                 </div>
-                <div>
-                  <p class="post-author-name">{{ post.author?.full_name || post.author }}</p>
-                  <p class="post-meta">@{{ post.author?.username || '' }} · {{ formatTime(post.created_at) }}</p>
+                <div class="post-author-text">
+                  <div class="post-author-line">
+                    <span class="post-author-name">{{ post.author?.full_name || post.author }}</span>
+                    <span class="post-author-username">@{{ post.author?.username || '' }}</span>
+                    <span class="post-time-dot">·</span>
+                    <span class="post-time">{{ formatTime(post.created_at) }}</span>
+                  </div>
                 </div>
               </div>
               <div class="post-menu-wrap">
@@ -215,14 +219,17 @@
             <div v-if="post.showComments" class="post-comments">
               <div v-if="post.commentList?.length" class="comments-list">
                 <div v-for="comment in post.commentList" :key="comment.id" class="comment-item">
-                  <div class="comment-avatar">{{ getInitials(comment.author) }}</div>
-                  <div class="comment-content">
-                    <p class="comment-author">{{ comment.author }}</p>
-                    <p class="comment-text">{{ comment.text || comment.content }}</p>
-                    <p class="comment-time">{{ comment.time || formatTime(comment.created_at) }}</p>
+                  <div class="comment-avatar">{{ getInitials(comment.author || comment.content) }}</div>
+                  <div class="comment-body">
+                    <div class="comment-header-line">
+                      <span class="comment-author-name">{{ comment.author || 'User' }}</span>
+                      <span class="comment-time">{{ comment.time || formatTime(comment.created_at) }}</span>
+                    </div>
+                    <p class="comment-text">{{ comment.content || comment.text }}</p>
                   </div>
                 </div>
               </div>
+              <p v-else class="no-comments">No comments yet. Be the first!</p>
 
               <!-- Comment Input -->
               <div class="comment-input-row">
@@ -684,13 +691,13 @@ function submitComment(post, e) {
 /* Post Header */
 .post-header {
   display: flex; align-items: flex-start; justify-content: space-between;
-  padding: 1rem 1rem 0;
+  padding: 0.75rem 1rem 0;
 }
 
-.post-author-info { display: flex; align-items: center; gap: 0.625rem; min-width: 0; }
+.post-author-info { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
 
 .post-avatar {
-  width: 38px; height: 38px;
+  width: 40px; height: 40px;
   border-radius: var(--radius-full);
   background: var(--surface-container); color: var(--primary);
   font-family: var(--font-headline); font-size: 0.875rem; font-weight: 700;
@@ -711,10 +718,33 @@ function submitComment(post, e) {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
+.post-author-line {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.post-author-username {
+  font-size: 0.8rem;
+  color: var(--on-surface-variant);
+  font-weight: 400;
+}
+
+.post-time-dot {
+  font-size: 0.75rem;
+  color: var(--on-surface-variant);
+}
+
+.post-time {
+  font-size: 0.75rem;
+  color: var(--on-surface-variant);
+}
+
 .post-meta { font-size: 0.7rem; color: var(--on-surface-variant); margin-top: 1px; }
 
 /* Post Content */
-.post-content { padding: 0.75rem 1rem; }
+.post-content { padding: 0.5rem 1rem 0.5rem 3.5rem; }
 
 .post-text {
   font-size: 0.9rem; color: var(--on-surface); line-height: 1.65;
@@ -1108,15 +1138,45 @@ function submitComment(post, e) {
 
 .comments-list { display: flex; flex-direction: column; gap: 0.875rem; margin-bottom: 0.875rem; }
 
-.comment-item { display: flex; gap: 0.625rem; }
+.comment-item { display: flex; gap: 0.5rem; }
 
 .comment-avatar {
-  width: 30px; height: 30px;
+  width: 28px; height: 28px;
   border-radius: var(--radius-full);
   background: var(--surface-container); color: var(--primary);
-  font-family: var(--font-headline); font-size: 0.7rem; font-weight: 700;
+  font-family: var(--font-headline); font-size: 0.65rem; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
+}
+
+.comment-body { flex: 1; min-width: 0; }
+
+.comment-header-line {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.comment-author-name {
+  font-family: var(--font-headline);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--on-surface);
+}
+
+.comment-time { font-size: 0.68rem; color: var(--on-surface-variant); }
+
+.comment-text {
+  font-size: 0.84rem; color: var(--on-surface);
+  margin-top: 0.15rem; line-height: 1.5; word-break: break-word;
+}
+
+.no-comments {
+  font-size: 0.8rem;
+  color: var(--on-surface-variant);
+  text-align: center;
+  padding: 0.5rem 0;
+  font-style: italic;
 }
 
 .comment-content { flex: 1; min-width: 0; }
@@ -1124,12 +1184,6 @@ function submitComment(post, e) {
 .comment-header { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
 
 .comment-author { font-family: var(--font-headline); font-size: 0.78rem; font-weight: 600; color: var(--on-surface); }
-.comment-time   { font-size: 0.7rem; color: var(--on-surface-variant); }
-
-.comment-text {
-  font-size: 0.85rem; color: var(--on-surface);
-  margin-top: 0.2rem; line-height: 1.5; word-break: break-word;
-}
 
 .comment-actions { display: flex; gap: 0.625rem; margin-top: 0.375rem; }
 
