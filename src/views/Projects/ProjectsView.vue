@@ -84,16 +84,34 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { PROJECT_CATEGORIES } from '@/constants'
+import http from '@/services/http'
 
 const activeFilter = ref('All')
 
-const projects = []
+const projects = ref([])
+
+onMounted(async () => {
+  try {
+    const data = await http.get('/projects?limit=50')
+    projects.value = (data.projects || []).map(p => ({
+      id: p.id,
+      title: p.title,
+      description: p.description,
+      category: p.project_type || 'Web App',
+      skills: p.skills_needed || [],
+      budget: p.budget_min ? `$${p.budget_min}${p.budget_max ? ' - $' + p.budget_max : ''}` : 'Negotiable',
+      status: p.status,
+      duration: p.duration,
+      created_at: p.created_at,
+    }))
+  } catch { /* leave empty */ }
+})
 
 const filteredProjects = computed(() => {
-  if (activeFilter.value === 'All') return projects
-  return projects.filter(p => p.category === activeFilter.value)
+  if (activeFilter.value === 'All') return projects.value
+  return projects.value.filter(p => p.category === activeFilter.value)
 })
 </script>
 
