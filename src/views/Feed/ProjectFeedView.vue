@@ -238,7 +238,7 @@
               </button>
               <button class="action-btn impressions-btn">
                 <span class="material-symbols-outlined">bar_chart</span>
-                <span class="action-count">{{ post.view_count || Math.floor(Math.random() * 50) + (post.like_count || 0) * 3 + 1 }}</span>
+                <span class="action-count">{{ (post.like_count || 0) + (post.comment_count || 0) + (post.repost_count || 0) }}</span>
               </button>
               <button class="action-btn" @click="sharePost(post)">
                 <span class="material-symbols-outlined">share</span>

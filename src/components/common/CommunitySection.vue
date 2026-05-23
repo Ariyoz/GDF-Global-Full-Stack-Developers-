@@ -51,7 +51,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import SectionHeader from '@/components/ui/SectionHeader.vue'
-import http from '@/services/http'
 
 const communityStats = ref([
   { value: '—', label: 'Active Developers' },
@@ -62,24 +61,18 @@ const communityStats = ref([
 
 onMounted(async () => {
   try {
-    const devs = await http.get('/explore/developers?limit=1')
-    communityStats.value = [
-      { value: String(devs.total || devs.developers?.length || 0), label: 'Developers' },
-      { value: '0', label: 'Companies Hiring' },
-      { value: '0', label: 'Projects Delivered' },
-      { value: '5+', label: 'Countries' },
-    ]
-  } catch {
-    try {
-      const data = await http.get('/admin/analytics')
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1'
+    const res = await fetch(`${baseUrl}/explore/developers?limit=1`)
+    if (res.ok) {
+      const devs = await res.json()
       communityStats.value = [
-        { value: String(data.total_users || 0), label: 'Developers' },
-        { value: String(data.total_projects || 0), label: 'Companies Hiring' },
-        { value: String(data.total_posts || 0), label: 'Projects Delivered' },
+        { value: String(devs.total || devs.developers?.length || 0), label: 'Developers' },
+        { value: '0', label: 'Companies Hiring' },
+        { value: '0', label: 'Projects Delivered' },
         { value: '5+', label: 'Countries' },
       ]
-    } catch { /* leave defaults */ }
-  }
+    }
+  } catch { /* leave defaults */ }
 })
 
 const benefits = [
