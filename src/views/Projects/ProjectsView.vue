@@ -39,7 +39,8 @@
             @click="viewProject(project)"
           >
             <div class="project-thumb" :style="{ background: project.gradient }">
-              <span class="material-symbols-outlined thumb-icon">{{ project.icon }}</span>
+              <img v-if="project.cover_image" :src="project.cover_image" alt="" class="project-thumb-img" />
+              <span v-else class="material-symbols-outlined thumb-icon">{{ project.icon }}</span>
               <div class="thumb-overlay">
                 <span class="thumb-badge">{{ project.category }}</span>
               </div>
@@ -125,6 +126,7 @@ onMounted(async () => {
       views: p.view_count || 0,
       likes: p.like_count || 0,
       is_liked: false,
+      cover_image: p.cover_image || '',
       author: 'Developer',
       year: p.created_at ? new Date(p.created_at).getFullYear() : new Date().getFullYear(),
       icon: categoryIcons[p.project_type] || 'code',
@@ -233,6 +235,14 @@ const filteredProjects = computed(() => {
 }
 
 .thumb-icon { font-size: 3.5rem; color: rgba(255,255,255,0.8); }
+
+.project-thumb-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
 .thumb-overlay {
   position: absolute;

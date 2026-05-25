@@ -219,6 +219,7 @@ const currentStep = ref(0)
 const loading     = ref(false)
 const tagInput    = ref('')
 const fileInput   = ref(null)
+const coverFile   = ref(null)
 
 const form = reactive({
   title:       '',
@@ -277,18 +278,40 @@ function triggerFileInput() {
 
 function handleFileChange(e) {
   const file = e.target.files[0]
-  if (file) form.coverImage = file.name
+  if (file) {
+    coverFile.value = file
+    form.coverImage = file.name
+  }
 }
 
 async function handlePublish() {
   loading.value = true
   try {
+    let coverImageUrl = ''
+
+    // Upload cover image to Cloudinary if selected
+    if (coverFile.value) {
+      try {
+        const formData = new FormData()
+        formData.append('file', coverFile.value)
+        const uploadResult = await http.post('/uploads/media', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
+        if (uploadResult.url) coverImageUrl = uploadResult.url
+      } catch (err) {
+        console.error('Image upload failed:', err)
+      }
+    }
+
     await http.post('/projects/', {
       title: form.title,
       description: form.description,
       skills_needed: form.tags,
       requirements: form.description,
       experience_level: 'mid',
+      cover_image: coverImageUrl || undefined,
+      live_url: form.liveUrl || undefined,
+      github_url: form.githubUrl || undefined,
     })
     uiStore.showSuccess('Project added successfully!')
     currentStep.value = 3
