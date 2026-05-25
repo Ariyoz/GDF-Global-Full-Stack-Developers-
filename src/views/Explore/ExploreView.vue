@@ -459,8 +459,8 @@ function resetFilters() {
 .dev-avatar-wrap { position: relative; flex-shrink: 0; }
 
 .dev-avatar {
-  width: 80px;
-  height: 80px;
+  width: 100px;
+  height: 100px;
   border-radius: var(--radius-full);
   background: var(--surface-container);
   border: 2px solid var(--outline-variant);
@@ -479,7 +479,7 @@ function resetFilters() {
 
 .dev-initials {
   font-family: var(--font-headline);
-  font-size: 1.3rem;
+  font-size: 1.6rem;
   font-weight: 700;
   color: var(--primary);
 }

@@ -172,8 +172,8 @@ function initials(name) {
 
 .dev-avatar {
   position: relative;
-  width: 56px;
-  height: 56px;
+  width: 72px;
+  height: 72px;
   border-radius: var(--radius-full);
   background: var(--primary-fixed);
   border: 2px solid rgba(99,14,212,0.15);
@@ -186,7 +186,7 @@ function initials(name) {
 
 .dev-initials {
   font-family: var(--font-headline);
-  font-size: 1.1rem;
+  font-size: 1.4rem;
   font-weight: 700;
   color: var(--primary);
 }
