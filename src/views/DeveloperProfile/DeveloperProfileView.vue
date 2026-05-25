@@ -99,9 +99,29 @@
                 <img v-if="dev.avatar" :src="dev.avatar" :alt="dev.name" class="post-avatar-img" />
                 <span v-else>{{ initials(dev.name) }}</span>
               </div>
-              <div>
+              <div style="flex:1;">
                 <span class="post-author-name">{{ dev.name }}</span>
                 <span class="post-username-mini">@{{ dev.username }} · {{ formatTime(post.created_at) }}</span>
+              </div>
+              <!-- Post menu -->
+              <div class="post-menu-mini" v-if="isOwnProfile">
+                <button class="btn-ghost icon-only" @click="profileMenuId = profileMenuId === post.id ? null : post.id">
+                  <span class="material-symbols-outlined" style="font-size:18px;">more_horiz</span>
+                </button>
+                <div v-if="profileMenuId === post.id" class="profile-post-dropdown">
+                  <button class="dropdown-item" @click="pinPost(post); profileMenuId = null">
+                    <span class="material-symbols-outlined">push_pin</span>
+                    Pin to profile
+                  </button>
+                  <button class="dropdown-item" @click="profileMenuId = null">
+                    <span class="material-symbols-outlined">bar_chart</span>
+                    View post activity
+                  </button>
+                  <button class="dropdown-item dropdown-item--danger" @click="deleteProfilePost(post.id)">
+                    <span class="material-symbols-outlined">delete</span>
+                    Delete post
+                  </button>
+                </div>
               </div>
             </div>
             <p v-if="post.content" class="post-text-content">{{ post.content }}</p>
@@ -280,6 +300,24 @@ const activeTab = ref('posts')
 const bannerInput = ref(null)
 const avatarInputProfile = ref(null)
 const showEditModal = ref(false)
+const profileMenuId = ref(null)
+
+function pinPost(post) {
+  // Move post to top
+  const idx = userPosts.value.findIndex(p => p.id === post.id)
+  if (idx > 0) {
+    userPosts.value.splice(idx, 1)
+    userPosts.value.unshift(post)
+  }
+}
+
+async function deleteProfilePost(postId) {
+  try {
+    await http.delete(`/feed/${postId}`)
+    userPosts.value = userPosts.value.filter(p => p.id !== postId)
+  } catch { /* ignore */ }
+  profileMenuId.value = null
+}
 
 const editForm = ref({
   full_name: '',
@@ -874,6 +912,43 @@ function formatJoinDate(dateStr) {
 }
 
 .post-header-mini { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem; }
+
+.post-menu-mini { position: relative; margin-left: auto; }
+
+.profile-post-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 100;
+  min-width: 180px;
+  padding: 0.4rem;
+  background: var(--surface-container-high);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.profile-post-dropdown .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-headline);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--on-surface);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.profile-post-dropdown .dropdown-item:hover { background: var(--surface-container); }
+.profile-post-dropdown .dropdown-item--danger { color: #ef4444; }
+.profile-post-dropdown .dropdown-item--danger:hover { background: rgba(239,68,68,0.08); }
 
 .post-avatar-mini {
   width: 32px; height: 32px; border-radius: 50%;
