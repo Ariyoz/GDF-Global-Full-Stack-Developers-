@@ -45,7 +45,7 @@
         </div>
 
         <!-- CTA Card -->
-        <div class="trending-card trending-cta" @click="$router.push('/dashboard/projects/upload')">
+        <div class="trending-card trending-cta" @click="$router.push('/dashboard/projects')">
           <div class="trending-cta-inner">
             <span class="material-symbols-outlined" style="font-size:2.5rem;color:var(--primary)">add_circle</span>
             <h4 class="trending-cta-title">Submit Yours</h4>
@@ -56,7 +56,7 @@
 
       <!-- Empty state -->
       <div v-else-if="!loading" class="trending-empty">
-        <p>No projects yet. Be the first to <RouterLink to="/dashboard/projects/upload" style="color:var(--primary)">submit one</RouterLink>!</p>
+        <p>No projects yet. Be the first to <RouterLink to="/dashboard/projects" style="color:var(--primary)">submit one</RouterLink>!</p>
       </div>
     </div>
   </section>
