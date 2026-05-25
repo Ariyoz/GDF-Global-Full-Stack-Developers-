@@ -59,8 +59,23 @@
             </p>
           </div>
           <div class="chat-actions">
-            <button class="btn-ghost icon-only"><span class="material-symbols-outlined">call</span></button>
-            <button class="btn-ghost icon-only"><span class="material-symbols-outlined">more_vert</span></button>
+            <button class="btn-ghost icon-only" @click="showChatMenu = !showChatMenu">
+              <span class="material-symbols-outlined">more_vert</span>
+            </button>
+            <div v-if="showChatMenu" class="chat-dropdown">
+              <button class="dropdown-item" @click="deleteChat">
+                <span class="material-symbols-outlined">delete</span>
+                Delete conversation
+              </button>
+              <button class="dropdown-item" @click="showChatMenu = false">
+                <span class="material-symbols-outlined">volume_off</span>
+                Mute
+              </button>
+              <button class="dropdown-item" @click="showChatMenu = false">
+                <span class="material-symbols-outlined">block</span>
+                Block user
+              </button>
+            </div>
           </div>
         </div>
 
@@ -79,14 +94,21 @@
         </div>
 
         <div class="chat-input-bar glass-card-static">
+          <button class="btn-ghost icon-only input-action" @click="$refs.chatImageInput?.click()">
+            <span class="material-symbols-outlined">image</span>
+          </button>
+          <input ref="chatImageInput" type="file" accept="image/*" class="hidden-input" @change="sendImage" />
           <input
             v-model="newMessage"
             class="chat-input"
-            placeholder="Type a message..."
+            placeholder="Start a new message"
             @keydown.enter.prevent="sendMessage"
             @input="handleTyping"
           />
-          <button class="btn-primary send-btn" @click="sendMessage" :disabled="!newMessage.trim()">
+          <button class="btn-ghost icon-only input-action" @click="newMessage += '😊'">
+            <span class="material-symbols-outlined">mood</span>
+          </button>
+          <button class="send-btn" @click="sendMessage" :disabled="!newMessage.trim()">
             <span class="material-symbols-outlined">send</span>
           </button>
         </div>
@@ -105,6 +127,7 @@
 import { ref, computed, nextTick, onMounted } from 'vue'
 import { useMessagingStore } from '@/store/messaging'
 import { useAuthStore } from '@/store/auth'
+import http from '@/services/http'
 
 const messagingStore = useMessagingStore()
 const authStore = useAuthStore()
@@ -112,6 +135,8 @@ const authStore = useAuthStore()
 const search     = ref('')
 const newMessage = ref('')
 const messagesEl = ref(null)
+const showChatMenu = ref(false)
+const chatImageInput = ref(null)
 
 // Load conversations on mount
 onMounted(() => {
@@ -127,11 +152,11 @@ const filteredConvs = computed(() => {
 
 const activeConv = computed(() => messagingStore.activeConversation)
 const activeMessages = computed(() => messagingStore.messages)
-
 const conversations = computed(() => messagingStore.conversations)
 
 function selectConv(conv) {
   messagingStore.setActiveConversation(conv)
+  showChatMenu.value = false
   nextTick(() => {
     if (messagesEl.value) {
       messagesEl.value.scrollTop = messagesEl.value.scrollHeight
@@ -149,6 +174,30 @@ async function sendMessage() {
   nextTick(() => {
     if (messagesEl.value) messagesEl.value.scrollTop = messagesEl.value.scrollHeight
   })
+}
+
+async function sendImage(e) {
+  const file = e.target.files?.[0]
+  if (!file || !activeConv.value) return
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+    const data = await http.post('/uploads/media', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+    if (data.url) {
+      await messagingStore.sendMessage(`[Image] ${data.url}`, 'image', data.url)
+    }
+  } catch { /* ignore */ }
+  if (chatImageInput.value) chatImageInput.value.value = ''
+}
+
+async function deleteChat() {
+  if (!activeConv.value) return
+  // Remove from local list
+  const convId = activeConv.value.id
+  messagingStore.conversations = messagingStore.conversations.filter(c => c.id !== convId)
+  messagingStore.setActiveConversation(null)
+  showChatMenu.value = false
+  // TODO: Call backend delete endpoint when available
 }
 
 function handleTyping() {
@@ -353,7 +402,49 @@ function handleTyping() {
   display: flex;
   gap: 0.25rem;
   flex-shrink: 0;
+  position: relative;
 }
+
+.chat-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 100;
+  min-width: 200px;
+  padding: 0.4rem;
+  background: var(--surface-container-high);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.chat-dropdown .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.75rem;
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-headline);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--on-surface);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.chat-dropdown .dropdown-item:hover { background: var(--surface-container); }
+
+.hidden-input { display: none; }
+
+.input-action {
+  padding: 0.4rem;
+  color: var(--primary);
+}
+
 .icon-only { padding: 0.4rem; }
 
 .chat-messages {
@@ -400,8 +491,8 @@ function handleTyping() {
 .chat-input-bar {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.875rem 1.25rem;
+  gap: 0.4rem;
+  padding: 0.75rem 1rem;
   border-top: 1px solid var(--outline-variant);
   border-radius: 0;
 }
@@ -409,7 +500,7 @@ function handleTyping() {
 .chat-input {
   flex: 1;
   min-width: 0;
-  padding: 0.625rem 1rem;
+  padding: 0.5rem 0.875rem;
   background: var(--surface-container-low);
   border: 1px solid var(--outline-variant);
   border-radius: var(--radius-full);
@@ -421,6 +512,21 @@ function handleTyping() {
 .chat-input:focus { border-color: var(--primary); }
 
 .send-btn {
+  padding: 0.5rem;
+  background: var(--primary);
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s;
+}
+.send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.send-btn .material-symbols-outlined { font-size: 20px; }
+
+.old-send-btn {
   padding: 0.625rem;
   border-radius: var(--radius-full);
   width: auto !important;
