@@ -192,12 +192,8 @@ async function sendImage(e) {
 
 async function deleteChat() {
   if (!activeConv.value) return
-  // Remove from local list
-  const convId = activeConv.value.id
-  messagingStore.conversations = messagingStore.conversations.filter(c => c.id !== convId)
-  messagingStore.setActiveConversation(null)
+  await messagingStore.deleteConversation(activeConv.value.id)
   showChatMenu.value = false
-  // TODO: Call backend delete endpoint when available
 }
 
 function handleTyping() {

@@ -59,6 +59,10 @@
             <span class="material-symbols-outlined" style="font-size:16px;">code</span>
             <a :href="dev.github" target="_blank" class="meta-link">GitHub</a>
           </span>
+          <span class="meta-item">
+            <span class="material-symbols-outlined" style="font-size:16px;">calendar_today</span>
+            Joined {{ formatJoinDate(profileData?.created_at) }}
+          </span>
         </div>
 
         <!-- Followers/Following -->
@@ -76,6 +80,7 @@
       <!-- Profile Tabs -->
       <div class="profile-tabs">
         <button class="profile-tab" :class="{ active: activeTab === 'posts' }" @click="activeTab = 'posts'">Posts</button>
+        <button class="profile-tab" :class="{ active: activeTab === 'replies' }" @click="activeTab = 'replies'">Replies</button>
         <button class="profile-tab" :class="{ active: activeTab === 'media' }" @click="activeTab = 'media'">Media</button>
         <button class="profile-tab" :class="{ active: activeTab === 'likes' }" @click="activeTab = 'likes'">Likes</button>
       </div>
@@ -125,6 +130,14 @@
         <div v-else class="no-posts">
           <span class="material-symbols-outlined" style="font-size:2.5rem;color:var(--on-surface-variant)">image</span>
           <p style="margin-top:0.5rem;color:var(--on-surface-variant)">No media yet</p>
+        </div>
+      </div>
+
+      <!-- Replies Tab -->
+      <div v-if="activeTab === 'replies'" class="tab-content">
+        <div class="no-posts">
+          <span class="material-symbols-outlined" style="font-size:2.5rem;color:var(--on-surface-variant)">forum</span>
+          <p style="margin-top:0.5rem;color:var(--on-surface-variant)">Replies will appear here</p>
         </div>
       </div>
 
@@ -529,6 +542,12 @@ function formatTime(dateStr) {
   if (diff < 86400) return `${Math.floor(diff / 3600)}h`
   if (diff < 604800) return `${Math.floor(diff / 86400)}d`
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+function formatJoinDate(dateStr) {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 }
 </script>
 

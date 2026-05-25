@@ -117,6 +117,7 @@ export const useMessagingStore = defineStore('messaging', () => {
         message_type: type,
         media_url: mediaUrl,
         is_read: false,
+        is_edited: false,
         created_at: new Date().toISOString(),
       })
 
@@ -130,6 +131,28 @@ export const useMessagingStore = defineStore('messaging', () => {
     } catch (err) {
       console.error('Failed to send message:', err)
     }
+  }
+
+  async function deleteConversation(convId) {
+    try {
+      await import('@/services/http').then(m => m.default.delete(`/messages/conversations/${convId}`))
+    } catch { /* ignore */ }
+    conversations.value = conversations.value.filter(c => c.id !== convId)
+    if (activeConversation.value?.id === convId) {
+      activeConversation.value = null
+      messages.value = []
+    }
+  }
+
+  async function deleteMessage(messageId) {
+    try {
+      await import('@/services/http').then(m => m.default.delete(`/messages/messages/${messageId}`))
+      const msg = messages.value.find(m => m.id === messageId)
+      if (msg) {
+        msg.content = 'This message was deleted'
+        msg.is_deleted = true
+      }
+    } catch { /* ignore */ }
   }
 
   async function startConversation(otherUserId) {
@@ -171,6 +194,6 @@ export const useMessagingStore = defineStore('messaging', () => {
   return {
     conversations, activeConversation, messages, unreadCount, loading, typingUsers,
     fetchConversations, fetchMessages, sendMessage, startConversation,
-    setActiveConversation, sendTyping, sendStopTyping,
+    setActiveConversation, sendTyping, sendStopTyping, deleteConversation, deleteMessage,
   }
 })
