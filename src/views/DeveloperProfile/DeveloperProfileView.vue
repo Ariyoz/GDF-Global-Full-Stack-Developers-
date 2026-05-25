@@ -862,14 +862,14 @@ function formatJoinDate(dateStr) {
 .profile-tab.active { color: var(--on-surface); border-bottom-color: var(--primary); }
 
 /* Tab Content */
-.profile-content { padding: 0 0.5rem; }
+.profile-content { padding: 0 1rem; }
 
 .tab-content { padding: 0.5rem 0; }
 
 .user-posts-list { display: flex; flex-direction: column; }
 
 .user-post-item {
-  padding: 1rem 0;
+  padding: 1rem 0.5rem;
   border-bottom: 1px solid var(--outline-variant);
 }
 
