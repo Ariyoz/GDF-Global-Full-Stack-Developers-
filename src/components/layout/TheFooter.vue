@@ -151,23 +151,21 @@ const footerColumns = [
 /* Links */
 .footer-links-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(120px, 1fr));
-  gap: var(--space-lg);
+  grid-template-columns: 1fr;
+  gap: var(--space-xl);
   width: 100%;
-  justify-items: center;
 }
 
 @media (min-width: 480px) {
-  .footer-links-grid { grid-template-columns: repeat(3, minmax(140px, 1fr)); }
+  .footer-links-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 @media (min-width: 768px) {
-  .footer-links-grid { grid-template-columns: repeat(3, minmax(180px, 1fr)); }
+  .footer-links-grid { grid-template-columns: repeat(3, 1fr); gap: var(--space-xl); }
 }
 
 .footer-col {
   width: 100%;
-  max-width: none;
 }
 
 .footer-col-title {
@@ -175,7 +173,7 @@ const footerColumns = [
   font-size: 0.875rem;
   font-weight: 700;
   color: var(--on-surface);
-  margin-bottom: var(--space-md);
+  margin-bottom: var(--space-sm);
   letter-spacing: 0.01em;
 }
 
@@ -183,30 +181,38 @@ const footerColumns = [
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: var(--space-xs);
 }
 
 .footer-link {
-  font-size: 1rem;
+  font-size: 0.875rem;
   color: var(--on-surface-variant);
   text-decoration: none;
   transition: var(--transition-fast);
 }
 
-@media (max-width: 639px) {
-  .footer-col-title,
-  .footer-col-list,
+@media (max-width: 479px) {
+  .footer-links-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-lg);
+    text-align: left;
+  }
+
+  .footer-col-title {
+    font-size: 0.8rem;
+  }
+
   .footer-link {
-    text-align: center;
+    font-size: 0.8rem;
   }
 
   .footer-inner {
-    align-items: center;
+    align-items: flex-start;
   }
 
   .footer-brand {
-    align-items: center;
-    text-align: center;
+    align-items: flex-start;
+    text-align: left;
   }
 
   .footer-tagline {
@@ -253,15 +259,10 @@ const footerColumns = [
 /* Copyright text — uses design token so it adapts to dark mode */
 .footer-copy {
   font-family: var(--font-headline);
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   color: var(--on-surface-variant);
   opacity: 0.7;
 }
 
-.footer-bottom-links {
-  display: flex;
-  gap: var(--space-md);
-}
-
-.footer-bottom-links .footer-link { font-size: 0.875rem; }
+.footer-bottom-links .footer-link { font-size: 0.8rem; }
 </style>
