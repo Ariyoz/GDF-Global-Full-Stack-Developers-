@@ -106,13 +106,6 @@ function initials(name) {
 /* Subtle tinted background — adapts to dark mode via CSS variable */
 .featured-section {
   background: var(--surface-container-low);
-  padding-left: 0;
-  padding-right: 0;
-}
-
-.featured-section .container-gfd {
-  padding-left: 1rem;
-  padding-right: 1rem;
 }
 
 /* Section header */
@@ -122,7 +115,6 @@ function initials(name) {
   justify-content: space-between;
   gap: 0.75rem;
   margin-bottom: 1.5rem;
-  flex-wrap: wrap;
 }
 
 .view-all-link {
@@ -161,6 +153,8 @@ function initials(name) {
   flex-direction: column;
   gap: 0.75rem;
   padding: 1.25rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Card header */
@@ -172,8 +166,8 @@ function initials(name) {
 
 .dev-avatar {
   position: relative;
-  width: 72px;
-  height: 72px;
+  width: 60px;
+  height: 60px;
   border-radius: var(--radius-full);
   background: var(--primary-fixed);
   border: 2px solid rgba(99,14,212,0.15);
@@ -186,7 +180,7 @@ function initials(name) {
 
 .dev-initials {
   font-family: var(--font-headline);
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: var(--primary);
 }
