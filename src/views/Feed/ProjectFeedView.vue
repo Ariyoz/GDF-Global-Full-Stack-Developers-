@@ -282,10 +282,22 @@
             </div>
           </article>
 
-          <!-- Loading indicator -->
+          <!-- Loading skeleton -->
           <div v-if="feedStore.loading" class="feed-loading">
-            <span class="material-symbols-outlined spinning">progress_activity</span>
-            <p>Loading posts...</p>
+            <div v-for="i in 3" :key="i" class="skeleton-post">
+              <div class="skeleton-header">
+                <div class="skeleton-avatar skeleton-shimmer"></div>
+                <div class="skeleton-text-group">
+                  <div class="skeleton-line skeleton-shimmer" style="width:120px;height:12px;"></div>
+                  <div class="skeleton-line skeleton-shimmer" style="width:80px;height:10px;margin-top:4px;"></div>
+                </div>
+              </div>
+              <div class="skeleton-body">
+                <div class="skeleton-line skeleton-shimmer" style="width:100%;height:12px;"></div>
+                <div class="skeleton-line skeleton-shimmer" style="width:85%;height:12px;margin-top:6px;"></div>
+                <div class="skeleton-line skeleton-shimmer" style="width:60%;height:12px;margin-top:6px;"></div>
+              </div>
+            </div>
           </div>
 
           <!-- Empty state -->
@@ -1008,22 +1020,32 @@ function submitComment(post, e) {
 .feed-loading {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 2rem;
-  color: var(--on-surface-variant);
-  font-size: 0.875rem;
+  gap: 1rem;
+  padding: 1rem;
 }
 
-.feed-loading .spinning {
-  font-size: 2rem;
-  color: var(--primary);
-  animation: spin 1s linear infinite;
+.skeleton-post {
+  padding: 1rem;
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-xl);
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.skeleton-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+.skeleton-avatar { width: 40px; height: 40px; border-radius: 50%; }
+.skeleton-text-group { display: flex; flex-direction: column; }
+.skeleton-body { display: flex; flex-direction: column; }
+.skeleton-line { border-radius: 4px; }
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, var(--surface-container) 25%, var(--surface-container-high) 50%, var(--surface-container) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 .feed-empty {

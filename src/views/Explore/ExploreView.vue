@@ -15,6 +15,7 @@
               type="text"
               placeholder="Search skills, name, or role..."
               class="search-input"
+              @input="onSearchInput"
             />
           </div>
           <div class="filter-chips">
@@ -174,6 +175,19 @@ onMounted(() => {
 const searchQuery = ref('')
 const activeRole  = ref('All')
 const sortBy      = ref('rating')
+
+// Debounced search — calls backend when user types
+let searchTimeout = null
+function onSearchInput() {
+  clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    if (searchQuery.value.trim()) {
+      devStore.fetchDevelopers({ search: searchQuery.value.trim() })
+    } else {
+      devStore.fetchDevelopers()
+    }
+  }, 500)
+}
 
 const filters = ref({
   availability: [],

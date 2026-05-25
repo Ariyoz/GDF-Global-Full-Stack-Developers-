@@ -84,6 +84,7 @@
         <button class="profile-tab" :class="{ active: activeTab === 'media' }" @click="activeTab = 'media'">Media</button>
         <button class="profile-tab" :class="{ active: activeTab === 'likes' }" @click="activeTab = 'likes'">Likes</button>
         <button v-if="dev.github" class="profile-tab" :class="{ active: activeTab === 'repos' }" @click="activeTab = 'repos'; loadRepos()">Repos</button>
+        <button v-if="isOwnProfile" class="profile-tab" :class="{ active: activeTab === 'saved' }" @click="activeTab = 'saved'">Saved</button>
       </div>
     </div>
 
@@ -169,6 +170,15 @@
         <div v-else class="no-posts">
           <span class="material-symbols-outlined" style="font-size:2.5rem;color:var(--on-surface-variant)">code</span>
           <p style="margin-top:0.5rem;color:var(--on-surface-variant)">No repositories found</p>
+        </div>
+      </div>
+
+      <!-- Saved Posts Tab (private - only own profile) -->
+      <div v-if="activeTab === 'saved' && isOwnProfile" class="tab-content">
+        <div class="no-posts">
+          <span class="material-symbols-outlined" style="font-size:2.5rem;color:var(--on-surface-variant)">bookmark</span>
+          <p style="margin-top:0.5rem;color:var(--on-surface-variant)">Your saved posts will appear here</p>
+          <p style="font-size:0.78rem;color:var(--on-surface-variant);margin-top:0.25rem;">Only you can see this</p>
         </div>
       </div>
     </div>
