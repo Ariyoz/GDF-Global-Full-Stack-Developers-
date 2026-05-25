@@ -80,165 +80,59 @@
         <button class="profile-tab" :class="{ active: activeTab === 'likes' }" @click="activeTab = 'likes'">Likes</button>
       </div>
     </div>
-    </div>
 
-    <!-- Body -->
-    <div class="container-gfd profile-body">
-      <!-- Left Column -->
-      <aside class="profile-aside">
-        <div class="glass-card-static aside-card">
-          <h3 class="aside-title">About</h3>
-          <p class="text-body-md">{{ dev.bio }}</p>
-        </div>
-
-        <div class="glass-card-static aside-card">
-          <h3 class="aside-title">Skills</h3>
-          <div class="skills-wrap">
-            <span v-for="skill in dev.skills" :key="skill" class="chip chip-primary">{{ skill }}</span>
-          </div>
-        </div>
-
-        <div class="glass-card-static aside-card">
-          <h3 class="aside-title">Experience</h3>
-          <div class="exp-list">
-            <div v-for="exp in dev.experience" :key="exp.company" class="exp-item">
-              <div class="exp-icon-wrap">
-                <span class="material-symbols-outlined exp-icon">terminal</span>
+    <!-- Tab Content -->
+    <div class="container-gfd profile-content">
+      <!-- Posts Tab -->
+      <div v-if="activeTab === 'posts'" class="tab-content">
+        <div v-if="userPosts.length" class="user-posts-list">
+          <div v-for="post in userPosts" :key="post.id" class="user-post-item">
+            <div class="post-header-mini">
+              <div class="post-avatar-mini">
+                <img v-if="dev.avatar" :src="dev.avatar" :alt="dev.name" class="post-avatar-img" />
+                <span v-else>{{ initials(dev.name) }}</span>
               </div>
               <div>
-                <p class="exp-title">{{ exp.title }}</p>
-                <p class="exp-company">{{ exp.company }} · {{ exp.period }}</p>
-                <p class="exp-desc">{{ exp.desc }}</p>
+                <span class="post-author-name">{{ dev.name }}</span>
+                <span class="post-username-mini">@{{ dev.username }} · {{ formatTime(post.created_at) }}</span>
               </div>
+            </div>
+            <p v-if="post.content" class="post-text-content">{{ post.content }}</p>
+            <div v-if="post.media_urls && post.media_urls.length && post.media_urls[0]" class="post-media-grid">
+              <img v-for="(url, idx) in post.media_urls.filter(u => u)" :key="idx" :src="url" alt="Post media" class="post-media-img" />
+            </div>
+            <div class="post-stats-mini">
+              <span>💬 {{ post.comment_count || 0 }}</span>
+              <span>🔁 {{ post.repost_count || 0 }}</span>
+              <span>❤️ {{ post.like_count || 0 }}</span>
+              <span>📊 {{ (post.like_count || 0) + (post.comment_count || 0) }}</span>
             </div>
           </div>
         </div>
-
-        <div class="glass-card-static aside-card stats-card">
-          <div v-for="stat in profileStats" :key="stat.label" class="pstat">
-            <p class="pstat-value">{{ stat.value }}</p>
-            <p class="pstat-label">{{ stat.label }}</p>
-          </div>
+        <div v-else class="no-posts">
+          <span class="material-symbols-outlined" style="font-size:2.5rem;color:var(--on-surface-variant)">article</span>
+          <p style="margin-top:0.5rem;color:var(--on-surface-variant)">No posts yet</p>
         </div>
-      </aside>
+      </div>
 
-      <!-- Right Column -->
-      <div class="profile-main">
-        <!-- Portfolio -->
-        <div class="glass-card-static main-card">
-          <div class="main-card-header">
-            <h3 class="aside-title">Portfolio Projects</h3>
-            <a v-if="dev.projects.length" href="#" class="view-all-link">
-              View All <span class="material-symbols-outlined" style="font-size:16px;">arrow_forward</span>
-            </a>
-          </div>
-
-          <!-- Portfolio Items -->
-          <div v-if="dev.projects.length || portfolioItems.length" class="portfolio-grid">
-            <div v-for="project in dev.projects" :key="project.name" class="portfolio-card">
-              <div class="portfolio-thumb" :style="{ background: project.gradient }">
-                <span class="material-symbols-outlined portfolio-icon">{{ project.icon }}</span>
-                <div class="portfolio-hover">
-                  <span class="portfolio-hover-btn">View Details</span>
-                </div>
-              </div>
-              <h4 class="portfolio-name">{{ project.name }}</h4>
-              <p class="portfolio-desc">{{ project.desc }}</p>
-            </div>
-
-            <!-- User-uploaded portfolio items -->
-            <div v-for="item in portfolioItems" :key="item.id" class="portfolio-card">
-              <a v-if="item.type === 'link'" :href="item.url" target="_blank" rel="noopener" class="portfolio-thumb portfolio-thumb--link">
-                <span class="material-symbols-outlined portfolio-icon">link</span>
-                <div class="portfolio-hover">
-                  <span class="portfolio-hover-btn">Open Link</span>
-                </div>
-              </a>
-              <div v-else-if="item.type === 'image'" class="portfolio-thumb portfolio-thumb--img">
-                <img :src="item.url" :alt="item.name" class="portfolio-img" />
-                <div class="portfolio-hover">
-                  <span class="portfolio-hover-btn">View Image</span>
-                </div>
-              </div>
-              <div v-else class="portfolio-thumb portfolio-thumb--file">
-                <span class="material-symbols-outlined portfolio-icon">description</span>
-                <div class="portfolio-hover">
-                  <a :href="item.url" target="_blank" class="portfolio-hover-btn">Open PDF</a>
-                </div>
-              </div>
-              <h4 class="portfolio-name">{{ item.name }}</h4>
-              <p class="portfolio-desc">{{ item.type === 'link' ? item.url : item.type.toUpperCase() }}</p>
-              <button v-if="isOwnProfile" class="portfolio-remove" @click="removePortfolioItem(item.id)">
-                <span class="material-symbols-outlined" style="font-size:16px;">close</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Empty state -->
-          <div v-if="!dev.projects.length && !portfolioItems.length" class="portfolio-empty">
-            <span class="material-symbols-outlined" style="font-size:2.5rem;color:var(--on-surface-variant);">folder_open</span>
-            <p>No portfolio items yet.</p>
-          </div>
-
-          <!-- Upload section (own profile only) -->
-          <div v-if="isOwnProfile" class="portfolio-upload-section">
-            <div class="upload-divider" />
-            <h4 class="upload-title">Add to Portfolio</h4>
-            <div class="upload-options">
-              <!-- File upload (PDF/Image) -->
-              <label class="upload-btn">
-                <span class="material-symbols-outlined" style="font-size:18px;">upload_file</span>
-                Upload File
-                <input type="file" accept=".pdf,image/*" class="upload-input-hidden" @change="handleFileUpload" />
-              </label>
-              <!-- Link input -->
-              <div class="upload-link-row">
-                <input
-                  v-model="portfolioLink"
-                  type="url"
-                  class="upload-link-input"
-                  placeholder="https://your-project-link.com"
-                  @keydown.enter.prevent="addPortfolioLink"
-                />
-                <button type="button" class="upload-link-btn" @click="addPortfolioLink" :disabled="!portfolioLink.trim()">
-                  <span class="material-symbols-outlined" style="font-size:18px;">add_link</span>
-                  Add
-                </button>
-              </div>
-            </div>
-          </div>
+      <!-- Media Tab -->
+      <div v-if="activeTab === 'media'" class="tab-content">
+        <div v-if="userPosts.filter(p => p.media_urls?.length).length" class="media-grid">
+          <template v-for="post in userPosts" :key="post.id">
+            <img v-for="(url, idx) in (post.media_urls || []).filter(u => u)" :key="idx" :src="url" alt="Media" class="media-grid-img" />
+          </template>
         </div>
+        <div v-else class="no-posts">
+          <span class="material-symbols-outlined" style="font-size:2.5rem;color:var(--on-surface-variant)">image</span>
+          <p style="margin-top:0.5rem;color:var(--on-surface-variant)">No media yet</p>
+        </div>
+      </div>
 
-        <!-- User Posts (like Twitter profile) -->
-        <div class="glass-card-static main-card">
-          <h3 class="aside-title" style="margin-bottom:1.25rem;">Posts</h3>
-          <div v-if="userPosts.length" class="user-posts-list">
-            <div v-for="post in userPosts" :key="post.id" class="user-post-item">
-              <div class="post-header-mini">
-                <div class="post-avatar-mini">
-                  <img v-if="dev.avatar" :src="dev.avatar" :alt="dev.name" class="post-avatar-img" />
-                  <span v-else>{{ initials(dev.name) }}</span>
-                </div>
-                <div>
-                  <p class="post-author-name">{{ dev.name }}</p>
-                  <p class="post-meta-mini">@{{ dev.username }} · {{ formatTime(post.created_at) }}</p>
-                </div>
-              </div>
-              <p v-if="post.content" class="post-text-content">{{ post.content }}</p>
-              <div v-if="post.media_urls && post.media_urls.length" class="post-media-grid">
-                <img v-for="(url, idx) in post.media_urls" :key="idx" :src="url" alt="Post media" class="post-media-img" />
-              </div>
-              <div class="post-stats-mini">
-                <span>❤️ {{ post.like_count || 0 }}</span>
-                <span>💬 {{ post.comment_count || 0 }}</span>
-                <span>🔁 {{ post.repost_count || 0 }}</span>
-              </div>
-            </div>
-          </div>
-          <div v-else class="no-posts">
-            <span class="material-symbols-outlined" style="font-size:2.5rem;color:var(--on-surface-variant)">article</span>
-            <p style="margin-top:0.5rem;color:var(--on-surface-variant)">No posts yet</p>
-          </div>
+      <!-- Likes Tab -->
+      <div v-if="activeTab === 'likes'" class="tab-content">
+        <div class="no-posts">
+          <span class="material-symbols-outlined" style="font-size:2.5rem;color:var(--on-surface-variant)">favorite</span>
+          <p style="margin-top:0.5rem;color:var(--on-surface-variant)">Liked posts will appear here</p>
         </div>
       </div>
     </div>
@@ -742,6 +636,54 @@ function formatTime(dateStr) {
 }
 .profile-tab:hover { background: rgba(99,14,212,0.04); }
 .profile-tab.active { color: var(--on-surface); border-bottom-color: var(--primary); }
+
+/* Tab Content */
+.profile-content { padding: 0 0.5rem; }
+
+.tab-content { padding: 0.5rem 0; }
+
+.user-posts-list { display: flex; flex-direction: column; }
+
+.user-post-item {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--outline-variant);
+}
+
+.post-header-mini { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem; }
+
+.post-avatar-mini {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--primary-fixed); color: var(--primary);
+  font-size: 0.7rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; flex-shrink: 0;
+}
+.post-avatar-mini .post-avatar-img { width: 100%; height: 100%; object-fit: cover; }
+
+.post-author-name { font-family: var(--font-headline); font-size: 0.85rem; font-weight: 700; color: var(--on-surface); }
+.post-username-mini { font-size: 0.78rem; color: var(--on-surface-variant); margin-left: 0.3rem; }
+
+.post-text-content { font-size: 0.9rem; color: var(--on-surface); line-height: 1.5; margin: 0.25rem 0; }
+
+.post-media-grid { margin-top: 0.5rem; border-radius: var(--radius-lg); overflow: hidden; }
+.post-media-img { width: 100%; max-height: 400px; object-fit: cover; border-radius: var(--radius-lg); border: 1px solid var(--outline-variant); }
+
+.post-stats-mini { display: flex; gap: 1.25rem; margin-top: 0.5rem; font-size: 0.78rem; color: var(--on-surface-variant); }
+
+.no-posts { display: flex; flex-direction: column; align-items: center; padding: 3rem; text-align: center; }
+
+/* Media Grid */
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.25rem;
+}
+.media-grid-img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 4px;
+}
 
 .btn-follow {
   display: inline-flex;
