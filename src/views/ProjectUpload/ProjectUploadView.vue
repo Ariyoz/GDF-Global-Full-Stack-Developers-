@@ -207,9 +207,14 @@
 
 <script setup>
 import { ref, reactive, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import GfdInput  from '@/components/ui/GfdInput.vue'
 import GfdButton from '@/components/ui/GfdButton.vue'
+import { useUiStore } from '@/store/ui'
+import http from '@/services/http'
 
+const router = useRouter()
+const uiStore = useUiStore()
 const currentStep = ref(0)
 const loading     = ref(false)
 const tagInput    = ref('')
@@ -277,9 +282,22 @@ function handleFileChange(e) {
 
 async function handlePublish() {
   loading.value = true
-  await new Promise(r => setTimeout(r, 1200))
-  loading.value = false
-  currentStep.value = 3
+  try {
+    await http.post('/projects/', {
+      title: form.title,
+      description: form.description,
+      skills_needed: form.tags,
+      requirements: form.description,
+      experience_level: 'mid',
+    })
+    uiStore.showSuccess('Project added successfully!')
+    currentStep.value = 3
+  } catch (err) {
+    console.error('Failed to publish project:', err)
+    uiStore.showError('Failed to publish project. Please try again.')
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
