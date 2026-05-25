@@ -36,7 +36,7 @@
       <!-- Center Feed -->
       <main class="feed-main">
         <!-- Create Post -->
-        <div class="glass-card-static create-post">
+        <div class="create-post">
           <div class="create-post-top">
             <div class="post-avatar-sm">{{ userInitials }}</div>
             <button class="create-post-input" @click="showCompose = true">
@@ -129,7 +129,7 @@
           <article
             v-for="post in posts"
             :key="post.id"
-            class="feed-post glass-card animate-fade-in-up"
+            class="feed-post"
           >
             <!-- Post Header -->
             <div class="post-header">
@@ -687,12 +687,18 @@ function submitComment(post, e) {
 .sidebar-link .material-symbols-outlined { font-size: 20px; }
 
 /* ── Feed Main ── */
-.feed-main { display: flex; flex-direction: column; gap: 0.875rem; min-width: 0; }
+.feed-main { display: flex; flex-direction: column; gap: 0; min-width: 0; }
+
+@media (max-width: 767px) {
+  .post-content { padding-left: 1rem; padding-right: 1rem; }
+  .post-actions-bar { padding-left: 1rem; }
+}
 
 /* ── Create Post ── */
 .create-post {
   padding: 1rem;
-  border-radius: var(--radius-xl);
+  background: var(--surface-container-lowest);
+  border-bottom: 1px solid var(--outline-variant);
 }
 
 .create-post-top {
@@ -740,9 +746,19 @@ function submitComment(post, e) {
 .post-action-type .material-symbols-outlined { font-size: 18px; }
 
 /* ── Feed Posts ── */
-.feed-posts { display: flex; flex-direction: column; gap: 0.875rem; }
+.feed-posts { display: flex; flex-direction: column; gap: 0; }
 
-.feed-post { padding: 0; overflow: hidden; }
+.feed-post {
+  padding: 0;
+  overflow: hidden;
+  background: var(--surface-container-lowest);
+  border-bottom: 1px solid var(--outline-variant);
+  transition: background 0.15s ease;
+}
+
+.feed-post:hover {
+  background: var(--surface-container-low);
+}
 
 /* Post Header */
 .post-header {
@@ -750,7 +766,7 @@ function submitComment(post, e) {
   padding: 0.75rem 1rem 0;
 }
 
-.post-author-info { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
+.post-author-info { display: flex; align-items: center; gap: 0.625rem; min-width: 0; }
 
 .post-avatar {
   width: 40px; height: 40px;
@@ -800,11 +816,11 @@ function submitComment(post, e) {
 .post-meta { font-size: 0.7rem; color: var(--on-surface-variant); margin-top: 1px; }
 
 /* Post Content */
-.post-content { padding: 0.5rem 1rem 0.5rem 3.5rem; }
+.post-content { padding: 0.25rem 1rem 0.5rem 3.75rem; }
 
 .post-text {
-  font-size: 0.9rem; color: var(--on-surface); line-height: 1.65;
-  margin-bottom: 0.75rem; word-break: break-word;
+  font-size: 0.9375rem; color: var(--on-surface); line-height: 1.55;
+  margin-bottom: 0; word-break: break-word;
 }
 
 /* Image */
@@ -915,9 +931,8 @@ function submitComment(post, e) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 1rem;
-  border-top: 1px solid var(--outline-variant);
-  max-width: 400px;
+  padding: 0.5rem 1rem 0.75rem 3.5rem;
+  border-top: none;
 }
 
 .post-actions-bar .action-btn {
@@ -985,10 +1000,10 @@ function submitComment(post, e) {
 .feed-tabs {
   display: flex;
   border-bottom: 1px solid var(--outline-variant);
-  margin-bottom: 0.5rem;
   background: var(--surface-container-lowest);
-  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-  overflow: hidden;
+  position: sticky;
+  top: 72px;
+  z-index: 10;
 }
 
 .feed-tab {
@@ -996,9 +1011,9 @@ function submitComment(post, e) {
   padding: 0.875rem 1rem;
   background: none;
   border: none;
-  border-bottom: 2px solid transparent;
+  border-bottom: 3px solid transparent;
   font-family: var(--font-headline);
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: var(--on-surface-variant);
   cursor: pointer;
@@ -1007,12 +1022,13 @@ function submitComment(post, e) {
 }
 
 .feed-tab:hover {
-  background: rgba(99,14,212,0.04);
+  background: var(--surface-container-low);
   color: var(--on-surface);
 }
 
 .feed-tab.active {
-  color: var(--primary);
+  color: var(--on-surface);
+  font-weight: 700;
   border-bottom-color: var(--primary);
 }
 
@@ -1070,16 +1086,16 @@ function submitComment(post, e) {
 /* ── Post Media ── */
 .post-media {
   margin-top: 0.75rem;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   overflow: hidden;
+  border: 1px solid var(--outline-variant);
 }
 
 .post-media img {
   width: 100%;
   max-height: 500px;
   object-fit: cover;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--outline-variant);
+  display: block;
 }
 
 /* ── Hashtags ── */
