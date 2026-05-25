@@ -64,12 +64,12 @@
   --on-error-container:       #93000a;
 
   /* ── Glass ── */
-  --glass-bg:             rgba(255, 255, 255, 0.85);
-  --glass-bg-hover:       rgba(255, 255, 255, 0.95);
-  --glass-border:         #F3F4F6;
-  --glass-border-primary: rgba(124, 58, 237, 0.3);
-  --glass-blur:           blur(20px);
-  --glass-blur-heavy:     blur(40px);
+  --glass-bg:             #ffffff;
+  --glass-bg-hover:       #f9fafb;
+  --glass-border:         #e5e7eb;
+  --glass-border-primary: rgba(124, 58, 237, 0.2);
+  --glass-blur:           none;
+  --glass-blur-heavy:     none;
 
   /* ── Shadows ── */
   --shadow-sm:        0px 4px 20px rgba(0,0,0,0.03), 0px 10px 40px rgba(0,0,0,0.04);
@@ -185,10 +185,10 @@
   --on-error-container:       #fecaca;
 
   /* ── Glass — dark ── */
-  --glass-bg:             rgba(18, 18, 26, 0.85);
-  --glass-bg-hover:       rgba(24, 24, 36, 0.95);
-  --glass-border:         rgba(255, 255, 255, 0.07);
-  --glass-border-primary: rgba(168, 85, 247, 0.25);
+  --glass-bg:             #1a1a2e;
+  --glass-bg-hover:       #1f1f35;
+  --glass-border:         rgba(255, 255, 255, 0.08);
+  --glass-border-primary: rgba(168, 85, 247, 0.2);
 
   /* ── Shadows — dark (more pronounced) ── */
   --shadow-sm:        0px 4px 20px rgba(0,0,0,0.3), 0px 10px 40px rgba(0,0,0,0.4);

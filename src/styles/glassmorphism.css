@@ -1,73 +1,61 @@
-/* ── GFD Glassmorphism — adapts to light/dark via CSS variables ── */
+/* ── GFD Card Styles — Clean flat cards like Twitter/X ── */
 
 .glass {
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant);
   border-radius: var(--radius-xl);
 }
 
-/* Standard hoverable glass card */
+/* Standard hoverable card */
 .glass-card {
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-sm);
-  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
 .glass-card:hover {
-  border-color: var(--glass-border-primary);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  background: var(--surface-container-low);
+  border-color: var(--outline-variant);
 }
 
-/* Static glass card — no hover lift */
+/* Static card — no hover effect */
 .glass-card-static {
-  background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-sm);
 }
 
-/* Navbar glass */
+/* Navbar */
 .glass-nav {
-  background: rgba(249, 249, 255, 0.88);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: var(--surface-container-lowest);
   border-bottom: 1px solid var(--outline-variant);
 }
 
 [data-theme="dark"] .glass-nav {
-  background: rgba(10, 10, 15, 0.88);
+  background: #16161f;
+  border-bottom-color: rgba(255, 255, 255, 0.08);
 }
 
-/* Input glass */
+/* Input */
 .glass-input {
   background: var(--surface-container-lowest);
   border: 1px solid var(--outline-variant);
   border-radius: var(--radius-lg);
   color: var(--on-surface);
-  transition: var(--transition-base);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .glass-input:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15);
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.12);
 }
 
-/* Modal glass */
+/* Modal */
 .glass-modal {
   background: var(--surface-container-lowest);
-  backdrop-filter: blur(40px);
-  -webkit-backdrop-filter: blur(40px);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--outline-variant);
   border-radius: var(--radius-2xl);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
 }
