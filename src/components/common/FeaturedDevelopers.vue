@@ -172,11 +172,11 @@ function initials(name) {
 
 .dev-avatar {
   position: relative;
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-lg);
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
   background: var(--primary-fixed);
-  border: 1px solid rgba(99,14,212,0.15);
+  border: 2px solid rgba(99,14,212,0.15);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -186,7 +186,7 @@ function initials(name) {
 
 .dev-initials {
   font-family: var(--font-headline);
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: var(--primary);
 }
@@ -195,7 +195,7 @@ function initials(name) {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-full);
 }
 
 .dev-online-dot {

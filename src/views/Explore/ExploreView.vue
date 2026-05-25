@@ -98,7 +98,8 @@
             <div class="dev-card-top">
               <div class="dev-avatar-wrap">
                 <div class="dev-avatar">
-                  <span class="dev-initials">{{ initials(dev.name) }}</span>
+                  <img v-if="dev.avatar" :src="dev.avatar" :alt="dev.name" class="dev-avatar-img" />
+                  <span v-else class="dev-initials">{{ initials(dev.name) }}</span>
                 </div>
                 <span v-if="dev.available" class="online-dot" />
               </div>
@@ -458,19 +459,27 @@ function resetFilters() {
 .dev-avatar-wrap { position: relative; flex-shrink: 0; }
 
 .dev-avatar {
-  width: 64px;
-  height: 64px;
-  border-radius: var(--radius-lg);
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-full);
   background: var(--surface-container);
-  border: 1px solid var(--outline-variant);
+  border: 2px solid var(--outline-variant);
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+}
+
+.dev-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-full);
 }
 
 .dev-initials {
   font-family: var(--font-headline);
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   font-weight: 700;
   color: var(--primary);
 }
