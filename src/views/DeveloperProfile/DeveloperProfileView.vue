@@ -113,7 +113,7 @@
                     <span class="material-symbols-outlined">push_pin</span>
                     Pin to profile
                   </button>
-                  <button class="dropdown-item" @click="profileMenuId = null">
+                  <button class="dropdown-item" @click="viewPostActivity(post); profileMenuId = null">
                     <span class="material-symbols-outlined">bar_chart</span>
                     View post activity
                   </button>
@@ -203,6 +203,58 @@
         </div>
       </div>
     </div>
+
+    <!-- Edit Profile Modal (X style) -->
+    <Transition name="modal">
+      <div v-if="showActivityModal" class="modal-overlay" @click.self="showActivityModal = false">
+        <div class="activity-modal">
+          <div class="edit-modal-header">
+            <button class="btn-ghost icon-only" @click="showActivityModal = false">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+            <h3 class="edit-modal-title">Post Activity</h3>
+            <div></div>
+          </div>
+          <div class="activity-content">
+            <div class="activity-stat-row">
+              <span class="material-symbols-outlined">visibility</span>
+              <div>
+                <p class="activity-stat-value">{{ (activityPost?.like_count || 0) + (activityPost?.comment_count || 0) + (activityPost?.repost_count || 0) }}</p>
+                <p class="activity-stat-label">Impressions</p>
+              </div>
+            </div>
+            <div class="activity-stat-row">
+              <span class="material-symbols-outlined">favorite</span>
+              <div>
+                <p class="activity-stat-value">{{ activityPost?.like_count || 0 }}</p>
+                <p class="activity-stat-label">Likes</p>
+              </div>
+            </div>
+            <div class="activity-stat-row">
+              <span class="material-symbols-outlined">chat_bubble_outline</span>
+              <div>
+                <p class="activity-stat-value">{{ activityPost?.comment_count || 0 }}</p>
+                <p class="activity-stat-label">Comments</p>
+              </div>
+            </div>
+            <div class="activity-stat-row">
+              <span class="material-symbols-outlined">repeat</span>
+              <div>
+                <p class="activity-stat-value">{{ activityPost?.repost_count || 0 }}</p>
+                <p class="activity-stat-label">Reposts</p>
+              </div>
+            </div>
+            <div class="activity-stat-row">
+              <span class="material-symbols-outlined">bookmark</span>
+              <div>
+                <p class="activity-stat-value">{{ activityPost?.bookmark_count || 0 }}</p>
+                <p class="activity-stat-label">Bookmarks</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
 
     <!-- Edit Profile Modal (X style) -->
     <Transition name="modal">
@@ -301,6 +353,13 @@ const bannerInput = ref(null)
 const avatarInputProfile = ref(null)
 const showEditModal = ref(false)
 const profileMenuId = ref(null)
+const showActivityModal = ref(false)
+const activityPost = ref(null)
+
+function viewPostActivity(post) {
+  activityPost.value = post
+  showActivityModal.value = true
+}
 
 function pinPost(post) {
   // Move post to top
@@ -949,6 +1008,45 @@ function formatJoinDate(dateStr) {
 .profile-post-dropdown .dropdown-item:hover { background: var(--surface-container); }
 .profile-post-dropdown .dropdown-item--danger { color: #ef4444; }
 .profile-post-dropdown .dropdown-item--danger:hover { background: rgba(239,68,68,0.08); }
+
+/* Activity Modal */
+.activity-modal {
+  width: 100%;
+  max-width: 400px;
+  background: var(--surface-container-lowest);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+.activity-content {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.activity-stat-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.activity-stat-row .material-symbols-outlined {
+  font-size: 24px;
+  color: var(--on-surface-variant);
+}
+
+.activity-stat-value {
+  font-family: var(--font-headline);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--on-surface);
+}
+
+.activity-stat-label {
+  font-size: 0.8rem;
+  color: var(--on-surface-variant);
+}
 
 .post-avatar-mini {
   width: 32px; height: 32px; border-radius: 50%;
