@@ -155,6 +155,31 @@ export const useMessagingStore = defineStore('messaging', () => {
     } catch { /* ignore */ }
   }
 
+  function pinChat(convId) {
+    const conv = conversations.value.find(c => c.id === convId)
+    if (conv) {
+      conv.pinned = !conv.pinned
+      // Sort: pinned first, then by time
+      conversations.value.sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1
+        if (!a.pinned && b.pinned) return 1
+        return 0
+      })
+    }
+  }
+
+  async function createGroupChat(name, participantIds) {
+    const authStore = useAuthStore()
+    try {
+      const data = await messagingService.startConversation(authStore.user.id, participantIds[0])
+      // For group, we'd need a different endpoint — using existing for now
+      await fetchConversations()
+      return data
+    } catch (err) {
+      console.error('Failed to create group:', err)
+    }
+  }
+
   async function startConversation(otherUserId) {
     const authStore = useAuthStore()
     try {
@@ -195,5 +220,6 @@ export const useMessagingStore = defineStore('messaging', () => {
     conversations, activeConversation, messages, unreadCount, loading, typingUsers,
     fetchConversations, fetchMessages, sendMessage, startConversation,
     setActiveConversation, sendTyping, sendStopTyping, deleteConversation, deleteMessage,
+    pinChat, createGroupChat,
   }
 })

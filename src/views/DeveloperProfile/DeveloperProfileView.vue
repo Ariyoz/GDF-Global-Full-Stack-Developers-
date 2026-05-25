@@ -223,6 +223,13 @@
               <span class="char-count">{{ editForm.full_name?.length || 0 }}/50</span>
             </div>
             <div class="edit-field">
+              <label>Username</label>
+              <input v-model="editForm.username" type="text" maxlength="30" @input="checkUsername" placeholder="username" />
+              <span v-if="usernameStatus === 'checking'" class="username-status checking">Checking...</span>
+              <span v-else-if="usernameStatus === 'available'" class="username-status available">✓ Available</span>
+              <span v-else-if="usernameStatus === 'taken'" class="username-status taken">✗ Taken</span>
+            </div>
+            <div class="edit-field">
               <label>Bio</label>
               <textarea v-model="editForm.bio" maxlength="160" rows="3"></textarea>
               <span class="char-count">{{ editForm.bio?.length || 0 }}/160</span>
@@ -275,6 +282,7 @@ const showEditModal = ref(false)
 
 const editForm = ref({
   full_name: '',
+  username: '',
   bio: '',
   location: '',
   portfolio_url: '',
@@ -284,6 +292,33 @@ const editForm = ref({
   banner: '',
 })
 
+const usernameStatus = ref('') // '', 'checking', 'available', 'taken'
+let usernameCheckTimeout = null
+
+function checkUsername() {
+  const username = editForm.value.username?.trim()
+  if (!username || username === profileData.value?.username) {
+    usernameStatus.value = ''
+    return
+  }
+  usernameStatus.value = 'checking'
+  clearTimeout(usernameCheckTimeout)
+  usernameCheckTimeout = setTimeout(async () => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1'}/explore/search?q=${username}&limit=5`)
+      if (res.ok) {
+        const data = await res.json()
+        const taken = (data.results || []).some(u => u.username?.toLowerCase() === username.toLowerCase())
+        usernameStatus.value = taken ? 'taken' : 'available'
+      } else {
+        usernameStatus.value = 'available'
+      }
+    } catch {
+      usernameStatus.value = ''
+    }
+  }, 600)
+}
+
 // Initialize edit form when modal opens
 import { watch } from 'vue'
 watch(showEditModal, (val) => {
@@ -291,6 +326,7 @@ watch(showEditModal, (val) => {
     const p = profileData.value
     editForm.value = {
       full_name: p.full_name || '',
+      username: p.username || '',
       bio: p.bio || '',
       location: p.location || '',
       portfolio_url: p.portfolio_url || p.website_url || '',
@@ -299,6 +335,7 @@ watch(showEditModal, (val) => {
       avatar: p.avatar || '',
       banner: p.banner || '',
     }
+    usernameStatus.value = ''
   }
 })
 
@@ -312,8 +349,11 @@ async function saveProfile() {
       github_url: editForm.value.github_url,
       skills: editForm.value.skillsText.split(',').map(s => s.trim()).filter(Boolean),
     }
+    // Only include username if changed and available
+    if (editForm.value.username && editForm.value.username !== profileData.value?.username && usernameStatus.value !== 'taken') {
+      updates.username = editForm.value.username
+    }
     await http.patch('/users/me', updates)
-    // Refresh profile
     await loadProfile()
     showEditModal.value = false
   } catch (err) {
@@ -997,6 +1037,15 @@ function formatJoinDate(dateStr) {
   position: absolute; top: 0; right: 0;
   font-size: 0.68rem; color: var(--on-surface-variant);
 }
+
+.username-status {
+  font-size: 0.72rem;
+  font-weight: 500;
+  margin-top: 0.2rem;
+}
+.username-status.checking { color: var(--on-surface-variant); }
+.username-status.available { color: #22c55e; }
+.username-status.taken { color: #ef4444; }
 
 /* Modal transitions */
 .modal-enter-active, .modal-leave-active { transition: opacity 0.2s; }

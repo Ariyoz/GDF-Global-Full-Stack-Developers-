@@ -25,6 +25,7 @@
           <div class="conv-info">
             <div class="conv-top">
               <span class="conv-name">{{ conv.name }}</span>
+              <span v-if="conv.pinned" class="material-symbols-outlined pin-icon" style="font-size:14px;color:var(--primary);">push_pin</span>
               <span class="conv-time">{{ conv.time }}</span>
             </div>
             <div class="conv-bottom">
@@ -63,6 +64,10 @@
               <span class="material-symbols-outlined">more_vert</span>
             </button>
             <div v-if="showChatMenu" class="chat-dropdown">
+              <button class="dropdown-item" @click="pinCurrentChat">
+                <span class="material-symbols-outlined">push_pin</span>
+                {{ activeConv?.pinned ? 'Unpin chat' : 'Pin chat' }}
+              </button>
               <button class="dropdown-item" @click="deleteChat">
                 <span class="material-symbols-outlined">delete</span>
                 Delete conversation
@@ -98,7 +103,9 @@
               <p v-if="msg.media_url" class="msg-media">
                 <img :src="msg.media_url" alt="Shared image" class="msg-image" />
               </p>
-              <span>{{ msg.content || msg.text }}</span>
+              <!-- Code snippet detection -->
+              <pre v-if="isCodeSnippet(msg.content)" class="msg-code"><code>{{ extractCode(msg.content) }}</code></pre>
+              <span v-else>{{ msg.content || msg.text }}</span>
               <span v-if="msg.is_edited" class="msg-edited">(edited)</span>
               <div class="msg-footer">
                 <span class="msg-time">{{ msg.time }}</span>
@@ -214,6 +221,23 @@ async function deleteChat() {
 
 function handleTyping() {
   messagingStore.sendTyping()
+}
+
+function pinCurrentChat() {
+  if (activeConv.value) {
+    messagingStore.pinChat(activeConv.value.id)
+  }
+  showChatMenu.value = false
+}
+
+function isCodeSnippet(content) {
+  if (!content) return false
+  return content.startsWith('```') || content.includes('\n```')
+}
+
+function extractCode(content) {
+  if (!content) return ''
+  return content.replace(/```\w*\n?/g, '').replace(/```$/g, '').trim()
 }
 </script>
 
@@ -482,6 +506,22 @@ function handleTyping() {
 .msg-read { font-size: 0.7rem; color: var(--primary); }
 .msg-sent { font-size: 0.7rem; color: var(--on-surface-variant); }
 .msg-bubble.deleted { opacity: 0.6; font-style: italic; }
+
+/* Code snippets in messages */
+.msg-code {
+  background: var(--surface-container);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 0.75rem;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--on-surface);
+  margin: 0;
+}
 
 .input-action {
   padding: 0.4rem;
