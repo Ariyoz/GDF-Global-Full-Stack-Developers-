@@ -182,10 +182,27 @@
               :key="t.value"
               class="type-chip"
               :class="{ active: postType === t.value }"
-              @click="postType = t.value"
+              @click="t.value === 'image' ? triggerImageUpload() : (postType = t.value)"
             >
               <span class="material-symbols-outlined" style="font-size:16px">{{ t.icon }}</span>
               {{ t.label }}
+            </button>
+          </div>
+
+          <!-- Hidden file input for image upload -->
+          <input
+            ref="imageInput"
+            type="file"
+            accept="image/*"
+            class="hidden-input"
+            @change="handleImageSelect"
+          />
+
+          <!-- Image preview -->
+          <div v-if="selectedImagePreview" class="sheet-image-preview">
+            <img :src="selectedImagePreview" alt="Selected image" class="preview-img" />
+            <button class="preview-remove" @click="clearImage">
+              <span class="material-symbols-outlined">close</span>
             </button>
           </div>
 
@@ -215,7 +232,7 @@
           <!-- Footer -->
           <div class="sheet-footer">
             <div class="sheet-tools">
-              <button class="tool-btn" @click="postType = postType === 'image' ? 'text' : 'image'">
+              <button class="tool-btn" @click="triggerImageUpload()">
                 <span class="material-symbols-outlined">image</span>
               </button>
               <button class="tool-btn" @click="postType = postType === 'code' ? 'text' : 'code'">
@@ -227,7 +244,7 @@
             </div>
             <button
               class="btn-primary sheet-post-btn"
-              :disabled="!composeText.trim()"
+              :disabled="!composeText.trim() && !selectedImageFile"
               @click="submitCompose"
             >
               <span class="material-symbols-outlined" style="font-size:16px">send</span>
@@ -275,6 +292,28 @@ const postTypes = [
   { value: 'image', icon: 'image',    label: 'Photo'   },
 ]
 
+const selectedImageFile = ref(null)
+const selectedImagePreview = ref(null)
+const imageInput = ref(null)
+
+function triggerImageUpload() {
+  imageInput.value?.click()
+}
+
+function handleImageSelect(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  selectedImageFile.value = file
+  selectedImagePreview.value = URL.createObjectURL(file)
+  postType.value = 'image'
+}
+
+function clearImage() {
+  if (selectedImagePreview.value) URL.revokeObjectURL(selectedImagePreview.value)
+  selectedImageFile.value = null
+  selectedImagePreview.value = null
+}
+
 async function openCompose() {
   showCompose.value = true
   await nextTick()
@@ -287,35 +326,38 @@ function closeCompose() {
   codeSnippet.value  = ''
   postLink.value     = ''
   postType.value     = 'text'
+  clearImage()
 }
 
-function submitCompose() {
-  if (!composeText.value.trim()) return
+async function submitCompose() {
+  if (!composeText.value.trim() && !selectedImageFile.value) return
 
-  // Build the post object and push it into the shared feed store
-  const post = {
-    id:          Date.now(),
-    author:      user.value?.name || 'Developer',
-    time:        'Just now',
-    category:    user.value?.role || 'Developer',
-    text:        composeText.value,
-    type:        postType.value,
-    reactions:   {},
-    commentList: [],
-    showComments: false,
-    ...(postType.value === 'code' && {
-      filename: `snippet.${codeLang.value.toLowerCase()}`,
-      code:     codeSnippet.value,
-    }),
-    ...(postType.value === 'link' && postLink.value && {
-      links: [{ label: postLink.value, icon: 'link' }],
-    }),
+  let mediaUrls = []
+
+  // Upload image to Cloudinary if selected
+  if (selectedImageFile.value) {
+    try {
+      const formData = new FormData()
+      formData.append('file', selectedImageFile.value)
+      const { default: http } = await import('@/services/http')
+      const data = await http.post('/uploads/media', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+      if (data.url) mediaUrls.push(data.url)
+    } catch (err) {
+      console.error('Image upload failed:', err)
+    }
   }
 
-  feedStore.addPost(post)
-  closeCompose()
+  // Submit to feed store (which calls the real backend)
+  await feedStore.addPost({
+    content: composeText.value,
+    text: composeText.value,
+    post_type: mediaUrls.length ? 'image' : postType.value === 'code' ? 'code' : 'text',
+    media_urls: mediaUrls,
+    code_snippet: postType.value === 'code' ? codeSnippet.value : undefined,
+    code_language: postType.value === 'code' ? codeLang.value : undefined,
+  })
 
-  // Navigate to feed so the user sees their post
+  closeCompose()
   router.push({ name: 'feed' })
 }
 
@@ -984,6 +1026,55 @@ function handleSignOut() {
 }
 
 .sheet-link-input::placeholder { color: var(--outline); }
+
+/* Hidden file input */
+.hidden-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Image preview */
+.sheet-image-preview {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--outline-variant);
+}
+
+.preview-img {
+  width: 100%;
+  max-height: 240px;
+  object-fit: cover;
+  display: block;
+}
+
+.preview-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  transition: background 0.15s ease;
+}
+
+.preview-remove:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.preview-remove .material-symbols-outlined {
+  font-size: 18px;
+}
 
 /* Footer */
 .sheet-footer {
