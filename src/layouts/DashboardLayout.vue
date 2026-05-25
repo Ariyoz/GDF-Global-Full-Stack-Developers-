@@ -266,11 +266,13 @@ import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/store/auth'
 import { useTheme }     from '@/composables/useTheme'
 import { useFeedStore } from '@/store/feed'
+import { useUiStore }   from '@/store/ui'
 import ToastContainer from '@/components/ui/ToastContainer.vue'
 
 const router    = useRouter()
 const authStore = useAuthStore()
 const feedStore = useFeedStore()
+const uiStore   = useUiStore()
 const { user, isAdmin }  = storeToRefs(authStore)
 const { isDark, toggle } = useTheme()
 
@@ -357,6 +359,7 @@ async function submitCompose() {
     code_language: postType.value === 'code' ? codeLang.value : undefined,
   })
 
+  uiStore.showSuccess('Posted successfully!')
   closeCompose()
   router.push({ name: 'feed' })
 }

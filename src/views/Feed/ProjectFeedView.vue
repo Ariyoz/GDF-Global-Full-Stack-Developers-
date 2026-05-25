@@ -358,10 +358,12 @@ import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
 import { useFeedStore }  from '@/store/feed'
+import { useUiStore }    from '@/store/ui'
 import http from '@/services/http'
 
 const authStore = useAuthStore()
 const feedStore = useFeedStore()
+const uiStore   = useUiStore()
 const { posts } = storeToRefs(feedStore)
 
 // Use profile for display
@@ -591,6 +593,7 @@ async function submitPost() {
   composeMode.value = 'text'
   quotePost.value = null
   showCompose.value = false
+  uiStore.showSuccess('Posted successfully!')
 }
 
 function submitComment(post, e) {
