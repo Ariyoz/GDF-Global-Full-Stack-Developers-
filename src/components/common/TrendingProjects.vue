@@ -13,80 +13,108 @@
         </RouterLink>
       </div>
 
-      <!-- Mobile: stacked list -->
-      <div class="bento-mobile">
+      <!-- Projects Grid -->
+      <div class="trending-grid" v-if="projects.length">
         <div
-          v-for="project in mobileProjects"
-          :key="project.title"
-          class="mobile-project-card"
-          :style="{ background: project.gradient }"
+          v-for="(project, i) in projects.slice(0, 4)"
+          :key="project.id"
+          class="trending-card"
+          :class="{ 'trending-card-large': i === 0 }"
+          @click="viewProject(project)"
         >
-          <div class="mobile-card-overlay">
-            <span v-if="project.badge" class="bento-badge">{{ project.badge }}</span>
-            <h3 class="mobile-card-title">{{ project.title }}</h3>
-            <p class="mobile-card-desc">{{ project.desc }}</p>
+          <div class="trending-card-inner">
+            <span v-if="i === 0" class="trending-badge">TRENDING</span>
+            <div class="trending-card-content">
+              <h3 class="trending-card-title">{{ project.title }}</h3>
+              <p class="trending-card-desc">{{ project.description?.slice(0, 80) }}{{ project.description?.length > 80 ? '...' : '' }}</p>
+              <div class="trending-card-skills" v-if="project.skills_needed?.length">
+                <span v-for="skill in project.skills_needed.slice(0, 3)" :key="skill" class="trending-skill">{{ skill }}</span>
+              </div>
+              <div class="trending-card-stats">
+                <span class="trending-stat">
+                  <span class="material-symbols-outlined">visibility</span>
+                  {{ formatCount(project.view_count) }}
+                </span>
+                <button class="trending-stat like-stat" :class="{ liked: project.is_liked }" @click.stop="likeProject(project)">
+                  <span class="material-symbols-outlined" :style="project.is_liked ? 'font-variation-settings:\'FILL\' 1' : ''">favorite</span>
+                  {{ formatCount(project.like_count) }}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- CTA card -->
-        <div class="mobile-cta-card" @click="$router.push('/projects')">
-          <span class="material-symbols-outlined" style="font-size:2rem;color:var(--primary)">add_circle</span>
-          <p class="mobile-cta-title">Submit Yours</p>
-          <p class="mobile-cta-desc">Showcase to 500+ top companies.</p>
+        <!-- CTA Card -->
+        <div class="trending-card trending-cta" @click="$router.push('/dashboard/projects/upload')">
+          <div class="trending-cta-inner">
+            <span class="material-symbols-outlined" style="font-size:2.5rem;color:var(--primary)">add_circle</span>
+            <h4 class="trending-cta-title">Submit Yours</h4>
+            <p class="trending-cta-desc">Showcase to 500+ top companies.</p>
+          </div>
         </div>
       </div>
 
-      <!-- Desktop: bento grid -->
-      <div class="bento-desktop">
-        <!-- Large featured (col-span-2, row-span-2) -->
-        <div class="bento-large">
-          <div class="bento-overlay">
-            <span class="bento-badge">EDITOR'S CHOICE</span>
-            <h3 class="bento-title-lg">Vortex Analytics Engine</h3>
-            <p class="bento-desc">Real-time data visualization for cloud-native infrastructure.</p>
-            <div class="bento-meta">
-              <span class="bento-meta-item">
-                <span class="material-symbols-outlined" style="font-size:15px">visibility</span> 12.4k
-              </span>
-              <span class="bento-meta-item">
-                <span class="material-symbols-outlined" style="font-size:15px">favorite</span> 2.1k
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Medium (col-span-2) -->
-        <div class="bento-medium">
-          <div class="bento-overlay-dark">
-            <h3 class="bento-title-md">Prism Design System</h3>
-            <div class="bento-author">
-              <div class="author-dot" />
-              <span>by David Kim</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Small 1 -->
-        <div class="bento-small">
-          <div class="bento-overlay-dark">
-            <h4 class="bento-title-sm">Nexus Core API</h4>
-            <span class="bento-category">Fintech</span>
-          </div>
-        </div>
-
-        <!-- CTA -->
-        <div class="bento-cta" @click="$router.push('/projects')">
-          <span class="material-symbols-outlined bento-cta-icon">add_circle</span>
-          <h4 class="bento-cta-title">Submit Yours</h4>
-          <p class="bento-cta-desc">Showcase to 500+ top companies.</p>
-        </div>
+      <!-- Empty state -->
+      <div v-else-if="!loading" class="trending-empty">
+        <p>No projects yet. Be the first to <RouterLink to="/dashboard/projects/upload" style="color:var(--primary)">submit one</RouterLink>!</p>
       </div>
     </div>
   </section>
 </template>
 
 <script setup>
-const mobileProjects = []
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+const projects = ref([])
+const loading = ref(true)
+
+onMounted(async () => {
+  try {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1'
+    const res = await fetch(`${baseUrl}/projects?limit=4&sort=trending`)
+    if (res.ok) {
+      const data = await res.json()
+      projects.value = data.projects || []
+    }
+  } catch (err) {
+    console.error('Failed to fetch trending projects:', err)
+  } finally {
+    loading.value = false
+  }
+})
+
+async function viewProject(project) {
+  // Record view
+  try {
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1'
+    fetch(`${baseUrl}/projects/${project.id}/view`, { method: 'POST' })
+  } catch { /* ignore */ }
+  router.push(`/projects`)
+}
+
+async function likeProject(project) {
+  try {
+    const token = localStorage.getItem('gfd_token')
+    if (!token) return
+    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1'
+    const res = await fetch(`${baseUrl}/projects/${project.id}/like`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (res.ok) {
+      project.like_count = (project.like_count || 0) + 1
+      project.is_liked = true
+    }
+  } catch { /* ignore */ }
+}
+
+function formatCount(count) {
+  if (!count) return '0'
+  if (count >= 1000) return (count / 1000).toFixed(1) + 'k'
+  return count.toString()
+}
 </script>
 
 <style scoped>
@@ -116,108 +144,45 @@ const mobileProjects = []
 }
 .view-all-link:hover { text-decoration: underline; }
 
-/* ── Mobile Layout ── */
-.bento-mobile {
-  display: flex;
-  flex-direction: column;
-  gap: 0.875rem;
+/* ── Trending Grid ── */
+.trending-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
 }
 
-@media (min-width: 768px) {
-  .bento-mobile { display: none; }
+@media (min-width: 640px) {
+  .trending-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
-.mobile-project-card {
-  position: relative;
+@media (min-width: 1024px) {
+  .trending-grid { grid-template-columns: repeat(3, 1fr); }
+  .trending-card-large { grid-column: span 2; }
+}
+
+.trending-card {
   border-radius: var(--radius-xl);
   overflow: hidden;
-  min-height: 140px;
   cursor: pointer;
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant);
+  transition: border-color 0.15s ease, transform 0.15s ease;
 }
 
-.mobile-card-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.1) 100%);
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 1.25rem;
+.trending-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
 }
 
-.mobile-card-title {
-  font-family: var(--font-headline);
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #fff;
-  margin-bottom: 0.25rem;
-}
-
-.mobile-card-desc {
-  font-size: 0.8rem;
-  color: rgba(255,255,255,0.75);
-  line-height: 1.4;
-}
-
-.mobile-cta-card {
-  border-radius: var(--radius-xl);
-  /* Always dark — doesn't flip in light mode */
-  background: #1a1a2e;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
+.trending-card-inner {
   padding: 1.5rem;
-  cursor: pointer;
-  gap: 0.5rem;
-  transition: background 0.25s;
-  min-height: 120px;
-  border: 1px solid rgba(168,85,247,0.15);
-}
-
-.mobile-cta-card:hover { background: var(--primary); }
-.mobile-cta-card:hover .mobile-cta-title,
-.mobile-cta-card:hover .mobile-cta-desc { color: rgba(255,255,255,0.9); }
-.mobile-cta-card:hover .material-symbols-outlined { color: #fff; }
-
-.mobile-cta-title { font-family: var(--font-headline); font-size: 1rem; font-weight: 700; color: #fff; }
-.mobile-cta-desc  { font-size: 0.8rem; color: rgba(255,255,255,0.6); }
-
-/* ── Desktop Bento Grid ── */
-.bento-desktop { display: none; }
-
-@media (min-width: 768px) {
-  .bento-desktop {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: 280px 280px;
-    gap: 1rem;
-  }
-}
-
-/* Large — always dark gradient */
-.bento-large {
-  position: relative;
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  background: linear-gradient(135deg, #1a0840 0%, #1a1040 100%);
-  grid-column: span 2;
-  grid-row: span 2;
-  cursor: pointer;
-}
-
-.bento-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 55%);
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  padding: 2rem;
+  gap: 0.75rem;
+  min-height: 180px;
 }
 
-.bento-badge {
+.trending-badge {
   display: inline-block;
   padding: 0.2rem 0.625rem;
   background: var(--primary);
@@ -227,146 +192,129 @@ const mobileProjects = []
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: 0.06em;
-  margin-bottom: 0.5rem;
   width: fit-content;
 }
 
-.bento-title-lg {
-  font-family: var(--font-headline);
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: #fff;
-  margin-bottom: 0.35rem;
+.trending-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
 }
 
-.bento-desc {
-  font-size: 0.9rem;
-  color: rgba(255,255,255,0.8);
-  margin-bottom: 0.875rem;
+.trending-card-title {
+  font-family: var(--font-headline);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--on-surface);
+}
+
+.trending-card-large .trending-card-title {
+  font-size: 1.3rem;
+}
+
+.trending-card-desc {
+  font-size: 0.85rem;
+  color: var(--on-surface-variant);
   line-height: 1.5;
 }
 
-.bento-meta { display: flex; gap: 0.875rem; }
-
-.bento-meta-item {
+.trending-card-skills {
   display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.8rem;
-  color: rgba(255,255,255,0.6);
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: auto;
 }
 
-/* Medium */
-.bento-medium {
-  position: relative;
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  background: linear-gradient(135deg, #2a1060 0%, #1a0840 100%);
-  grid-column: span 2;
-  cursor: pointer;
-}
-
-.bento-overlay-dark {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.4);
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 1.5rem;
-  transition: background 0.25s;
-}
-
-.bento-medium:hover .bento-overlay-dark,
-.bento-small:hover .bento-overlay-dark {
-  background: rgba(0,0,0,0.2);
-}
-
-.bento-title-md {
-  font-family: var(--font-headline);
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #fff;
-}
-
-.bento-author {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.35rem;
-  font-size: 0.8rem;
-  color: rgba(255,255,255,0.85);
-}
-
-.author-dot {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
+.trending-skill {
+  padding: 0.2rem 0.5rem;
   background: var(--surface-container);
-  border: 1px solid rgba(255,255,255,0.2);
-}
-
-/* Small */
-.bento-small {
-  position: relative;
-  border-radius: var(--radius-xl);
-  overflow: hidden;
-  background: linear-gradient(135deg, #1a0840 0%, #0d0520 100%);
-  cursor: pointer;
-}
-
-.bento-title-sm {
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-full);
   font-family: var(--font-headline);
-  font-size: 1rem;
-  font-weight: 700;
-  color: #fff;
-}
-
-.bento-category {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 500;
-  color: rgba(255,255,255,0.55);
-  margin-top: 2px;
+  color: var(--on-surface-variant);
 }
 
-/* CTA — always dark */
-.bento-cta {
-  border-radius: var(--radius-xl);
-  background: #1a1a2e;
-  border: 1px solid rgba(168,85,247,0.15);
+.trending-card-stats {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--outline-variant);
+}
+
+.trending-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.8rem;
+  color: var(--on-surface-variant);
+}
+
+.trending-stat .material-symbols-outlined {
+  font-size: 16px;
+}
+
+.like-stat {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-full);
+  transition: all 0.15s ease;
+}
+
+.like-stat:hover {
+  background: rgba(233, 30, 99, 0.08);
+  color: #e91e63;
+}
+
+.like-stat.liked {
+  color: #e91e63;
+}
+
+/* CTA Card */
+.trending-cta {
+  background: var(--surface-container-low);
+  border: 1px dashed var(--outline-variant);
+}
+
+.trending-cta:hover {
+  border-color: var(--primary);
+  border-style: solid;
+  background: var(--primary-fixed);
+}
+
+.trending-cta-inner {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 1.5rem;
-  cursor: pointer;
-  transition: background 0.25s;
+  padding: 2rem 1.5rem;
+  min-height: 180px;
   gap: 0.5rem;
 }
 
-.bento-cta:hover { background: var(--primary); }
-
-.bento-cta-icon {
-  font-size: 2.5rem;
-  color: var(--primary);
-  transition: color 0.25s;
-}
-
-.bento-cta:hover .bento-cta-icon { color: #fff; }
-
-.bento-cta-title {
+.trending-cta-title {
   font-family: var(--font-headline);
   font-size: 1.1rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--on-surface);
 }
 
-.bento-cta-desc {
-  font-size: 0.875rem;
-  color: rgba(255,255,255,0.55);
-  transition: color 0.25s;
+.trending-cta-desc {
+  font-size: 0.85rem;
+  color: var(--on-surface-variant);
 }
 
-.bento-cta:hover .bento-cta-desc { color: rgba(255,255,255,0.8); }
+.trending-empty {
+  text-align: center;
+  padding: 2rem;
+  color: var(--on-surface-variant);
+  font-size: 0.9rem;
+}
 </style>

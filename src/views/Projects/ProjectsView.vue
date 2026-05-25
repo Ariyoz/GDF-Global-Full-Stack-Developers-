@@ -33,7 +33,7 @@
         <div class="projects-grid">
           <div
             v-for="(project, i) in filteredProjects"
-            :key="project.title"
+            :key="project.id || project.title"
             class="project-card glass-card animate-fade-in-up"
             :class="`delay-${(i % 3) * 100}`"
           >
@@ -50,7 +50,7 @@
               <h3 class="project-title">{{ project.title }}</h3>
               <p class="project-desc">{{ project.desc }}</p>
               <div class="project-tags">
-                <span v-for="tag in project.tags" :key="tag" class="chip">{{ tag }}</span>
+                <span v-for="tag in project.tags.slice(0, 4)" :key="tag" class="chip">{{ tag }}</span>
               </div>
               <div class="project-footer">
                 <div class="project-author">
@@ -62,10 +62,10 @@
                     <span class="material-symbols-outlined" style="font-size:14px;">visibility</span>
                     {{ project.views }}
                   </span>
-                  <span class="pstat">
-                    <span class="material-symbols-outlined" style="font-size:14px;">favorite</span>
+                  <button class="pstat like-btn" :class="{ liked: project.is_liked }" @click="likeProject(project)">
+                    <span class="material-symbols-outlined" style="font-size:14px;" :style="project.is_liked ? 'font-variation-settings:\'FILL\' 1' : ''">favorite</span>
                     {{ project.likes }}
-                  </span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -87,27 +87,60 @@
 import { ref, computed, onMounted } from 'vue'
 import { PROJECT_CATEGORIES } from '@/constants'
 import http from '@/services/http'
+import { useUiStore } from '@/store/ui'
 
+const uiStore = useUiStore()
 const activeFilter = ref('All')
 
 const projects = ref([])
 
+const categoryIcons = {
+  webapp: 'web', mobile: 'smartphone', api: 'api',
+  uiux: 'design_services', saas: 'cloud', opensource: 'code',
+  full_time: 'work', part_time: 'schedule', contract: 'handshake',
+  freelance: 'person', internship: 'school',
+}
+
+const categoryGradients = [
+  'linear-gradient(135deg, #1a0840 0%, #2a1060 100%)',
+  'linear-gradient(135deg, #0d1b2a 0%, #1b2838 100%)',
+  'linear-gradient(135deg, #1a1040 0%, #0d0520 100%)',
+  'linear-gradient(135deg, #0a2540 0%, #1a3a5c 100%)',
+  'linear-gradient(135deg, #2d1b4e 0%, #1a0840 100%)',
+]
+
 onMounted(async () => {
   try {
     const data = await http.get('/projects?limit=50')
-    projects.value = (data.projects || []).map(p => ({
+    projects.value = (data.projects || []).map((p, i) => ({
       id: p.id,
       title: p.title,
-      description: p.description,
-      category: p.project_type || 'Web App',
-      skills: p.skills_needed || [],
+      desc: p.description || '',
+      category: p.project_type || 'contract',
+      tags: p.skills_needed || [],
       budget: p.budget_min ? `$${p.budget_min}${p.budget_max ? ' - $' + p.budget_max : ''}` : 'Negotiable',
       status: p.status,
       duration: p.duration,
+      views: p.view_count || 0,
+      likes: p.like_count || 0,
+      is_liked: false,
+      author: 'Developer',
+      year: p.created_at ? new Date(p.created_at).getFullYear() : new Date().getFullYear(),
+      icon: categoryIcons[p.project_type] || 'code',
+      gradient: categoryGradients[i % categoryGradients.length],
       created_at: p.created_at,
     }))
   } catch { /* leave empty */ }
 })
+
+async function likeProject(project) {
+  try {
+    await http.post(`/projects/${project.id}/like`)
+    project.likes = (project.likes || 0) + 1
+    project.is_liked = true
+    uiStore.showSuccess('Project liked!')
+  } catch { /* ignore */ }
+}
 
 const filteredProjects = computed(() => {
   if (activeFilter.value === 'All') return projects.value
@@ -272,6 +305,24 @@ const filteredProjects = computed(() => {
   gap: 0.2rem;
   font-size: 0.75rem;
   color: var(--on-surface-variant);
+}
+
+.like-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: var(--radius-full);
+  transition: all 0.15s ease;
+}
+
+.like-btn:hover {
+  background: rgba(233, 30, 99, 0.08);
+  color: #e91e63;
+}
+
+.like-btn.liked {
+  color: #e91e63;
 }
 
 .empty-state {
