@@ -109,10 +109,11 @@
               <img v-for="(url, idx) in post.media_urls.filter(u => u)" :key="idx" :src="url" alt="Post media" class="post-media-img" />
             </div>
             <div class="post-stats-mini">
-              <span>💬 {{ post.comment_count || 0 }}</span>
-              <span>🔁 {{ post.repost_count || 0 }}</span>
-              <span>❤️ {{ post.like_count || 0 }}</span>
-              <span>📊 {{ (post.like_count || 0) + (post.comment_count || 0) }}</span>
+              <span class="stat-btn"><span class="material-symbols-outlined">chat_bubble_outline</span> {{ post.comment_count || 0 }}</span>
+              <span class="stat-btn"><span class="material-symbols-outlined">repeat</span> {{ post.repost_count || 0 }}</span>
+              <span class="stat-btn"><span class="material-symbols-outlined">favorite</span> {{ post.like_count || 0 }}</span>
+              <span class="stat-btn"><span class="material-symbols-outlined">bar_chart</span> {{ (post.like_count || 0) + (post.comment_count || 0) }}</span>
+              <span class="stat-btn"><span class="material-symbols-outlined">share</span></span>
             </div>
           </div>
         </div>
@@ -891,7 +892,25 @@ function formatJoinDate(dateStr) {
 .post-media-grid { margin-top: 0.5rem; border-radius: var(--radius-lg); overflow: hidden; }
 .post-media-img { width: 100%; max-height: 400px; object-fit: cover; border-radius: var(--radius-lg); border: 1px solid var(--outline-variant); }
 
-.post-stats-mini { display: flex; gap: 1.25rem; margin-top: 0.5rem; font-size: 0.78rem; color: var(--on-surface-variant); }
+.post-stats-mini {
+  display: flex;
+  justify-content: space-between;
+  max-width: 400px;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+.stat-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  color: var(--on-surface-variant);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.stat-btn:hover { color: var(--primary); }
+.stat-btn .material-symbols-outlined { font-size: 18px; }
 
 .no-posts { display: flex; flex-direction: column; align-items: center; padding: 3rem; text-align: center; }
 
