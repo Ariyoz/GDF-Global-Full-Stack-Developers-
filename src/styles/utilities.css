@@ -129,6 +129,17 @@
   padding: 0 var(--space-gutter);
 }
 
+@media (max-width: 768px) {
+  .section-gfd {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .container-gfd {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
 /* ── Dividers ── */
 /* Uses design token so it adapts to dark mode automatically */
 .divider-gfd {
@@ -240,11 +251,6 @@ button, input, textarea, select {
 }
 
 @media (max-width: 768px) {
-  .container-gfd {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-
   /* Only make buttons full-width when they are direct children of
      a flex column or a standalone context — NOT inside grids or
      flex-row containers like nav bars, card footers, etc. */

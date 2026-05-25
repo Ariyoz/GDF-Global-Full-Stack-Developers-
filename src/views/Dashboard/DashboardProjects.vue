@@ -105,7 +105,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
-import { jobsService } from '@/services/jobs.service'
+import http from '@/services/http'
 import GfdBadge from '@/components/ui/GfdBadge.vue'
 
 const router = useRouter()
@@ -136,9 +136,9 @@ onMounted(async () => {
   if (!userId) return
 
   try {
-    const { data } = await jobsService.list({ limit: 50 })
+    const data = await http.get('/projects/mine?limit=50')
 
-    projects.value = (data || []).map(j => ({
+    projects.value = (data.projects || []).map(j => ({
       id: j.id,
       name: j.title,
       desc: j.description?.slice(0, 100) || '',
@@ -148,6 +148,8 @@ onMounted(async () => {
       statusKey: j.status === 'open' ? 'active' : j.status === 'in_progress' ? 'review' : j.status === 'completed' ? 'completed' : 'pending',
       progress: j.status === 'completed' ? 100 : j.status === 'in_progress' ? 50 : j.status === 'open' ? 25 : 10,
       deadline: j.deadline ? new Date(j.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—',
+      views: j.view_count || 0,
+      likes: j.like_count || 0,
       team: 0,
       icon: 'work',
       gradient: 'linear-gradient(135deg,#630ed4,#7c3aed)',
