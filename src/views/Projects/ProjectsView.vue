@@ -36,6 +36,7 @@
             :key="project.id || project.title"
             class="project-card glass-card animate-fade-in-up"
             :class="`delay-${(i % 3) * 100}`"
+            @click="viewProject(project)"
           >
             <div class="project-thumb" :style="{ background: project.gradient }">
               <span class="material-symbols-outlined thumb-icon">{{ project.icon }}</span>
@@ -139,6 +140,13 @@ async function likeProject(project) {
     project.likes = (project.likes || 0) + 1
     project.is_liked = true
     uiStore.showSuccess('Project liked!')
+  } catch { /* ignore */ }
+}
+
+async function viewProject(project) {
+  try {
+    await http.post(`/projects/${project.id}/view`)
+    project.views = (project.views || 0) + 1
   } catch { /* ignore */ }
 }
 
