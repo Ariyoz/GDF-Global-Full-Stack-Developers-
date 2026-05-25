@@ -151,8 +151,8 @@ function initials(name) {
 .dev-card {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  padding: 1.25rem;
+  gap: 0.5rem;
+  padding: 1rem;
   width: 100%;
   box-sizing: border-box;
 }
@@ -166,8 +166,8 @@ function initials(name) {
 
 .dev-avatar {
   position: relative;
-  width: 60px;
-  height: 60px;
+  width: 48px;
+  height: 48px;
   border-radius: var(--radius-full);
   background: var(--primary-fixed);
   border: 2px solid rgba(99,14,212,0.15);
@@ -180,7 +180,7 @@ function initials(name) {
 
 .dev-initials {
   font-family: var(--font-headline);
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--primary);
 }
@@ -236,12 +236,12 @@ function initials(name) {
 
 /* Bio */
 .dev-bio {
-  font-size: 0.875rem;
+  font-size: 0.82rem;
   color: var(--on-surface-variant);
-  line-height: 1.55;
+  line-height: 1.45;
   flex: 1;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -250,8 +250,8 @@ function initials(name) {
 .dev-footer {
   display: flex;
   flex-direction: column;
-  gap: 0.625rem;
-  padding-top: 0.625rem;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
   border-top: 1px solid var(--outline-variant);
 }
 
@@ -286,10 +286,10 @@ function initials(name) {
   align-items: center;
   justify-content: center;
   gap: 0.25rem;
-  padding: 0.5rem 0.5rem;
+  padding: 0.45rem 0.5rem;
   border-radius: var(--radius-lg);
   font-family: var(--font-headline);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
