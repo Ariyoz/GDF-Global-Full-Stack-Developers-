@@ -4,6 +4,7 @@ import { ref } from 'vue'
 import { messagingService } from '@/services/messaging.service'
 import { websocketService } from '@/services/websocket.service'
 import { useAuthStore } from '@/store/auth'
+import http from '@/services/http'
 
 export const useMessagingStore = defineStore('messaging', () => {
   const conversations = ref([])
@@ -135,8 +136,11 @@ export const useMessagingStore = defineStore('messaging', () => {
 
   async function deleteConversation(convId) {
     try {
-      await import('@/services/http').then(m => m.default.delete(`/messages/conversations/${convId}`))
-    } catch { /* ignore */ }
+      await http.request({ method: 'DELETE', url: `/messages/conversations/${convId}` })
+    } catch (err) {
+      console.error('Failed to delete conversation:', err)
+    }
+    // Remove from local state regardless
     conversations.value = conversations.value.filter(c => c.id !== convId)
     if (activeConversation.value?.id === convId) {
       activeConversation.value = null
@@ -146,13 +150,15 @@ export const useMessagingStore = defineStore('messaging', () => {
 
   async function deleteMessage(messageId) {
     try {
-      await import('@/services/http').then(m => m.default.delete(`/messages/messages/${messageId}`))
+      await http.request({ method: 'DELETE', url: `/messages/messages/${messageId}` })
       const msg = messages.value.find(m => m.id === messageId)
       if (msg) {
         msg.content = 'This message was deleted'
         msg.is_deleted = true
       }
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.error('Failed to delete message:', err)
+    }
   }
 
   function pinChat(convId) {
