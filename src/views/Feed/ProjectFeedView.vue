@@ -190,7 +190,7 @@
 
             <!-- Post Content -->
             <div class="post-content">
-              <p v-if="post.content" class="post-text">{{ post.content }}</p>
+              <p v-if="post.content" class="post-text" v-html="linkifyText(post.content)"></p>
               <p v-else-if="!post.media_urls?.length" class="post-text" style="color:var(--on-surface-variant);font-style:italic;">No content</p>
 
               <!-- Media (images/videos) — shown BELOW text -->
@@ -488,6 +488,15 @@ function formatTime(dateStr) {
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
   if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+function linkifyText(text) {
+  if (!text) return ''
+  // Escape HTML first to prevent XSS
+  const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  // Convert URLs to clickable links
+  const urlRegex = /(https?:\/\/[^\s<]+)/g
+  return escaped.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer" class="post-link-inline">$1</a>')
 }
 
 // Seed data is now in the store — no local posts array needed
@@ -824,6 +833,16 @@ function submitComment(post, e) {
 .post-text {
   font-size: 0.9375rem; color: var(--on-surface); line-height: 1.55;
   margin-bottom: 0; word-break: break-word;
+}
+
+.post-text :deep(.post-link-inline) {
+  color: var(--primary);
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.post-text :deep(.post-link-inline:hover) {
+  text-decoration: underline;
 }
 
 /* Image */
