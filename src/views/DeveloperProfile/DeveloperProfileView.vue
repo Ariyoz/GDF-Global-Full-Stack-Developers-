@@ -83,6 +83,7 @@
         <button class="profile-tab" :class="{ active: activeTab === 'replies' }" @click="activeTab = 'replies'">Replies</button>
         <button class="profile-tab" :class="{ active: activeTab === 'media' }" @click="activeTab = 'media'">Media</button>
         <button class="profile-tab" :class="{ active: activeTab === 'likes' }" @click="activeTab = 'likes'">Likes</button>
+        <button v-if="dev.github" class="profile-tab" :class="{ active: activeTab === 'repos' }" @click="activeTab = 'repos'; loadRepos()">Repos</button>
       </div>
     </div>
 
@@ -146,6 +147,28 @@
         <div class="no-posts">
           <span class="material-symbols-outlined" style="font-size:2.5rem;color:var(--on-surface-variant)">favorite</span>
           <p style="margin-top:0.5rem;color:var(--on-surface-variant)">Liked posts will appear here</p>
+        </div>
+      </div>
+
+      <!-- GitHub Repos Tab -->
+      <div v-if="activeTab === 'repos'" class="tab-content">
+        <div v-if="repos.length" class="repos-list">
+          <a v-for="repo in repos" :key="repo.name" :href="repo.html_url || repo.repo_url" target="_blank" class="repo-card">
+            <div class="repo-header">
+              <span class="material-symbols-outlined" style="font-size:18px;color:var(--on-surface-variant)">folder</span>
+              <span class="repo-name">{{ repo.name }}</span>
+            </div>
+            <p v-if="repo.description" class="repo-desc">{{ repo.description }}</p>
+            <div class="repo-meta">
+              <span v-if="repo.language" class="repo-lang">{{ repo.language }}</span>
+              <span v-if="repo.stargazers_count || repo.stars" class="repo-stars">⭐ {{ repo.stargazers_count || repo.stars || 0 }}</span>
+              <span v-if="repo.forks_count || repo.forks" class="repo-forks">🍴 {{ repo.forks_count || repo.forks || 0 }}</span>
+            </div>
+          </a>
+        </div>
+        <div v-else class="no-posts">
+          <span class="material-symbols-outlined" style="font-size:2.5rem;color:var(--on-surface-variant)">code</span>
+          <p style="margin-top:0.5rem;color:var(--on-surface-variant)">No repositories found</p>
         </div>
       </div>
     </div>
@@ -407,6 +430,23 @@ function removePortfolioItem(id) {
 const profileData = ref(null)
 const userPosts = ref([])
 const loadingProfile = ref(true)
+const repos = ref([])
+
+async function loadRepos() {
+  if (repos.value.length) return // Already loaded
+  const username = dev.value?.username || profileData.value?.username
+  const githubUrl = dev.value?.github || profileData.value?.github_url
+  if (githubUrl) {
+    // Extract GitHub username from URL
+    const ghUsername = githubUrl.replace('https://github.com/', '').replace('/', '')
+    if (ghUsername) {
+      try {
+        const res = await fetch(`https://api.github.com/users/${ghUsername}/repos?per_page=20&sort=updated`)
+        if (res.ok) repos.value = await res.json()
+      } catch { /* ignore */ }
+    }
+  }
+}
 
 async function loadProfile() {
   loadingProfile.value = true
@@ -804,6 +844,25 @@ function formatJoinDate(dateStr) {
 .post-stats-mini { display: flex; gap: 1.25rem; margin-top: 0.5rem; font-size: 0.78rem; color: var(--on-surface-variant); }
 
 .no-posts { display: flex; flex-direction: column; align-items: center; padding: 3rem; text-align: center; }
+
+/* GitHub Repos */
+.repos-list { display: flex; flex-direction: column; gap: 0.75rem; padding: 0.5rem 0; }
+
+.repo-card {
+  display: block;
+  padding: 1rem;
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  text-decoration: none;
+  transition: border-color 0.15s;
+}
+.repo-card:hover { border-color: var(--primary); }
+
+.repo-header { display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.3rem; }
+.repo-name { font-family: var(--font-headline); font-size: 0.9rem; font-weight: 700; color: var(--primary); }
+.repo-desc { font-size: 0.8rem; color: var(--on-surface-variant); line-height: 1.4; margin-bottom: 0.5rem; }
+.repo-meta { display: flex; gap: 0.75rem; font-size: 0.75rem; color: var(--on-surface-variant); }
+.repo-lang { font-weight: 600; }
 
 /* Media Grid */
 .media-grid {

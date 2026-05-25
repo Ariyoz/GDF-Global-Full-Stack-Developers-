@@ -80,15 +80,31 @@
         </div>
 
         <div class="chat-messages" ref="messagesEl">
+          <!-- Typing indicator -->
+          <div v-if="messagingStore.typingUsers[activeConv?.id]?.length" class="typing-indicator">
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-text">typing...</span>
+          </div>
+
           <div
             v-for="msg in activeMessages"
             :key="msg.id"
             class="msg-row"
             :class="{ 'msg-mine': msg.mine }"
           >
-            <div class="msg-bubble" :class="msg.mine ? 'bubble-mine' : 'bubble-theirs'">
-              {{ msg.content || msg.text }}
-              <span class="msg-time">{{ msg.time }}</span>
+            <div class="msg-bubble" :class="[msg.mine ? 'bubble-mine' : 'bubble-theirs', { deleted: msg.is_deleted }]">
+              <p v-if="msg.media_url" class="msg-media">
+                <img :src="msg.media_url" alt="Shared image" class="msg-image" />
+              </p>
+              <span>{{ msg.content || msg.text }}</span>
+              <span v-if="msg.is_edited" class="msg-edited">(edited)</span>
+              <div class="msg-footer">
+                <span class="msg-time">{{ msg.time }}</span>
+                <span v-if="msg.mine && msg.is_read" class="msg-read">✓✓</span>
+                <span v-else-if="msg.mine" class="msg-sent">✓</span>
+              </div>
             </div>
           </div>
         </div>
@@ -435,6 +451,37 @@ function handleTyping() {
 .chat-dropdown .dropdown-item:hover { background: var(--surface-container); }
 
 .hidden-input { display: none; }
+
+/* Typing indicator */
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.5rem 1rem;
+}
+.typing-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--on-surface-variant);
+  animation: typingBounce 1.4s infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+.typing-text { font-size: 0.75rem; color: var(--on-surface-variant); margin-left: 0.3rem; }
+
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-4px); }
+}
+
+/* Message improvements */
+.msg-media { margin-bottom: 0.3rem; }
+.msg-image { max-width: 250px; border-radius: var(--radius-lg); }
+.msg-edited { font-size: 0.65rem; color: var(--on-surface-variant); font-style: italic; }
+.msg-footer { display: flex; align-items: center; gap: 0.25rem; justify-content: flex-end; margin-top: 0.15rem; }
+.msg-read { font-size: 0.7rem; color: var(--primary); }
+.msg-sent { font-size: 0.7rem; color: var(--on-surface-variant); }
+.msg-bubble.deleted { opacity: 0.6; font-style: italic; }
 
 .input-action {
   padding: 0.4rem;
