@@ -60,6 +60,12 @@
             </p>
           </div>
           <div class="chat-actions">
+            <button class="btn-ghost icon-only call-btn" @click="startCall('voice')" title="Voice call">
+              <span class="material-symbols-outlined">call</span>
+            </button>
+            <button class="btn-ghost icon-only call-btn" @click="startCall('video')" title="Video call">
+              <span class="material-symbols-outlined">videocam</span>
+            </button>
             <button class="btn-ghost icon-only" @click="showChatMenu = !showChatMenu">
               <span class="material-symbols-outlined">more_vert</span>
             </button>
@@ -83,6 +89,35 @@
             </div>
           </div>
         </div>
+
+        <!-- Call Overlay -->
+        <Transition name="call-fade">
+          <div v-if="callActive" class="call-overlay">
+            <div class="call-card">
+              <div class="call-avatar-large">
+                <img v-if="activeConv.avatar" :src="activeConv.avatar" :alt="activeConv.name" class="call-avatar-img" />
+                <span v-else class="call-initials">{{ (activeConv.name || 'U')[0] }}</span>
+              </div>
+              <h3 class="call-name">{{ activeConv.name }}</h3>
+              <p class="call-status-text">{{ callStatusText }}</p>
+              <div class="call-timer" v-if="callConnected">{{ callDuration }}</div>
+              <div class="call-controls">
+                <button class="call-control-btn" :class="{ active: isMuted }" @click="isMuted = !isMuted">
+                  <span class="material-symbols-outlined">{{ isMuted ? 'mic_off' : 'mic' }}</span>
+                </button>
+                <button v-if="callType === 'video'" class="call-control-btn" :class="{ active: isCameraOff }" @click="isCameraOff = !isCameraOff">
+                  <span class="material-symbols-outlined">{{ isCameraOff ? 'videocam_off' : 'videocam' }}</span>
+                </button>
+                <button class="call-control-btn" :class="{ active: isSpeaker }" @click="isSpeaker = !isSpeaker">
+                  <span class="material-symbols-outlined">{{ isSpeaker ? 'volume_up' : 'volume_off' }}</span>
+                </button>
+                <button class="call-end-btn" @click="endCall">
+                  <span class="material-symbols-outlined">call_end</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </Transition>
 
         <div class="chat-messages" ref="messagesEl">
           <!-- Typing indicator -->
@@ -160,6 +195,51 @@ const newMessage = ref('')
 const messagesEl = ref(null)
 const showChatMenu = ref(false)
 const chatImageInput = ref(null)
+
+// Call state
+const callActive = ref(false)
+const callType = ref('voice') // 'voice' or 'video'
+const callConnected = ref(false)
+const callStatusText = ref('Calling...')
+const callDuration = ref('00:00')
+const isMuted = ref(false)
+const isCameraOff = ref(false)
+const isSpeaker = ref(false)
+let callTimer = null
+let callSeconds = 0
+
+function startCall(type) {
+  callType.value = type
+  callActive.value = true
+  callConnected.value = false
+  callStatusText.value = type === 'video' ? 'Video calling...' : 'Calling...'
+  callDuration.value = '00:00'
+  callSeconds = 0
+
+  // Simulate connection after 2 seconds
+  setTimeout(() => {
+    if (callActive.value) {
+      callConnected.value = true
+      callStatusText.value = type === 'video' ? 'Video call connected' : 'Connected'
+      callTimer = setInterval(() => {
+        callSeconds++
+        const mins = Math.floor(callSeconds / 60).toString().padStart(2, '0')
+        const secs = (callSeconds % 60).toString().padStart(2, '0')
+        callDuration.value = `${mins}:${secs}`
+      }, 1000)
+    }
+  }, 2000)
+}
+
+function endCall() {
+  callActive.value = false
+  callConnected.value = false
+  if (callTimer) {
+    clearInterval(callTimer)
+    callTimer = null
+  }
+  callSeconds = 0
+}
 
 // Load conversations on mount
 onMounted(() => {
@@ -675,5 +755,149 @@ function extractCode(content) {
   .chat-input {
     min-width: 0;
   }
+}
+
+/* ── Call UI ── */
+.call-btn:hover {
+  color: var(--primary);
+  background: rgba(168, 85, 247, 0.08);
+}
+
+.call-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  background: linear-gradient(135deg, #1a0840 0%, #0d0520 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.call-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+.call-avatar-large {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(168, 85, 247, 0.2);
+  border: 3px solid rgba(168, 85, 247, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  animation: callPulse 2s ease-in-out infinite;
+}
+
+.call-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.call-initials {
+  font-family: var(--font-headline);
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.call-name {
+  font-family: var(--font-headline);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.call-status-text {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.call-timer {
+  font-family: var(--font-mono, monospace);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #fff;
+  margin-top: 0.5rem;
+}
+
+.call-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.call-control-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  transition: all 0.15s ease;
+}
+
+.call-control-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.call-control-btn.active {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+}
+
+.call-control-btn .material-symbols-outlined {
+  font-size: 24px;
+}
+
+.call-end-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #ef4444;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
+}
+
+.call-end-btn:hover {
+  background: #dc2626;
+  transform: scale(1.05);
+}
+
+.call-end-btn .material-symbols-outlined {
+  font-size: 28px;
+}
+
+@keyframes callPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.3); }
+  50% { box-shadow: 0 0 0 20px rgba(168, 85, 247, 0); }
+}
+
+/* Call transition */
+.call-fade-enter-active, .call-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.call-fade-enter-from, .call-fade-leave-to {
+  opacity: 0;
 }
 </style>
