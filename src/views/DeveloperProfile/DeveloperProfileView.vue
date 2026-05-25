@@ -22,7 +22,7 @@
 
         <!-- Action buttons (right side) -->
         <div class="profile-header-actions">
-          <button v-if="isOwnProfile" class="btn-edit-profile" @click="$router.push('/dashboard/profile')">
+          <button v-if="isOwnProfile" class="btn-edit-profile" @click="showEditModal = true">
             Edit profile
           </button>
           <template v-else>
@@ -136,6 +136,71 @@
         </div>
       </div>
     </div>
+
+    <!-- Edit Profile Modal (X style) -->
+    <Transition name="modal">
+      <div v-if="showEditModal" class="modal-overlay" @click.self="showEditModal = false">
+        <div class="edit-modal">
+          <div class="edit-modal-header">
+            <button class="btn-ghost icon-only" @click="showEditModal = false">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+            <h3 class="edit-modal-title">Edit profile</h3>
+            <button class="btn-save" @click="saveProfile">Save</button>
+          </div>
+
+          <!-- Banner edit -->
+          <div class="edit-banner" @click="triggerBannerUpload()">
+            <img v-if="editForm.banner || dev.banner" :src="editForm.banner || dev.banner" class="edit-banner-img" />
+            <div v-else class="edit-banner-placeholder" />
+            <div class="edit-banner-overlay">
+              <span class="material-symbols-outlined">photo_camera</span>
+            </div>
+          </div>
+
+          <!-- Avatar edit -->
+          <div class="edit-avatar-wrap">
+            <div class="edit-avatar" @click="triggerAvatarUpload()">
+              <img v-if="editForm.avatar || dev.avatar" :src="editForm.avatar || dev.avatar" class="edit-avatar-img" />
+              <span v-else class="avatar-initials">{{ initials(dev.name) }}</span>
+              <div class="edit-avatar-overlay">
+                <span class="material-symbols-outlined">photo_camera</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Form fields -->
+          <div class="edit-form">
+            <div class="edit-field">
+              <label>Name</label>
+              <input v-model="editForm.full_name" type="text" maxlength="50" />
+              <span class="char-count">{{ editForm.full_name?.length || 0 }}/50</span>
+            </div>
+            <div class="edit-field">
+              <label>Bio</label>
+              <textarea v-model="editForm.bio" maxlength="160" rows="3"></textarea>
+              <span class="char-count">{{ editForm.bio?.length || 0 }}/160</span>
+            </div>
+            <div class="edit-field">
+              <label>Location</label>
+              <input v-model="editForm.location" type="text" placeholder="City, Country" />
+            </div>
+            <div class="edit-field">
+              <label>Website</label>
+              <input v-model="editForm.portfolio_url" type="url" placeholder="https://yoursite.com" />
+            </div>
+            <div class="edit-field">
+              <label>GitHub URL</label>
+              <input v-model="editForm.github_url" type="url" placeholder="https://github.com/username" />
+            </div>
+            <div class="edit-field">
+              <label>Skills (comma separated)</label>
+              <input v-model="editForm.skillsText" type="text" placeholder="Vue.js, React, Node.js" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -160,6 +225,55 @@ const portfolioLink = ref('')
 const activeTab = ref('posts')
 const bannerInput = ref(null)
 const avatarInputProfile = ref(null)
+const showEditModal = ref(false)
+
+const editForm = ref({
+  full_name: '',
+  bio: '',
+  location: '',
+  portfolio_url: '',
+  github_url: '',
+  skillsText: '',
+  avatar: '',
+  banner: '',
+})
+
+// Initialize edit form when modal opens
+import { watch } from 'vue'
+watch(showEditModal, (val) => {
+  if (val && profileData.value) {
+    const p = profileData.value
+    editForm.value = {
+      full_name: p.full_name || '',
+      bio: p.bio || '',
+      location: p.location || '',
+      portfolio_url: p.portfolio_url || p.website_url || '',
+      github_url: p.github_url || '',
+      skillsText: (p.skills || []).join(', '),
+      avatar: p.avatar || '',
+      banner: p.banner || '',
+    }
+  }
+})
+
+async function saveProfile() {
+  try {
+    const updates = {
+      full_name: editForm.value.full_name,
+      bio: editForm.value.bio,
+      location: editForm.value.location,
+      portfolio_url: editForm.value.portfolio_url,
+      github_url: editForm.value.github_url,
+      skills: editForm.value.skillsText.split(',').map(s => s.trim()).filter(Boolean),
+    }
+    await http.patch('/users/me', updates)
+    // Refresh profile
+    await loadProfile()
+    showEditModal.value = false
+  } catch (err) {
+    console.error('Failed to save profile:', err)
+  }
+}
 
 // Load follow state from localStorage
 function loadFollowState() {
@@ -684,6 +798,121 @@ function formatTime(dateStr) {
   object-fit: cover;
   border-radius: 4px;
 }
+
+/* Edit Profile Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2rem 1rem;
+  overflow-y: auto;
+}
+
+.edit-modal {
+  width: 100%;
+  max-width: 600px;
+  background: var(--surface-container-lowest);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.edit-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  position: sticky;
+  top: 0;
+  background: var(--surface-container-lowest);
+  z-index: 10;
+  border-bottom: 1px solid var(--outline-variant);
+}
+
+.edit-modal-title {
+  font-family: var(--font-headline);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--on-surface);
+  flex: 1;
+}
+
+.btn-save {
+  padding: 0.4rem 1rem;
+  background: var(--on-surface);
+  color: var(--surface);
+  border: none;
+  border-radius: var(--radius-full);
+  font-family: var(--font-headline);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.edit-banner {
+  height: 150px;
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+}
+.edit-banner-img { width: 100%; height: 100%; object-fit: cover; }
+.edit-banner-placeholder { width: 100%; height: 100%; background: var(--surface-container); }
+.edit-banner-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; opacity: 0; transition: opacity 0.2s;
+}
+.edit-banner:hover .edit-banner-overlay { opacity: 1; }
+
+.edit-avatar-wrap { padding: 0 1rem; margin-top: -40px; }
+.edit-avatar {
+  width: 80px; height: 80px; border-radius: 50%;
+  border: 3px solid var(--surface-container-lowest);
+  overflow: hidden; position: relative; cursor: pointer;
+  background: var(--primary-fixed);
+  display: flex; align-items: center; justify-content: center;
+}
+.edit-avatar-img { width: 100%; height: 100%; object-fit: cover; }
+.edit-avatar-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; opacity: 0; transition: opacity 0.2s; border-radius: 50%;
+}
+.edit-avatar:hover .edit-avatar-overlay { opacity: 1; }
+
+.edit-form { padding: 1.25rem 1rem; display: flex; flex-direction: column; gap: 1.25rem; }
+
+.edit-field { position: relative; display: flex; flex-direction: column; gap: 0.3rem; }
+.edit-field label {
+  font-family: var(--font-headline); font-size: 0.78rem; font-weight: 500;
+  color: var(--on-surface-variant);
+}
+.edit-field input, .edit-field textarea {
+  padding: 0.6rem 0.75rem;
+  background: transparent;
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body); font-size: 0.9rem;
+  color: var(--on-surface); outline: none;
+  transition: border-color 0.15s;
+}
+.edit-field input:focus, .edit-field textarea:focus { border-color: var(--primary); }
+.edit-field textarea { resize: vertical; min-height: 70px; }
+.char-count {
+  position: absolute; top: 0; right: 0;
+  font-size: 0.68rem; color: var(--on-surface-variant);
+}
+
+/* Modal transitions */
+.modal-enter-active, .modal-leave-active { transition: opacity 0.2s; }
+.modal-enter-from, .modal-leave-to { opacity: 0; }
 
 .btn-follow {
   display: inline-flex;
