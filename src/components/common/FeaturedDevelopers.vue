@@ -137,10 +137,11 @@ function initials(name) {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1rem;
+  padding: 0 0.25rem;
 }
 
 @media (min-width: 640px) {
-  .devs-grid { grid-template-columns: repeat(2, 1fr); }
+  .devs-grid { grid-template-columns: repeat(2, 1fr); padding: 0; }
 }
 
 @media (min-width: 1024px) {

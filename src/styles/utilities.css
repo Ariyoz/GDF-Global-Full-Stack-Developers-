@@ -130,13 +130,9 @@
 }
 
 @media (max-width: 768px) {
-  .section-gfd {
+  .container-gfd {
     padding-left: 1rem;
     padding-right: 1rem;
-  }
-  .container-gfd {
-    padding-left: 0;
-    padding-right: 0;
   }
 }
 
