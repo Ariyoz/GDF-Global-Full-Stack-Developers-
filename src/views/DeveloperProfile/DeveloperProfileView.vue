@@ -61,7 +61,7 @@
           </span>
           <span class="meta-item">
             <span class="material-symbols-outlined" style="font-size:16px;">calendar_today</span>
-            Joined {{ formatJoinDate(profileData?.created_at) }}
+            Joined {{ formatJoinDate(profileData?.created_at || dev.created_at) }}
           </span>
         </div>
 
