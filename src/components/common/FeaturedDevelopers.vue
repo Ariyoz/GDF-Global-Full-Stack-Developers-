@@ -108,6 +108,11 @@ function initials(name) {
   background: var(--surface-container-low);
 }
 
+.featured-section > .container-gfd {
+  padding-left: 0;
+  padding-right: 0;
+}
+
 /* Section header */
 .section-top {
   display: flex;
@@ -137,11 +142,12 @@ function initials(name) {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1rem;
-  padding: 0 0.25rem;
+  margin-left: 0;
+  margin-right: 0;
 }
 
 @media (min-width: 640px) {
-  .devs-grid { grid-template-columns: repeat(2, 1fr); padding: 0; }
+  .devs-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (min-width: 1024px) {
@@ -156,6 +162,8 @@ function initials(name) {
   padding: 1rem;
   width: 100%;
   box-sizing: border-box;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Card header */
