@@ -1,58 +1,85 @@
 <template>
   <div class="profile-view">
-    <!-- Banner -->
-    <div class="profile-banner">
-      <div class="banner-bg" />
-      <div class="banner-overlay" />
+    <!-- Banner (X/Twitter style) -->
+    <div class="profile-banner" @click="isOwnProfile && triggerBannerUpload()">
+      <img v-if="dev.banner" :src="dev.banner" alt="Banner" class="banner-img" />
+      <div v-else class="banner-bg" />
+      <input v-if="isOwnProfile" ref="bannerInput" type="file" accept="image/*" class="hidden-input" @change="handleBannerUpload" />
     </div>
 
-    <!-- Profile Header -->
+    <!-- Profile Header (X/Twitter style) -->
     <div class="container-gfd profile-header-wrap">
-      <div class="profile-header">
-        <div class="profile-left">
-          <div class="avatar-wrap">
-            <div class="profile-avatar">
-              <img v-if="dev.avatar" :src="dev.avatar" :alt="dev.name" class="profile-avatar-img" />
-              <span v-else class="avatar-initials">{{ initials(dev.name) }}</span>
-            </div>
-            <span class="online-indicator" />
+      <!-- Avatar overlapping banner -->
+      <div class="profile-avatar-section">
+        <div class="profile-avatar" @click="isOwnProfile && triggerAvatarUpload()">
+          <img v-if="dev.avatar" :src="dev.avatar" :alt="dev.name" class="profile-avatar-img" />
+          <span v-else class="avatar-initials">{{ initials(dev.name) }}</span>
+          <div v-if="isOwnProfile" class="avatar-edit-overlay">
+            <span class="material-symbols-outlined">photo_camera</span>
           </div>
-          <div class="profile-meta">
-            <h1 class="profile-name">
-              {{ dev.name }}
-              <span class="material-symbols-outlined verified-icon" style="font-variation-settings:'FILL' 1;">verified</span>
-              <RouterLink v-if="isOwnProfile" to="/dashboard/profile" class="btn-edit-round" title="Edit Profile">
-                <span class="material-symbols-outlined" style="font-size:16px;">edit</span>
-              </RouterLink>
-            </h1>
-            <p class="profile-role">{{ dev.role }}</p>
-            <p class="profile-location">
-              <span class="material-symbols-outlined" style="font-size:16px;">location_on</span>
-              {{ dev.location }}
-            </p>
-          </div>
+        </div>
+        <input v-if="isOwnProfile" ref="avatarInputProfile" type="file" accept="image/*" class="hidden-input" @change="handleAvatarUploadProfile" />
+
+        <!-- Action buttons (right side) -->
+        <div class="profile-header-actions">
+          <button v-if="isOwnProfile" class="btn-edit-profile" @click="$router.push('/dashboard/profile')">
+            Edit profile
+          </button>
+          <template v-else>
+            <button class="btn-follow" :class="{ following: isFollowing }" @click="toggleFollow">
+              {{ isFollowing ? 'Following' : 'Follow' }}
+            </button>
+            <button class="btn-outline btn-sm" @click="startMessage">
+              <span class="material-symbols-outlined" style="font-size:18px;">mail</span>
+            </button>
+          </template>
         </div>
       </div>
 
-      <!-- Action Buttons — always visible below header -->
-      <div class="profile-actions">
-        <button
-          class="btn-follow"
-          :class="{ following: isFollowing }"
-          @click="toggleFollow"
-        >
-          <span class="material-symbols-outlined" style="font-size:18px;">{{ isFollowing ? 'person_remove' : 'person_add' }}</span>
-          {{ isFollowing ? 'Following' : 'Follow' }}
-        </button>
-        <RouterLink :to="`/hire?dev=${dev.id}&name=${encodeURIComponent(dev.name)}`" class="btn-primary">
-          <span class="material-symbols-outlined" style="font-size:18px;">handshake</span>
-          Hire {{ dev.name.split(' ')[0] }}
-        </RouterLink>
-        <button class="btn-outline" @click="startMessage">
-          <span class="material-symbols-outlined" style="font-size:18px;">chat</span>
-          Message
-        </button>
+      <!-- Name, username, bio -->
+      <div class="profile-info">
+        <h1 class="profile-name">
+          {{ dev.name }}
+          <span v-if="dev.verified" class="material-symbols-outlined verified-icon" style="font-variation-settings:'FILL' 1;">verified</span>
+        </h1>
+        <p class="profile-username">@{{ dev.username }}</p>
+        <p v-if="dev.bio" class="profile-bio">{{ dev.bio }}</p>
+
+        <!-- Meta row (location, website, join date) -->
+        <div class="profile-meta-row">
+          <span v-if="dev.location" class="meta-item">
+            <span class="material-symbols-outlined" style="font-size:16px;">location_on</span>
+            {{ dev.location }}
+          </span>
+          <span v-if="dev.website" class="meta-item">
+            <span class="material-symbols-outlined" style="font-size:16px;">link</span>
+            <a :href="dev.website" target="_blank" class="meta-link">{{ dev.website.replace('https://', '') }}</a>
+          </span>
+          <span v-if="dev.github" class="meta-item">
+            <span class="material-symbols-outlined" style="font-size:16px;">code</span>
+            <a :href="dev.github" target="_blank" class="meta-link">GitHub</a>
+          </span>
+        </div>
+
+        <!-- Followers/Following -->
+        <div class="profile-follow-row">
+          <span class="follow-stat"><strong>{{ dev.following_count || 0 }}</strong> Following</span>
+          <span class="follow-stat"><strong>{{ followerCount }}</strong> Followers</span>
+        </div>
+
+        <!-- Skills -->
+        <div v-if="dev.skills && dev.skills.length" class="profile-skills">
+          <span v-for="skill in dev.skills" :key="skill" class="skill-chip">{{ skill }}</span>
+        </div>
       </div>
+
+      <!-- Profile Tabs -->
+      <div class="profile-tabs">
+        <button class="profile-tab" :class="{ active: activeTab === 'posts' }" @click="activeTab = 'posts'">Posts</button>
+        <button class="profile-tab" :class="{ active: activeTab === 'media' }" @click="activeTab = 'media'">Media</button>
+        <button class="profile-tab" :class="{ active: activeTab === 'likes' }" @click="activeTab = 'likes'">Likes</button>
+      </div>
+    </div>
     </div>
 
     <!-- Body -->
@@ -236,6 +263,9 @@ const isFollowing = ref(false)
 const followerCount = ref(0)
 const portfolioItems = ref([])
 const portfolioLink = ref('')
+const activeTab = ref('posts')
+const bannerInput = ref(null)
+const avatarInputProfile = ref(null)
 
 // Load follow state from localStorage
 function loadFollowState() {
@@ -287,6 +317,34 @@ async function startMessage() {
   } catch {
     router.push('/messaging')
   }
+}
+
+function triggerBannerUpload() {
+  bannerInput.value?.click()
+}
+
+function triggerAvatarUpload() {
+  avatarInputProfile.value?.click()
+}
+
+async function handleBannerUpload(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+    const data = await http.post('/uploads/banner', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+    if (data.url && profileData.value) profileData.value.banner = data.url
+  } catch { /* ignore */ }
+}
+
+async function handleAvatarUploadProfile(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  try {
+    await authStore.uploadAvatar(file)
+    if (profileData.value) profileData.value.avatar = authStore.profile?.avatar
+  } catch { /* ignore */ }
 }
 
 function handleFileUpload(e) {
@@ -469,14 +527,21 @@ function formatTime(dateStr) {
 <style scoped>
 .profile-view { background: var(--background); min-height: 100vh; }
 
-/* Banner */
+/* Banner (X style) */
 .profile-banner {
-  height: 240px;
+  height: 200px;
   position: relative;
   overflow: hidden;
+  cursor: pointer;
 }
 
-@media (min-width: 768px) { .profile-banner { height: 280px; } }
+@media (min-width: 768px) { .profile-banner { height: 250px; } }
+
+.banner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
 .banner-bg {
   position: absolute;
@@ -484,45 +549,41 @@ function formatTime(dateStr) {
   background: linear-gradient(135deg, #1a0840 0%, #2a1060 40%, #630ed4 100%);
 }
 
-.banner-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom, transparent 50%, rgba(249,249,255,0.3) 100%);
-}
+.hidden-input { display: none; }
 
 /* Profile Header */
 .profile-header-wrap { position: relative; z-index: 1; }
 
-.profile-header {
+.profile-avatar-section {
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-top: -4rem;
-  padding-bottom: 1.5rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-top: -40px;
+  padding: 0 0.5rem;
 }
-
-@media (min-width: 768px) {
-  .profile-header {
-    flex-direction: row;
-    align-items: flex-end;
-    justify-content: space-between;
-  }
-}
-
-.profile-left { display: flex; align-items: flex-end; gap: 1.25rem; }
-
-.avatar-wrap { position: relative; }
 
 .profile-avatar {
-  width: 120px;
-  height: 120px;
-  border-radius: var(--radius-xl);
-  border: 4px solid var(--surface);
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  border: 4px solid var(--background);
   background: var(--primary-fixed);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+}
+
+@media (min-width: 768px) {
+  .profile-avatar { width: 120px; height: 120px; margin-top: -50px; }
+}
+
+.profile-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .avatar-initials {
@@ -532,81 +593,155 @@ function formatTime(dateStr) {
   color: var(--primary);
 }
 
-.profile-avatar-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: var(--radius-xl);
+.avatar-edit-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.2s;
+  border-radius: 50%;
+}
+.profile-avatar:hover .avatar-edit-overlay { opacity: 1; }
+
+.profile-header-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.75rem;
 }
 
-.online-indicator {
-  position: absolute;
-  bottom: 4px;
-  right: 4px;
-  width: 20px;
-  height: 20px;
-  background: #22c55e;
-  border-radius: 50%;
-  border: 3px solid var(--surface);
+.btn-edit-profile {
+  padding: 0.5rem 1.25rem;
+  border: 1.5px solid var(--outline-variant);
+  border-radius: var(--radius-full);
+  background: transparent;
+  font-family: var(--font-headline);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--on-surface);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+.btn-edit-profile:hover { background: var(--surface-container); }
+
+.btn-sm {
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-full);
+}
+
+/* Profile Info */
+.profile-info {
+  padding: 0.75rem 0.5rem 0;
 }
 
 .profile-name {
   font-family: var(--font-headline);
-  font-size: clamp(1.5rem, 3vw, 2rem);
-  font-weight: 700;
+  font-size: 1.25rem;
+  font-weight: 800;
   color: var(--on-surface);
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  flex-wrap: wrap;
-}
-
-.verified-icon { font-size: 22px; color: var(--primary); }
-
-.profile-role {
-  font-family: var(--font-headline);
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--on-surface-variant);
-  margin-top: 0.25rem;
-}
-
-.profile-location {
-  display: flex;
-  align-items: center;
   gap: 0.25rem;
+}
+
+.verified-icon { font-size: 20px; color: var(--primary); }
+
+.profile-username {
   font-size: 0.875rem;
   color: var(--on-surface-variant);
-  margin-top: 0.35rem;
+  margin-top: 0.1rem;
 }
 
-.profile-actions {
+.profile-bio {
+  font-size: 0.9rem;
+  color: var(--on-surface);
+  line-height: 1.5;
+  margin-top: 0.75rem;
+}
+
+.profile-meta-row {
   display: flex;
-  gap: 0.75rem;
   flex-wrap: wrap;
-  padding-top: 1rem;
-  padding-bottom: 1.5rem;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
 }
 
-.btn-edit-round {
-  display: inline-flex;
+.meta-item {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--surface-container);
-  border: 1px solid var(--outline-variant);
+  gap: 0.2rem;
+  font-size: 0.8rem;
   color: var(--on-surface-variant);
-  text-decoration: none;
-  transition: var(--transition-fast);
-  margin-left: 0.25rem;
 }
-.btn-edit-round:hover {
+
+.meta-link {
+  color: var(--primary);
+  text-decoration: none;
+}
+.meta-link:hover { text-decoration: underline; }
+
+.profile-follow-row {
+  display: flex;
+  gap: 1.25rem;
+  margin-top: 0.75rem;
+}
+
+.follow-stat {
+  font-size: 0.85rem;
+  color: var(--on-surface-variant);
+}
+.follow-stat strong {
+  color: var(--on-surface);
+  font-weight: 700;
+}
+
+.profile-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
+}
+
+.skill-chip {
+  padding: 0.2rem 0.6rem;
   background: rgba(99,14,212,0.1);
-  border-color: var(--primary);
+  border: 1px solid rgba(99,14,212,0.2);
+  border-radius: var(--radius-full);
+  font-family: var(--font-headline);
+  font-size: 0.72rem;
+  font-weight: 600;
   color: var(--primary);
 }
+
+/* Profile Tabs */
+.profile-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--outline-variant);
+  margin-top: 1rem;
+  overflow-x: auto;
+}
+
+.profile-tab {
+  flex: 1;
+  padding: 0.875rem 1rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-family: var(--font-headline);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+  white-space: nowrap;
+}
+.profile-tab:hover { background: rgba(99,14,212,0.04); }
+.profile-tab.active { color: var(--on-surface); border-bottom-color: var(--primary); }
 
 .btn-follow {
   display: inline-flex;
