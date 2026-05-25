@@ -138,10 +138,14 @@ onMounted(async () => {
 
 async function likeProject(project) {
   try {
-    await http.post(`/projects/${project.id}/like`)
-    project.likes = (project.likes || 0) + 1
-    project.is_liked = true
-    uiStore.showSuccess('Project liked!')
+    const res = await http.post(`/projects/${project.id}/like`)
+    if (res.liked) {
+      project.likes = (project.likes || 0) + 1
+      project.is_liked = true
+    } else {
+      project.likes = Math.max((project.likes || 1) - 1, 0)
+      project.is_liked = false
+    }
   } catch { /* ignore */ }
 }
 
