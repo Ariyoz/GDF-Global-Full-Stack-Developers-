@@ -129,11 +129,11 @@
               <img v-for="(url, idx) in post.media_urls.filter(u => u)" :key="idx" :src="url" alt="Post media" class="post-media-img" />
             </div>
             <div class="post-stats-mini">
-              <span class="stat-btn"><span class="material-symbols-outlined">chat_bubble_outline</span> {{ post.comment_count || 0 }}</span>
-              <span class="stat-btn"><span class="material-symbols-outlined">repeat</span> {{ post.repost_count || 0 }}</span>
-              <span class="stat-btn"><span class="material-symbols-outlined">favorite</span> {{ post.like_count || 0 }}</span>
-              <span class="stat-btn"><span class="material-symbols-outlined">bar_chart</span> {{ (post.like_count || 0) + (post.comment_count || 0) }}</span>
-              <span class="stat-btn"><span class="material-symbols-outlined">share</span></span>
+              <button class="stat-btn" @click="toggleComments(post)"><span class="material-symbols-outlined">chat_bubble_outline</span> {{ post.comment_count || 0 }}</button>
+              <button class="stat-btn" :class="{ active: post.is_reposted }" @click="repostProfilePost(post)"><span class="material-symbols-outlined">repeat</span> {{ post.repost_count || 0 }}</button>
+              <button class="stat-btn like-stat" :class="{ active: post.is_liked }" @click="likeProfilePost(post)"><span class="material-symbols-outlined" :style="post.is_liked ? 'font-variation-settings:\'FILL\' 1' : ''">favorite</span> {{ post.like_count || 0 }}</button>
+              <button class="stat-btn"><span class="material-symbols-outlined">bar_chart</span> {{ (post.like_count || 0) + (post.comment_count || 0) }}</button>
+              <button class="stat-btn" @click="shareProfilePost(post)"><span class="material-symbols-outlined">share</span></button>
             </div>
           </div>
         </div>
@@ -376,6 +376,41 @@ async function deleteProfilePost(postId) {
     userPosts.value = userPosts.value.filter(p => p.id !== postId)
   } catch { /* ignore */ }
   profileMenuId.value = null
+}
+
+async function likeProfilePost(post) {
+  try {
+    if (post.is_liked) {
+      await http.post(`/feed/${post.id}/unlike`)
+      post.is_liked = false
+      post.like_count = Math.max((post.like_count || 1) - 1, 0)
+    } else {
+      await http.post(`/feed/${post.id}/like`)
+      post.is_liked = true
+      post.like_count = (post.like_count || 0) + 1
+    }
+  } catch { /* ignore */ }
+}
+
+async function repostProfilePost(post) {
+  try {
+    await http.post(`/feed/${post.id}/repost`)
+    post.is_reposted = true
+    post.repost_count = (post.repost_count || 0) + 1
+  } catch { /* ignore */ }
+}
+
+function shareProfilePost(post) {
+  const url = window.location.origin + `/developer/${route.params.id}`
+  if (navigator.share) {
+    navigator.share({ title: post.content?.slice(0, 50) || 'GFD Post', text: post.content, url })
+  } else {
+    navigator.clipboard.writeText(url)
+  }
+}
+
+function toggleComments(post) {
+  post.showComments = !post.showComments
 }
 
 const editForm = ref({
@@ -1080,9 +1115,16 @@ function formatJoinDate(dateStr) {
   font-size: 0.78rem;
   color: var(--on-surface-variant);
   cursor: pointer;
-  transition: color 0.15s;
+  background: none;
+  border: none;
+  padding: 0.3rem 0.5rem;
+  border-radius: var(--radius-full);
+  transition: all 0.15s;
 }
-.stat-btn:hover { color: var(--primary); }
+.stat-btn:hover { color: var(--primary); background: rgba(168, 85, 247, 0.08); }
+.stat-btn.active { color: var(--primary); }
+.stat-btn.like-stat.active { color: #e91e63; }
+.stat-btn.like-stat:hover { color: #e91e63; background: rgba(233, 30, 99, 0.08); }
 .stat-btn .material-symbols-outlined { font-size: 18px; }
 
 .no-posts { display: flex; flex-direction: column; align-items: center; padding: 3rem; text-align: center; }
