@@ -73,13 +73,13 @@ const STATS = ref([
 onMounted(async () => {
   try {
     const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1'
-    const res = await fetch(`${baseUrl}/explore/developers?limit=1`)
+    const res = await fetch(`${baseUrl}/explore/stats`)
     if (res.ok) {
       const data = await res.json()
       STATS.value = [
-        { value: String(data.total || data.developers?.length || 0), label: 'Developers' },
-        { value: '0', label: 'Companies Hiring' },
-        { value: '0', label: 'Projects Delivered' },
+        { value: String(data.developers || 0), label: 'Developers' },
+        { value: String(data.companies_hiring || 0), label: 'Companies Hiring' },
+        { value: String(data.projects_delivered || 0), label: 'Projects Delivered' },
         { value: '5+', label: 'Countries' },
       ]
     }
