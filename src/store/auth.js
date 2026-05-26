@@ -162,19 +162,22 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true
     error.value = null
     try {
-      // Direct redirect to OAuth provider — skip backend API call for speed
       const backendUrl = import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1'
       const baseBackend = backendUrl.replace('/api/v1', '')
 
+      let oauthUrl = ''
       if (provider === 'github') {
         const clientId = 'Ov23liIFAyUPGivCRcp1'
         const redirectUri = encodeURIComponent(`${baseBackend}/api/v1/auth/github/callback`)
-        window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=read:user,user:email`
+        oauthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=read:user,user:email`
       } else if (provider === 'google') {
         const clientId = '857439876956-s9hvn4pdgfcetd18l6g40avdps95pl3d.apps.googleusercontent.com'
         const redirectUri = encodeURIComponent(`${baseBackend}/api/v1/auth/google/callback`)
-        window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid+email+profile&access_type=offline`
+        oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid+email+profile&access_type=offline`
       }
+
+      // Navigate to OAuth — works in both browser and PWA standalone mode
+      window.location.href = oauthUrl
     } catch (err) {
       error.value = err.message || `${provider} login failed`
       throw err
