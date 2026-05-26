@@ -91,19 +91,35 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { adminService } from '@/services/admin.service'
 
 const statusFilter = ref('')
 const typeFilter = ref('')
 
-const reportStats = [
+const reportStats = ref([
   { icon: 'report',       label: 'Open Reports',    value: '0',   color: 'var(--error)',    bg: 'var(--error-container)',  valueColor: 'var(--error)' },
   { icon: 'search',       label: 'Investigating',   value: '0',   color: 'var(--tertiary)', bg: 'var(--tertiary-fixed)',   valueColor: 'var(--tertiary)' },
   { icon: 'check_circle', label: 'Resolved (7d)',   value: '0',   color: 'var(--primary)',  bg: 'var(--primary-fixed)' },
   { icon: 'timer',        label: 'Avg Resolution',  value: '—',   color: 'var(--on-surface-variant)', bg: 'var(--surface-container-high)' },
-]
+])
 
 const reports = ref([])
+
+onMounted(async () => {
+  try {
+    const data = await adminService.getReports({ status: 'pending' })
+    reports.value = (data || []).map(r => ({
+      id: r.id,
+      type: r.content_type || 'Post',
+      reason: r.reason || 'Reported',
+      reporter: r.reporter_name || 'User',
+      status: r.status || 'pending',
+      created_at: r.created_at,
+    }))
+    reportStats.value[0].value = String(reports.value.length)
+  } catch { /* ignore */ }
+})
 
 const filteredReports = computed(() => {
   let list = reports.value

@@ -7,13 +7,17 @@ const { admin } = API_ENDPOINTS
 export const adminService = {
   async getAnalytics() {
     const data = await http.get(admin.analytics)
-    // Map snake_case from backend to camelCase for frontend
     return {
       totalUsers: data.total_users || 0,
       totalPosts: data.total_posts || 0,
       totalJobs: data.total_projects || 0,
       activeJobs: data.total_projects || 0,
       pendingReports: data.pending_reports || 0,
+      developers: data.developers || 0,
+      clients: data.clients || 0,
+      suspendedUsers: data.suspended_users || 0,
+      verifiedUsers: data.verified_users || 0,
+      totalMessages: data.total_messages || 0,
     }
   },
 

@@ -153,8 +153,14 @@ onMounted(async () => {
   try {
     const analytics = await adminService.getAnalytics()
     platformStats.value[0].value = String(analytics.totalUsers)
+    platformStats.value[0].change = `${analytics.developers} devs, ${analytics.clients} clients`
     platformStats.value[1].value = String(analytics.activeJobs)
     platformStats.value[2].value = String(analytics.totalPosts)
+
+    // Update verification queue with real data
+    verificationQueue[0].count = analytics.pendingReports || 0
+    verificationQueue[1].count = analytics.verifiedUsers || 0
+    verificationQueue[2].count = analytics.suspendedUsers || 0
 
     const recent = await adminService.getRecentActivity(5)
     activityRows.value = recent.map(u => ({

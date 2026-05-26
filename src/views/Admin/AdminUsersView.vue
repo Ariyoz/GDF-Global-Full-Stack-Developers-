@@ -115,7 +115,7 @@
                   <button class="row-action-btn edit" title="Edit">
                     <span class="material-symbols-outlined">edit</span>
                   </button>
-                  <button class="row-action-btn danger" :title="user.status === 'suspended' ? 'Lift Ban' : 'Suspend'">
+                  <button class="row-action-btn danger" :title="user.status === 'suspended' ? 'Lift Ban' : 'Suspend'" @click="toggleSuspend(user)">
                     <span class="material-symbols-outlined">{{ user.status === 'suspended' ? 'lock_open' : 'block' }}</span>
                   </button>
                 </div>
@@ -220,6 +220,22 @@ function statusDotClass(status) {
 
 function statusTextClass(status) {
   return { 'text-active': status === 'active', 'text-pending': status === 'pending', 'text-error': status === 'suspended' }
+}
+
+async function toggleSuspend(user) {
+  try {
+    if (user.status === 'suspended') {
+      await adminService.reinstateUser(user.id)
+      user.status = 'active'
+      user.statusLabel = 'Active'
+    } else {
+      await adminService.suspendUser(user.id)
+      user.status = 'suspended'
+      user.statusLabel = 'Suspended'
+    }
+  } catch (err) {
+    console.error('Failed to update user status:', err)
+  }
 }
 </script>
 

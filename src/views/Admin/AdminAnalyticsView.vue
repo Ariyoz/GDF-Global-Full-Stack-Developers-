@@ -120,18 +120,31 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { adminService } from '@/services/admin.service'
 
 const timeRange = ref('30d')
 
-const keyMetrics = [
+const keyMetrics = ref([
   { icon: 'group',        label: 'Total Users',       value: '0',     change: '—',     positive: false, color: 'var(--primary)' },
   { icon: 'article',      label: 'Total Posts',       value: '0',     change: '—',     positive: false, color: '#3b82f6' },
   { icon: 'folder_open',  label: 'Active Projects',   value: '0',     change: '—',     positive: false, color: '#10b981' },
-  { icon: 'handshake',    label: 'Collaborations',    value: '0',     change: '—',     positive: false, color: '#f59e0b' },
-  { icon: 'visibility',   label: 'Page Views (30d)',  value: '0',     change: '—',     positive: false, color: 'var(--primary)' },
-  { icon: 'timer',        label: 'Avg Session',       value: '—',     change: '—',     positive: false, color: 'var(--error)' },
-]
+  { icon: 'handshake',    label: 'Companies Hiring',  value: '0',     change: '—',     positive: false, color: '#f59e0b' },
+  { icon: 'chat',         label: 'Messages Sent',     value: '0',     change: '—',     positive: false, color: 'var(--primary)' },
+  { icon: 'flag',         label: 'Pending Reports',   value: '0',     change: '—',     positive: false, color: 'var(--error)' },
+])
+
+onMounted(async () => {
+  try {
+    const data = await adminService.getAnalytics()
+    keyMetrics.value[0].value = String(data.totalUsers)
+    keyMetrics.value[1].value = String(data.totalPosts)
+    keyMetrics.value[2].value = String(data.activeJobs)
+    keyMetrics.value[3].value = String(data.clients)
+    keyMetrics.value[4].value = String(data.totalMessages)
+    keyMetrics.value[5].value = String(data.pendingReports)
+  } catch { /* ignore */ }
+})
 
 const userGrowthData = [
   { label: 'Mon', pct: 0 },

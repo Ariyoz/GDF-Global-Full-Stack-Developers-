@@ -106,7 +106,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { adminService } from '@/services/admin.service'
 
 const activeTab = ref('pending')
 
@@ -117,14 +118,30 @@ const tabs = [
   { value: 'resolved', label: 'Resolved',        badge: null },
 ]
 
-const modStats = [
+const modStats = ref([
   { icon: 'flag',           label: 'Pending Flags',   value: '0',  color: 'var(--error)',    bg: 'var(--error-container)',  valueColor: 'var(--error)' },
   { icon: 'gavel',          label: 'Resolved Today',  value: '0',  color: 'var(--primary)',  bg: 'var(--primary-fixed)' },
   { icon: 'person_off',     label: 'Users Warned',    value: '0',  color: 'var(--tertiary)', bg: 'var(--tertiary-fixed)',   valueColor: 'var(--tertiary)' },
   { icon: 'delete_forever', label: 'Content Removed', value: '0',  color: 'var(--on-surface-variant)', bg: 'var(--surface-container-high)' },
-]
+])
 
 const moderationItems = ref([])
+
+onMounted(async () => {
+  try {
+    const reports = await adminService.getReports({ status: 'pending' })
+    moderationItems.value = (reports || []).map(r => ({
+      id: r.id,
+      type: r.content_type || 'Post',
+      content: r.reason || 'Reported content',
+      reporter: r.reporter_name || 'User',
+      severity: r.severity || 'Medium',
+      status: r.status || 'pending',
+      created_at: r.created_at,
+    }))
+    modStats.value[0].value = String(moderationItems.value.length)
+  } catch { /* ignore */ }
+})
 
 const filteredItems = computed(() => {
   if (activeTab.value === 'pending') return moderationItems.value.filter(i => i.status === 'pending')
