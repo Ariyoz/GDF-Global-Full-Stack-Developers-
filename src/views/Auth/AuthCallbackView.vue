@@ -11,7 +11,6 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
-import http from '@/services/http'
 
 const router = useRouter()
 const route = useRoute()
@@ -20,43 +19,29 @@ const message = ref('Signing you in...')
 
 onMounted(async () => {
   try {
-    const code = route.query.code
-    const provider = route.path.includes('github') ? 'github' : 'google'
+    // Check for tokens in URL params (from backend OAuth redirect)
+    const params = new URLSearchParams(window.location.search)
+    const accessToken = params.get('access_token')
+    const refreshToken = params.get('refresh_token')
 
-    if (!code) {
-      // No code — might be a redirect from the frontend OAuth flow
-      // Check if we have token params in the URL (from backend redirect)
-      const params = new URLSearchParams(window.location.search)
-      const accessToken = params.get('access_token')
-      const refreshToken = params.get('refresh_token')
-
-      if (accessToken && refreshToken) {
-        await authStore.handleOAuthCallback({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-          user_id: params.get('user_id'),
-          role: params.get('role'),
-        })
-        router.push('/dashboard')
-        return
-      }
-
-      message.value = 'Redirecting...'
-      router.push('/auth/login')
+    if (accessToken && refreshToken) {
+      await authStore.handleOAuthCallback({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        user_id: params.get('user_id'),
+        role: params.get('role'),
+      })
+      router.replace('/dashboard')
       return
     }
 
-    // Exchange code with backend
-    message.value = `Connecting with ${provider}...`
-    const endpoint = `/auth/${provider}/callback?code=${code}`
-    const data = await http.get(endpoint)
-
-    await authStore.handleOAuthCallback(data)
-    router.push('/dashboard')
+    // No tokens — redirect to login
+    message.value = 'Redirecting...'
+    router.replace('/auth/login')
   } catch (err) {
     console.error('OAuth callback error:', err)
     message.value = 'Login failed. Redirecting...'
-    setTimeout(() => router.push('/auth/login'), 2000)
+    setTimeout(() => router.replace('/auth/login'), 1500)
   }
 })
 </script>

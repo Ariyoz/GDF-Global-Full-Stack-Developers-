@@ -162,10 +162,19 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true
     error.value = null
     try {
-      const endpoint = provider === 'github' ? auth.githubLogin : auth.googleLogin
-      const data = await http.get(endpoint)
-      // Redirect to OAuth provider
-      window.location.href = data.url
+      // Direct redirect to OAuth provider — skip backend API call for speed
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1'
+      const baseBackend = backendUrl.replace('/api/v1', '')
+
+      if (provider === 'github') {
+        const clientId = 'Ov23liIFAyUPGivCRcp1'
+        const redirectUri = encodeURIComponent(`${baseBackend}/api/v1/auth/github/callback`)
+        window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=read:user,user:email`
+      } else if (provider === 'google') {
+        const clientId = '857439876956-s9hvn4pdgfcetd18l6g40avdps95pl3d.apps.googleusercontent.com'
+        const redirectUri = encodeURIComponent(`${baseBackend}/api/v1/auth/google/callback`)
+        window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid+email+profile&access_type=offline`
+      }
     } catch (err) {
       error.value = err.message || `${provider} login failed`
       throw err
