@@ -93,8 +93,14 @@
         <!-- Call Overlay -->
         <Transition name="call-fade">
           <div v-if="callActive" class="call-overlay">
-            <div class="call-card">
-              <div class="call-avatar-large">
+            <!-- Video streams (shown during video call) -->
+            <div v-if="callType === 'video' && callConnected" class="video-call-container">
+              <video ref="remoteVideoEl" class="remote-video" autoplay playsinline></video>
+              <video ref="localVideoEl" class="local-video" autoplay playsinline muted></video>
+            </div>
+
+            <div class="call-card" :class="{ 'call-card-video': callType === 'video' && callConnected }">
+              <div v-if="!(callType === 'video' && callConnected)" class="call-avatar-large">
                 <img v-if="activeConv.avatar" :src="activeConv.avatar" :alt="activeConv.name" class="call-avatar-img" />
                 <span v-else class="call-initials">{{ (activeConv.name || 'U')[0] }}</span>
               </div>
@@ -105,7 +111,7 @@
                 <button class="call-control-btn" :class="{ active: isMuted }" @click="toggleMute">
                   <span class="material-symbols-outlined">{{ isMuted ? 'mic_off' : 'mic' }}</span>
                 </button>
-                <button v-if="callType === 'video'" class="call-control-btn" :class="{ active: isCameraOff }" @click="isCameraOff = !isCameraOff">
+                <button v-if="callType === 'video'" class="call-control-btn" :class="{ active: isCameraOff }" @click="toggleCamera">
                   <span class="material-symbols-outlined">{{ isCameraOff ? 'videocam_off' : 'videocam' }}</span>
                 </button>
                 <button class="call-control-btn" :class="{ active: isSpeaker }" @click="isSpeaker = !isSpeaker">
@@ -236,6 +242,8 @@ let callTimeout = null
 let peerConnection = null
 let localStream = null
 const remoteAudio = ref(null)
+const remoteVideoEl = ref(null)
+const localVideoEl = ref(null)
 
 const rtcConfig = {
   iceServers: [
@@ -258,10 +266,14 @@ function createPeerConnection() {
   }
 
   peerConnection.ontrack = (event) => {
-    // Play remote audio
-    const audio = new Audio()
-    audio.srcObject = event.streams[0]
-    audio.play().catch(() => {})
+    // Play remote audio/video
+    if (callType.value === 'video' && remoteVideoEl.value) {
+      remoteVideoEl.value.srcObject = event.streams[0]
+    } else {
+      const audio = new Audio()
+      audio.srcObject = event.streams[0]
+      audio.play().catch(() => {})
+    }
   }
 
   peerConnection.onconnectionstatechange = () => {
@@ -279,13 +291,21 @@ function createPeerConnection() {
 
 async function getLocalAudio() {
   try {
-    localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+    const constraints = {
+      audio: true,
+      video: callType.value === 'video' ? { width: 640, height: 480, facingMode: 'user' } : false,
+    }
+    localStream = await navigator.mediaDevices.getUserMedia(constraints)
     localStream.getTracks().forEach(track => {
       peerConnection.addTrack(track, localStream)
     })
+    // Show local video preview
+    if (callType.value === 'video' && localVideoEl.value) {
+      localVideoEl.value.srcObject = localStream
+    }
   } catch (err) {
-    console.error('Microphone access denied:', err)
-    callStatusText.value = 'Mic access denied'
+    console.error('Media access denied:', err)
+    callStatusText.value = callType.value === 'video' ? 'Camera/Mic access denied' : 'Mic access denied'
     setTimeout(() => endCall(), 2000)
   }
 }
@@ -408,6 +428,15 @@ function toggleMute() {
   if (localStream) {
     localStream.getAudioTracks().forEach(track => {
       track.enabled = !isMuted.value
+    })
+  }
+}
+
+function toggleCamera() {
+  isCameraOff.value = !isCameraOff.value
+  if (localStream) {
+    localStream.getVideoTracks().forEach(track => {
+      track.enabled = !isCameraOff.value
     })
   }
 }
@@ -1102,6 +1131,59 @@ function extractCode(content) {
 }
 .call-fade-enter-from, .call-fade-leave-to {
   opacity: 0;
+}
+
+/* Video call */
+.video-call-container {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.remote-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.local-video {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 120px;
+  height: 160px;
+  object-fit: cover;
+  border-radius: var(--radius-lg);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  z-index: 5;
+}
+
+@media (max-width: 767px) {
+  .local-video {
+    width: 90px;
+    height: 120px;
+    top: 0.75rem;
+    right: 0.75rem;
+  }
+}
+
+.call-card-video {
+  position: relative;
+  z-index: 2;
+  background: transparent;
+}
+
+.call-card-video .call-name,
+.call-card-video .call-status-text,
+.call-card-video .call-timer {
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+.call-card-video .call-controls {
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  border-radius: var(--radius-full);
+  padding: 0.75rem 1.5rem;
 }
 
 /* Incoming call */
