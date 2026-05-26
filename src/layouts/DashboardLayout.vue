@@ -433,7 +433,8 @@ function handleSignOut() {
   left: 0;
   right: 0;
   z-index: 200;
-  height: 72px;
+  height: calc(72px + env(safe-area-inset-top, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
   background: var(--surface-container-lowest);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -609,7 +610,7 @@ function handleSignOut() {
 /* Body */
 .dash-body {
   display: flex;
-  padding-top: 72px;
+  padding-top: calc(72px + env(safe-area-inset-top, 0px));
   min-height: 100vh;
 }
 

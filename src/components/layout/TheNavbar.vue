@@ -157,6 +157,7 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
   position: fixed;
   top: 0; left: 0; right: 0;
   z-index: 1000;
+  padding-top: env(safe-area-inset-top, 0px);
   background: rgba(249, 249, 255, 0.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);

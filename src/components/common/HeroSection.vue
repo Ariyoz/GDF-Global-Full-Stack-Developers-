@@ -64,26 +64,35 @@ const router = useRouter()
 const searchQuery = ref('')
 
 const STATS = ref([
-  { value: '—', label: 'Developers' },
-  { value: '—', label: 'Companies Hiring' },
-  { value: '—', label: 'Projects Delivered' },
-  { value: '—', label: 'Countries' },
+  { value: '0', label: 'Developers' },
+  { value: '0', label: 'Companies Hiring' },
+  { value: '0', label: 'Projects Delivered' },
+  { value: '5+', label: 'Countries' },
 ])
 
 onMounted(async () => {
-  try {
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1'
-    const res = await fetch(`${baseUrl}/explore/stats`)
-    if (res.ok) {
-      const data = await res.json()
-      STATS.value = [
-        { value: String(data.developers || 0), label: 'Developers' },
-        { value: String(data.companies_hiring || 0), label: 'Companies Hiring' },
-        { value: String(data.projects_delivered || 0), label: 'Projects Delivered' },
-        { value: '5+', label: 'Countries' },
-      ]
-    }
-  } catch { /* leave defaults */ }
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1'
+
+  async function loadStats() {
+    try {
+      const res = await fetch(`${baseUrl}/explore/stats`)
+      if (res.ok) {
+        const data = await res.json()
+        STATS.value = [
+          { value: String(data.developers || 0), label: 'Developers' },
+          { value: String(data.companies_hiring || 0), label: 'Companies Hiring' },
+          { value: String(data.projects_delivered || 0), label: 'Projects Delivered' },
+          { value: '5+', label: 'Countries' },
+        ]
+        return true
+      }
+    } catch { /* retry */ }
+    return false
+  }
+
+  // Try immediately, retry after 3s if backend is cold-starting
+  const success = await loadStats()
+  if (!success) setTimeout(loadStats, 3000)
 })
 
 function handleSearch() {

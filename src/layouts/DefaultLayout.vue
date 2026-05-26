@@ -86,7 +86,7 @@ import ToastContainer from '@/components/ui/ToastContainer.vue'
 
 .layout-main {
   flex: 1;
-  padding-top: 72px; /* fixed navbar height */
+  padding-top: calc(72px + env(safe-area-inset-top, 0px));
 }
 
 /* ── Mobile Bottom Nav ── */
