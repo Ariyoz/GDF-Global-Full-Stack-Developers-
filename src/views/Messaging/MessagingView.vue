@@ -119,6 +119,28 @@
           </div>
         </Transition>
 
+        <!-- Incoming Call Notification -->
+        <Transition name="call-fade">
+          <div v-if="incomingCall" class="incoming-call-overlay">
+            <div class="incoming-call-card">
+              <div class="call-avatar-large">
+                <img v-if="incomingCall.caller_avatar" :src="incomingCall.caller_avatar" alt="" class="call-avatar-img" />
+                <span v-else class="call-initials">{{ (incomingCall.caller_name || 'U')[0] }}</span>
+              </div>
+              <h3 class="call-name">{{ incomingCall.caller_name || 'Someone' }}</h3>
+              <p class="call-status-text">{{ incomingCall.call_type === 'video' ? 'Incoming video call...' : 'Incoming voice call...' }}</p>
+              <div class="incoming-call-actions">
+                <button class="call-end-btn" @click="rejectIncomingCall">
+                  <span class="material-symbols-outlined">call_end</span>
+                </button>
+                <button class="call-accept-btn" @click="acceptIncomingCall">
+                  <span class="material-symbols-outlined">call</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </Transition>
+
         <div class="chat-messages" ref="messagesEl">
           <!-- Typing indicator -->
           <div v-if="messagingStore.typingUsers[activeConv?.id]?.length" class="typing-indicator">
@@ -205,10 +227,13 @@ const callDuration = ref('00:00')
 const isMuted = ref(false)
 const isCameraOff = ref(false)
 const isSpeaker = ref(false)
+const incomingCall = ref(null) // { from, call_type, caller_name, caller_avatar }
 let callTimer = null
 let callSeconds = 0
+let callTimeout = null
 
 function startCall(type) {
+  if (!activeConv.value) return
   callType.value = type
   callActive.value = true
   callConnected.value = false
@@ -216,30 +241,97 @@ function startCall(type) {
   callDuration.value = '00:00'
   callSeconds = 0
 
-  // Simulate connection after 2 seconds
-  setTimeout(() => {
-    if (callActive.value) {
-      callConnected.value = true
-      callStatusText.value = type === 'video' ? 'Video call connected' : 'Connected'
-      callTimer = setInterval(() => {
-        callSeconds++
-        const mins = Math.floor(callSeconds / 60).toString().padStart(2, '0')
-        const secs = (callSeconds % 60).toString().padStart(2, '0')
-        callDuration.value = `${mins}:${secs}`
-      }, 1000)
+  // Send call signal via WebSocket
+  const user = authStore.profile || authStore.user
+  messagingStore.sendCallSignal('call_initiate', {
+    to: activeConv.value.otherUserId,
+    call_type: type,
+    caller_name: user?.full_name || user?.name || 'User',
+    caller_avatar: user?.avatar || '',
+  })
+
+  // Timeout — if no answer in 30 seconds, end call
+  callTimeout = setTimeout(() => {
+    if (callActive.value && !callConnected.value) {
+      callStatusText.value = 'No answer'
+      setTimeout(() => endCall(), 1500)
     }
-  }, 2000)
+  }, 30000)
+}
+
+function acceptIncomingCall() {
+  if (!incomingCall.value) return
+  callType.value = incomingCall.value.call_type || 'voice'
+  callActive.value = true
+  callConnected.value = true
+  callStatusText.value = 'Connected'
+  callSeconds = 0
+
+  // Send accept signal
+  messagingStore.sendCallSignal('call_accept', { to: incomingCall.value.from })
+
+  // Start timer
+  callTimer = setInterval(() => {
+    callSeconds++
+    const mins = Math.floor(callSeconds / 60).toString().padStart(2, '0')
+    const secs = (callSeconds % 60).toString().padStart(2, '0')
+    callDuration.value = `${mins}:${secs}`
+  }, 1000)
+
+  incomingCall.value = null
+}
+
+function rejectIncomingCall() {
+  if (!incomingCall.value) return
+  messagingStore.sendCallSignal('call_reject', { to: incomingCall.value.from })
+  incomingCall.value = null
 }
 
 function endCall() {
+  if (activeConv.value) {
+    messagingStore.sendCallSignal('call_end', { to: activeConv.value.otherUserId })
+  }
   callActive.value = false
   callConnected.value = false
   if (callTimer) {
     clearInterval(callTimer)
     callTimer = null
   }
+  if (callTimeout) {
+    clearTimeout(callTimeout)
+    callTimeout = null
+  }
   callSeconds = 0
 }
+
+// Listen for incoming call events
+import { watch } from 'vue'
+watch(() => messagingStore.callEvent, (event) => {
+  if (!event) return
+  if (event.type === 'incoming_call') {
+    incomingCall.value = event
+  } else if (event.type === 'call_accepted') {
+    callConnected.value = true
+    callStatusText.value = 'Connected'
+    if (callTimeout) { clearTimeout(callTimeout); callTimeout = null }
+    callTimer = setInterval(() => {
+      callSeconds++
+      const mins = Math.floor(callSeconds / 60).toString().padStart(2, '0')
+      const secs = (callSeconds % 60).toString().padStart(2, '0')
+      callDuration.value = `${mins}:${secs}`
+    }, 1000)
+  } else if (event.type === 'call_rejected') {
+    callStatusText.value = 'Call declined'
+    setTimeout(() => endCall(), 1500)
+  } else if (event.type === 'call_ended') {
+    callActive.value = false
+    callConnected.value = false
+    incomingCall.value = null
+    if (callTimer) { clearInterval(callTimer); callTimer = null }
+    callSeconds = 0
+  }
+  messagingStore.clearCallEvent()
+})
 
 // Load conversations on mount
 onMounted(() => {
@@ -899,5 +991,57 @@ function extractCode(content) {
 }
 .call-fade-enter-from, .call-fade-leave-to {
   opacity: 0;
+}
+
+/* Incoming call */
+.incoming-call-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  background: linear-gradient(135deg, #1a0840 0%, #0d0520 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.incoming-call-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+.incoming-call-actions {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.call-accept-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 16px rgba(34, 197, 94, 0.4);
+  animation: callPulse 2s ease-in-out infinite;
+}
+
+.call-accept-btn:hover {
+  background: #16a34a;
+  transform: scale(1.05);
+}
+
+.call-accept-btn .material-symbols-outlined {
+  font-size: 28px;
 }
 </style>

@@ -762,7 +762,7 @@ function submitComment(post, e) {
 
 .feed-post {
   padding: 0;
-  overflow: hidden;
+  overflow: visible;
   background: var(--surface-container-lowest);
   border-bottom: 1px solid var(--outline-variant);
   transition: background 0.15s ease;

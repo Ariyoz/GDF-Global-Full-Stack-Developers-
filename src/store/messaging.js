@@ -222,10 +222,29 @@ export const useMessagingStore = defineStore('messaging', () => {
     }
   }
 
+  // ── Call Signaling ──
+  const callEvent = ref(null)
+
+  function sendCallSignal(type, data) {
+    websocketService.send({ type, ...data })
+  }
+
+  function clearCallEvent() {
+    callEvent.value = null
+  }
+
+  // Listen for call events from WebSocket
+  websocketService.onEvent((event) => {
+    if (['incoming_call', 'call_accepted', 'call_rejected', 'call_ended'].includes(event.type)) {
+      callEvent.value = event
+    }
+  })
+
   return {
     conversations, activeConversation, messages, unreadCount, loading, typingUsers,
+    callEvent,
     fetchConversations, fetchMessages, sendMessage, startConversation,
     setActiveConversation, sendTyping, sendStopTyping, deleteConversation, deleteMessage,
-    pinChat, createGroupChat,
+    pinChat, createGroupChat, sendCallSignal, clearCallEvent,
   }
 })
