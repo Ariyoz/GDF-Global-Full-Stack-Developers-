@@ -102,7 +102,7 @@
               <p class="call-status-text">{{ callStatusText }}</p>
               <div class="call-timer" v-if="callConnected">{{ callDuration }}</div>
               <div class="call-controls">
-                <button class="call-control-btn" :class="{ active: isMuted }" @click="isMuted = !isMuted">
+                <button class="call-control-btn" :class="{ active: isMuted }" @click="toggleMute">
                   <span class="material-symbols-outlined">{{ isMuted ? 'mic_off' : 'mic' }}</span>
                 </button>
                 <button v-if="callType === 'video'" class="call-control-btn" :class="{ active: isCameraOff }" @click="isCameraOff = !isCameraOff">
@@ -227,12 +227,80 @@ const callDuration = ref('00:00')
 const isMuted = ref(false)
 const isCameraOff = ref(false)
 const isSpeaker = ref(false)
-const incomingCall = ref(null) // { from, call_type, caller_name, caller_avatar }
+const incomingCall = ref(null)
 let callTimer = null
 let callSeconds = 0
 let callTimeout = null
 
-function startCall(type) {
+// WebRTC
+let peerConnection = null
+let localStream = null
+const remoteAudio = ref(null)
+
+const rtcConfig = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+  ]
+}
+
+function createPeerConnection() {
+  peerConnection = new RTCPeerConnection(rtcConfig)
+
+  peerConnection.onicecandidate = (event) => {
+    if (event.candidate && activeConv.value) {
+      messagingStore.sendCallSignal('webrtc_ice', {
+        to: activeConv.value.otherUserId || incomingCall.value?.from,
+        candidate: JSON.stringify(event.candidate),
+      })
+    }
+  }
+
+  peerConnection.ontrack = (event) => {
+    // Play remote audio
+    const audio = new Audio()
+    audio.srcObject = event.streams[0]
+    audio.play().catch(() => {})
+  }
+
+  peerConnection.onconnectionstatechange = () => {
+    if (peerConnection.connectionState === 'connected') {
+      callConnected.value = true
+      callStatusText.value = 'Connected'
+      startCallTimer()
+    } else if (peerConnection.connectionState === 'disconnected' || peerConnection.connectionState === 'failed') {
+      endCall()
+    }
+  }
+
+  return peerConnection
+}
+
+async function getLocalAudio() {
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+    localStream.getTracks().forEach(track => {
+      peerConnection.addTrack(track, localStream)
+    })
+  } catch (err) {
+    console.error('Microphone access denied:', err)
+    callStatusText.value = 'Mic access denied'
+    setTimeout(() => endCall(), 2000)
+  }
+}
+
+function startCallTimer() {
+  if (callTimeout) { clearTimeout(callTimeout); callTimeout = null }
+  callTimer = setInterval(() => {
+    callSeconds++
+    const mins = Math.floor(callSeconds / 60).toString().padStart(2, '0')
+    const secs = (callSeconds % 60).toString().padStart(2, '0')
+    callDuration.value = `${mins}:${secs}`
+  }, 1000)
+}
+
+async function startCall(type) {
   if (!activeConv.value) return
   callType.value = type
   callActive.value = true
@@ -241,16 +309,26 @@ function startCall(type) {
   callDuration.value = '00:00'
   callSeconds = 0
 
-  // Send call signal via WebSocket
+  // Create peer connection and get mic
+  createPeerConnection()
+  await getLocalAudio()
+  if (!localStream) return
+
+  // Create offer
+  const offer = await peerConnection.createOffer()
+  await peerConnection.setLocalDescription(offer)
+
+  // Send call signal with offer
   const user = authStore.profile || authStore.user
   messagingStore.sendCallSignal('call_initiate', {
     to: activeConv.value.otherUserId,
     call_type: type,
     caller_name: user?.full_name || user?.name || 'User',
     caller_avatar: user?.avatar || '',
+    offer: JSON.stringify(offer),
   })
 
-  // Timeout — if no answer in 30 seconds, end call
+  // Timeout
   callTimeout = setTimeout(() => {
     if (callActive.value && !callConnected.value) {
       callStatusText.value = 'No answer'
@@ -259,24 +337,38 @@ function startCall(type) {
   }, 30000)
 }
 
-function acceptIncomingCall() {
+async function acceptIncomingCall() {
   if (!incomingCall.value) return
   callType.value = incomingCall.value.call_type || 'voice'
   callActive.value = true
-  callConnected.value = true
-  callStatusText.value = 'Connected'
+  callStatusText.value = 'Connecting...'
   callSeconds = 0
 
-  // Send accept signal
-  messagingStore.sendCallSignal('call_accept', { to: incomingCall.value.from })
+  // Create peer connection and get mic
+  createPeerConnection()
+  await getLocalAudio()
 
-  // Start timer
-  callTimer = setInterval(() => {
-    callSeconds++
-    const mins = Math.floor(callSeconds / 60).toString().padStart(2, '0')
-    const secs = (callSeconds % 60).toString().padStart(2, '0')
-    callDuration.value = `${mins}:${secs}`
-  }, 1000)
+  // Set remote offer
+  if (incomingCall.value.offer) {
+    const offer = JSON.parse(incomingCall.value.offer)
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(offer))
+
+    // Create answer
+    const answer = await peerConnection.createAnswer()
+    await peerConnection.setLocalDescription(answer)
+
+    // Send answer back
+    messagingStore.sendCallSignal('call_accept', {
+      to: incomingCall.value.from,
+      answer: JSON.stringify(answer),
+    })
+  } else {
+    // Fallback if no offer (old signaling)
+    messagingStore.sendCallSignal('call_accept', { to: incomingCall.value.from })
+    callConnected.value = true
+    callStatusText.value = 'Connected'
+    startCallTimer()
+  }
 
   incomingCall.value = null
 }
@@ -291,44 +383,63 @@ function endCall() {
   if (activeConv.value) {
     messagingStore.sendCallSignal('call_end', { to: activeConv.value.otherUserId })
   }
+  // Cleanup WebRTC
+  if (localStream) {
+    localStream.getTracks().forEach(track => track.stop())
+    localStream = null
+  }
+  if (peerConnection) {
+    peerConnection.close()
+    peerConnection = null
+  }
   callActive.value = false
   callConnected.value = false
-  if (callTimer) {
-    clearInterval(callTimer)
-    callTimer = null
-  }
-  if (callTimeout) {
-    clearTimeout(callTimeout)
-    callTimeout = null
-  }
+  incomingCall.value = null
+  if (callTimer) { clearInterval(callTimer); callTimer = null }
+  if (callTimeout) { clearTimeout(callTimeout); callTimeout = null }
   callSeconds = 0
 }
 
 // Listen for incoming call events
 import { watch } from 'vue'
-watch(() => messagingStore.callEvent, (event) => {
+
+function toggleMute() {
+  isMuted.value = !isMuted.value
+  if (localStream) {
+    localStream.getAudioTracks().forEach(track => {
+      track.enabled = !isMuted.value
+    })
+  }
+}
+
+watch(() => messagingStore.callEvent, async (event) => {
   if (!event) return
+
   if (event.type === 'incoming_call') {
     incomingCall.value = event
   } else if (event.type === 'call_accepted') {
-    callConnected.value = true
-    callStatusText.value = 'Connected'
-    if (callTimeout) { clearTimeout(callTimeout); callTimeout = null }
-    callTimer = setInterval(() => {
-      callSeconds++
-      const mins = Math.floor(callSeconds / 60).toString().padStart(2, '0')
-      const secs = (callSeconds % 60).toString().padStart(2, '0')
-      callDuration.value = `${mins}:${secs}`
-    }, 1000)
+    // Set remote answer
+    if (event.answer && peerConnection) {
+      const answer = JSON.parse(event.answer)
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(answer))
+    } else {
+      callConnected.value = true
+      callStatusText.value = 'Connected'
+      startCallTimer()
+    }
+  } else if (event.type === 'webrtc_ice') {
+    // Add ICE candidate
+    if (event.candidate && peerConnection) {
+      try {
+        const candidate = JSON.parse(event.candidate)
+        await peerConnection.addIceCandidate(new RTCIceCandidate(candidate))
+      } catch { /* ignore */ }
+    }
   } else if (event.type === 'call_rejected') {
     callStatusText.value = 'Call declined'
     setTimeout(() => endCall(), 1500)
   } else if (event.type === 'call_ended') {
-    callActive.value = false
-    callConnected.value = false
-    incomingCall.value = null
-    if (callTimer) { clearInterval(callTimer); callTimer = null }
-    callSeconds = 0
+    endCall()
   }
   messagingStore.clearCallEvent()
 })

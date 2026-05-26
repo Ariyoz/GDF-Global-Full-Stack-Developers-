@@ -64,7 +64,7 @@ export const useMessagingStore = defineStore('messaging', () => {
     }
 
     // Call events
-    if (['incoming_call', 'call_accepted', 'call_rejected', 'call_ended'].includes(event.type)) {
+    if (['incoming_call', 'call_accepted', 'call_rejected', 'call_ended', 'webrtc_ice'].includes(event.type)) {
       callEvent.value = event
     }
   })
