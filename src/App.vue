@@ -5,13 +5,13 @@
     </Transition>
   </RouterView>
 
-  <!-- Global incoming message/call alert -->
+  <!-- Global incoming notification popup -->
   <Transition name="page">
     <div v-if="incomingAlert" class="global-alert" @click="handleAlertClick">
       <div class="global-alert-inner">
-        <div class="alert-avatar">
+        <div class="alert-avatar" :class="`alert-type-${incomingAlert.type}`">
           <img v-if="incomingAlert.avatar" :src="incomingAlert.avatar" alt="" class="alert-avatar-img" />
-          <span v-else class="alert-initials">{{ (incomingAlert.name || 'U')[0] }}</span>
+          <span v-else class="material-symbols-outlined alert-icon">{{ incomingAlert.icon || 'notifications' }}</span>
         </div>
         <div class="alert-content">
           <p class="alert-title">{{ incomingAlert.title }}</p>
@@ -35,45 +35,132 @@ import { websocketService } from '@/services/websocket.service'
 
 const router = useRouter()
 const incomingAlert = ref(null)
+const alertQueue = ref([])
 let alertTimeout = null
 
 onMounted(() => {
   websocketService.onEvent((event) => {
-    // Incoming message notification
+    // Incoming message
     if (event.type === 'message_sent' && event.from) {
-      showAlert({
+      queueAlert({
         type: 'message',
+        icon: 'chat',
         name: event.from_name || 'New Message',
         avatar: event.from_avatar || '',
         title: event.from_name || 'New Message',
         body: event.content?.slice(0, 60) || 'Sent you a message',
+        route: '/messaging',
       })
     }
 
-    // Incoming call notification
+    // Incoming call
     if (event.type === 'incoming_call') {
-      showAlert({
+      queueAlert({
         type: 'call',
+        icon: 'call',
         name: event.caller_name || 'Incoming Call',
         avatar: event.caller_avatar || '',
         title: event.caller_name || 'Incoming Call',
         body: event.call_type === 'video' ? '📹 Video call...' : '📞 Voice call...',
+        route: '/messaging',
+        duration: 30000,
+      })
+    }
+
+    // Like on post
+    if (event.type === 'post_liked') {
+      queueAlert({
+        type: 'like',
+        icon: 'favorite',
+        name: event.actor_name || 'Someone',
+        avatar: event.actor_avatar || '',
+        title: event.actor_name || 'Someone',
+        body: '❤️ liked your post',
+        route: '/feed',
+      })
+    }
+
+    // Comment on post
+    if (event.type === 'post_commented') {
+      queueAlert({
+        type: 'comment',
+        icon: 'chat_bubble',
+        name: event.actor_name || 'Someone',
+        avatar: event.actor_avatar || '',
+        title: event.actor_name || 'Someone',
+        body: '💬 commented on your post',
+        route: '/feed',
+      })
+    }
+
+    // Repost
+    if (event.type === 'post_reposted') {
+      queueAlert({
+        type: 'repost',
+        icon: 'repeat',
+        name: event.actor_name || 'Someone',
+        avatar: event.actor_avatar || '',
+        title: event.actor_name || 'Someone',
+        body: '🔁 reposted your post',
+        route: '/feed',
+      })
+    }
+
+    // New follower
+    if (event.type === 'new_follower' || event.type === 'user_followed') {
+      queueAlert({
+        type: 'follow',
+        icon: 'person_add',
+        name: event.actor_name || 'Someone',
+        avatar: event.actor_avatar || '',
+        title: event.actor_name || 'Someone',
+        body: '👤 started following you',
+        route: '/notifications',
+      })
+    }
+
+    // Generic notification (catch-all from backend)
+    if (event.type === 'notification') {
+      queueAlert({
+        type: 'notification',
+        icon: 'notifications',
+        name: event.title || 'Notification',
+        avatar: event.actor_avatar || '',
+        title: event.title || 'Notification',
+        body: event.body || event.message || '',
+        route: '/notifications',
       })
     }
   })
 })
 
+function queueAlert(data) {
+  if (incomingAlert.value) {
+    // Queue it if one is already showing
+    alertQueue.value.push(data)
+  } else {
+    showAlert(data)
+  }
+}
+
 function showAlert(data) {
   incomingAlert.value = data
   if (alertTimeout) clearTimeout(alertTimeout)
+  const duration = data.duration || 4000
   alertTimeout = setTimeout(() => {
     incomingAlert.value = null
-  }, data.type === 'call' ? 30000 : 5000)
+    // Show next in queue
+    if (alertQueue.value.length > 0) {
+      const next = alertQueue.value.shift()
+      setTimeout(() => showAlert(next), 300)
+    }
+  }, duration)
 }
 
 function handleAlertClick() {
-  router.push('/messaging')
+  const route = incomingAlert.value?.route || '/notifications'
   incomingAlert.value = null
+  router.push(route)
 }
 
 function acceptAlert() {
@@ -83,6 +170,11 @@ function acceptAlert() {
 
 function dismissAlert() {
   incomingAlert.value = null
+  // Show next in queue
+  if (alertQueue.value.length > 0) {
+    const next = alertQueue.value.shift()
+    setTimeout(() => showAlert(next), 300)
+  }
 }
 </script>
 
@@ -179,12 +271,22 @@ function dismissAlert() {
   border-radius: 50%;
 }
 
-.alert-initials {
-  font-family: var(--font-headline);
-  font-size: 1rem;
-  font-weight: 700;
+.alert-icon {
+  font-size: 22px;
   color: var(--primary);
 }
+
+.alert-type-like .alert-icon { color: #e91e63; }
+.alert-type-like { background: rgba(233, 30, 99, 0.1); }
+.alert-type-comment .alert-icon { color: #2196f3; }
+.alert-type-comment { background: rgba(33, 150, 243, 0.1); }
+.alert-type-repost .alert-icon { color: #00c853; }
+.alert-type-repost { background: rgba(0, 200, 83, 0.1); }
+.alert-type-follow .alert-icon { color: var(--primary); }
+.alert-type-follow { background: rgba(168, 85, 247, 0.1); }
+.alert-type-message .alert-icon { color: var(--primary); }
+.alert-type-call { background: rgba(34, 197, 94, 0.1); }
+.alert-type-call .alert-icon { color: #22c55e; }
 
 .alert-content {
   flex: 1;
