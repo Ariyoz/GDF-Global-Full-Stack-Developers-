@@ -143,11 +143,15 @@ export const useMessagingStore = defineStore('messaging', () => {
       })
 
       // Send via WebSocket for instant delivery
+      const authStore = useAuthStore()
+      const senderProfile = authStore.profile || authStore.user
       websocketService.send({
         type: 'message',
         conversation_id: activeConversation.value.id,
         content,
         to: activeConversation.value.otherUserId,
+        from_name: senderProfile?.full_name || senderProfile?.name || 'User',
+        from_avatar: senderProfile?.avatar || '',
       })
     } catch (err) {
       console.error('Failed to send message:', err)
