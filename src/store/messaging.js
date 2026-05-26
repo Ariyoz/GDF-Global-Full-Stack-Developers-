@@ -18,12 +18,14 @@ export const useMessagingStore = defineStore('messaging', () => {
   // Listen for WebSocket events
   websocketService.onEvent((event) => {
     if (event.type === 'message_sent') {
-      // New message received
-      if (activeConversation.value?.id === event.data?.conversation_id) {
+      // New message received — show instantly
+      const convId = event.conversation_id || event.data?.conversation_id
+      if (activeConversation.value?.id === convId) {
         messages.value.push({
           id: Date.now(),
-          content: event.data.content_preview || event.content,
-          sender_id: event.data?.sender_id || event.from,
+          content: event.content || event.data?.content_preview || '',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          sender_id: event.from || event.data?.sender_id,
           created_at: new Date().toISOString(),
           is_read: false,
           mine: false,
