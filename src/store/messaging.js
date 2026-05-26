@@ -13,6 +13,7 @@ export const useMessagingStore = defineStore('messaging', () => {
   const unreadCount = ref(0)
   const loading = ref(false)
   const typingUsers = ref({}) // { conversationId: [userId, ...] }
+  const callEvent = ref(null)
 
   // Listen for WebSocket events
   websocketService.onEvent((event) => {
@@ -21,8 +22,8 @@ export const useMessagingStore = defineStore('messaging', () => {
       if (activeConversation.value?.id === event.data?.conversation_id) {
         messages.value.push({
           id: Date.now(),
-          content: event.data.content_preview,
-          sender_id: event.data.sender_id,
+          content: event.data.content_preview || event.content,
+          sender_id: event.data?.sender_id || event.from,
           created_at: new Date().toISOString(),
           is_read: false,
           mine: false,
@@ -33,7 +34,7 @@ export const useMessagingStore = defineStore('messaging', () => {
     }
 
     if (event.type === 'typing_start') {
-      const convId = event.data?.conversation_id
+      const convId = event.data?.conversation_id || event.conversation_id
       if (convId) {
         if (!typingUsers.value[convId]) typingUsers.value[convId] = []
         if (!typingUsers.value[convId].includes(event.from)) {
@@ -43,10 +44,28 @@ export const useMessagingStore = defineStore('messaging', () => {
     }
 
     if (event.type === 'typing_stop') {
-      const convId = event.data?.conversation_id
+      const convId = event.data?.conversation_id || event.conversation_id
       if (convId && typingUsers.value[convId]) {
         typingUsers.value[convId] = typingUsers.value[convId].filter(id => id !== event.from)
       }
+    }
+
+    // Online/offline status updates
+    if (event.type === 'user_online') {
+      const userId = event.data?.user_id || event.user_id
+      const conv = conversations.value.find(c => c.otherUserId === userId)
+      if (conv) conv.online = true
+    }
+
+    if (event.type === 'user_offline') {
+      const userId = event.data?.user_id || event.user_id
+      const conv = conversations.value.find(c => c.otherUserId === userId)
+      if (conv) conv.online = false
+    }
+
+    // Call events
+    if (['incoming_call', 'call_accepted', 'call_rejected', 'call_ended'].includes(event.type)) {
+      callEvent.value = event
     }
   })
 
@@ -63,6 +82,7 @@ export const useMessagingStore = defineStore('messaging', () => {
         lastMessage: c.last_message_content || '',
         time: c.last_message_at ? new Date(c.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
         unread: 0,
+        online: c.online || false,
         type: c.type,
         otherUserId: c.other_user_id,
       }))
@@ -223,7 +243,6 @@ export const useMessagingStore = defineStore('messaging', () => {
   }
 
   // ── Call Signaling ──
-  const callEvent = ref(null)
 
   function sendCallSignal(type, data) {
     websocketService.send({ type, ...data })
@@ -232,13 +251,6 @@ export const useMessagingStore = defineStore('messaging', () => {
   function clearCallEvent() {
     callEvent.value = null
   }
-
-  // Listen for call events from WebSocket
-  websocketService.onEvent((event) => {
-    if (['incoming_call', 'call_accepted', 'call_rejected', 'call_ended'].includes(event.type)) {
-      callEvent.value = event
-    }
-  })
 
   return {
     conversations, activeConversation, messages, unreadCount, loading, typingUsers,
