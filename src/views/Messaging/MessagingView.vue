@@ -142,14 +142,6 @@
         </Transition>
 
         <div class="chat-messages" ref="messagesEl">
-          <!-- Typing indicator -->
-          <div v-if="messagingStore.typingUsers[activeConv?.id]?.length" class="typing-indicator">
-            <span class="typing-dot"></span>
-            <span class="typing-dot"></span>
-            <span class="typing-dot"></span>
-            <span class="typing-text">typing...</span>
-          </div>
-
           <div
             v-for="msg in activeMessages"
             :key="msg.id"
@@ -170,6 +162,14 @@
                 <span v-else-if="msg.mine" class="msg-sent">✓</span>
               </div>
             </div>
+          </div>
+
+          <!-- Typing indicator (at bottom after all messages) -->
+          <div v-if="messagingStore.typingUsers[activeConv?.id]?.length" class="typing-indicator">
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-text">typing...</span>
           </div>
         </div>
 
