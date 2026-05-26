@@ -39,7 +39,7 @@ import ToastContainer from '@/components/ui/ToastContainer.vue'
   justify-content: center;
   position: relative;
   overflow: hidden;
-  padding: 2rem 1.5rem;
+  padding: calc(2rem + env(safe-area-inset-top, 0px)) 1.5rem calc(2rem + env(safe-area-inset-bottom, 0px));
   transition: background-color 0.3s ease;
 }
 

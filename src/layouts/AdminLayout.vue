@@ -62,8 +62,8 @@ watch(() => route.path, () => {
   left: 0;
   right: 0;
   z-index: 300;
-  height: 56px;
-  padding: 0 1rem;
+  height: calc(56px + env(safe-area-inset-top, 0px));
+  padding: env(safe-area-inset-top, 0px) 1rem 0;
   background: var(--surface-container-lowest);
   border-bottom: 1px solid var(--outline-variant);
 }
@@ -109,7 +109,7 @@ watch(() => route.path, () => {
   flex: 1;
   overflow-y: auto;
   max-width: 1200px;
-  padding-top: 56px;
+  padding-top: calc(56px + env(safe-area-inset-top, 0px));
 }
 
 @media (min-width: 768px) { .admin-main { padding-top: 0; } }
