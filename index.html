@@ -3,17 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Global Full-Stack Developers — The global marketplace for world-class full-stack engineers and high-impact digital products." />
     <title>GFD | Global Full-Stack Developers</title>
-
-    <!-- PWA -->
-    <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#7c3aed" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="GFD" />
-    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -24,14 +16,12 @@
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
     <script>
-      // Register Service Worker
+      // Unregister any old service workers that might be causing blank pages
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').then(reg => {
-            console.log('[PWA] Service Worker registered');
-          }).catch(err => {
-            console.log('[PWA] SW registration failed:', err);
-          });
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for (let registration of registrations) {
+            registration.unregister();
+          }
         });
       }
     </script>
