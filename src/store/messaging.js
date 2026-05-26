@@ -143,7 +143,6 @@ export const useMessagingStore = defineStore('messaging', () => {
       })
 
       // Send via WebSocket for instant delivery
-      const authStore = useAuthStore()
       const senderProfile = authStore.profile || authStore.user
       websocketService.send({
         type: 'message',
