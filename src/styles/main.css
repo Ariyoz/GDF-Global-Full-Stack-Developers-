@@ -7,8 +7,9 @@
 @import "./utilities.css";
 
 /* ── PWA Safe Area — iPhone notch/status bar ── */
-html {
-  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+html, body {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* ── Smooth theme transition for all elements ── */

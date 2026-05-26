@@ -1,21 +1,8 @@
-// GFD Service Worker — Offline support + caching
-const CACHE_NAME = 'gfd-v1'
-const OFFLINE_URL = '/offline.html'
+// GFD Service Worker — Minimal, no aggressive caching
+const CACHE_NAME = 'gfd-v2'
 
-// Assets to cache on install
-const PRECACHE_ASSETS = [
-  '/',
-  '/offline.html',
-  '/manifest.json',
-]
-
-// Install — cache core assets
+// Install — just activate immediately
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(PRECACHE_ASSETS)
-    })
-  )
   self.skipWaiting()
 })
 
@@ -31,41 +18,10 @@ self.addEventListener('activate', (event) => {
   self.clients.claim()
 })
 
-// Fetch — network first, fallback to cache
+// Fetch — always go to network, no caching (prevents blank page issues)
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') return
-
-  // Skip API calls — always go to network
-  if (event.request.url.includes('/api/')) return
-
-  // Skip WebSocket
-  if (event.request.url.includes('/ws/')) return
-
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        // Cache successful responses
-        if (response.status === 200) {
-          const clone = response.clone()
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, clone)
-          })
-        }
-        return response
-      })
-      .catch(() => {
-        // Offline — try cache
-        return caches.match(event.request).then((cached) => {
-          if (cached) return cached
-          // If it's a navigation request, show offline page
-          if (event.request.mode === 'navigate') {
-            return caches.match(OFFLINE_URL)
-          }
-          return new Response('Offline', { status: 503 })
-        })
-      })
-  )
+  // Let all requests go to network normally
+  return
 })
 
 // Push notifications
@@ -88,7 +44,6 @@ self.addEventListener('notificationclick', (event) => {
   const url = event.notification.data?.url || '/'
   event.waitUntil(
     self.clients.matchAll({ type: 'window' }).then((clients) => {
-      // Focus existing window or open new one
       for (const client of clients) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
           client.navigate(url)
