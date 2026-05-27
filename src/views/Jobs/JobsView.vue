@@ -44,6 +44,9 @@
         <div class="job-footer">
           <span v-if="job.salary_min" class="job-salary">${{ job.salary_min }}{{ job.salary_max ? ' - $' + job.salary_max : '' }}/yr</span>
           <span class="job-time">{{ formatTime(job.created_at) }}</span>
+          <button v-if="job.poster_name === authStore.profile?.full_name || isClient" class="job-delete-btn" @click.stop="deleteJob(job)" title="Delete job">
+            <span class="material-symbols-outlined">delete</span>
+          </button>
         </div>
       </div>
 
@@ -429,6 +432,17 @@ function formatTime(dateStr) {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
+async function deleteJob(job) {
+  if (!confirm('Are you sure you want to delete this job posting?')) return
+  try {
+    await http.request({ method: 'DELETE', url: `/jobs/${job.id}` })
+    jobs.value = jobs.value.filter(j => j.id !== job.id)
+    uiStore.showSuccess('Job deleted')
+  } catch {
+    uiStore.showError('Failed to delete job')
+  }
+}
+
 async function viewApplicants(job) {
   if (!job) return
   try {
@@ -497,6 +511,9 @@ onUnmounted(() => {
 .job-footer { display: flex; justify-content: space-between; align-items: center; }
 .job-salary { font-family: var(--font-headline); font-size: 0.8rem; font-weight: 600; color: var(--primary); }
 .job-time { font-size: 0.72rem; color: var(--on-surface-variant); }
+.job-delete-btn { background: none; border: none; color: var(--on-surface-variant); cursor: pointer; padding: 0.3rem; border-radius: 50%; transition: all 0.15s; margin-left: auto; }
+.job-delete-btn:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+.job-delete-btn .material-symbols-outlined { font-size: 18px; }
 
 .jobs-loading { display: flex; flex-direction: column; gap: 1rem; }
 .skeleton-job { display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: var(--surface-container-lowest); border-radius: var(--radius-xl); }
