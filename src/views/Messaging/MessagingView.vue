@@ -512,6 +512,10 @@ async function sendMessage() {
   const text = newMessage.value.trim()
   newMessage.value = ''
 
+  // Stop typing indicator when message is sent
+  if (typingTimeout) clearTimeout(typingTimeout)
+  messagingStore.sendStopTyping()
+
   await messagingStore.sendMessage(text)
 
   nextTick(() => {
@@ -539,8 +543,15 @@ async function deleteChat() {
   showChatMenu.value = false
 }
 
+let typingTimeout = null
+
 function handleTyping() {
   messagingStore.sendTyping()
+  // Auto-stop typing after 2 seconds of no input
+  if (typingTimeout) clearTimeout(typingTimeout)
+  typingTimeout = setTimeout(() => {
+    messagingStore.sendStopTyping()
+  }, 2000)
 }
 
 function pinCurrentChat() {
