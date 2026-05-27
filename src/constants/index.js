@@ -19,10 +19,10 @@ export const SOCIAL_LINKS = {
 
 export const NAV_LINKS = [
   { label: 'Explore',   to: '/explore',   exact: false },
+  { label: 'Jobs',      to: '/jobs',      exact: false },
   { label: 'Hire',      to: '/hire',      exact: false },
   { label: 'Projects',  to: '/projects',  exact: false },
   { label: 'Community', to: '/community', exact: false },
-  { label: 'Careers',   to: '/careers',   exact: false },
 ]
 
 export const SERVICES = [

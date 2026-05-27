@@ -130,7 +130,6 @@ const routes = [
   {
     path: '/jobs',
     component: DashboardLayout,
-    meta: { requiresAuth: true },
     children: [{ path: '', name: 'jobs', component: () => import('@/views/Jobs/JobsView.vue') }],
   },
   {
