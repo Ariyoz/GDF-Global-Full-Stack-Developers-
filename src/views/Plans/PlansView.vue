@@ -64,7 +64,7 @@
         <button
           class="plan-cta"
           :class="plan.featured ? 'btn-primary' : 'btn-outline'"
-          :disabled="plan.id === currentPlan"
+          :disabled="plan.id === currentPlan || subscribing"
           @click="selectPlan(plan)"
         >
           <span v-if="plan.id === currentPlan" class="material-symbols-outlined" style="font-size:16px;font-variation-settings:'FILL' 1">check_circle</span>
@@ -113,13 +113,17 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useUiStore } from '@/store/ui'
+import { useAuthStore } from '@/store/auth'
+import http from '@/services/http'
 
 const uiStore = useUiStore()
+const authStore = useAuthStore()
 const billing    = ref('monthly')
 const openFaq    = ref(null)
-const currentPlan = ref('pro') // simulate user is on Pro
+const currentPlan = ref('free')
+const subscribing = ref(false)
 
 const plans = [
   {
@@ -225,14 +229,43 @@ function selectPlan(plan) {
     uiStore.showInfo('Our sales team will reach out within 24 hours.')
     return
   }
-  if (plan.id === 'free') {
-    uiStore.showInfo('Downgraded to Free plan.')
-    currentPlan.value = 'free'
-    return
-  }
-  uiStore.showSuccess(`Upgraded to ${plan.name}! Welcome aboard.`)
-  currentPlan.value = plan.id
+  subscribeToPlan(plan)
 }
+
+async function subscribeToPlan(plan) {
+  subscribing.value = true
+  try {
+    const result = await http.post('/subscriptions/subscribe', {
+      plan: plan.id,
+      billing_cycle: billing.value,
+    })
+    currentPlan.value = plan.id
+    if (result.is_verified) {
+      // Update local auth store to reflect verified status
+      if (authStore.profile) authStore.profile.is_verified = true
+    }
+    if (plan.id === 'free') {
+      if (authStore.profile) authStore.profile.is_verified = false
+      uiStore.showInfo('Downgraded to Free plan.')
+    } else {
+      uiStore.showSuccess(`Subscribed to ${plan.name}! You now have the verified badge ✓`)
+    }
+  } catch (err) {
+    uiStore.showError(err.response?.data?.detail || 'Failed to subscribe. Please try again.')
+  } finally {
+    subscribing.value = false
+  }
+}
+
+onMounted(async () => {
+  try {
+    const data = await http.get('/subscriptions/my-subscription')
+    if (data.plan) currentPlan.value = data.plan
+  } catch {
+    // User might not be logged in or endpoint not ready yet
+    currentPlan.value = 'free'
+  }
+})
 </script>
 
 <style scoped>

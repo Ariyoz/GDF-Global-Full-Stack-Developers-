@@ -141,6 +141,7 @@
                 <div class="post-author-text">
                   <div class="post-author-line">
                     <span class="post-author-name">{{ post.author?.full_name || post.author }}</span>
+                    <span v-if="post.author?.is_verified" class="material-symbols-outlined verified-tick" style="font-variation-settings:'FILL' 1">verified</span>
                     <span class="post-author-username">@{{ post.author?.username || '' }}</span>
                     <span class="post-time-dot">·</span>
                     <span class="post-time">{{ formatTime(post.created_at) }}</span>
@@ -931,6 +932,12 @@ function submitComment(post, e) {
   font-family: var(--font-headline); font-size: 0.875rem; font-weight: 700;
   color: var(--on-surface);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.verified-tick {
+  font-size: 16px;
+  color: var(--primary);
+  flex-shrink: 0;
 }
 
 .post-author-line {
