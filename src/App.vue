@@ -109,6 +109,20 @@ onMounted(() => {
       })
     }
 
+    // Bookmark
+    if (event.type === 'post_bookmarked') {
+      const name = event.data?.bookmarker_name || event.actor_name || 'Someone'
+      queueAlert({
+        type: 'bookmark',
+        icon: 'bookmark',
+        name: name,
+        avatar: event.data?.bookmarker_avatar || event.actor_avatar || '',
+        title: name,
+        body: 'bookmarked your post',
+        route: '/feed',
+      })
+    }
+
     // New follower
     if (event.type === 'new_follower' || event.type === 'user_followed') {
       const name = event.data?.follower_name || event.actor_name || 'Someone'
@@ -290,6 +304,8 @@ function dismissAlert() {
 .alert-type-follow { background: rgba(168, 85, 247, 0.08); }
 .alert-type-message .alert-icon { color: var(--primary); }
 .alert-type-message { background: rgba(168, 85, 247, 0.08); }
+.alert-type-bookmark .alert-icon { color: #3b82f6; }
+.alert-type-bookmark { background: rgba(59, 130, 246, 0.08); }
 .alert-type-call { background: rgba(34, 197, 94, 0.08); }
 .alert-type-call .alert-icon { color: #22c55e; }
 
