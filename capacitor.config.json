@@ -9,27 +9,36 @@
       "gfd-backend.onrender.com",
       "gdf-global-full-stack-developers.vercel.app",
       "accounts.google.com",
-      "github.com"
+      "github.com",
+      "res.cloudinary.com"
     ]
   },
   "plugins": {
     "SplashScreen": {
       "launchShowDuration": 2000,
+      "launchAutoHide": true,
       "backgroundColor": "#0d0520",
       "showSpinner": false,
-      "androidScaleType": "CENTER_CROP"
+      "androidScaleType": "CENTER_CROP",
+      "splashFullScreen": true,
+      "splashImmersive": true
     },
     "StatusBar": {
       "style": "DARK",
-      "backgroundColor": "#0d0520"
+      "backgroundColor": "#0d0520",
+      "overlaysWebView": false
     },
     "Keyboard": {
       "resize": "body",
       "resizeOnFullScreen": true
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
     }
   },
   "android": {
     "allowMixedContent": false,
-    "webContentsDebuggingEnabled": false
+    "webContentsDebuggingEnabled": false,
+    "loggingBehavior": "none"
   }
 }
