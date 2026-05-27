@@ -113,10 +113,11 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button class="btn-primary apply-btn" @click="showApplyModal = true; selectedJob = selectedJob">
+            <button v-if="isDeveloper" class="btn-primary apply-btn" @click="showApplyModal = true; selectedJob = selectedJob">
               <span class="material-symbols-outlined">send</span>
               Apply Now
             </button>
+            <p v-else-if="isClient" class="posted-by-you">You posted this job</p>
           </div>
         </div>
       </div>
@@ -261,6 +262,7 @@ const showApplyModal = ref(false)
 const showPostJob = ref(false)
 
 const isClient = computed(() => authStore.profile?.role === 'client' || authStore.profile?.role === 'admin')
+const isDeveloper = computed(() => authStore.profile?.role === 'developer')
 
 const filters = [
   { value: 'all', label: 'All' },
@@ -360,7 +362,7 @@ onMounted(fetchJobs)
 </script>
 
 <style scoped>
-.jobs-view { padding: 0.5rem 0; min-height: 100vh; background: var(--background); }
+.jobs-view { padding: 0.5rem 0; min-height: 100vh; background: var(--background); padding-bottom: 80px; }
 .jobs-header { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; }
 .jobs-title { font-family: var(--font-headline); font-size: 1.25rem; font-weight: 700; color: var(--on-surface); }
 .btn-post-job { display: flex; align-items: center; gap: 0.3rem; padding: 0.5rem 1rem; background: var(--primary); color: #fff; border: none; border-radius: var(--radius-full); font-family: var(--font-headline); font-size: 0.8rem; font-weight: 600; cursor: pointer; }
@@ -423,6 +425,7 @@ onMounted(fetchJobs)
 .detail-stats { display: flex; gap: 1rem; font-size: 0.8rem; color: var(--on-surface-variant); }
 
 .apply-btn { width: 100%; justify-content: center; padding: 0.75rem; font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem; }
+.posted-by-you { font-size: 0.85rem; color: var(--on-surface-variant); text-align: center; font-style: italic; }
 
 .form-fields { display: flex; flex-direction: column; gap: 0.875rem; }
 .form-field { display: flex; flex-direction: column; gap: 0.3rem; }
