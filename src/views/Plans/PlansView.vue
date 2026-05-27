@@ -99,7 +99,7 @@
       </div>
     </div>
 
-    <!-- Payment Modal (Bank Transfer) -->
+    <!-- Payment Modal (USDT Crypto) -->
     <Transition name="modal">
       <div v-if="showPaymentModal" class="modal-overlay" @click.self="showPaymentModal = false">
         <div class="payment-modal">
@@ -113,10 +113,8 @@
             <div class="payment-plan-summary">
               <div class="payment-plan-name">{{ selectedPlanForPayment?.name }}</div>
               <div class="payment-plan-price">
-                <span class="payment-amount">${{ selectedPlanForPayment?.priceMonthly }}</span>/mo
-                <span v-if="selectedPlanForPayment?.priceYearly" class="payment-total">
-                  (${{ selectedPlanForPayment?.priceYearly }}/year)
-                </span>
+                <span class="payment-amount">${{ selectedPlanForPayment?.id === 'pro_yearly' ? selectedPlanForPayment?.priceYearly : selectedPlanForPayment?.priceMonthly }}</span>
+                <span class="payment-cycle">{{ selectedPlanForPayment?.id === 'pro_yearly' ? '/year' : '/month' }}</span>
               </div>
             </div>
 
@@ -124,48 +122,70 @@
 
             <div class="payment-instructions">
               <h4 class="payment-section-title">
-                <span class="material-symbols-outlined" style="font-size:18px;">account_balance</span>
-                Bank Transfer Details
+                <span class="material-symbols-outlined" style="font-size:18px;">currency_bitcoin</span>
+                Pay with USDT (TRC20/ERC20)
               </h4>
-              <p class="payment-note">Transfer the exact amount below and click "I've Sent Payment" to activate your subscription.</p>
+              <p class="payment-note">Send the exact amount in USDT to the wallet address below, then confirm your payment.</p>
 
               <div class="bank-details">
                 <div class="bank-detail-row">
-                  <span class="bank-label">Bank Name</span>
-                  <span class="bank-value">Opay (OPay Digital Services)</span>
+                  <span class="bank-label">Network</span>
+                  <span class="bank-value">ERC20 / TRC20</span>
                 </div>
                 <div class="bank-detail-row">
-                  <span class="bank-label">Account Name</span>
-                  <span class="bank-value">GFD Technologies</span>
-                </div>
-                <div class="bank-detail-row">
-                  <span class="bank-label">Account Number</span>
-                  <span class="bank-value copyable" @click="copyToClipboard('7046981093')">
-                    7046981093
+                  <span class="bank-label">Wallet Address</span>
+                  <span class="bank-value copyable" @click="copyToClipboard('0xd2849d446C3001B0C4d4174a5E62cf229e6cf5f5')">
+                    0xd284...cf5f5
                     <span class="material-symbols-outlined" style="font-size:14px;">content_copy</span>
                   </span>
+                </div>
+                <div class="wallet-full-address" @click="copyToClipboard('0xd2849d446C3001B0C4d4174a5E62cf229e6cf5f5')">
+                  <code>0xd2849d446C3001B0C4d4174a5E62cf229e6cf5f5</code>
+                  <span class="material-symbols-outlined" style="font-size:14px;">content_copy</span>
                 </div>
                 <div class="bank-detail-row">
                   <span class="bank-label">Amount</span>
                   <span class="bank-value amount-highlight">
-                    ${{ selectedPlanForPayment?.id === 'pro_yearly' ? selectedPlanForPayment?.priceYearly : selectedPlanForPayment?.priceMonthly }}
-                    ({{ selectedPlanForPayment?.id === 'pro_yearly' ? 'Yearly' : 'Monthly' }})
+                    ${{ selectedPlanForPayment?.id === 'pro_yearly' ? selectedPlanForPayment?.priceYearly : selectedPlanForPayment?.priceMonthly }} USDT
                   </span>
                 </div>
               </div>
 
               <div class="payment-methods-note">
-                <span class="material-symbols-outlined" style="font-size:16px;color:var(--primary);">info</span>
-                <span>You can also pay via bank card transfer or any mobile banking app.</span>
+                <span class="material-symbols-outlined" style="font-size:16px;color:#f59e0b;">warning</span>
+                <span>Make sure to send the exact amount. Only USDT is accepted.</span>
+              </div>
+            </div>
+
+            <div class="payment-divider"></div>
+
+            <!-- Username confirmation -->
+            <div class="confirm-section">
+              <h4 class="payment-section-title">
+                <span class="material-symbols-outlined" style="font-size:18px;">person</span>
+                Confirm Your Identity
+              </h4>
+              <div class="confirm-input-wrap">
+                <label class="confirm-label">Enter your GFD username</label>
+                <input
+                  v-model="confirmUsername"
+                  type="text"
+                  class="confirm-input"
+                  :placeholder="authStore.profile?.username || 'your_username'"
+                />
               </div>
             </div>
           </div>
           <div class="payment-modal-footer">
-            <button class="btn-primary payment-confirm-btn" :disabled="subscribing" @click="confirmPaymentSent">
+            <button
+              class="btn-primary payment-confirm-btn"
+              :disabled="subscribing || !confirmUsername.trim()"
+              @click="confirmPaymentSent"
+            >
               <span class="material-symbols-outlined" style="font-size:18px;">check_circle</span>
-              {{ subscribing ? 'Processing...' : "I've Sent Payment" }}
+              {{ subscribing ? 'Submitting...' : "I've Sent Payment — Confirm" }}
             </button>
-            <p class="payment-footer-note">Your badge will be activated within 24 hours after payment confirmation.</p>
+            <p class="payment-footer-note">Your verified badge will be activated once payment is confirmed by admin.</p>
           </div>
         </div>
       </div>
@@ -260,28 +280,29 @@ const plans = [
 const faqs = [
   {
     q: 'How do I pay?',
-    a: 'After selecting a plan, you\'ll see our bank details. Transfer the amount via bank card or direct transfer, then your subscription will be activated within 24 hours after we confirm payment.',
-  },
-  {
-    q: 'Can I cancel my plan at any time?',
-    a: 'Yes. You can cancel your subscription at any time. You\'ll retain access until the end of your current billing period.',
+    a: 'Send USDT to our wallet address shown after selecting a plan. Once you\'ve sent the payment, enter your username and click confirm. Your badge will be activated after we verify the payment.',
   },
   {
     q: 'How long does activation take?',
-    a: 'Once we confirm your payment, your verified badge and Pro features are activated within 24 hours. Most activations happen within a few hours.',
+    a: 'Once we confirm your USDT payment, your verified badge and Pro features are activated within 24 hours. Most activations happen within a few hours.',
   },
   {
-    q: 'What happens to my projects if I downgrade?',
-    a: 'Your projects remain visible but you\'ll be limited to 3 active ones on the Free plan. Additional projects are archived and can be restored if you upgrade again.',
+    q: 'What happens when my subscription expires?',
+    a: 'Your verified badge (purple tick) will be automatically removed when your subscription period ends. You can renew anytime.',
   },
   {
-    q: 'Do you offer refunds?',
-    a: 'We offer a full refund within the first 7 days if you\'re not satisfied. After that, you can cancel and your access continues until the billing period ends.',
+    q: 'Can I cancel my plan at any time?',
+    a: 'Yes. You can cancel your subscription at any time. Your badge stays active until the end of your billing period.',
+  },
+  {
+    q: 'What network should I use?',
+    a: 'You can send USDT on either ERC20 (Ethereum) or TRC20 (Tron) network to the wallet address provided.',
   },
 ]
 
 const showPaymentModal = ref(false)
 const selectedPlanForPayment = ref(null)
+const confirmUsername = ref('')
 
 function selectPlan(plan) {
   if (plan.id === currentPlan.value) return
@@ -289,8 +310,9 @@ function selectPlan(plan) {
     downgradeToFree()
     return
   }
-  // Show payment modal with bank details
+  // Show payment modal with USDT wallet
   selectedPlanForPayment.value = plan
+  confirmUsername.value = authStore.profile?.username || ''
   showPaymentModal.value = true
 }
 
@@ -306,24 +328,22 @@ async function downgradeToFree() {
 }
 
 async function confirmPaymentSent() {
-  if (!selectedPlanForPayment.value) return
+  if (!selectedPlanForPayment.value || !confirmUsername.value.trim()) return
   subscribing.value = true
   try {
     const plan = selectedPlanForPayment.value
     const billingCycle = plan.id === 'pro_yearly' ? 'yearly' : 'monthly'
-    const result = await http.post('/subscriptions/subscribe', {
+    await http.post('/subscriptions/subscribe', {
       plan: plan.id,
       billing_cycle: billingCycle,
+      username: confirmUsername.value.trim(),
     })
-    currentPlan.value = plan.id
-    if (result.is_verified) {
-      if (authStore.profile) authStore.profile.is_verified = true
-    }
     showPaymentModal.value = false
     selectedPlanForPayment.value = null
-    uiStore.showSuccess('Payment recorded! Your verified badge will be activated shortly ✓')
+    confirmUsername.value = ''
+    uiStore.showSuccess('Payment submitted! Your verified badge will be activated once admin confirms your payment.')
   } catch (err) {
-    uiStore.showError(err.response?.data?.detail || 'Failed to process. Please try again.')
+    uiStore.showError(err.response?.data?.detail || 'Failed to submit. Please try again.')
   } finally {
     subscribing.value = false
   }
@@ -868,6 +888,64 @@ onMounted(async () => {
   padding: 0.6rem 0.75rem;
   background: var(--surface-container-low);
   border-radius: var(--radius-lg);
+}
+
+.wallet-full-address {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--surface-container);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-top: 0.25rem;
+}
+
+.wallet-full-address:hover { background: var(--surface-container-high); }
+
+.wallet-full-address code {
+  font-size: 0.68rem;
+  color: var(--on-surface);
+  word-break: break-all;
+  flex: 1;
+}
+
+.confirm-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.confirm-input-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.confirm-label {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--on-surface-variant);
+}
+
+.confirm-input {
+  width: 100%;
+  padding: 0.6rem 0.875rem;
+  background: var(--surface-container-low);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  font-size: 0.875rem;
+  color: var(--on-surface);
+  outline: none;
+  font-family: var(--font-body);
+}
+
+.confirm-input:focus { border-color: var(--primary); }
+
+.payment-cycle {
+  font-size: 0.8rem;
+  color: var(--on-surface-variant);
 }
 
 .payment-modal-footer {
