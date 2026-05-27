@@ -19,37 +19,46 @@ export const useMessagingStore = defineStore('messaging', () => {
   // Listen for WebSocket events
   websocketService.onEvent((event) => {
     if (event.type === 'message_sent') {
-      // New message received — show instantly
+      // conversation_id can be at top level or in data
       const convId = event.conversation_id || event.data?.conversation_id
-      const content = event.content || event.data?.content_preview || ''
+      const content = event.content || event.data?.content || event.data?.content_preview || ''
       const senderId = event.from || event.data?.sender_id
 
-      if (activeConversation.value?.id === convId) {
-        messages.value.push({
-          id: Date.now(),
-          content: content,
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          sender_id: senderId,
-          created_at: new Date().toISOString(),
-          is_read: false,
-          mine: false,
-        })
+      // Add to messages if this is the active conversation
+      if (convId && activeConversation.value?.id === convId) {
+        // Avoid duplicate if we already added it (sender side)
+        const isDuplicate = messages.value.some(m =>
+          m.content === content && m.sender_id === senderId &&
+          Date.now() - new Date(m.created_at).getTime() < 5000
+        )
+        if (!isDuplicate) {
+          messages.value.push({
+            id: `ws-${Date.now()}`,
+            content,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            sender_id: senderId,
+            created_at: new Date().toISOString(),
+            is_read: false,
+            mine: false,
+          })
+        }
       }
 
-      // Update conversation preview instantly (no API call needed)
+      // Update conversation preview instantly
       const conv = conversations.value.find(c => c.id === convId)
       if (conv) {
         conv.lastMessage = content
         conv.time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        conv.unread = (conv.unread || 0) + 1
-        // Move to top of list
+        if (activeConversation.value?.id !== convId) {
+          conv.unread = (conv.unread || 0) + 1
+        }
+        // Move to top
         const idx = conversations.value.indexOf(conv)
         if (idx > 0) {
           conversations.value.splice(idx, 1)
           conversations.value.unshift(conv)
         }
       } else {
-        // New conversation — fetch from backend
         fetchConversations()
       }
 
@@ -57,19 +66,22 @@ export const useMessagingStore = defineStore('messaging', () => {
     }
 
     if (event.type === 'typing_start') {
-      const convId = event.data?.conversation_id || event.conversation_id
-      if (convId) {
+      // conversation_id can be at top level or in data
+      const convId = event.conversation_id || event.data?.conversation_id
+      const fromId = event.from || event.data?.from
+      if (convId && fromId) {
         if (!typingUsers.value[convId]) typingUsers.value[convId] = []
-        if (!typingUsers.value[convId].includes(event.from)) {
-          typingUsers.value[convId].push(event.from)
+        if (!typingUsers.value[convId].includes(fromId)) {
+          typingUsers.value[convId] = [...typingUsers.value[convId], fromId]
         }
       }
     }
 
     if (event.type === 'typing_stop') {
-      const convId = event.data?.conversation_id || event.conversation_id
+      const convId = event.conversation_id || event.data?.conversation_id
+      const fromId = event.from || event.data?.from
       if (convId && typingUsers.value[convId]) {
-        typingUsers.value[convId] = typingUsers.value[convId].filter(id => id !== event.from)
+        typingUsers.value[convId] = typingUsers.value[convId].filter(id => id !== fromId)
       }
     }
 
