@@ -113,11 +113,14 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button v-if="isDeveloper" class="btn-primary apply-btn" @click="showApplyModal = true; selectedJob = selectedJob">
+            <button v-if="isDeveloper" class="btn-primary apply-btn" @click="showApplyModal = true">
               <span class="material-symbols-outlined">send</span>
               Apply Now
             </button>
-            <p v-else-if="isClient" class="posted-by-you">You posted this job</p>
+            <button v-else-if="isClient || selectedJob?.poster_name === authStore.profile?.full_name" class="btn-primary apply-btn" @click="viewApplicants(selectedJob)">
+              <span class="material-symbols-outlined">group</span>
+              View Applicants ({{ selectedJob?.application_count || 0 }})
+            </button>
           </div>
         </div>
       </div>
@@ -241,6 +244,53 @@
         </div>
       </div>
     </Transition>
+
+    <!-- Applicants Review Modal -->
+    <Transition name="modal">
+      <div v-if="showApplicants" class="modal-overlay" @click.self="showApplicants = false">
+        <div class="job-detail-modal">
+          <div class="modal-header">
+            <h2 class="modal-title">Applicants</h2>
+            <button class="btn-ghost icon-only" @click="showApplicants = false">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div v-if="applicants.length === 0" class="jobs-empty" style="padding:1rem;">
+              <span class="material-symbols-outlined" style="font-size:2rem;color:var(--on-surface-variant)">person_off</span>
+              <p>No applications yet</p>
+            </div>
+            <div v-for="app in applicants" :key="app.id" class="applicant-card">
+              <div class="applicant-header">
+                <div class="applicant-avatar">
+                  <img v-if="app.applicant_avatar" :src="app.applicant_avatar" class="applicant-avatar-img" />
+                  <span v-else>{{ (app.applicant_name || 'U')[0] }}</span>
+                </div>
+                <div class="applicant-info">
+                  <h4 class="applicant-name">{{ app.applicant_name }}</h4>
+                  <p class="applicant-meta">{{ app.years_experience ? app.years_experience + ' yrs exp' : '' }} · {{ app.availability || 'Flexible' }}</p>
+                </div>
+                <span class="applicant-status" :class="app.status">{{ app.status }}</span>
+              </div>
+              <p v-if="app.cover_letter" class="applicant-cover">{{ app.cover_letter }}</p>
+              <div class="applicant-links">
+                <a v-if="app.resume_url" :href="app.resume_url" target="_blank" class="app-link">📄 Resume</a>
+                <a v-if="app.portfolio_url" :href="app.portfolio_url" target="_blank" class="app-link">🌐 Portfolio</a>
+                <a v-if="app.github_url" :href="app.github_url" target="_blank" class="app-link">💻 GitHub</a>
+              </div>
+              <div v-if="app.status === 'pending'" class="applicant-actions">
+                <button class="btn-approve" @click="updateApplicationStatus(app, 'shortlisted')">
+                  <span class="material-symbols-outlined">check</span> Shortlist
+                </button>
+                <button class="btn-decline" @click="updateApplicationStatus(app, 'rejected')">
+                  <span class="material-symbols-outlined">close</span> Decline
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -261,6 +311,8 @@ const activeFilter = ref('all')
 const selectedJob = ref(null)
 const showApplyModal = ref(false)
 const showPostJob = ref(false)
+const showApplicants = ref(false)
+const applicants = ref([])
 
 const isClient = computed(() => authStore.profile?.role === 'client' || authStore.profile?.role === 'admin')
 const isDeveloper = computed(() => authStore.profile?.role === 'developer')
@@ -359,6 +411,28 @@ function formatTime(dateStr) {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
+async function viewApplicants(job) {
+  if (!job) return
+  try {
+    const data = await http.get(`/jobs/${job.id}/applications`)
+    applicants.value = data.applications || []
+    showApplicants.value = true
+    selectedJob.value = null
+  } catch (err) {
+    uiStore.showError('Failed to load applicants')
+  }
+}
+
+async function updateApplicationStatus(app, newStatus) {
+  try {
+    await http.patch(`/jobs/applications/${app.id}`, { status: newStatus })
+    app.status = newStatus
+    uiStore.showSuccess(newStatus === 'shortlisted' ? 'Applicant shortlisted!' : 'Application declined')
+  } catch {
+    uiStore.showError('Failed to update status')
+  }
+}
+
 onMounted(() => {
   fetchJobs()
   // Auto-refresh every 30 seconds for real-time feel
@@ -383,9 +457,9 @@ onUnmounted(() => {
 .search-input { width: 100%; padding: 0.6rem 0.75rem 0.6rem 2.75rem; background: var(--surface-container-low); border: 1px solid var(--outline-variant); border-radius: var(--radius-full); font-size: 0.875rem; color: var(--on-surface); outline: none; }
 .search-input:focus { border-color: var(--primary); }
 
-.jobs-filters { display: flex; gap: 0.4rem; padding: 0 1rem 0.75rem; overflow-x: auto; scrollbar-width: none; }
+.jobs-filters { display: flex; gap: 0.4rem; padding: 0 1rem 0.75rem; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .jobs-filters::-webkit-scrollbar { display: none; }
-.filter-chip { padding: 0.35rem 0.875rem; background: var(--surface-container); border: 1px solid var(--outline-variant); border-radius: var(--radius-full); font-size: 0.78rem; font-weight: 600; color: var(--on-surface-variant); cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+.filter-chip { padding: 0.4rem 1rem; background: var(--surface-container); border: 1px solid var(--outline-variant); border-radius: var(--radius-full); font-size: 0.8rem; font-weight: 600; color: var(--on-surface-variant); cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: all 0.15s; }
 .filter-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
 
 .jobs-list { padding: 0 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
@@ -436,6 +510,31 @@ onUnmounted(() => {
 
 .apply-btn { width: 100%; justify-content: center; padding: 0.75rem; font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem; }
 .posted-by-you { font-size: 0.85rem; color: var(--on-surface-variant); text-align: center; font-style: italic; }
+
+/* Applicant Cards */
+.applicant-card { padding: 1rem; background: var(--surface-container-low); border: 1px solid var(--outline-variant); border-radius: var(--radius-xl); display: flex; flex-direction: column; gap: 0.6rem; }
+.applicant-header { display: flex; align-items: center; gap: 0.75rem; }
+.applicant-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary-fixed); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; font-family: var(--font-headline); font-size: 0.9rem; font-weight: 700; color: var(--primary); }
+.applicant-avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.applicant-info { flex: 1; min-width: 0; }
+.applicant-name { font-family: var(--font-headline); font-size: 0.9rem; font-weight: 700; color: var(--on-surface); }
+.applicant-meta { font-size: 0.75rem; color: var(--on-surface-variant); }
+.applicant-status { padding: 0.2rem 0.5rem; border-radius: var(--radius-full); font-size: 0.7rem; font-weight: 600; text-transform: capitalize; }
+.applicant-status.pending { background: rgba(251, 146, 60, 0.1); color: #f59e0b; }
+.applicant-status.shortlisted { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
+.applicant-status.rejected { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+.applicant-status.accepted { background: rgba(168, 85, 247, 0.1); color: var(--primary); }
+.applicant-cover { font-size: 0.82rem; color: var(--on-surface-variant); line-height: 1.5; }
+.applicant-links { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.app-link { font-size: 0.78rem; color: var(--primary); text-decoration: none; font-weight: 500; }
+.app-link:hover { text-decoration: underline; }
+.applicant-actions { display: flex; gap: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--outline-variant); }
+.btn-approve { flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.3rem; padding: 0.5rem; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: var(--radius-lg); color: #16a34a; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+.btn-approve:hover { background: rgba(34, 197, 94, 0.2); }
+.btn-approve .material-symbols-outlined { font-size: 16px; }
+.btn-decline { flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.3rem; padding: 0.5rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-lg); color: #ef4444; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+.btn-decline:hover { background: rgba(239, 68, 68, 0.2); }
+.btn-decline .material-symbols-outlined { font-size: 16px; }
 
 .form-fields { display: flex; flex-direction: column; gap: 0.875rem; }
 .form-field { display: flex; flex-direction: column; gap: 0.3rem; }
