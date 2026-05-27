@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="jobs-header">
       <h1 class="jobs-title">Jobs</h1>
-      <button v-if="isClient" class="btn-post-job" @click="showPostJob = true">
+      <button v-if="isClient || isDeveloper" class="btn-post-job" @click="showPostJob = true">
         <span class="material-symbols-outlined">add</span>
         Post Job
       </button>
@@ -60,7 +60,7 @@
       <div v-if="!loading && jobs.length === 0" class="jobs-empty">
         <span class="material-symbols-outlined" style="font-size:3rem;color:var(--on-surface-variant)">work_off</span>
         <p>No jobs posted yet</p>
-        <button v-if="isClient" class="btn-primary" @click="showPostJob = true">Post the first job</button>
+        <button class="btn-primary" @click="showPostJob = true">Post the first job</button>
       </div>
     </div>
 

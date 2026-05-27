@@ -28,7 +28,7 @@
             <span class="material-symbols-outlined">notifications</span>
           </RouterLink>
           <!-- Wallet icon button -->
-          <RouterLink to="/wallet" class="icon-btn" aria-label="Wallet">
+          <RouterLink to="/wallet" class="icon-btn topnav-hide-mobile" aria-label="Wallet">
             <span class="material-symbols-outlined">account_balance_wallet</span>
           </RouterLink>
           <!-- User pill: avatar + name + sign out — all in one row -->
