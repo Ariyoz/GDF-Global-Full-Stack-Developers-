@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="jobs-header">
       <h1 class="jobs-title">Jobs</h1>
-      <button v-if="isClient || isDeveloper" class="btn-post-job" @click="showPostJob = true">
+      <button v-if="isClient" class="btn-post-job" @click="showPostJob = true">
         <span class="material-symbols-outlined">add</span>
         Post Job
       </button>
@@ -60,7 +60,8 @@
       <div v-if="!loading && jobs.length === 0" class="jobs-empty">
         <span class="material-symbols-outlined" style="font-size:3rem;color:var(--on-surface-variant)">work_off</span>
         <p>No jobs posted yet</p>
-        <button class="btn-primary" @click="showPostJob = true">Post the first job</button>
+        <button v-if="isClient" class="btn-primary" @click="showPostJob = true">Post the first job</button>
+        <p v-else style="font-size:0.85rem;">Check back later for new opportunities</p>
       </div>
     </div>
 
@@ -488,13 +489,13 @@ onUnmounted(() => {
 .jobs-empty { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 3rem 1rem; text-align: center; color: var(--on-surface-variant); }
 
 /* Modals */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: flex-end; padding: 0; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: flex-end; padding: 0; overflow: hidden; }
 @media (min-width: 640px) { .modal-overlay { align-items: center; padding: 1rem; } }
-.job-detail-modal { width: 100%; max-width: 560px; max-height: 85vh; display: flex; flex-direction: column; background: var(--surface-container-lowest); border-radius: var(--radius-2xl) var(--radius-2xl) 0 0; }
+.job-detail-modal { width: 100%; max-width: 560px; max-height: 85vh; display: flex; flex-direction: column; background: var(--surface-container-lowest); border-radius: var(--radius-2xl) var(--radius-2xl) 0 0; overflow: hidden; }
 @media (min-width: 640px) { .job-detail-modal { border-radius: var(--radius-2xl); margin: 0 auto; max-height: 80vh; } }
-.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.25rem 0.75rem; flex-shrink: 0; }
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.25rem 0.75rem; flex-shrink: 0; border-bottom: 1px solid var(--outline-variant); }
 .modal-title { font-family: var(--font-headline); font-size: 1.1rem; font-weight: 700; color: var(--on-surface); }
-.modal-body { display: flex; flex-direction: column; gap: 1rem; padding: 0 1.25rem; overflow-y: auto; flex: 1; }
+.modal-body { display: flex; flex-direction: column; gap: 1rem; padding: 1rem 1.25rem; overflow-y: auto; flex: 1; min-height: 0; }
 .modal-footer { padding: 0.75rem 1.25rem 1.25rem; border-top: 1px solid var(--outline-variant); flex-shrink: 0; }
 
 .detail-company { display: flex; align-items: center; gap: 0.75rem; }
