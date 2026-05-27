@@ -359,9 +359,24 @@ async function fetchJobs() {
     let url = '/jobs?limit=30'
     if (activeFilter.value !== 'all') url += `&job_type=${activeFilter.value}`
     if (searchQuery.value) url += `&search=${searchQuery.value}`
-    const data = await http.get(url)
-    jobs.value = data.jobs || []
-  } catch { jobs.value = [] }
+
+    // Try with auth first, fallback to public fetch
+    try {
+      const data = await http.get(url)
+      jobs.value = data.jobs || []
+    } catch {
+      // Fallback: fetch without auth token
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1'
+      const res = await fetch(`${baseUrl}${url}`)
+      if (res.ok) {
+        const data = await res.json()
+        jobs.value = data.jobs || []
+      }
+    }
+  } catch (err) {
+    console.error('Fetch jobs error:', err)
+    jobs.value = []
+  }
   finally { loading.value = false }
 }
 
