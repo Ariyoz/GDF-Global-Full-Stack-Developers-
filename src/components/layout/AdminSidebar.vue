@@ -27,6 +27,9 @@
         <RouterLink to="/admin/verification" class="admin-nav-link" :class="{ active: $route.path === '/admin/verification' }" @click="$emit('navigate')">
           <span class="material-symbols-outlined">verified</span> Verification
         </RouterLink>
+        <RouterLink to="/admin/subscriptions" class="admin-nav-link" :class="{ active: $route.path === '/admin/subscriptions' }" @click="$emit('navigate')">
+          <span class="material-symbols-outlined">credit_card</span> Subscriptions
+        </RouterLink>
         <div class="admin-nav-divider" />
         <p class="admin-nav-section">Systems</p>
         <RouterLink to="/admin/analytics" class="admin-nav-link" :class="{ active: $route.path === '/admin/analytics' }" @click="$emit('navigate')">

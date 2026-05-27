@@ -12,17 +12,7 @@
         Unlock more visibility, priority support, and exclusive features to grow your career on GFD.
       </p>
 
-      <!-- Billing toggle -->
-      <div class="billing-toggle">
-        <span :class="['toggle-label', { active: billing === 'monthly' }]">Monthly</span>
-        <button class="toggle-switch" :class="{ on: billing === 'yearly' }" @click="billing = billing === 'monthly' ? 'yearly' : 'monthly'">
-          <span class="toggle-knob" />
-        </button>
-        <span :class="['toggle-label', { active: billing === 'yearly' }]">
-          Yearly
-          <span class="save-badge">Save 20%</span>
-        </span>
-      </div>
+      <!-- Billing toggle removed — plans show both options as separate cards -->
     </div>
 
     <!-- Plans Grid -->
@@ -53,11 +43,11 @@
         <!-- Price -->
         <div class="plan-price">
           <span class="price-currency">$</span>
-          <span class="price-amount">{{ billing === 'yearly' ? plan.priceYearly : plan.priceMonthly }}</span>
+          <span class="price-amount">{{ plan.priceMonthly }}</span>
           <span class="price-period">/ mo</span>
         </div>
-        <p v-if="billing === 'yearly' && plan.priceMonthly > 0" class="price-billed">
-          Billed ${{ plan.priceYearly * 12 }}/year
+        <p v-if="plan.priceYearly > 0" class="price-billed">
+          ${{ plan.priceYearly }}/year total
         </p>
 
         <!-- CTA -->
@@ -109,6 +99,78 @@
       </div>
     </div>
 
+    <!-- Payment Modal (Bank Transfer) -->
+    <Transition name="modal">
+      <div v-if="showPaymentModal" class="modal-overlay" @click.self="showPaymentModal = false">
+        <div class="payment-modal">
+          <div class="payment-modal-header">
+            <h2 class="payment-modal-title">Complete Payment</h2>
+            <button class="btn-ghost icon-only" @click="showPaymentModal = false">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+          <div class="payment-modal-body">
+            <div class="payment-plan-summary">
+              <div class="payment-plan-name">{{ selectedPlanForPayment?.name }}</div>
+              <div class="payment-plan-price">
+                <span class="payment-amount">${{ selectedPlanForPayment?.priceMonthly }}</span>/mo
+                <span v-if="selectedPlanForPayment?.priceYearly" class="payment-total">
+                  (${{ selectedPlanForPayment?.priceYearly }}/year)
+                </span>
+              </div>
+            </div>
+
+            <div class="payment-divider"></div>
+
+            <div class="payment-instructions">
+              <h4 class="payment-section-title">
+                <span class="material-symbols-outlined" style="font-size:18px;">account_balance</span>
+                Bank Transfer Details
+              </h4>
+              <p class="payment-note">Transfer the exact amount below and click "I've Sent Payment" to activate your subscription.</p>
+
+              <div class="bank-details">
+                <div class="bank-detail-row">
+                  <span class="bank-label">Bank Name</span>
+                  <span class="bank-value">Opay (OPay Digital Services)</span>
+                </div>
+                <div class="bank-detail-row">
+                  <span class="bank-label">Account Name</span>
+                  <span class="bank-value">GFD Technologies</span>
+                </div>
+                <div class="bank-detail-row">
+                  <span class="bank-label">Account Number</span>
+                  <span class="bank-value copyable" @click="copyToClipboard('7046981093')">
+                    7046981093
+                    <span class="material-symbols-outlined" style="font-size:14px;">content_copy</span>
+                  </span>
+                </div>
+                <div class="bank-detail-row">
+                  <span class="bank-label">Amount</span>
+                  <span class="bank-value amount-highlight">
+                    ${{ selectedPlanForPayment?.id === 'pro_yearly' ? selectedPlanForPayment?.priceYearly : selectedPlanForPayment?.priceMonthly }}
+                    ({{ selectedPlanForPayment?.id === 'pro_yearly' ? 'Yearly' : 'Monthly' }})
+                  </span>
+                </div>
+              </div>
+
+              <div class="payment-methods-note">
+                <span class="material-symbols-outlined" style="font-size:16px;color:var(--primary);">info</span>
+                <span>You can also pay via bank card transfer or any mobile banking app.</span>
+              </div>
+            </div>
+          </div>
+          <div class="payment-modal-footer">
+            <button class="btn-primary payment-confirm-btn" :disabled="subscribing" @click="confirmPaymentSent">
+              <span class="material-symbols-outlined" style="font-size:18px;">check_circle</span>
+              {{ subscribing ? 'Processing...' : "I've Sent Payment" }}
+            </button>
+            <p class="payment-footer-note">Your badge will be activated within 24 hours after payment confirmation.</p>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
   </div>
 </template>
 
@@ -120,7 +182,6 @@ import http from '@/services/http'
 
 const uiStore = useUiStore()
 const authStore = useAuthStore()
-const billing    = ref('monthly')
 const openFaq    = ref(null)
 const currentPlan = ref('free')
 const subscribing = ref(false)
@@ -135,7 +196,7 @@ const plans = [
     iconColor: 'var(--primary)',
     priceMonthly: 0,
     priceYearly: 0,
-    cta: 'Get Started',
+    cta: 'Current Plan',
     featured: false,
     features: [
       { text: 'Public developer profile',        included: true  },
@@ -143,126 +204,141 @@ const plans = [
       { text: 'Apply to 5 jobs/month',            included: true  },
       { text: 'Community access',                 included: true  },
       { text: 'Basic analytics',                  included: true  },
+      { text: 'Verified badge (purple tick)',     included: false },
       { text: 'Priority search ranking',          included: false },
       { text: 'Unlimited job applications',       included: false },
-      { text: 'Featured profile badge',           included: false },
       { text: 'Direct client messaging',          included: false },
-      { text: 'Dedicated account manager',        included: false },
     ],
   },
   {
-    id: 'pro',
-    name: 'Pro',
-    desc: 'For serious developers ready to grow.',
+    id: 'pro_monthly',
+    name: 'Pro (Monthly)',
+    desc: 'Pay month by month, cancel anytime.',
     icon: 'bolt',
     iconBg: 'rgba(99,14,212,0.12)',
     iconColor: 'var(--primary)',
-    priceMonthly: 19,
-    priceYearly: 15,
-    cta: 'Upgrade to Pro',
-    featured: true,
+    priceMonthly: 7,
+    priceYearly: 84,
+    cta: 'Subscribe — $7/mo',
+    featured: false,
     features: [
-      { text: 'Public developer profile',        included: true  },
+      { text: 'Everything in Free',              included: true  },
+      { text: 'Verified badge (purple tick)',    included: true, badge: '✓' },
       { text: 'Unlimited portfolio projects',     included: true  },
       { text: 'Unlimited job applications',       included: true  },
-      { text: 'Community access',                 included: true  },
+      { text: 'Priority search ranking',          included: true  },
       { text: 'Advanced analytics & insights',    included: true  },
-      { text: 'Priority search ranking',          included: true,  badge: 'New' },
-      { text: 'Featured profile badge',           included: true  },
       { text: 'Direct client messaging',          included: true  },
       { text: 'Early access to new features',     included: true  },
-      { text: 'Dedicated account manager',        included: false },
     ],
   },
   {
-    id: 'enterprise',
-    name: 'Enterprise',
-    desc: 'For agencies and high-volume teams.',
-    icon: 'corporate_fare',
+    id: 'pro_yearly',
+    name: 'Pro (Yearly)',
+    desc: 'Best value — save $24/year.',
+    icon: 'workspace_premium',
     iconBg: 'rgba(245,158,11,0.1)',
     iconColor: '#f59e0b',
-    priceMonthly: 79,
-    priceYearly: 63,
-    cta: 'Contact Sales',
-    featured: false,
+    priceMonthly: 5,
+    priceYearly: 60,
+    cta: 'Subscribe — $5/mo',
+    featured: true,
     features: [
-      { text: 'Everything in Pro',               included: true  },
-      { text: 'Team workspace (up to 20 seats)', included: true  },
-      { text: 'White-label profile options',     included: true  },
-      { text: 'Custom integrations & API',       included: true  },
-      { text: 'Priority support (24/7)',         included: true  },
-      { text: 'Dedicated account manager',       included: true  },
-      { text: 'Custom analytics dashboard',      included: true  },
-      { text: 'Invoice billing',                 included: true  },
-      { text: 'SLA guarantee',                   included: true  },
-      { text: 'Onboarding & training session',   included: true  },
+      { text: 'Everything in Free',              included: true  },
+      { text: 'Verified badge (purple tick)',    included: true, badge: '✓' },
+      { text: 'Unlimited portfolio projects',     included: true  },
+      { text: 'Unlimited job applications',       included: true  },
+      { text: 'Priority search ranking',          included: true  },
+      { text: 'Advanced analytics & insights',    included: true  },
+      { text: 'Direct client messaging',          included: true  },
+      { text: 'Early access to new features',     included: true  },
+      { text: 'Save $24 compared to monthly',    included: true, badge: 'Save' },
     ],
   },
 ]
 
 const faqs = [
   {
+    q: 'How do I pay?',
+    a: 'After selecting a plan, you\'ll see our bank details. Transfer the amount via bank card or direct transfer, then your subscription will be activated within 24 hours after we confirm payment.',
+  },
+  {
     q: 'Can I cancel my plan at any time?',
-    a: 'Yes. You can cancel your subscription at any time from your account settings. You\'ll retain access until the end of your current billing period.',
+    a: 'Yes. You can cancel your subscription at any time. You\'ll retain access until the end of your current billing period.',
   },
   {
-    q: 'What payment methods do you accept?',
-    a: 'We accept all major credit and debit cards (Visa, Mastercard, Amex), as well as PayPal. Enterprise customers can also pay via invoice.',
-  },
-  {
-    q: 'Is there a free trial for Pro?',
-    a: 'Yes — new users get a 14-day free trial of the Pro plan with no credit card required. You\'ll be notified before the trial ends.',
+    q: 'How long does activation take?',
+    a: 'Once we confirm your payment, your verified badge and Pro features are activated within 24 hours. Most activations happen within a few hours.',
   },
   {
     q: 'What happens to my projects if I downgrade?',
     a: 'Your projects remain visible but you\'ll be limited to 3 active ones on the Free plan. Additional projects are archived and can be restored if you upgrade again.',
   },
   {
-    q: 'Do you offer discounts for students?',
-    a: 'Yes — verified students get 50% off the Pro plan. Contact us at hello@gfd.dev with your student email to apply.',
+    q: 'Do you offer refunds?',
+    a: 'We offer a full refund within the first 7 days if you\'re not satisfied. After that, you can cancel and your access continues until the billing period ends.',
   },
 ]
 
+const showPaymentModal = ref(false)
+const selectedPlanForPayment = ref(null)
+
 function selectPlan(plan) {
   if (plan.id === currentPlan.value) return
-  if (plan.id === 'enterprise') {
-    uiStore.showInfo('Our sales team will reach out within 24 hours.')
+  if (plan.id === 'free') {
+    downgradeToFree()
     return
   }
-  subscribeToPlan(plan)
+  // Show payment modal with bank details
+  selectedPlanForPayment.value = plan
+  showPaymentModal.value = true
 }
 
-async function subscribeToPlan(plan) {
+async function downgradeToFree() {
+  try {
+    await http.post('/subscriptions/subscribe', { plan: 'free', billing_cycle: 'monthly' })
+    currentPlan.value = 'free'
+    if (authStore.profile) authStore.profile.is_verified = false
+    uiStore.showInfo('Downgraded to Free plan.')
+  } catch {
+    uiStore.showError('Failed to downgrade. Please try again.')
+  }
+}
+
+async function confirmPaymentSent() {
+  if (!selectedPlanForPayment.value) return
   subscribing.value = true
   try {
+    const plan = selectedPlanForPayment.value
+    const billingCycle = plan.id === 'pro_yearly' ? 'yearly' : 'monthly'
     const result = await http.post('/subscriptions/subscribe', {
       plan: plan.id,
-      billing_cycle: billing.value,
+      billing_cycle: billingCycle,
     })
     currentPlan.value = plan.id
     if (result.is_verified) {
-      // Update local auth store to reflect verified status
       if (authStore.profile) authStore.profile.is_verified = true
     }
-    if (plan.id === 'free') {
-      if (authStore.profile) authStore.profile.is_verified = false
-      uiStore.showInfo('Downgraded to Free plan.')
-    } else {
-      uiStore.showSuccess(`Subscribed to ${plan.name}! You now have the verified badge ✓`)
-    }
+    showPaymentModal.value = false
+    selectedPlanForPayment.value = null
+    uiStore.showSuccess('Payment recorded! Your verified badge will be activated shortly ✓')
   } catch (err) {
-    uiStore.showError(err.response?.data?.detail || 'Failed to subscribe. Please try again.')
+    uiStore.showError(err.response?.data?.detail || 'Failed to process. Please try again.')
   } finally {
     subscribing.value = false
   }
 }
 
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text)
+  uiStore.showSuccess('Copied to clipboard!')
+}
+
 onMounted(async () => {
   try {
     const data = await http.get('/subscriptions/my-subscription')
-    if (data.plan) currentPlan.value = data.plan
+    if (data.plan && data.plan !== 'free') currentPlan.value = data.plan
   } catch {
-    // User might not be logged in or endpoint not ready yet
     currentPlan.value = 'free'
   }
 })
@@ -629,4 +705,193 @@ onMounted(async () => {
 /* FAQ transition */
 .faq-enter-active, .faq-leave-active { transition: opacity 0.2s ease, transform 0.2s ease; }
 .faq-enter-from, .faq-leave-to { opacity: 0; transform: translateY(-6px); }
+
+/* ── Payment Modal ── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+.modal-enter-active, .modal-leave-active { transition: opacity 0.2s ease; }
+.modal-enter-from, .modal-leave-to { opacity: 0; }
+
+.payment-modal {
+  width: 100%;
+  max-width: 440px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-2xl);
+  overflow: hidden;
+}
+
+[data-theme="dark"] .payment-modal {
+  background: #1a1a2e;
+  border-color: rgba(255,255,255,0.08);
+}
+
+.payment-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--outline-variant);
+}
+
+.payment-modal-title {
+  font-family: var(--font-headline);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--on-surface);
+}
+
+.payment-modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.payment-plan-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  background: rgba(168, 85, 247, 0.06);
+  border: 1px solid rgba(168, 85, 247, 0.15);
+  border-radius: var(--radius-xl);
+}
+
+.payment-plan-name {
+  font-family: var(--font-headline);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--on-surface);
+}
+
+.payment-plan-price {
+  font-family: var(--font-headline);
+  font-size: 0.85rem;
+  color: var(--on-surface-variant);
+}
+
+.payment-amount {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.payment-total {
+  font-size: 0.75rem;
+  color: var(--on-surface-variant);
+}
+
+.payment-divider {
+  height: 1px;
+  background: var(--outline-variant);
+}
+
+.payment-instructions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.payment-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-headline);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--on-surface);
+}
+
+.payment-note {
+  font-size: 0.82rem;
+  color: var(--on-surface-variant);
+  line-height: 1.5;
+}
+
+.bank-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: var(--surface-container-low);
+  border-radius: var(--radius-xl);
+}
+
+.bank-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bank-label {
+  font-size: 0.78rem;
+  color: var(--on-surface-variant);
+  font-weight: 500;
+}
+
+.bank-value {
+  font-family: var(--font-headline);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--on-surface);
+  text-align: right;
+}
+
+.bank-value.copyable {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+  color: var(--primary);
+}
+
+.bank-value.copyable:hover { text-decoration: underline; }
+
+.amount-highlight {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.payment-methods-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: var(--on-surface-variant);
+  line-height: 1.4;
+  padding: 0.6rem 0.75rem;
+  background: var(--surface-container-low);
+  border-radius: var(--radius-lg);
+}
+
+.payment-modal-footer {
+  padding: 1rem 1.5rem 1.5rem;
+  border-top: 1px solid var(--outline-variant);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.payment-confirm-btn {
+  width: 100%;
+  justify-content: center;
+  padding: 0.75rem;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.payment-footer-note {
+  font-size: 0.72rem;
+  color: var(--on-surface-variant);
+  text-align: center;
+}
 </style>
