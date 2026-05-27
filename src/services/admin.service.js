@@ -10,7 +10,7 @@ export const adminService = {
     return {
       totalUsers: data.total_users || 0,
       totalPosts: data.total_posts || 0,
-      totalJobs: data.total_projects || 0,
+      totalProjects: data.total_projects || 0,
       activeJobs: data.total_projects || 0,
       pendingReports: data.pending_reports || 0,
       developers: data.developers || 0,
@@ -18,6 +18,8 @@ export const adminService = {
       suspendedUsers: data.suspended_users || 0,
       verifiedUsers: data.verified_users || 0,
       totalMessages: data.total_messages || 0,
+      pendingSubscriptions: data.pending_subscriptions || 0,
+      activeSubscriptions: data.active_subscriptions || 0,
     }
   },
 

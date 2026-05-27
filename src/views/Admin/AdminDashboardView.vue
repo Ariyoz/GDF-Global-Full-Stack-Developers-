@@ -127,17 +127,18 @@ import { adminService } from '@/services/admin.service'
 
 const platformStats = ref([
   { icon: 'person_add', label: 'Total Users',  value: '0', change: '—', positive: false, color: 'var(--primary)',  bg: 'rgba(168,85,247,0.1)' },
-  { icon: 'work',       label: 'Active Jobs',  value: '0', change: '—', positive: false, color: 'var(--tertiary)', bg: 'rgba(251,146,60,0.1)' },
+  { icon: 'verified',   label: 'Verified',     value: '0', change: '—', positive: false, color: '#16a34a',         bg: 'rgba(22,163,74,0.1)' },
   { icon: 'article',    label: 'Total Posts',   value: '0', change: '—', positive: false, color: 'var(--primary-container)', bg: 'rgba(99,14,212,0.08)' },
+  { icon: 'credit_card',label: 'Pending Payments', value: '0', change: '—', positive: false, color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
 ])
 
 const activityRows = ref([])
 
-const verificationQueue = [
-  { icon: 'fingerprint', label: 'Identity Docs',  count: 0, color: 'var(--primary)' },
-  { icon: 'school',      label: 'Degree Verif.',  count: 0, color: 'var(--tertiary)' },
-  { icon: 'language',    label: 'Github Syncs',   count: 0, color: 'var(--outline)' },
-]
+const verificationQueue = ref([
+  { icon: 'credit_card', label: 'Pending Payments', count: 0, color: '#f59e0b' },
+  { icon: 'verified',    label: 'Verified Users',   count: 0, color: 'var(--primary)' },
+  { icon: 'flag',        label: 'Pending Reports',  count: 0, color: '#ef4444' },
+])
 
 const trafficData = [
   { pct: 0, active: false },
@@ -154,13 +155,17 @@ onMounted(async () => {
     const analytics = await adminService.getAnalytics()
     platformStats.value[0].value = String(analytics.totalUsers)
     platformStats.value[0].change = `${analytics.developers} devs, ${analytics.clients} clients`
-    platformStats.value[1].value = String(analytics.activeJobs)
+    platformStats.value[1].value = String(analytics.verifiedUsers)
+    platformStats.value[1].change = `${analytics.activeSubscriptions || 0} active subs`
     platformStats.value[2].value = String(analytics.totalPosts)
+    platformStats.value[3].value = String(analytics.pendingSubscriptions || 0)
+    platformStats.value[3].change = analytics.pendingSubscriptions > 0 ? 'Needs approval' : 'All clear'
+    platformStats.value[3].positive = analytics.pendingSubscriptions > 0
 
     // Update verification queue with real data
-    verificationQueue[0].count = analytics.pendingReports || 0
-    verificationQueue[1].count = analytics.verifiedUsers || 0
-    verificationQueue[2].count = analytics.suspendedUsers || 0
+    verificationQueue.value[0].count = analytics.pendingSubscriptions || 0
+    verificationQueue.value[1].count = analytics.verifiedUsers || 0
+    verificationQueue.value[2].count = analytics.pendingReports || 0
 
     const recent = await adminService.getRecentActivity(5)
     activityRows.value = recent.map(u => ({
