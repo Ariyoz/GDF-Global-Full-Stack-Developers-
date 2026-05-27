@@ -153,26 +153,38 @@ export const useFeedStore = defineStore('feed', () => {
   }
 
   async function likePost(postId) {
+    // Optimistic update — show immediately
+    const post = posts.value.find(p => p.id === postId)
+    if (post) {
+      post.like_count = (post.like_count || 0) + 1
+      post.is_liked = true
+    }
     try {
-      const result = await postsService.like(postId)
-      const post = posts.value.find(p => p.id === postId)
-      if (post) {
-        post.like_count = result?.like_count || (post.like_count || 0) + 1
-        post.is_liked = true
-      }
-    } catch { /* ignore duplicate */ }
-  }
-
-  async function unlikePost(postId) {
-    try {
-      await postsService.unlike(postId)
-      const post = posts.value.find(p => p.id === postId)
+      await postsService.like(postId)
+    } catch {
+      // Revert on failure
       if (post) {
         post.like_count = Math.max((post.like_count || 1) - 1, 0)
         post.is_liked = false
       }
-    } catch (err) {
-      error.value = err.message
+    }
+  }
+
+  async function unlikePost(postId) {
+    // Optimistic update — show immediately
+    const post = posts.value.find(p => p.id === postId)
+    if (post) {
+      post.like_count = Math.max((post.like_count || 1) - 1, 0)
+      post.is_liked = false
+    }
+    try {
+      await postsService.unlike(postId)
+    } catch {
+      // Revert on failure
+      if (post) {
+        post.like_count = (post.like_count || 0) + 1
+        post.is_liked = true
+      }
     }
   }
 
@@ -198,32 +210,53 @@ export const useFeedStore = defineStore('feed', () => {
   }
 
   async function repostPost(postId) {
+    // Optimistic toggle
+    const post = posts.value.find(p => p.id === postId)
+    const wasReposted = post?.is_reposted
+    if (post) {
+      if (wasReposted) {
+        post.repost_count = Math.max((post.repost_count || 1) - 1, 0)
+        post.is_reposted = false
+      } else {
+        post.repost_count = (post.repost_count || 0) + 1
+        post.is_reposted = true
+      }
+    }
     try {
       const result = await postsService.repost(postId)
-      const post = posts.value.find(p => p.id === postId)
+      // Sync with server response
+      if (post && result) {
+        post.is_reposted = result.reposted !== false
+      }
+    } catch {
+      // Revert
       if (post) {
-        if (result?.reposted === false) {
-          // Unreposted
-          post.repost_count = Math.max((post.repost_count || 1) - 1, 0)
-          post.is_reposted = false
-        } else {
-          // Reposted
+        if (wasReposted) {
           post.repost_count = (post.repost_count || 0) + 1
           post.is_reposted = true
+        } else {
+          post.repost_count = Math.max((post.repost_count || 1) - 1, 0)
+          post.is_reposted = false
         }
       }
-    } catch { /* ignore */ }
+    }
   }
 
   async function bookmarkPost(postId) {
+    // Optimistic
+    const post = posts.value.find(p => p.id === postId)
+    if (post) {
+      post.bookmark_count = (post.bookmark_count || 0) + 1
+      post.is_bookmarked = true
+    }
     try {
       await postsService.bookmark(postId)
-      const post = posts.value.find(p => p.id === postId)
+    } catch {
       if (post) {
-        post.bookmark_count = (post.bookmark_count || 0) + 1
-        post.is_bookmarked = true
+        post.bookmark_count = Math.max((post.bookmark_count || 1) - 1, 0)
+        post.is_bookmarked = false
       }
-    } catch { /* ignore */ }
+    }
   }
 
   async function loadMore() {

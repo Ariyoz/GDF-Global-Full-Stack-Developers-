@@ -1,31 +1,42 @@
-// ── WebSocket Service — Global real-time connection ──
+// ── WebSocket Service — Global real-time connection (instant notifications) ──
 
 let ws = null
 let reconnectTimer = null
+let currentToken = null
+let reconnectAttempts = 0
+const MAX_RECONNECT_DELAY = 10000
 const listeners = new Set()
 
 export const websocketService = {
   connect(token) {
+    if (!token) return
+    currentToken = token
+
+    // Don't reconnect if already open
     if (ws && ws.readyState === WebSocket.OPEN) return
+    // Clean up existing connection
+    if (ws) {
+      try { ws.close() } catch {}
+      ws = null
+    }
 
     const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
     const wsUrl = baseUrl.replace('https://', 'wss://').replace('http://', 'ws://').replace('/api/v1', '')
-
-    if (!token) return
 
     try {
       ws = new WebSocket(`${wsUrl}/ws/${token}`)
 
       ws.onopen = () => {
         console.log('[WS] Connected')
-        // Send ping every 30s to keep alive
+        reconnectAttempts = 0
         this._startPing()
       }
 
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data)
-          // Notify all listeners
+          if (data.type === 'pong') return // Ignore pong responses
+          // Notify all listeners immediately
           listeners.forEach(fn => fn(data))
         } catch { /* ignore parse errors */ }
       }
@@ -33,22 +44,28 @@ export const websocketService = {
       ws.onclose = () => {
         console.log('[WS] Disconnected')
         this._stopPing()
-        // Auto-reconnect after 5s
-        reconnectTimer = setTimeout(() => this.connect(token), 5000)
+        ws = null
+        // Exponential backoff reconnect (1s, 2s, 4s, max 10s)
+        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), MAX_RECONNECT_DELAY)
+        reconnectAttempts++
+        reconnectTimer = setTimeout(() => this.connect(currentToken), delay)
       }
 
       ws.onerror = () => {
         // Will trigger onclose
       }
     } catch {
-      // WebSocket not available
+      // WebSocket not available — retry in 3s
+      reconnectTimer = setTimeout(() => this.connect(currentToken), 3000)
     }
   },
 
   disconnect() {
-    if (reconnectTimer) clearTimeout(reconnectTimer)
+    currentToken = null
+    reconnectAttempts = 0
+    if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null }
     if (ws) {
-      ws.close()
+      try { ws.close() } catch {}
       ws = null
     }
     this._stopPing()
@@ -63,7 +80,7 @@ export const websocketService = {
   // Subscribe to WebSocket events
   onEvent(callback) {
     listeners.add(callback)
-    return () => listeners.delete(callback) // Returns unsubscribe function
+    return () => listeners.delete(callback)
   },
 
   // Check if connected
@@ -71,12 +88,24 @@ export const websocketService = {
     return ws && ws.readyState === WebSocket.OPEN
   },
 
+  // Force reconnect (e.g., when tab becomes visible again)
+  ensureConnected() {
+    if (!currentToken) return
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null }
+      reconnectAttempts = 0
+      this.connect(currentToken)
+    }
+  },
+
   _pingInterval: null,
 
   _startPing() {
+    // Ping every 15s to keep connection alive on Render
+    this._stopPing()
     this._pingInterval = setInterval(() => {
       this.send({ type: 'ping' })
-    }, 30000)
+    }, 15000)
   },
 
   _stopPing() {
@@ -85,4 +114,20 @@ export const websocketService = {
       this._pingInterval = null
     }
   },
+}
+
+// Auto-reconnect when tab becomes visible (user switches back to app)
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      websocketService.ensureConnected()
+    }
+  })
+}
+
+// Reconnect on network recovery
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    websocketService.ensureConnected()
+  })
 }
