@@ -230,37 +230,37 @@ function dismissAlert() {
 /* ── Global Alert (incoming message/call) ── */
 .global-alert {
   position: fixed;
-  top: 0.75rem;
+  top: 1rem;
   left: 50%;
   transform: translateX(-50%);
   z-index: 9999;
-  width: calc(100% - 4rem);
-  max-width: 280px;
+  width: calc(100% - 2rem);
+  max-width: 360px;
 }
 
 .global-alert-inner {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 0.75rem;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
   background: var(--surface-container-lowest);
   border: 1px solid var(--outline-variant);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
   cursor: pointer;
 }
 
 [data-theme="dark"] .global-alert-inner {
-  background: #1a1a2e;
-  border-color: rgba(168, 85, 247, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  background: #1e1e2e;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .alert-avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: var(--primary-fixed);
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--surface-container);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -272,53 +272,61 @@ function dismissAlert() {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 50%;
+  border-radius: 10px;
 }
 
 .alert-icon {
-  font-size: 22px;
-  color: var(--primary);
+  font-size: 20px;
+  color: var(--on-surface-variant);
 }
 
 .alert-type-like .alert-icon { color: #e91e63; }
-.alert-type-like { background: rgba(233, 30, 99, 0.1); }
+.alert-type-like { background: rgba(233, 30, 99, 0.08); }
 .alert-type-comment .alert-icon { color: #2196f3; }
-.alert-type-comment { background: rgba(33, 150, 243, 0.1); }
+.alert-type-comment { background: rgba(33, 150, 243, 0.08); }
 .alert-type-repost .alert-icon { color: #00c853; }
-.alert-type-repost { background: rgba(0, 200, 83, 0.1); }
+.alert-type-repost { background: rgba(0, 200, 83, 0.08); }
 .alert-type-follow .alert-icon { color: var(--primary); }
-.alert-type-follow { background: rgba(168, 85, 247, 0.1); }
+.alert-type-follow { background: rgba(168, 85, 247, 0.08); }
 .alert-type-message .alert-icon { color: var(--primary); }
-.alert-type-call { background: rgba(34, 197, 94, 0.1); }
+.alert-type-message { background: rgba(168, 85, 247, 0.08); }
+.alert-type-call { background: rgba(34, 197, 94, 0.08); }
 .alert-type-call .alert-icon { color: #22c55e; }
 
 .alert-content {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
 }
 
 .alert-title {
   font-family: var(--font-headline);
-  font-size: 0.78rem;
+  font-size: 0.875rem;
   font-weight: 700;
   color: var(--on-surface);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.3;
+  margin: 0;
 }
 
 .alert-body {
-  font-size: 0.72rem;
+  font-size: 0.8rem;
+  font-weight: 400;
   color: var(--on-surface-variant);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: 0;
+  line-height: 1.3;
+  margin: 0;
 }
 
 .alert-accept {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: #22c55e;
   border: none;
@@ -330,13 +338,13 @@ function dismissAlert() {
   flex-shrink: 0;
 }
 
-.alert-accept .material-symbols-outlined { font-size: 20px; }
+.alert-accept .material-symbols-outlined { font-size: 18px; }
 
 .alert-dismiss {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--surface-container);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: transparent;
   border: none;
   display: flex;
   align-items: center;
@@ -344,7 +352,12 @@ function dismissAlert() {
   color: var(--on-surface-variant);
   cursor: pointer;
   flex-shrink: 0;
+  transition: background 0.15s;
 }
 
-.alert-dismiss .material-symbols-outlined { font-size: 14px; }
+.alert-dismiss:hover {
+  background: var(--surface-container);
+}
+
+.alert-dismiss .material-symbols-outlined { font-size: 18px; }
 </style>
