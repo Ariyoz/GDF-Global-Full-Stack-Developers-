@@ -331,7 +331,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useDevelopersStore } from '@/store/developers'
 import { useAuthStore } from '@/store/auth'
@@ -372,7 +372,7 @@ function pinPost(post) {
 
 async function deleteProfilePost(postId) {
   try {
-    await http.delete(`/feed/${postId}`)
+    await http.request({ method: 'DELETE', url: `/feed/${postId}` })
     userPosts.value = userPosts.value.filter(p => p.id !== postId)
   } catch { /* ignore */ }
   profileMenuId.value = null
@@ -453,7 +453,6 @@ function checkUsername() {
 }
 
 // Initialize edit form when modal opens
-import { watch } from 'vue'
 watch(showEditModal, (val) => {
   if (val && profileData.value) {
     const p = profileData.value
@@ -659,7 +658,6 @@ async function loadProfile() {
 }
 
 // Load on mount
-import { onMounted } from 'vue'
 onMounted(() => {
   loadProfile()
 })

@@ -210,7 +210,7 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick, onMounted } from 'vue'
+import { ref, computed, nextTick, onMounted, watch } from 'vue'
 import { useMessagingStore } from '@/store/messaging'
 import { useAuthStore } from '@/store/auth'
 import http from '@/services/http'
@@ -421,7 +421,6 @@ function endCall() {
 }
 
 // Listen for incoming call events
-import { watch } from 'vue'
 
 function toggleMute() {
   isMuted.value = !isMuted.value
