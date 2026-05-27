@@ -1,4 +1,4 @@
-// ── Axios HTTP Client ──
+// ── Axios HTTP Client — Secured ──
 import axios from 'axios'
 import { API_BASE_URL, API_TIMEOUT } from '@/config/api'
 
@@ -8,7 +8,9 @@ const http = axios.create({
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
+    'X-Requested-With': 'XMLHttpRequest', // CSRF protection
   },
+  withCredentials: false, // Don't send cookies cross-origin
 })
 
 // ── Request Interceptor ──
