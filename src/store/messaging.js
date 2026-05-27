@@ -20,19 +20,39 @@ export const useMessagingStore = defineStore('messaging', () => {
     if (event.type === 'message_sent') {
       // New message received — show instantly
       const convId = event.conversation_id || event.data?.conversation_id
+      const content = event.content || event.data?.content_preview || ''
+      const senderId = event.from || event.data?.sender_id
+
       if (activeConversation.value?.id === convId) {
         messages.value.push({
           id: Date.now(),
-          content: event.content || event.data?.content_preview || '',
+          content: content,
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          sender_id: event.from || event.data?.sender_id,
+          sender_id: senderId,
           created_at: new Date().toISOString(),
           is_read: false,
           mine: false,
         })
       }
+
+      // Update conversation preview instantly (no API call needed)
+      const conv = conversations.value.find(c => c.id === convId)
+      if (conv) {
+        conv.lastMessage = content
+        conv.time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        conv.unread = (conv.unread || 0) + 1
+        // Move to top of list
+        const idx = conversations.value.indexOf(conv)
+        if (idx > 0) {
+          conversations.value.splice(idx, 1)
+          conversations.value.unshift(conv)
+        }
+      } else {
+        // New conversation — fetch from backend
+        fetchConversations()
+      }
+
       unreadCount.value++
-      fetchConversations() // Refresh conversation list
     }
 
     if (event.type === 'typing_start') {

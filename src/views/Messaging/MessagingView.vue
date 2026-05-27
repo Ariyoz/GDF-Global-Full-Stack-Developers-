@@ -440,6 +440,15 @@ function toggleCamera() {
   }
 }
 
+// Auto-scroll when new messages arrive (real-time)
+watch(() => messagingStore.messages.length, () => {
+  nextTick(() => {
+    if (messagesEl.value) {
+      messagesEl.value.scrollTop = messagesEl.value.scrollHeight
+    }
+  })
+})
+
 watch(() => messagingStore.callEvent, async (event) => {
   if (!event) return
 
