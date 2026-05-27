@@ -75,7 +75,7 @@ onMounted(() => {
         name: event.actor_name || 'Someone',
         avatar: event.actor_avatar || '',
         title: event.actor_name || 'Someone',
-        body: '❤️ liked your post',
+        body: 'liked your post',
         route: '/feed',
       })
     }
@@ -88,7 +88,7 @@ onMounted(() => {
         name: event.actor_name || 'Someone',
         avatar: event.actor_avatar || '',
         title: event.actor_name || 'Someone',
-        body: '💬 commented on your post',
+        body: 'commented on your post',
         route: '/feed',
       })
     }
@@ -101,7 +101,7 @@ onMounted(() => {
         name: event.actor_name || 'Someone',
         avatar: event.actor_avatar || '',
         title: event.actor_name || 'Someone',
-        body: '🔁 reposted your post',
+        body: 'reposted your post',
         route: '/feed',
       })
     }
@@ -114,7 +114,7 @@ onMounted(() => {
         name: event.actor_name || 'Someone',
         avatar: event.actor_avatar || '',
         title: event.actor_name || 'Someone',
-        body: '👤 started following you',
+        body: 'started following you',
         route: '/notifications',
       })
     }
@@ -230,15 +230,15 @@ function dismissAlert() {
   left: 50%;
   transform: translateX(-50%);
   z-index: 9999;
-  width: calc(100% - 2rem);
-  max-width: 400px;
+  width: calc(100% - 3rem);
+  max-width: 320px;
 }
 
 .global-alert-inner {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.875rem 1rem;
+  gap: 0.6rem;
+  padding: 0.7rem 0.875rem;
   background: var(--surface-container-lowest);
   border: 1px solid var(--outline-variant);
   border-radius: var(--radius-xl);
@@ -253,8 +253,8 @@ function dismissAlert() {
 }
 
 .alert-avatar {
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: var(--primary-fixed);
   display: flex;
