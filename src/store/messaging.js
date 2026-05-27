@@ -75,14 +75,33 @@ export const useMessagingStore = defineStore('messaging', () => {
     // Online/offline status updates
     if (event.type === 'user_online') {
       const userId = event.data?.user_id || event.user_id
-      const conv = conversations.value.find(c => c.otherUserId === userId)
-      if (conv) conv.online = true
+      conversations.value.forEach(c => {
+        if (c.otherUserId === userId) c.online = true
+      })
+      // Also update active conversation
+      if (activeConversation.value?.otherUserId === userId) {
+        activeConversation.value.online = true
+      }
     }
 
     if (event.type === 'user_offline') {
       const userId = event.data?.user_id || event.user_id
-      const conv = conversations.value.find(c => c.otherUserId === userId)
-      if (conv) conv.online = false
+      conversations.value.forEach(c => {
+        if (c.otherUserId === userId) c.online = false
+      })
+      if (activeConversation.value?.otherUserId === userId) {
+        activeConversation.value.online = false
+      }
+    }
+
+    // Bulk online users list (received on connect)
+    if (event.type === 'online_users') {
+      const onlineIds = event.data?.user_ids || []
+      conversations.value.forEach(c => {
+        if (onlineIds.includes(c.otherUserId)) {
+          c.online = true
+        }
+      })
     }
 
     // Call events
