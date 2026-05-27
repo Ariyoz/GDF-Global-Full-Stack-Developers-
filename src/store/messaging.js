@@ -14,6 +14,7 @@ export const useMessagingStore = defineStore('messaging', () => {
   const loading = ref(false)
   const typingUsers = ref({}) // { conversationId: [userId, ...] }
   const callEvent = ref(null)
+  const onlineUserIds = ref(new Set()) // Track all known online users
 
   // Listen for WebSocket events
   websocketService.onEvent((event) => {
@@ -75,28 +76,34 @@ export const useMessagingStore = defineStore('messaging', () => {
     // Online/offline status updates
     if (event.type === 'user_online') {
       const userId = event.data?.user_id || event.user_id
-      conversations.value.forEach(c => {
-        if (c.otherUserId === userId) c.online = true
-      })
-      // Also update active conversation
-      if (activeConversation.value?.otherUserId === userId) {
-        activeConversation.value.online = true
+      if (userId) {
+        onlineUserIds.value.add(userId)
+        conversations.value.forEach(c => {
+          if (c.otherUserId === userId) c.online = true
+        })
+        if (activeConversation.value?.otherUserId === userId) {
+          activeConversation.value.online = true
+        }
       }
     }
 
     if (event.type === 'user_offline') {
       const userId = event.data?.user_id || event.user_id
-      conversations.value.forEach(c => {
-        if (c.otherUserId === userId) c.online = false
-      })
-      if (activeConversation.value?.otherUserId === userId) {
-        activeConversation.value.online = false
+      if (userId) {
+        onlineUserIds.value.delete(userId)
+        conversations.value.forEach(c => {
+          if (c.otherUserId === userId) c.online = false
+        })
+        if (activeConversation.value?.otherUserId === userId) {
+          activeConversation.value.online = false
+        }
       }
     }
 
     // Bulk online users list (received on connect)
     if (event.type === 'online_users') {
       const onlineIds = event.data?.user_ids || []
+      onlineIds.forEach(id => onlineUserIds.value.add(id))
       conversations.value.forEach(c => {
         if (onlineIds.includes(c.otherUserId)) {
           c.online = true
@@ -123,7 +130,8 @@ export const useMessagingStore = defineStore('messaging', () => {
         lastMessage: c.last_message_content || '',
         time: c.last_message_at ? new Date(c.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
         unread: 0,
-        online: c.online || false,
+        // Check DB online status AND our tracked online set
+        online: c.online || onlineUserIds.value.has(c.other_user_id) || false,
         type: c.type,
         otherUserId: c.other_user_id,
       }))
