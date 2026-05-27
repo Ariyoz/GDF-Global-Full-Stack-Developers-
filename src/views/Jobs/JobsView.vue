@@ -245,9 +245,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '@/store/auth'
 import { useUiStore } from '@/store/ui'
+import { websocketService } from '@/services/websocket.service'
 import http from '@/services/http'
 
 const authStore = useAuthStore()
@@ -358,7 +359,16 @@ function formatTime(dateStr) {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-onMounted(fetchJobs)
+onMounted(() => {
+  fetchJobs()
+  // Auto-refresh every 30 seconds for real-time feel
+  refreshInterval = setInterval(fetchJobs, 30000)
+})
+
+let refreshInterval = null
+onUnmounted(() => {
+  if (refreshInterval) clearInterval(refreshInterval)
+})
 </script>
 
 <style scoped>
@@ -404,14 +414,14 @@ onMounted(fetchJobs)
 .jobs-empty { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 3rem 1rem; text-align: center; color: var(--on-surface-variant); }
 
 /* Modals */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: flex-end; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: flex-end; padding: 0; }
 @media (min-width: 640px) { .modal-overlay { align-items: center; padding: 1rem; } }
-.job-detail-modal { width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; background: var(--surface-container-lowest); border-radius: var(--radius-2xl) var(--radius-2xl) 0 0; padding: 1.25rem; }
-@media (min-width: 640px) { .job-detail-modal { border-radius: var(--radius-2xl); margin: 0 auto; } }
-.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.job-detail-modal { width: 100%; max-width: 560px; max-height: 85vh; display: flex; flex-direction: column; background: var(--surface-container-lowest); border-radius: var(--radius-2xl) var(--radius-2xl) 0 0; }
+@media (min-width: 640px) { .job-detail-modal { border-radius: var(--radius-2xl); margin: 0 auto; max-height: 80vh; } }
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.25rem 0.75rem; flex-shrink: 0; }
 .modal-title { font-family: var(--font-headline); font-size: 1.1rem; font-weight: 700; color: var(--on-surface); }
-.modal-body { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1rem; }
-.modal-footer { padding-top: 0.75rem; border-top: 1px solid var(--outline-variant); }
+.modal-body { display: flex; flex-direction: column; gap: 1rem; padding: 0 1.25rem; overflow-y: auto; flex: 1; }
+.modal-footer { padding: 0.75rem 1.25rem 1.25rem; border-top: 1px solid var(--outline-variant); flex-shrink: 0; }
 
 .detail-company { display: flex; align-items: center; gap: 0.75rem; }
 .detail-company-name { font-family: var(--font-headline); font-size: 0.9rem; font-weight: 600; color: var(--on-surface); }
