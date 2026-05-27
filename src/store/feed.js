@@ -199,11 +199,18 @@ export const useFeedStore = defineStore('feed', () => {
 
   async function repostPost(postId) {
     try {
-      await postsService.repost(postId)
+      const result = await postsService.repost(postId)
       const post = posts.value.find(p => p.id === postId)
       if (post) {
-        post.repost_count = (post.repost_count || 0) + 1
-        post.is_reposted = true
+        if (result?.reposted === false) {
+          // Unreposted
+          post.repost_count = Math.max((post.repost_count || 1) - 1, 0)
+          post.is_reposted = false
+        } else {
+          // Reposted
+          post.repost_count = (post.repost_count || 0) + 1
+          post.is_reposted = true
+        }
       }
     } catch { /* ignore */ }
   }

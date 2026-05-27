@@ -221,7 +221,7 @@
 
             <!-- Post Actions Bar (Twitter/X style) -->
             <div class="post-actions-bar">
-              <button class="action-btn" @click="post.showComments = !post.showComments">
+              <button class="action-btn" @click="toggleComments(post)">
                 <span class="material-symbols-outlined">chat_bubble_outline</span>
                 <span v-if="post.comment_count" class="action-count">{{ post.comment_count }}</span>
               </button>
@@ -603,6 +603,26 @@ async function submitPost() {
   quotePost.value = null
   showCompose.value = false
   uiStore.showSuccess('Posted successfully!')
+}
+
+async function toggleComments(post) {
+  post.showComments = !post.showComments
+  // Fetch comments from backend if opening and not loaded yet
+  if (post.showComments && (!post.commentList || post.commentList.length === 0)) {
+    try {
+      const data = await http.get(`/feed/${post.id}`)
+      if (data.comments) {
+        post.commentList = data.comments.map(c => ({
+          id: c.id,
+          content: c.content,
+          author: c.author_name || 'User',
+          author_id: c.author_id,
+          time: formatTime(c.created_at),
+          created_at: c.created_at,
+        }))
+      }
+    } catch { /* ignore */ }
+  }
 }
 
 function submitComment(post, e) {
