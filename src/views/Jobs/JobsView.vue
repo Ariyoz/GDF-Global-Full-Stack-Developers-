@@ -367,24 +367,26 @@ async function fetchJobs() {
 
 async function postJob() {
   try {
-    await http.post('/jobs/', {
+    const payload = {
       title: jobForm.value.title,
-      company: jobForm.value.company,
+      company: jobForm.value.company || undefined,
       description: jobForm.value.description,
-      requirements: jobForm.value.requirements,
-      skills_required: jobForm.value.skillsText.split(',').map(s => s.trim()).filter(Boolean),
-      job_type: jobForm.value.job_type,
-      location: jobForm.value.location,
-      is_remote: jobForm.value.location?.toLowerCase().includes('remote') || !jobForm.value.location,
-      salary_min: jobForm.value.salary_min,
-      salary_max: jobForm.value.salary_max,
-    })
+      requirements: jobForm.value.requirements || undefined,
+      skills_required: jobForm.value.skillsText ? jobForm.value.skillsText.split(',').map(s => s.trim()).filter(Boolean) : [],
+      job_type: jobForm.value.job_type || 'full_time',
+      location: jobForm.value.location || undefined,
+      is_remote: !jobForm.value.location || jobForm.value.location.toLowerCase().includes('remote'),
+      salary_min: jobForm.value.salary_min || undefined,
+      salary_max: jobForm.value.salary_max || undefined,
+    }
+    await http.post('/jobs/', payload)
     uiStore.showSuccess('Job posted successfully!')
     showPostJob.value = false
     jobForm.value = { title: '', company: '', description: '', requirements: '', skillsText: '', job_type: 'full_time', location: '', salary_min: null, salary_max: null }
     fetchJobs()
   } catch (err) {
-    uiStore.showError('Failed to post job')
+    console.error('Post job error:', err.response?.data || err)
+    uiStore.showError(err.response?.data?.detail || 'Failed to post job. Please try again.')
   }
 }
 
