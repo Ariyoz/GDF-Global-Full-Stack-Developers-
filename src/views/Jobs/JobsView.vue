@@ -1,0 +1,436 @@
+<template>
+  <div class="jobs-view">
+    <!-- Header -->
+    <div class="jobs-header">
+      <h1 class="jobs-title">Jobs</h1>
+      <button v-if="isClient" class="btn-post-job" @click="showPostJob = true">
+        <span class="material-symbols-outlined">add</span>
+        Post Job
+      </button>
+    </div>
+
+    <!-- Search -->
+    <div class="jobs-search">
+      <span class="material-symbols-outlined search-icon">search</span>
+      <input v-model="searchQuery" class="search-input" placeholder="Search jobs, skills, companies..." @input="debouncedSearch" />
+    </div>
+
+    <!-- Filters -->
+    <div class="jobs-filters">
+      <button v-for="f in filters" :key="f.value" class="filter-chip" :class="{ active: activeFilter === f.value }" @click="activeFilter = f.value; fetchJobs()">
+        {{ f.label }}
+      </button>
+    </div>
+
+    <!-- Jobs List -->
+    <div class="jobs-list">
+      <div v-for="job in jobs" :key="job.id" class="job-card" @click="selectedJob = job">
+        <div class="job-card-header">
+          <div class="job-company-logo">
+            <img v-if="job.company_logo" :src="job.company_logo" :alt="job.company" class="company-logo-img" />
+            <span v-else class="company-initials">{{ (job.company || 'C')[0] }}</span>
+          </div>
+          <div class="job-info">
+            <h3 class="job-title">{{ job.title }}</h3>
+            <p class="job-company">{{ job.company }}</p>
+          </div>
+        </div>
+        <div class="job-meta">
+          <span class="job-tag">{{ job.job_type?.replace('_', ' ') }}</span>
+          <span v-if="job.is_remote" class="job-tag remote">Remote</span>
+          <span v-if="job.location" class="job-tag">{{ job.location }}</span>
+        </div>
+        <p class="job-desc">{{ job.description?.slice(0, 120) }}{{ job.description?.length > 120 ? '...' : '' }}</p>
+        <div class="job-footer">
+          <span v-if="job.salary_min" class="job-salary">${{ job.salary_min }}{{ job.salary_max ? ' - $' + job.salary_max : '' }}/yr</span>
+          <span class="job-time">{{ formatTime(job.created_at) }}</span>
+        </div>
+      </div>
+
+      <div v-if="loading" class="jobs-loading">
+        <div v-for="i in 3" :key="i" class="skeleton-job">
+          <div class="skeleton-shimmer" style="width:48px;height:48px;border-radius:12px;"></div>
+          <div style="flex:1;">
+            <div class="skeleton-shimmer" style="width:70%;height:14px;border-radius:4px;"></div>
+            <div class="skeleton-shimmer" style="width:40%;height:12px;border-radius:4px;margin-top:6px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="!loading && jobs.length === 0" class="jobs-empty">
+        <span class="material-symbols-outlined" style="font-size:3rem;color:var(--on-surface-variant)">work_off</span>
+        <p>No jobs posted yet</p>
+        <button v-if="isClient" class="btn-primary" @click="showPostJob = true">Post the first job</button>
+      </div>
+    </div>
+
+    <!-- Job Detail Modal -->
+    <Transition name="modal">
+      <div v-if="selectedJob" class="modal-overlay" @click.self="selectedJob = null">
+        <div class="job-detail-modal">
+          <div class="modal-header">
+            <h2 class="modal-title">{{ selectedJob.title }}</h2>
+            <button class="btn-ghost icon-only" @click="selectedJob = null">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="detail-company">
+              <div class="job-company-logo">
+                <img v-if="selectedJob.company_logo" :src="selectedJob.company_logo" class="company-logo-img" />
+                <span v-else class="company-initials">{{ (selectedJob.company || 'C')[0] }}</span>
+              </div>
+              <div>
+                <p class="detail-company-name">{{ selectedJob.company }}</p>
+                <p class="detail-location">{{ selectedJob.location || 'Remote' }}</p>
+              </div>
+            </div>
+            <div class="detail-tags">
+              <span class="job-tag">{{ selectedJob.job_type?.replace('_', ' ') }}</span>
+              <span v-if="selectedJob.is_remote" class="job-tag remote">Remote</span>
+              <span v-if="selectedJob.experience_level" class="job-tag">{{ selectedJob.experience_level }}</span>
+            </div>
+            <div v-if="selectedJob.salary_min" class="detail-salary">
+              💰 ${{ selectedJob.salary_min }}{{ selectedJob.salary_max ? ' - $' + selectedJob.salary_max : '' }} / year
+            </div>
+            <div class="detail-section">
+              <h4>Description</h4>
+              <p>{{ selectedJob.description }}</p>
+            </div>
+            <div v-if="selectedJob.requirements" class="detail-section">
+              <h4>Requirements</h4>
+              <p>{{ selectedJob.requirements }}</p>
+            </div>
+            <div v-if="selectedJob.skills_required?.length" class="detail-section">
+              <h4>Skills</h4>
+              <div class="detail-skills">
+                <span v-for="skill in selectedJob.skills_required" :key="skill" class="skill-chip">{{ skill }}</span>
+              </div>
+            </div>
+            <div class="detail-stats">
+              <span>👁 {{ selectedJob.view_count }} views</span>
+              <span>📝 {{ selectedJob.application_count }} applications</span>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-primary apply-btn" @click="showApplyModal = true; selectedJob = selectedJob">
+              <span class="material-symbols-outlined">send</span>
+              Apply Now
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- Apply Modal -->
+    <Transition name="modal">
+      <div v-if="showApplyModal" class="modal-overlay" @click.self="showApplyModal = false">
+        <div class="job-detail-modal">
+          <div class="modal-header">
+            <h2 class="modal-title">Apply to {{ selectedJob?.title }}</h2>
+            <button class="btn-ghost icon-only" @click="showApplyModal = false">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="form-fields">
+              <div class="form-field">
+                <label>Cover Letter</label>
+                <textarea v-model="applyForm.cover_letter" rows="4" placeholder="Why are you a great fit for this role?"></textarea>
+              </div>
+              <div class="form-field">
+                <label>Resume URL</label>
+                <input v-model="applyForm.resume_url" type="url" placeholder="https://drive.google.com/your-resume" />
+              </div>
+              <div class="form-field">
+                <label>Portfolio URL</label>
+                <input v-model="applyForm.portfolio_url" type="url" placeholder="https://yourportfolio.com" />
+              </div>
+              <div class="form-field">
+                <label>GitHub URL</label>
+                <input v-model="applyForm.github_url" type="url" placeholder="https://github.com/username" />
+              </div>
+              <div class="form-field">
+                <label>Years of Experience</label>
+                <input v-model.number="applyForm.years_experience" type="number" placeholder="3" />
+              </div>
+              <div class="form-field">
+                <label>Availability</label>
+                <select v-model="applyForm.availability">
+                  <option value="immediately">Immediately</option>
+                  <option value="2_weeks">2 Weeks Notice</option>
+                  <option value="1_month">1 Month</option>
+                  <option value="flexible">Flexible</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-primary apply-btn" @click="submitApplication" :disabled="!applyForm.cover_letter">
+              Submit Application
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- Post Job Modal -->
+    <Transition name="modal">
+      <div v-if="showPostJob" class="modal-overlay" @click.self="showPostJob = false">
+        <div class="job-detail-modal">
+          <div class="modal-header">
+            <h2 class="modal-title">Post a Job</h2>
+            <button class="btn-ghost icon-only" @click="showPostJob = false">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="form-fields">
+              <div class="form-field">
+                <label>Job Title *</label>
+                <input v-model="jobForm.title" type="text" placeholder="Senior Frontend Developer" />
+              </div>
+              <div class="form-field">
+                <label>Company Name</label>
+                <input v-model="jobForm.company" type="text" placeholder="Your company name" />
+              </div>
+              <div class="form-field">
+                <label>Description *</label>
+                <textarea v-model="jobForm.description" rows="4" placeholder="Describe the role..."></textarea>
+              </div>
+              <div class="form-field">
+                <label>Requirements</label>
+                <textarea v-model="jobForm.requirements" rows="3" placeholder="What skills/experience are needed?"></textarea>
+              </div>
+              <div class="form-field">
+                <label>Skills (comma separated)</label>
+                <input v-model="jobForm.skillsText" type="text" placeholder="React, Node.js, TypeScript" />
+              </div>
+              <div class="form-field">
+                <label>Job Type</label>
+                <select v-model="jobForm.job_type">
+                  <option value="full_time">Full Time</option>
+                  <option value="part_time">Part Time</option>
+                  <option value="contract">Contract</option>
+                  <option value="freelance">Freelance</option>
+                  <option value="remote">Remote</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label>Location</label>
+                <input v-model="jobForm.location" type="text" placeholder="Remote / City, Country" />
+              </div>
+              <div class="form-row">
+                <div class="form-field">
+                  <label>Min Salary ($)</label>
+                  <input v-model.number="jobForm.salary_min" type="number" placeholder="50000" />
+                </div>
+                <div class="form-field">
+                  <label>Max Salary ($)</label>
+                  <input v-model.number="jobForm.salary_max" type="number" placeholder="80000" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-primary apply-btn" @click="postJob" :disabled="!jobForm.title || !jobForm.description">
+              Post Job
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useAuthStore } from '@/store/auth'
+import { useUiStore } from '@/store/ui'
+import http from '@/services/http'
+
+const authStore = useAuthStore()
+const uiStore = useUiStore()
+
+const jobs = ref([])
+const loading = ref(true)
+const searchQuery = ref('')
+const activeFilter = ref('all')
+const selectedJob = ref(null)
+const showApplyModal = ref(false)
+const showPostJob = ref(false)
+
+const isClient = computed(() => authStore.profile?.role === 'client' || authStore.profile?.role === 'admin')
+
+const filters = [
+  { value: 'all', label: 'All' },
+  { value: 'full_time', label: 'Full Time' },
+  { value: 'remote', label: 'Remote' },
+  { value: 'contract', label: 'Contract' },
+  { value: 'freelance', label: 'Freelance' },
+]
+
+const applyForm = ref({
+  cover_letter: '',
+  resume_url: '',
+  portfolio_url: '',
+  github_url: '',
+  years_experience: null,
+  availability: 'immediately',
+})
+
+const jobForm = ref({
+  title: '',
+  company: '',
+  description: '',
+  requirements: '',
+  skillsText: '',
+  job_type: 'full_time',
+  location: '',
+  salary_min: null,
+  salary_max: null,
+})
+
+let searchTimeout = null
+function debouncedSearch() {
+  clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(fetchJobs, 500)
+}
+
+async function fetchJobs() {
+  loading.value = true
+  try {
+    let url = '/jobs?limit=30'
+    if (activeFilter.value !== 'all') url += `&job_type=${activeFilter.value}`
+    if (searchQuery.value) url += `&search=${searchQuery.value}`
+    const data = await http.get(url)
+    jobs.value = data.jobs || []
+  } catch { jobs.value = [] }
+  finally { loading.value = false }
+}
+
+async function postJob() {
+  try {
+    await http.post('/jobs/', {
+      title: jobForm.value.title,
+      company: jobForm.value.company,
+      description: jobForm.value.description,
+      requirements: jobForm.value.requirements,
+      skills_required: jobForm.value.skillsText.split(',').map(s => s.trim()).filter(Boolean),
+      job_type: jobForm.value.job_type,
+      location: jobForm.value.location,
+      is_remote: jobForm.value.location?.toLowerCase().includes('remote') || !jobForm.value.location,
+      salary_min: jobForm.value.salary_min,
+      salary_max: jobForm.value.salary_max,
+    })
+    uiStore.showSuccess('Job posted successfully!')
+    showPostJob.value = false
+    jobForm.value = { title: '', company: '', description: '', requirements: '', skillsText: '', job_type: 'full_time', location: '', salary_min: null, salary_max: null }
+    fetchJobs()
+  } catch (err) {
+    uiStore.showError('Failed to post job')
+  }
+}
+
+async function submitApplication() {
+  if (!selectedJob.value) return
+  try {
+    await http.post(`/jobs/${selectedJob.value.id}/apply`, applyForm.value)
+    uiStore.showSuccess('Application submitted!')
+    showApplyModal.value = false
+    selectedJob.value = null
+    applyForm.value = { cover_letter: '', resume_url: '', portfolio_url: '', github_url: '', years_experience: null, availability: 'immediately' }
+  } catch (err) {
+    uiStore.showError(err.response?.data?.detail || 'Failed to apply')
+  }
+}
+
+function formatTime(dateStr) {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diff = (now - date) / 1000
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+onMounted(fetchJobs)
+</script>
+
+<style scoped>
+.jobs-view { padding: 0.5rem 0; min-height: 100vh; background: var(--background); }
+.jobs-header { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; }
+.jobs-title { font-family: var(--font-headline); font-size: 1.25rem; font-weight: 700; color: var(--on-surface); }
+.btn-post-job { display: flex; align-items: center; gap: 0.3rem; padding: 0.5rem 1rem; background: var(--primary); color: #fff; border: none; border-radius: var(--radius-full); font-family: var(--font-headline); font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+.btn-post-job .material-symbols-outlined { font-size: 18px; }
+
+.jobs-search { padding: 0 1rem 0.75rem; position: relative; }
+.search-icon { position: absolute; left: 1.75rem; top: 50%; transform: translateY(-50%); font-size: 20px; color: var(--on-surface-variant); pointer-events: none; margin-top: -0.375rem; }
+.search-input { width: 100%; padding: 0.6rem 0.75rem 0.6rem 2.75rem; background: var(--surface-container-low); border: 1px solid var(--outline-variant); border-radius: var(--radius-full); font-size: 0.875rem; color: var(--on-surface); outline: none; }
+.search-input:focus { border-color: var(--primary); }
+
+.jobs-filters { display: flex; gap: 0.4rem; padding: 0 1rem 0.75rem; overflow-x: auto; scrollbar-width: none; }
+.jobs-filters::-webkit-scrollbar { display: none; }
+.filter-chip { padding: 0.35rem 0.875rem; background: var(--surface-container); border: 1px solid var(--outline-variant); border-radius: var(--radius-full); font-size: 0.78rem; font-weight: 600; color: var(--on-surface-variant); cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+.filter-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+.jobs-list { padding: 0 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+.job-card { padding: 1rem; background: var(--surface-container-lowest); border: 1px solid var(--outline-variant); border-radius: var(--radius-xl); cursor: pointer; transition: border-color 0.15s; }
+.job-card:hover { border-color: var(--primary); }
+.job-card-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
+.job-company-logo { width: 44px; height: 44px; border-radius: var(--radius-lg); background: var(--primary-fixed); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
+.company-logo-img { width: 100%; height: 100%; object-fit: cover; }
+.company-initials { font-family: var(--font-headline); font-size: 1rem; font-weight: 700; color: var(--primary); }
+.job-info { flex: 1; min-width: 0; }
+.job-title { font-family: var(--font-headline); font-size: 0.9rem; font-weight: 700; color: var(--on-surface); }
+.job-company { font-size: 0.8rem; color: var(--on-surface-variant); }
+.job-meta { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.5rem; }
+.job-tag { padding: 0.2rem 0.5rem; background: var(--surface-container); border-radius: var(--radius-full); font-size: 0.7rem; font-weight: 500; color: var(--on-surface-variant); text-transform: capitalize; }
+.job-tag.remote { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
+.job-desc { font-size: 0.82rem; color: var(--on-surface-variant); line-height: 1.5; margin-bottom: 0.5rem; }
+.job-footer { display: flex; justify-content: space-between; align-items: center; }
+.job-salary { font-family: var(--font-headline); font-size: 0.8rem; font-weight: 600; color: var(--primary); }
+.job-time { font-size: 0.72rem; color: var(--on-surface-variant); }
+
+.jobs-loading { display: flex; flex-direction: column; gap: 1rem; }
+.skeleton-job { display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: var(--surface-container-lowest); border-radius: var(--radius-xl); }
+.skeleton-shimmer { background: linear-gradient(90deg, var(--surface-container) 25%, var(--surface-container-high) 50%, var(--surface-container) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+.jobs-empty { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 3rem 1rem; text-align: center; color: var(--on-surface-variant); }
+
+/* Modals */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: flex-end; }
+@media (min-width: 640px) { .modal-overlay { align-items: center; padding: 1rem; } }
+.job-detail-modal { width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; background: var(--surface-container-lowest); border-radius: var(--radius-2xl) var(--radius-2xl) 0 0; padding: 1.25rem; }
+@media (min-width: 640px) { .job-detail-modal { border-radius: var(--radius-2xl); margin: 0 auto; } }
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.modal-title { font-family: var(--font-headline); font-size: 1.1rem; font-weight: 700; color: var(--on-surface); }
+.modal-body { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1rem; }
+.modal-footer { padding-top: 0.75rem; border-top: 1px solid var(--outline-variant); }
+
+.detail-company { display: flex; align-items: center; gap: 0.75rem; }
+.detail-company-name { font-family: var(--font-headline); font-size: 0.9rem; font-weight: 600; color: var(--on-surface); }
+.detail-location { font-size: 0.8rem; color: var(--on-surface-variant); }
+.detail-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.detail-salary { font-family: var(--font-headline); font-size: 1rem; font-weight: 700; color: var(--primary); }
+.detail-section h4 { font-family: var(--font-headline); font-size: 0.875rem; font-weight: 700; color: var(--on-surface); margin-bottom: 0.35rem; }
+.detail-section p { font-size: 0.85rem; color: var(--on-surface-variant); line-height: 1.6; white-space: pre-line; }
+.detail-skills { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.skill-chip { padding: 0.25rem 0.6rem; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2); border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 500; color: var(--primary); }
+.detail-stats { display: flex; gap: 1rem; font-size: 0.8rem; color: var(--on-surface-variant); }
+
+.apply-btn { width: 100%; justify-content: center; padding: 0.75rem; font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem; }
+
+.form-fields { display: flex; flex-direction: column; gap: 0.875rem; }
+.form-field { display: flex; flex-direction: column; gap: 0.3rem; }
+.form-field label { font-family: var(--font-headline); font-size: 0.8rem; font-weight: 600; color: var(--on-surface); }
+.form-field input, .form-field textarea, .form-field select { padding: 0.6rem 0.75rem; background: var(--surface-container-low); border: 1px solid var(--outline-variant); border-radius: var(--radius-lg); font-size: 0.85rem; color: var(--on-surface); outline: none; resize: none; }
+.form-field input:focus, .form-field textarea:focus, .form-field select:focus { border-color: var(--primary); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+.modal-enter-active, .modal-leave-active { transition: opacity 0.2s, transform 0.25s; }
+.modal-enter-from, .modal-leave-to { opacity: 0; transform: translateY(20px); }
+</style>

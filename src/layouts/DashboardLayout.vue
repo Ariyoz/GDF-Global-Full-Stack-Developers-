@@ -94,9 +94,9 @@
         </div>
       </button>
 
-      <RouterLink to="/messaging" class="bottom-nav-item" :class="{ active: $route.path === '/messaging' }">
-        <span class="material-symbols-outlined" :style="$route.path === '/messaging' ? 'font-variation-settings:\'FILL\' 1' : ''">chat</span>
-        <span>Messages</span>
+      <RouterLink to="/jobs" class="bottom-nav-item" :class="{ active: $route.path === '/jobs' }">
+        <span class="material-symbols-outlined" :style="$route.path === '/jobs' ? 'font-variation-settings:\'FILL\' 1' : ''">work</span>
+        <span>Jobs</span>
       </RouterLink>
 
       <!-- More button -->

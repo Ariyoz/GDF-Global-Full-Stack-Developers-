@@ -128,6 +128,12 @@ const routes = [
     children: [{ path: '', name: 'messaging', component: MessagingView }],
   },
   {
+    path: '/jobs',
+    component: DashboardLayout,
+    meta: { requiresAuth: true },
+    children: [{ path: '', name: 'jobs', component: () => import('@/views/Jobs/JobsView.vue') }],
+  },
+  {
     path: '/notifications',
     component: DashboardLayout,
     meta: { requiresAuth: true },
