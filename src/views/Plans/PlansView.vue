@@ -123,14 +123,18 @@
             <div class="payment-instructions">
               <h4 class="payment-section-title">
                 <span class="material-symbols-outlined" style="font-size:18px;">currency_bitcoin</span>
-                Pay with USDT (TRC20/ERC20)
+                Pay with USDT (BEP20)
               </h4>
-              <p class="payment-note">Send the exact amount in USDT to the wallet address below, then confirm your payment.</p>
+              <p class="payment-note">Send the exact amount in USDT (BEP20 network) to the wallet address below, then confirm your payment.</p>
 
               <div class="bank-details">
                 <div class="bank-detail-row">
                   <span class="bank-label">Network</span>
-                  <span class="bank-value">ERC20 / TRC20</span>
+                  <span class="bank-value">BEP20 (BSC)</span>
+                </div>
+                <div class="bank-detail-row">
+                  <span class="bank-label">Token</span>
+                  <span class="bank-value">USDT</span>
                 </div>
                 <div class="bank-detail-row">
                   <span class="bank-label">Wallet Address</span>
@@ -153,7 +157,7 @@
 
               <div class="payment-methods-note">
                 <span class="material-symbols-outlined" style="font-size:16px;color:#f59e0b;">warning</span>
-                <span>Make sure to send the exact amount. Only USDT is accepted.</span>
+                <span>Make sure to send on BEP20 (BSC) network only. Only USDT is accepted.</span>
               </div>
             </div>
 
@@ -296,7 +300,7 @@ const faqs = [
   },
   {
     q: 'What network should I use?',
-    a: 'You can send USDT on either ERC20 (Ethereum) or TRC20 (Tron) network to the wallet address provided.',
+    a: 'Send USDT on the BEP20 (Binance Smart Chain) network only. Do not send on other networks or your funds may be lost.',
   },
 ]
 
