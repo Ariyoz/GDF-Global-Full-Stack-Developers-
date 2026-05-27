@@ -4,6 +4,9 @@
     <header class="dash-topnav glass-nav">
       <div class="dash-topnav-inner">
         <div class="dash-topnav-left">
+          <RouterLink to="/" class="dash-back-btn" aria-label="Back to home">
+            <span class="material-symbols-outlined">arrow_back</span>
+          </RouterLink>
           <RouterLink to="/" class="dash-logo">GFD</RouterLink>
           <nav class="dash-topnav-links">
             <RouterLink to="/dashboard" class="dash-topnav-link" :class="{ active: $route.name === 'dashboard' }">Dashboard</RouterLink>
@@ -94,9 +97,9 @@
         </div>
       </button>
 
-      <RouterLink to="/jobs" class="bottom-nav-item" :class="{ active: $route.path === '/jobs' }">
-        <span class="material-symbols-outlined" :style="$route.path === '/jobs' ? 'font-variation-settings:\'FILL\' 1' : ''">work</span>
-        <span>Jobs</span>
+      <RouterLink to="/messaging" class="bottom-nav-item" :class="{ active: $route.path === '/messaging' }">
+        <span class="material-symbols-outlined" :style="$route.path === '/messaging' ? 'font-variation-settings:\'FILL\' 1' : ''">chat</span>
+        <span>Messages</span>
       </RouterLink>
 
       <!-- More button -->
@@ -481,6 +484,27 @@ function handleSignOut() {
   font-weight: 700;
   color: var(--on-surface);
   text-decoration: none;
+}
+
+.dash-back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  color: var(--on-surface-variant);
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.dash-back-btn:hover {
+  background: rgba(168, 85, 247, 0.08);
+  color: var(--primary);
+}
+
+.dash-back-btn .material-symbols-outlined {
+  font-size: 20px;
 }
 
 .dash-topnav-links {

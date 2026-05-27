@@ -46,13 +46,13 @@
       </RouterLink>
 
       <RouterLink
-        to="/auth/login"
+        to="/jobs"
         class="bottom-nav-item"
-        :class="{ active: $route.path.startsWith('/auth') }"
-        aria-label="Messages"
+        :class="{ active: $route.path.startsWith('/jobs') }"
+        aria-label="Jobs"
       >
-        <span class="material-symbols-outlined">chat_bubble</span>
-        <span class="nav-label">Messages</span>
+        <span class="material-symbols-outlined">work</span>
+        <span class="nav-label">Jobs</span>
       </RouterLink>
 
       <RouterLink
