@@ -41,14 +41,17 @@ let alertTimeout = null
 onMounted(() => {
   websocketService.onEvent((event) => {
     // Incoming message
-    if (event.type === 'message_sent' && event.from) {
+    if (event.type === 'message_sent') {
+      const name = event.from_name || event.data?.from_name || 'New Message'
+      const avatar = event.from_avatar || event.data?.from_avatar || ''
+      const content = event.content || event.data?.content || 'Sent you a message'
       queueAlert({
         type: 'message',
         icon: 'chat',
-        name: event.from_name || 'New Message',
-        avatar: event.from_avatar || '',
-        title: event.from_name || 'New Message',
-        body: event.content?.slice(0, 60) || 'Sent you a message',
+        name: name,
+        avatar: avatar,
+        title: name,
+        body: content.slice(0, 60),
         route: '/messaging',
       })
     }
