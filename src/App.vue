@@ -69,12 +69,13 @@ onMounted(() => {
 
     // Like on post
     if (event.type === 'post_liked') {
+      const name = event.data?.liker_name || event.liker_name || event.actor_name || 'Someone'
       queueAlert({
         type: 'like',
         icon: 'favorite',
-        name: event.actor_name || 'Someone',
-        avatar: event.actor_avatar || '',
-        title: event.actor_name || 'Someone',
+        name: name,
+        avatar: event.data?.liker_avatar || event.actor_avatar || '',
+        title: name,
         body: 'liked your post',
         route: '/feed',
       })
@@ -82,12 +83,13 @@ onMounted(() => {
 
     // Comment on post
     if (event.type === 'post_commented') {
+      const name = event.data?.commenter_name || event.commenter_name || event.actor_name || 'Someone'
       queueAlert({
         type: 'comment',
         icon: 'chat_bubble',
-        name: event.actor_name || 'Someone',
-        avatar: event.actor_avatar || '',
-        title: event.actor_name || 'Someone',
+        name: name,
+        avatar: event.data?.commenter_avatar || event.actor_avatar || '',
+        title: name,
         body: 'commented on your post',
         route: '/feed',
       })
@@ -95,12 +97,13 @@ onMounted(() => {
 
     // Repost
     if (event.type === 'post_reposted') {
+      const name = event.data?.reposter_name || event.actor_name || 'Someone'
       queueAlert({
         type: 'repost',
         icon: 'repeat',
-        name: event.actor_name || 'Someone',
-        avatar: event.actor_avatar || '',
-        title: event.actor_name || 'Someone',
+        name: name,
+        avatar: event.data?.reposter_avatar || event.actor_avatar || '',
+        title: name,
         body: 'reposted your post',
         route: '/feed',
       })
@@ -108,12 +111,13 @@ onMounted(() => {
 
     // New follower
     if (event.type === 'new_follower' || event.type === 'user_followed') {
+      const name = event.data?.follower_name || event.actor_name || 'Someone'
       queueAlert({
         type: 'follow',
         icon: 'person_add',
-        name: event.actor_name || 'Someone',
-        avatar: event.actor_avatar || '',
-        title: event.actor_name || 'Someone',
+        name: name,
+        avatar: event.data?.follower_avatar || event.actor_avatar || '',
+        title: name,
         body: 'started following you',
         route: '/notifications',
       })
@@ -226,23 +230,23 @@ function dismissAlert() {
 /* ── Global Alert (incoming message/call) ── */
 .global-alert {
   position: fixed;
-  top: 1rem;
+  top: 0.75rem;
   left: 50%;
   transform: translateX(-50%);
   z-index: 9999;
-  width: calc(100% - 3rem);
-  max-width: 320px;
+  width: calc(100% - 4rem);
+  max-width: 280px;
 }
 
 .global-alert-inner {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.7rem 0.875rem;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
   background: var(--surface-container-lowest);
   border: 1px solid var(--outline-variant);
-  border-radius: var(--radius-xl);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   cursor: pointer;
 }
 
@@ -253,8 +257,8 @@ function dismissAlert() {
 }
 
 .alert-avatar {
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   background: var(--primary-fixed);
   display: flex;
@@ -295,7 +299,7 @@ function dismissAlert() {
 
 .alert-title {
   font-family: var(--font-headline);
-  font-size: 0.875rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--on-surface);
   white-space: nowrap;
@@ -304,12 +308,12 @@ function dismissAlert() {
 }
 
 .alert-body {
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   color: var(--on-surface-variant);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: 0.1rem;
+  margin-top: 0;
 }
 
 .alert-accept {
@@ -329,8 +333,8 @@ function dismissAlert() {
 .alert-accept .material-symbols-outlined { font-size: 20px; }
 
 .alert-dismiss {
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: var(--surface-container);
   border: none;
@@ -342,5 +346,5 @@ function dismissAlert() {
   flex-shrink: 0;
 }
 
-.alert-dismiss .material-symbols-outlined { font-size: 16px; }
+.alert-dismiss .material-symbols-outlined { font-size: 14px; }
 </style>
