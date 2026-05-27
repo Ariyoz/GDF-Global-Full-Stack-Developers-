@@ -5,10 +5,16 @@
         <h2 class="text-headline-md">Notifications</h2>
         <p class="text-body-md" style="margin-top:0.25rem">Stay up to date with your activity.</p>
       </div>
-      <button class="btn-ghost mark-all-btn" @click="markAllRead">
-        <span class="material-symbols-outlined" style="font-size:16px;">done_all</span>
-        Mark all read
-      </button>
+      <div class="header-actions">
+        <button class="btn-ghost mark-all-btn" @click="clearAll">
+          <span class="material-symbols-outlined" style="font-size:16px;">delete_sweep</span>
+          Clear all
+        </button>
+        <button class="btn-ghost mark-all-btn" @click="markAllRead">
+          <span class="material-symbols-outlined" style="font-size:16px;">done_all</span>
+          Mark all read
+        </button>
+      </div>
     </div>
 
     <!-- Filter Tabs -->
@@ -42,6 +48,9 @@
           <p class="notif-desc">{{ notif.desc }}</p>
           <p class="notif-time">{{ notif.time }}</p>
         </div>
+        <button class="notif-delete-btn" @click.stop="deleteNotif(notif)" title="Delete notification">
+          <span class="material-symbols-outlined">close</span>
+        </button>
         <div v-if="!notif.read" class="unread-dot" />
       </div>
 
@@ -59,6 +68,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/store/auth'
 import { notificationsService } from '@/services/notifications.service'
 import { websocketService } from '@/services/websocket.service'
+import http from '@/services/http'
 
 const authStore = useAuthStore()
 const activeTab = ref('all')
@@ -84,10 +94,24 @@ async function markRead(notif) {
 }
 
 async function markAllRead() {
-  const userId = authStore.user?.id
-  if (!userId) return
-  await notificationsService.markAllAsRead(userId)
+  await notificationsService.markAllAsRead()
   notifications.value.forEach(n => { n.read = true })
+  updateCounts()
+}
+
+async function deleteNotif(notif) {
+  try {
+    await http.request({ method: 'DELETE', url: `/notifications/${notif.id}` })
+  } catch { /* ignore */ }
+  notifications.value = notifications.value.filter(n => n.id !== notif.id)
+  updateCounts()
+}
+
+async function clearAll() {
+  try {
+    await http.request({ method: 'DELETE', url: '/notifications/clear-all' })
+  } catch { /* ignore */ }
+  notifications.value = []
   updateCounts()
 }
 
@@ -180,6 +204,12 @@ onMounted(async () => {
   justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
 }
 
 .mark-all-btn { font-size: 0.875rem; }
@@ -279,6 +309,33 @@ onMounted(async () => {
   color: var(--outline);
   margin-top: 0.35rem;
 }
+
+.notif-delete-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--on-surface-variant);
+  cursor: pointer;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: all 0.15s;
+}
+
+.notif-item:hover .notif-delete-btn {
+  opacity: 1;
+}
+
+.notif-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.notif-delete-btn .material-symbols-outlined { font-size: 16px; }
 
 .unread-dot {
   width: 8px;

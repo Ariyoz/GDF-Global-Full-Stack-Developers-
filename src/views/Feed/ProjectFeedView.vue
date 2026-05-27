@@ -248,18 +248,73 @@
             <!-- Comments Section -->
             <div v-if="post.showComments" class="post-comments">
               <div v-if="post.commentList?.length" class="comments-list">
-                <div v-for="comment in post.commentList" :key="comment.id" class="comment-item">
-                  <div class="comment-avatar">{{ getInitials(comment.author || comment.content) }}</div>
-                  <div class="comment-body">
-                    <div class="comment-header-line">
-                      <span class="comment-author-name">{{ comment.author || 'User' }}</span>
-                      <span class="comment-time">{{ comment.time || formatTime(comment.created_at) }}</span>
+                <template v-for="comment in getRootComments(post)" :key="comment.id">
+                  <div class="comment-item">
+                    <div class="comment-avatar">
+                      <img v-if="comment.author_avatar" :src="comment.author_avatar" class="comment-avatar-img" />
+                      <span v-else>{{ getInitials(comment.author || comment.content) }}</span>
                     </div>
-                    <p class="comment-text">{{ comment.content || comment.text }}</p>
+                    <div class="comment-body">
+                      <div class="comment-header-line">
+                        <span class="comment-author-name">{{ comment.author || 'User' }}</span>
+                        <span v-if="comment.author_username" class="comment-author-handle">@{{ comment.author_username }}</span>
+                        <span class="comment-time">{{ comment.time || formatTime(comment.created_at) }}</span>
+                      </div>
+                      <p class="comment-text">{{ comment.content || comment.text }}</p>
+                      <div class="comment-actions">
+                        <button class="comment-action" @click="startReply(post, comment)">
+                          <span class="material-symbols-outlined" style="font-size:14px;">chat_bubble_outline</span>
+                          Reply
+                        </button>
+                        <button v-if="comment.author_id === authStore.user?.id || comment.author_id === authStore.profile?.id" class="comment-action comment-action--delete" @click="deleteComment(post, comment)">
+                          <span class="material-symbols-outlined" style="font-size:14px;">delete</span>
+                          Delete
+                        </button>
+                      </div>
+
+                      <!-- Replies (nested) -->
+                      <div v-if="getReplies(post, comment.id).length" class="comment-replies">
+                        <div v-for="reply in getReplies(post, comment.id)" :key="reply.id" class="comment-item reply-item">
+                          <div class="comment-avatar reply-avatar">
+                            <img v-if="reply.author_avatar" :src="reply.author_avatar" class="comment-avatar-img" />
+                            <span v-else>{{ getInitials(reply.author || reply.content) }}</span>
+                          </div>
+                          <div class="comment-body">
+                            <div class="comment-header-line">
+                              <span class="comment-author-name">{{ reply.author || 'User' }}</span>
+                              <span v-if="reply.author_username" class="comment-author-handle">@{{ reply.author_username }}</span>
+                              <span class="comment-time">{{ reply.time || formatTime(reply.created_at) }}</span>
+                            </div>
+                            <p class="comment-text">
+                              <span class="reply-mention">@{{ comment.author || 'User' }}</span>
+                              {{ reply.content || reply.text }}
+                            </p>
+                            <div class="comment-actions">
+                              <button class="comment-action" @click="startReply(post, comment)">
+                                <span class="material-symbols-outlined" style="font-size:14px;">chat_bubble_outline</span>
+                                Reply
+                              </button>
+                              <button v-if="reply.author_id === authStore.user?.id || reply.author_id === authStore.profile?.id" class="comment-action comment-action--delete" @click="deleteComment(post, reply)">
+                                <span class="material-symbols-outlined" style="font-size:14px;">delete</span>
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </template>
               </div>
               <p v-else class="no-comments">No comments yet. Be the first!</p>
+
+              <!-- Reply indicator -->
+              <div v-if="replyingTo[post.id]" class="replying-to-bar">
+                <span>Replying to <strong>{{ replyingTo[post.id].author || 'User' }}</strong></span>
+                <button class="cancel-reply-btn" @click="cancelReply(post.id)">
+                  <span class="material-symbols-outlined">close</span>
+                </button>
+              </div>
 
               <!-- Comment Input -->
               <div class="comment-input-row">
@@ -267,7 +322,7 @@
                 <input 
                   v-model="newComments[post.id]" 
                   class="comment-input" 
-                  placeholder="Write a comment..." 
+                  :placeholder="replyingTo[post.id] ? `Reply to @${replyingTo[post.id].author || 'User'}...` : 'Write a comment...'"
                   @keyup.enter="submitComment(post, $event)"
                 />
                 <button
@@ -441,6 +496,7 @@ function deletePost(postId) {
 const showCompose = ref(false)
 const newPost        = ref('')
 const newComments    = ref({})
+const replyingTo     = ref({}) // { postId: { id, author } }
 const composeMode    = ref('text')
 const quotePost      = ref(null)
 const imageInput     = ref(null)
@@ -607,30 +663,85 @@ async function submitPost() {
 
 async function toggleComments(post) {
   post.showComments = !post.showComments
-  // Fetch comments from backend if opening and not loaded yet
   if (post.showComments && (!post.commentList || post.commentList.length === 0)) {
     try {
-      const data = await http.get(`/feed/${post.id}`)
+      const data = await http.get(`/feed/${post.id}/comments`)
       if (data.comments) {
         post.commentList = data.comments.map(c => ({
           id: c.id,
           content: c.content,
           author: c.author_name || 'User',
           author_id: c.author_id,
+          author_username: c.author_username || '',
+          author_avatar: c.author_avatar || null,
+          parent_comment_id: c.parent_comment_id || null,
           time: formatTime(c.created_at),
           created_at: c.created_at,
         }))
       }
-    } catch { /* ignore */ }
+    } catch {
+      try {
+        const data = await http.get(`/feed/${post.id}`)
+        if (data.comments) {
+          post.commentList = data.comments.map(c => ({
+            id: c.id, content: c.content, author: c.author_name || 'User',
+            author_id: c.author_id, author_username: c.author_username || '',
+            author_avatar: c.author_avatar || null,
+            parent_comment_id: c.parent_comment_id || null,
+            time: formatTime(c.created_at), created_at: c.created_at,
+          }))
+        }
+      } catch { /* ignore */ }
+    }
   }
+}
+
+function getRootComments(post) {
+  if (!post.commentList) return []
+  return post.commentList.filter(c => !c.parent_comment_id)
+}
+
+function getReplies(post, parentId) {
+  if (!post.commentList) return []
+  return post.commentList.filter(c => c.parent_comment_id === parentId)
+}
+
+function startReply(post, comment) {
+  replyingTo.value[post.id] = { id: comment.id, author: comment.author }
+}
+
+function cancelReply(postId) {
+  delete replyingTo.value[postId]
+}
+
+async function deleteComment(post, comment) {
+  try {
+    await http.request({ method: 'DELETE', url: `/feed/${post.id}/comments/${comment.id}` })
+    post.commentList = post.commentList.filter(c => c.id !== comment.id)
+    post.comment_count = Math.max((post.comment_count || 1) - 1, 0)
+  } catch { /* ignore */ }
 }
 
 function submitComment(post, e) {
   const text = newComments.value[post.id]?.trim()
   if (!text) return
-
-  feedStore.commentOnPost(post.id, text)
+  const parentId = replyingTo.value[post.id]?.id || null
+  http.post(`/feed/${post.id}/comment`, { content: text, parent_id: parentId }).then(result => {
+    if (!post.commentList) post.commentList = []
+    post.commentList.push({
+      id: result?.id || Date.now().toString(),
+      content: text,
+      author: authStore.profile?.full_name || 'You',
+      author_id: authStore.user?.id || authStore.profile?.id,
+      author_username: authStore.profile?.username || '',
+      author_avatar: authStore.profile?.avatar || null,
+      parent_comment_id: parentId,
+      created_at: new Date().toISOString(),
+    })
+    post.comment_count = (post.comment_count || 0) + 1
+  }).catch(() => {})
   newComments.value[post.id] = ''
+  cancelReply(post.id)
 }
 </script>
 
@@ -1279,6 +1390,11 @@ function submitComment(post, e) {
   font-family: var(--font-headline); font-size: 0.65rem; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.comment-avatar-img {
+  width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-full);
 }
 
 .comment-body { flex: 1; min-width: 0; }
@@ -1296,12 +1412,74 @@ function submitComment(post, e) {
   color: var(--on-surface);
 }
 
+.comment-author-handle {
+  font-size: 0.72rem;
+  color: var(--on-surface-variant);
+}
+
 .comment-time { font-size: 0.68rem; color: var(--on-surface-variant); }
 
 .comment-text {
   font-size: 0.84rem; color: var(--on-surface);
   margin-top: 0.15rem; line-height: 1.5; word-break: break-word;
 }
+
+.comment-actions {
+  display: flex; gap: 0.75rem; margin-top: 0.3rem;
+}
+
+.comment-action {
+  display: flex; align-items: center; gap: 0.2rem;
+  font-size: 0.72rem; color: var(--on-surface-variant);
+  background: none; border: none; cursor: pointer;
+  font-family: var(--font-headline); font-weight: 600;
+  transition: color 0.15s ease; padding: 0;
+}
+.comment-action:hover { color: var(--primary); }
+.comment-action--delete:hover { color: #ef4444; }
+
+.comment-replies {
+  margin-top: 0.625rem;
+  padding-left: 0.25rem;
+  border-left: 2px solid var(--outline-variant);
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.reply-item { padding-left: 0.5rem; }
+
+.reply-avatar { width: 24px; height: 24px; font-size: 0.55rem; }
+
+.reply-mention {
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 0.82rem;
+  margin-right: 0.25rem;
+}
+
+.replying-to-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0.75rem;
+  background: rgba(168, 85, 247, 0.06);
+  border-radius: var(--radius-lg);
+  font-size: 0.78rem;
+  color: var(--on-surface-variant);
+  margin-bottom: 0.5rem;
+}
+
+.cancel-reply-btn {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--on-surface-variant);
+  cursor: pointer;
+}
+.cancel-reply-btn .material-symbols-outlined { font-size: 14px; }
 
 .no-comments {
   font-size: 0.8rem;
@@ -1312,20 +1490,6 @@ function submitComment(post, e) {
 }
 
 .comment-content { flex: 1; min-width: 0; }
-
-.comment-header { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
-
-.comment-author { font-family: var(--font-headline); font-size: 0.78rem; font-weight: 600; color: var(--on-surface); }
-
-.comment-actions { display: flex; gap: 0.625rem; margin-top: 0.375rem; }
-
-.comment-action {
-  font-size: 0.72rem; color: var(--on-surface-variant);
-  background: none; border: none; cursor: pointer;
-  font-family: var(--font-headline); font-weight: 600;
-  transition: color 0.15s ease; padding: 0;
-}
-.comment-action:hover { color: var(--primary); }
 
 .comment-input-row { display: flex; align-items: center; gap: 0.625rem; }
 
