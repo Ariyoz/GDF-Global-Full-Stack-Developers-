@@ -19,29 +19,25 @@ export const useMessagingStore = defineStore('messaging', () => {
   // Listen for WebSocket events
   websocketService.onEvent((event) => {
     if (event.type === 'message_sent') {
-      // conversation_id can be at top level or in data
       const convId = event.conversation_id || event.data?.conversation_id
       const content = event.content || event.data?.content || event.data?.content_preview || ''
       const senderId = event.from || event.data?.sender_id
+      const authStore = useAuthStore()
+
+      // Skip if this is our own message (we already added it optimistically)
+      if (senderId === authStore.user?.id) return
 
       // Add to messages if this is the active conversation
       if (convId && activeConversation.value?.id === convId) {
-        // Avoid duplicate if we already added it (sender side)
-        const isDuplicate = messages.value.some(m =>
-          m.content === content && m.sender_id === senderId &&
-          Date.now() - new Date(m.created_at).getTime() < 5000
-        )
-        if (!isDuplicate) {
-          messages.value.push({
-            id: `ws-${Date.now()}`,
-            content,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            sender_id: senderId,
-            created_at: new Date().toISOString(),
-            is_read: false,
-            mine: false,
-          })
-        }
+        messages.value.push({
+          id: event.message_id || `ws-${Date.now()}`,
+          content,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          sender_id: senderId,
+          created_at: new Date().toISOString(),
+          is_read: false,
+          mine: false,
+        })
       }
 
       // Update conversation preview instantly
@@ -189,9 +185,9 @@ export const useMessagingStore = defineStore('messaging', () => {
         mediaUrl,
       )
 
-      // Add to local messages immediately
+      // Add to local messages immediately (optimistic — sender sees it right away)
       messages.value.push({
-        id: result?.id || Date.now(),
+        id: result?.id || `local-${Date.now()}`,
         content,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         mine: true,
@@ -203,16 +199,15 @@ export const useMessagingStore = defineStore('messaging', () => {
         created_at: new Date().toISOString(),
       })
 
-      // Send via WebSocket for instant delivery
-      const senderProfile = authStore.profile || authStore.user
-      websocketService.send({
-        type: 'message',
-        conversation_id: activeConversation.value.id,
-        content,
-        to: activeConversation.value.otherUserId,
-        from_name: senderProfile?.full_name || senderProfile?.name || 'User',
-        from_avatar: senderProfile?.avatar || '',
-      })
+      // Update conversation preview for sender
+      const conv = conversations.value.find(c => c.id === activeConversation.value?.id)
+      if (conv) {
+        conv.lastMessage = content
+        conv.time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      }
+
+      // NOTE: Backend now sends WebSocket event to recipient directly from REST endpoint
+      // No need to send WebSocket frame here — avoids duplicates
     } catch (err) {
       console.error('Failed to send message:', err)
     }
