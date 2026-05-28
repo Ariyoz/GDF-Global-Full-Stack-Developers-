@@ -36,3 +36,9 @@ yarn-error.log*
 
 # Coverage
 coverage/
+
+# Android local config (machine-specific)
+android/local.properties
+android/.gradle/
+android/app/build/
+android/build/
