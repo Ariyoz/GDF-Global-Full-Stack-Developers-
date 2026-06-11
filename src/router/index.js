@@ -50,6 +50,9 @@ const SafetyReportView   = () => import('@/views/SafetyReport/SafetyReportView.v
 // ── Plans ──
 const PlansView          = () => import('@/views/Plans/PlansView.vue')
 
+// ── Courses ──
+const CoursesView        = () => import('@/views/Courses/CoursesView.vue')
+
 // ── Admin Views ──
 const AdminDashboardView    = () => import('@/views/Admin/AdminDashboardView.vue')
 const AdminUsersView        = () => import('@/views/Admin/AdminUsersView.vue')
@@ -169,6 +172,13 @@ const routes = [
     component: DashboardLayout,
     meta: { requiresAuth: true },
     children: [{ path: '', name: 'plans', component: PlansView }],
+  },
+
+  // ── Courses ──
+  {
+    path: '/courses',
+    component: DefaultLayout,
+    children: [{ path: '', name: 'courses', component: CoursesView }],
   },
 
   // ── Admin Routes ──

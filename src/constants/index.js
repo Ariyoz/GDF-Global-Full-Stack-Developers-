@@ -22,6 +22,7 @@ export const NAV_LINKS = [
   { label: 'Jobs',      to: '/jobs',      exact: false },
   { label: 'Hire',      to: '/hire',      exact: false },
   { label: 'Projects',  to: '/projects',  exact: false },
+  { label: 'Courses',   to: '/courses',   exact: false },
   { label: 'Community', to: '/community', exact: false },
 ]
 

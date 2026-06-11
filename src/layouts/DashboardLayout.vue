@@ -12,6 +12,7 @@
             <RouterLink to="/dashboard" class="dash-topnav-link" :class="{ active: $route.name === 'dashboard' }">Dashboard</RouterLink>
             <RouterLink to="/explore"   class="dash-topnav-link">Explore</RouterLink>
             <RouterLink to="/projects"  class="dash-topnav-link">Projects</RouterLink>
+            <RouterLink to="/courses"   class="dash-topnav-link">Courses</RouterLink>
           </nav>
         </div>
         <div class="dash-topnav-right">
@@ -405,6 +406,7 @@ const moreNavItems = [
   { to: '/wallet',              icon: 'account_balance_wallet', label: 'Wallet'      },
   { to: '/notifications',       icon: 'notifications',          label: 'Notifications'},
   { to: '/explore',             icon: 'search',                 label: 'Explore'     },
+  { to: '/courses',             icon: 'school',                 label: 'Courses'     },
   { to: '/messaging',           icon: 'chat',                   label: 'Messages'    },
   { to: '/dashboard/profile',   icon: 'person',                 label: 'Profile'     },
   { to: '/settings',            icon: 'settings',               label: 'Settings'    },
