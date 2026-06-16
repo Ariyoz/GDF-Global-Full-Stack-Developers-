@@ -7,6 +7,8 @@
     "iosScheme": "https",
     "allowNavigation": [
       "gfd-backend.onrender.com",
+      "globalfd.xyz",
+      "www.globalfd.xyz",
       "gdf-global-full-stack-developers.vercel.app",
       "accounts.google.com",
       "github.com",

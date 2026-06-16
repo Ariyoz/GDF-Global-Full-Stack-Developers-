@@ -7,7 +7,8 @@
     </base-config>
     <domain-config cleartextTrafficPermitted="false">
         <domain includeSubdomains="true">gfd-backend.onrender.com</domain>
-        <domain includeSubdomains="true">gdf-global-full-stack-developers.vercel.app</domain>
+        <domain includeSubdomains="true">globalfd.xyz</domain>
+        <domain includeSubdomains="true">www.globalfd.xyz</domain>
         <domain includeSubdomains="true">res.cloudinary.com</domain>
     </domain-config>
 </network-security-config>
