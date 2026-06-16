@@ -85,8 +85,14 @@ async function handleLogin() {
     await authStore.login(form)
     uiStore.showSuccess('Welcome back!')
     router.push(route.query.redirect || '/dashboard')
-  } catch {
-    uiStore.showError(authStore.error || 'Login failed. Please try again.')
+  } catch (err) {
+    const msg = authStore.error || 'Login failed. Please try again.'
+    // If it's a server cold start issue, show helpful message
+    if (!err.response) {
+      uiStore.showError('Server is waking up — please wait 30 seconds and try again.')
+    } else {
+      uiStore.showError(msg)
+    }
   } finally {
     loading.value = false
   }

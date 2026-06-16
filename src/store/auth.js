@@ -150,7 +150,13 @@ export const useAuthStore = defineStore('auth', () => {
 
       return data
     } catch (err) {
-      error.value = err.response?.data?.detail || err.message || 'Invalid email or password'
+      // Improve error message for users
+      if (!err.response) {
+        // No response = network/CORS issue or server down
+        error.value = 'Server is starting up. Please wait 30 seconds and try again.'
+      } else {
+        error.value = err.response?.data?.detail || err.message || 'Invalid email or password'
+      }
       throw err
     } finally {
       loading.value = false
