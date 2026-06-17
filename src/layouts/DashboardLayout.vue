@@ -24,9 +24,11 @@
           </button>
           <RouterLink to="/messaging" class="icon-btn topnav-hide-mobile" aria-label="Messages">
             <span class="material-symbols-outlined">mail</span>
+            <span v-if="messagingStore.totalUnread > 0" class="nav-badge">{{ messagingStore.totalUnread > 9 ? '9+' : messagingStore.totalUnread }}</span>
           </RouterLink>
-          <RouterLink to="/notifications" class="icon-btn topnav-hide-mobile" aria-label="Notifications">
+          <RouterLink to="/notifications" class="icon-btn topnav-hide-mobile" aria-label="Notifications" style="position:relative">
             <span class="material-symbols-outlined">notifications</span>
+            <span v-if="notifsStore.unreadCount > 0" class="nav-badge">{{ notifsStore.unreadCount > 9 ? '9+' : notifsStore.unreadCount }}</span>
           </RouterLink>
           <!-- Wallet icon button -->
           <RouterLink to="/wallet" class="icon-btn topnav-hide-mobile" aria-label="Wallet">
@@ -101,6 +103,7 @@
       <RouterLink to="/messaging" class="bottom-nav-item" :class="{ active: $route.path === '/messaging' }">
         <span class="material-symbols-outlined" :style="$route.path === '/messaging' ? 'font-variation-settings:\'FILL\' 1' : ''">chat</span>
         <span>Messages</span>
+        <span v-if="messagingStore.totalUnread > 0" class="bottom-badge">{{ messagingStore.totalUnread > 9 ? '9+' : messagingStore.totalUnread }}</span>
       </RouterLink>
 
       <!-- More button -->
@@ -264,21 +267,33 @@
 </template>
 
 <script setup>
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/store/auth'
 import { useTheme }     from '@/composables/useTheme'
 import { useFeedStore } from '@/store/feed'
 import { useUiStore }   from '@/store/ui'
+import { useMessagingStore } from '@/store/messaging'
+import { useNotificationsStore } from '@/store/notifications'
 import ToastContainer from '@/components/ui/ToastContainer.vue'
 
 const router    = useRouter()
 const authStore = useAuthStore()
 const feedStore = useFeedStore()
 const uiStore   = useUiStore()
+const messagingStore = useMessagingStore()
+const notifsStore = useNotificationsStore()
 const { user, isAdmin }  = storeToRefs(authStore)
 const { isDark, toggle } = useTheme()
+
+// Pre-fetch unread counts when layout mounts
+onMounted(() => {
+  if (authStore.isAuthenticated) {
+    notifsStore.fetchUnreadCount()
+    messagingStore.fetchConversations()
+  }
+})
 
 // ── Compose Sheet ──
 const showCompose     = ref(false)
@@ -370,7 +385,7 @@ async function submitCompose() {
 
 // ── User ──
 const userInitials = computed(() => {
-  const name = user.value?.full_name || profile.value?.full_name || user.value?.email || 'GFD'
+  const name = user.value?.full_name || authStore.profile?.full_name || user.value?.email || 'GFD'
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 })
 
@@ -564,8 +579,25 @@ function handleSignOut() {
 
 .icon-btn:hover { background: rgba(168,85,247,0.08); color: var(--primary); }
 .icon-btn .material-symbols-outlined { font-size: 20px; }
-
-/* User pill — avatar + first name + logout icon, all in one row */
+.icon-btn { position: relative; }
+.nav-badge {
+  position: absolute; top: 2px; right: 2px;
+  min-width: 16px; height: 16px; border-radius: 8px;
+  background: var(--primary); color: #fff;
+  font-size: 0.6rem; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 3px; pointer-events: none;
+  border: 1.5px solid var(--surface-container-lowest);
+}
+.bottom-nav-item { position: relative; }
+.bottom-badge {
+  position: absolute; top: 0; right: 2px;
+  min-width: 15px; height: 15px; border-radius: 8px;
+  background: var(--primary); color: #fff;
+  font-size: 0.55rem; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 3px; pointer-events: none;
+}
 .topnav-user-pill {
   display: flex;
   align-items: center;

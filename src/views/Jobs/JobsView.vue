@@ -3,10 +3,16 @@
     <!-- Header -->
     <div class="jobs-header">
       <h1 class="jobs-title">Jobs</h1>
-      <button v-if="isClient" class="btn-post-job" @click="showPostJob = true">
-        <span class="material-symbols-outlined">add</span>
-        Post Job
-      </button>
+      <div class="header-btns">
+        <button v-if="isDeveloper" class="btn-my-apps" @click="fetchMyApplications">
+          <span class="material-symbols-outlined">work_history</span>
+          My Applications
+        </button>
+        <button v-if="isClient || authStore.profile?.role === 'admin'" class="btn-post-job" @click="showPostJob = true">
+          <span class="material-symbols-outlined">add</span>
+          Post Job
+        </button>
+      </div>
     </div>
 
     <!-- Search -->
@@ -121,10 +127,17 @@
               <span class="material-symbols-outlined">send</span>
               Apply Now
             </button>
-            <button v-else-if="isClient || selectedJob?.poster_name === authStore.profile?.full_name" class="btn-primary apply-btn" @click="viewApplicants(selectedJob)">
-              <span class="material-symbols-outlined">group</span>
-              View Applicants ({{ selectedJob?.application_count || 0 }})
-            </button>
+            <div v-else-if="isClient || selectedJob?.poster_name === authStore.profile?.full_name" class="modal-footer-row">
+              <button class="btn-primary apply-btn" @click="viewApplicants(selectedJob); currentReviewJob = selectedJob">
+                <span class="material-symbols-outlined">group</span>
+                Applicants ({{ selectedJob?.application_count || 0 }})
+              </button>
+              <button v-if="selectedJob?.status !== 'closed'" class="btn-close-job" @click="closeJob(selectedJob)">
+                <span class="material-symbols-outlined">lock</span>
+                Close Job
+              </button>
+              <span v-else class="closed-badge">Closed</span>
+            </div>
           </div>
         </div>
       </div>
@@ -249,7 +262,36 @@
       </div>
     </Transition>
 
-    <!-- Applicants Review Modal -->
+    <!-- My Applications Modal -->
+    <Transition name="modal">
+      <div v-if="showMyApplications" class="modal-overlay" @click.self="showMyApplications = false">
+        <div class="job-detail-modal">
+          <div class="modal-header">
+            <h2 class="modal-title">My Applications</h2>
+            <button class="btn-ghost icon-only" @click="showMyApplications = false">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div v-if="myApplications.length === 0" class="jobs-empty" style="padding:1rem;">
+              <span class="material-symbols-outlined" style="font-size:2.5rem;color:var(--on-surface-variant)">work_history</span>
+              <p>No applications yet</p>
+            </div>
+            <div v-for="app in myApplications" :key="app.id" class="my-app-card">
+              <div class="my-app-header">
+                <div class="my-app-info">
+                  <h4 class="my-app-title">{{ app.job_title }}</h4>
+                  <p class="my-app-company">{{ app.company }}</p>
+                  <p class="my-app-meta">{{ app.job_type?.replace('_',' ') }} · {{ app.is_remote ? 'Remote' : app.location }}</p>
+                </div>
+                <span class="applicant-status" :class="app.status">{{ app.status }}</span>
+              </div>
+              <p class="my-app-date">Applied {{ formatTime(app.created_at) }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
     <Transition name="modal">
       <div v-if="showApplicants" class="modal-overlay" @click.self="showApplicants = false">
         <div class="job-detail-modal">
@@ -282,9 +324,23 @@
                 <a v-if="app.portfolio_url" :href="app.portfolio_url" target="_blank" class="app-link">🌐 Portfolio</a>
                 <a v-if="app.github_url" :href="app.github_url" target="_blank" class="app-link">💻 GitHub</a>
               </div>
-              <div v-if="app.status === 'pending'" class="applicant-actions">
+              <div v-if="app.status === 'pending' || app.status === 'reviewed'" class="applicant-actions">
                 <button class="btn-approve" @click="updateApplicationStatus(app, 'shortlisted')">
                   <span class="material-symbols-outlined">check</span> Shortlist
+                </button>
+                <button class="btn-chat" @click="openHiringChat(selectedJob, app)">
+                  <span class="material-symbols-outlined">chat</span> Message
+                </button>
+                <button class="btn-decline" @click="updateApplicationStatus(app, 'rejected')">
+                  <span class="material-symbols-outlined">close</span> Decline
+                </button>
+              </div>
+              <div v-else-if="app.status === 'shortlisted'" class="applicant-actions">
+                <button class="btn-approve" style="background:rgba(168,85,247,0.1);border-color:rgba(168,85,247,0.3);color:var(--primary)" @click="updateApplicationStatus(app, 'accepted')">
+                  <span class="material-symbols-outlined">how_to_reg</span> Accept
+                </button>
+                <button class="btn-chat" @click="openHiringChat(selectedJob, app)">
+                  <span class="material-symbols-outlined">chat</span> Message
                 </button>
                 <button class="btn-decline" @click="updateApplicationStatus(app, 'rejected')">
                   <span class="material-symbols-outlined">close</span> Decline
@@ -303,7 +359,6 @@ import { useSeo, pageSeo } from '@/composables/useSeo'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '@/store/auth'
 import { useUiStore } from '@/store/ui'
-import { websocketService } from '@/services/websocket.service'
 import http from '@/services/http'
 
 useSeo(pageSeo.jobs)
@@ -462,19 +517,60 @@ async function updateApplicationStatus(app, newStatus) {
   try {
     await http.patch(`/jobs/applications/${app.id}`, { status: newStatus })
     app.status = newStatus
-    uiStore.showSuccess(newStatus === 'shortlisted' ? 'Applicant shortlisted!' : 'Application declined')
+    uiStore.showSuccess(
+      newStatus === 'shortlisted' ? 'Applicant shortlisted!' :
+      newStatus === 'accepted' ? '🎉 Applicant accepted!' :
+      newStatus === 'rejected' ? 'Application declined' : 'Status updated'
+    )
   } catch {
     uiStore.showError('Failed to update status')
   }
 }
 
-onMounted(() => {
-  fetchJobs()
-  // Auto-refresh every 30 seconds for real-time feel
-  refreshInterval = setInterval(fetchJobs, 30000)
-})
+async function openHiringChat(job, app) {
+  try {
+    const data = await http.post(`/jobs/${currentReviewJob.value?.id || job.id}/applications/${app.id}/open-chat`, {})
+    uiStore.showSuccess('Hiring conversation started!')
+    showApplicants.value = false
+    window.location.href = '/messaging'
+  } catch {
+    uiStore.showError('Failed to open chat')
+  }
+}
+
+async function closeJob(job) {
+  if (!confirm('Close this job? No more applications will be accepted.')) return
+  try {
+    await http.patch(`/jobs/${job.id}/close`, {})
+    job.status = 'closed'
+    jobs.value.forEach(j => { if (j.id === job.id) j.status = 'closed' })
+    uiStore.showSuccess('Job closed')
+    selectedJob.value = null
+  } catch {
+    uiStore.showError('Failed to close job')
+  }
+}
+
+const currentReviewJob = ref(null)
+
+const myApplications = ref([])
+const showMyApplications = ref(false)
+
+async function fetchMyApplications() {
+  try {
+    const data = await http.get('/jobs/my-applications')
+    myApplications.value = data.applications || []
+    showMyApplications.value = true
+  } catch {
+    uiStore.showError('Failed to load your applications')
+  }
+}
 
 let refreshInterval = null
+onMounted(() => {
+  fetchJobs()
+  refreshInterval = setInterval(fetchJobs, 30000)
+})
 onUnmounted(() => {
   if (refreshInterval) clearInterval(refreshInterval)
 })
@@ -583,4 +679,23 @@ onUnmounted(() => {
 
 .modal-enter-active, .modal-leave-active { transition: opacity 0.2s, transform 0.25s; }
 .modal-enter-from, .modal-leave-to { opacity: 0; transform: translateY(20px); }
+
+/* New styles */
+.header-btns { display:flex; align-items:center; gap:0.5rem; }
+.btn-my-apps { display:flex; align-items:center; gap:0.3rem; padding:0.5rem 0.875rem; background:var(--surface-container); border:1px solid var(--outline-variant); border-radius:var(--radius-full); font-family:var(--font-headline); font-size:0.8rem; font-weight:600; color:var(--on-surface); cursor:pointer; }
+.btn-my-apps .material-symbols-outlined { font-size:16px; }
+.modal-footer-row { display:flex; gap:0.5rem; align-items:center; }
+.btn-close-job { display:flex; align-items:center; gap:0.3rem; padding:0.65rem 1rem; background:var(--surface-container); border:1px solid var(--outline-variant); border-radius:var(--radius-lg); font-size:0.85rem; font-weight:600; color:var(--on-surface-variant); cursor:pointer; }
+.btn-close-job:hover { background:rgba(239,68,68,0.08); color:#ef4444; border-color:rgba(239,68,68,0.3); }
+.closed-badge { padding:0.35rem 0.75rem; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius:var(--radius-full); font-size:0.78rem; font-weight:600; color:#ef4444; }
+.btn-chat { flex:1; display:flex; align-items:center; justify-content:center; gap:0.3rem; padding:0.5rem; background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.2); border-radius:var(--radius-lg); color:var(--primary); font-size:0.8rem; font-weight:600; cursor:pointer; }
+.btn-chat:hover { background:rgba(99,102,241,0.15); }
+.btn-chat .material-symbols-outlined { font-size:16px; }
+.my-app-card { padding:0.875rem; background:var(--surface-container-low); border:1px solid var(--outline-variant); border-radius:var(--radius-xl); display:flex; flex-direction:column; gap:0.4rem; }
+.my-app-header { display:flex; align-items:flex-start; justify-content:space-between; gap:0.5rem; }
+.my-app-info { flex:1; min-width:0; }
+.my-app-title { font-family:var(--font-headline); font-size:0.9rem; font-weight:700; color:var(--on-surface); }
+.my-app-company { font-size:0.8rem; color:var(--on-surface-variant); }
+.my-app-meta { font-size:0.75rem; color:var(--on-surface-variant); text-transform:capitalize; }
+.my-app-date { font-size:0.72rem; color:var(--on-surface-variant); }
 </style>
