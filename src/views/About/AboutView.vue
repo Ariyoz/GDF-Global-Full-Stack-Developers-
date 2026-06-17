@@ -25,7 +25,7 @@ import AboutSection from '@/components/common/AboutSection.vue'
 import TeamSection  from '@/components/common/TeamSection.vue'
 
 useSeo(pageSeo.about)
-
+</script>
 
 <style scoped>
 .about-view { background: var(--background); }
