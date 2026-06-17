@@ -31,6 +31,31 @@
         </div>
       </div>
 
+      <!-- Socials -->
+      <div class="socials-wrap animate-fade-in-up delay-300">
+        <h3 class="socials-title">Join Us on Social Media</h3>
+        <p class="socials-sub">Follow our community channels, get updates, and connect with the GFD network.</p>
+        <div class="socials-grid">
+          <a
+            v-for="social in socials"
+            :key="social.label"
+            :href="social.url"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="social-card glass-card"
+          >
+            <div class="social-icon-wrap" :style="{ background: social.bg }">
+              <img :src="social.logo" :alt="social.label" class="social-logo" />
+            </div>
+            <div class="social-info">
+              <span class="social-label">{{ social.label }}</span>
+              <span class="social-handle">{{ social.handle }}</span>
+            </div>
+            <span class="material-symbols-outlined social-arrow">arrow_outward</span>
+          </a>
+        </div>
+      </div>
+
       <!-- CTA Banner -->
       <div class="community-cta animate-fade-in-up delay-400">
         <div class="cta-banner">
@@ -82,6 +107,37 @@ const benefits = [
   { icon: 'public',        title: 'Global Network',      desc: 'Connect with developers across multiple countries.' },
   { icon: 'emoji_events',  title: 'Recognition',         desc: 'Get featured for your contributions and achievements.' },
   { icon: 'bolt',          title: 'Modern Tech Stack',   desc: 'Work with the latest tools, frameworks, and best practices.' },
+]
+
+const socials = [
+  {
+    label: 'Instagram',
+    handle: '@glob.aldevs',
+    url: 'https://www.instagram.com/glob.aldevs?igsh=MXZ1dWcyb3JpN2k1cQ%3D%3D&utm_source=qr',
+    bg: 'linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png',
+  },
+  {
+    label: 'TikTok',
+    handle: '@global_devs',
+    url: 'https://www.tiktok.com/@global_devs',
+    bg: '#010101',
+    logo: 'https://upload.wikimedia.org/wikipedia/en/a/a9/TikTok_logo.svg',
+  },
+  {
+    label: 'X (Twitter)',
+    handle: '@globalfdst',
+    url: 'https://x.com/globalfdst',
+    bg: '#000000',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/5/53/X_logo_2023_original.svg',
+  },
+  {
+    label: 'WhatsApp Community',
+    handle: 'Join our group',
+    url: 'https://chat.whatsapp.com/BHvYymbItGiBbVGwGaJgRH?s=cl&p=i&ilr=1',
+    bg: '#25D366',
+    logo: 'https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg',
+  },
 ]
 </script>
 
@@ -176,6 +232,97 @@ const benefits = [
   font-size: 0.875rem;
   color: var(--on-surface-variant);
   line-height: 1.6;
+}
+
+/* Socials */
+.socials-wrap {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.socials-title {
+  font-family: var(--font-headline);
+  font-size: clamp(1.1rem, 3vw, 1.375rem);
+  font-weight: 700;
+  color: var(--on-surface);
+  margin-bottom: 0.375rem;
+}
+
+.socials-sub {
+  font-size: 0.875rem;
+  color: var(--on-surface-variant);
+  line-height: 1.6;
+  margin-bottom: 1.25rem;
+}
+
+.socials-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.875rem;
+  text-align: left;
+}
+
+@media (min-width: 640px) {
+  .socials-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+.social-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.social-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+
+.social-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 10px;
+}
+
+.social-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.social-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+}
+
+.social-label {
+  font-family: var(--font-headline);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--on-surface);
+}
+
+.social-handle {
+  font-size: 0.8rem;
+  color: var(--on-surface-variant);
+}
+
+.social-arrow {
+  font-size: 18px;
+  color: var(--primary);
+  align-self: flex-end;
 }
 
 /* CTA Banner */

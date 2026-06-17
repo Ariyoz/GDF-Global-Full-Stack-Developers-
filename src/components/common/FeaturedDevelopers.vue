@@ -109,8 +109,15 @@ function initials(name) {
 }
 
 .featured-section > .container-gfd {
-  padding-left: 0;
-  padding-right: 0;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .featured-section > .container-gfd {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
 }
 
 /* Section header */
@@ -142,8 +149,6 @@ function initials(name) {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1rem;
-  margin-left: 0;
-  margin-right: 0;
 }
 
 @media (min-width: 640px) {
@@ -162,8 +167,6 @@ function initials(name) {
   padding: 1rem;
   width: 100%;
   box-sizing: border-box;
-  margin-left: auto;
-  margin-right: auto;
 }
 
 /* Card header */
