@@ -82,6 +82,9 @@ import ToastContainer from '@/components/ui/ToastContainer.vue'
   flex-direction: column;
   background: var(--background);
   transition: background-color 0.3s ease;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
 }
 
 .layout-main {

@@ -6,6 +6,14 @@
 @import "./typography.css";
 @import "./utilities.css";
 
+/* ── Root overflow lock ── */
+#app {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+  position: relative;
+}
+
 /* ── Smooth theme transition for all elements ── */
 *,
 *::before,

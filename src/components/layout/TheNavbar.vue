@@ -157,6 +157,9 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
   position: fixed;
   top: 0; left: 0; right: 0;
   z-index: 1000;
+  width: 100%;
+  max-width: 100vw;
+  overflow: hidden;
   padding-top: env(safe-area-inset-top, 0px);
   background: rgba(249, 249, 255, 0.92);
   backdrop-filter: blur(16px);
@@ -176,19 +179,19 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
   align-items: center;
   justify-content: space-between;
   height: 64px;
-  gap: 1rem;
+  gap: 0.75rem;
+  padding: 0 1rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 @media (max-width: 640px) {
-  .navbar-gfd {
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-  }
   .navbar-inner {
     gap: 0.5rem;
+    padding: 0 0.75rem;
   }
   .mobile-right {
-    gap: 0.5rem;
+    gap: 0.25rem;
   }
 }
 
@@ -332,7 +335,9 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
   border-top: 1px solid var(--outline-variant);
   padding: 0.75rem 0.75rem 1.25rem;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
-  /* No backdrop-filter — solid background prevents text bleed-through */
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .mobile-nav {
