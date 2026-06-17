@@ -1,0 +1,31 @@
+User-agent: *
+Allow: /
+
+# Allow all public pages
+Allow: /about
+Allow: /services
+Allow: /community
+Allow: /projects
+Allow: /careers
+Allow: /contact
+Allow: /hire
+Allow: /explore
+Allow: /jobs
+Allow: /courses
+Allow: /plans
+Allow: /developer/
+
+# Block private/authenticated routes
+Disallow: /dashboard
+Disallow: /feed
+Disallow: /messaging
+Disallow: /notifications
+Disallow: /wallet
+Disallow: /settings
+Disallow: /projects/upload
+Disallow: /admin
+Disallow: /auth/callback
+Disallow: /report
+
+# Sitemaps
+Sitemap: https://www.globalfd.xyz/sitemap.xml

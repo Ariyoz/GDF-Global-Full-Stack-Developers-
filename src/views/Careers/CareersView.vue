@@ -75,6 +75,10 @@
 </template>
 
 <script setup>
+import { useSeo, pageSeo } from '@/composables/useSeo'
+
+useSeo(pageSeo.careers)
+
 const openRoles = [
   { icon: 'palette',      title: 'Senior Frontend Developer', type: 'Full-time', location: 'Remote', desc: 'Lead frontend development with Vue.js, building premium UIs for global clients.', tags: ['Vue.js', 'JavaScript', 'Tailwind CSS'] },
   { icon: 'settings',     title: 'Backend Engineer',          type: 'Full-time', location: 'Remote', desc: 'Design scalable APIs and microservices handling millions of requests.', tags: ['Node.js', 'PostgreSQL', 'Redis', 'Docker'] },

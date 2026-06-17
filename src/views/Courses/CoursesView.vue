@@ -87,7 +87,10 @@
 </template>
 
 <script setup>
+import { useSeo, pageSeo } from '@/composables/useSeo'
 import { ref, computed } from 'vue'
+
+useSeo(pageSeo.courses)
 
 const searchQuery = ref('')
 const activeCategory = ref('all')

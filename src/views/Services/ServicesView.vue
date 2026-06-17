@@ -47,8 +47,11 @@
 </template>
 
 <script setup>
+import { useSeo, pageSeo } from '@/composables/useSeo'
 import ServicesSection from '@/components/common/ServicesSection.vue'
 import SectionHeader   from '@/components/ui/SectionHeader.vue'
+
+useSeo(pageSeo.services)
 
 const steps = [
   { title: 'Discovery',   desc: 'We learn your goals, audience, and technical requirements.' },

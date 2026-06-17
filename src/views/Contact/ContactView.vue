@@ -78,9 +78,17 @@
 </template>
 
 <script setup>
+import { useSeo, pageSeo } from '@/composables/useSeo'
 import { ref, reactive } from 'vue'
 import GfdInput  from '@/components/ui/GfdInput.vue'
 import GfdButton from '@/components/ui/GfdButton.vue'
+
+useSeo({
+  title: 'Contact Us',
+  description: 'Get in touch with the GFD team. Have a project in mind or want to join our developer community? We reply within 24 hours.',
+  path: '/contact',
+  keywords: ['contact GFD', 'hire developers contact', 'get in touch', 'developer platform support'],
+})
 
 const loading = ref(false)
 const sent    = ref(false)

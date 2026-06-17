@@ -53,7 +53,10 @@
 </template>
 
 <script setup>
+import { useSeo, pageSeo } from '@/composables/useSeo'
 import CommunitySection from '@/components/common/CommunitySection.vue'
+
+useSeo(pageSeo.community)
 
 const jobs = [
   { icon: 'palette',        title: 'Senior Frontend Developer', type: 'Full-time', desc: 'Build premium UIs with Vue.js and modern CSS.',                tags: ['Vue.js', 'Tailwind', 'JavaScript'] },

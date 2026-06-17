@@ -86,10 +86,13 @@
 </template>
 
 <script setup>
+import { useSeo, pageSeo } from '@/composables/useSeo'
 import { ref, computed, onMounted } from 'vue'
 import { PROJECT_CATEGORIES } from '@/constants'
 import http from '@/services/http'
 import { useUiStore } from '@/store/ui'
+
+useSeo(pageSeo.projects)
 
 const uiStore = useUiStore()
 const activeFilter = ref('All')

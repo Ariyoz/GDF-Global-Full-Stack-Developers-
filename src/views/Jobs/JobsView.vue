@@ -299,11 +299,14 @@
 </template>
 
 <script setup>
+import { useSeo, pageSeo } from '@/composables/useSeo'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '@/store/auth'
 import { useUiStore } from '@/store/ui'
 import { websocketService } from '@/services/websocket.service'
 import http from '@/services/http'
+
+useSeo(pageSeo.jobs)
 
 const authStore = useAuthStore()
 const uiStore = useUiStore()

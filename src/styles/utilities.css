@@ -343,11 +343,6 @@ button, input, textarea, select {
   border-bottom-color: rgba(168, 85, 247, 0.25) !important;
 }
 
-/* Logo */
-[data-theme="dark"] .navbar-gfd .logo-text {
-  color: #ffffff !important;
-}
-
 /* Desktop nav links */
 [data-theme="dark"] .navbar-gfd .nav-link {
   color: rgba(255, 255, 255, 0.72) !important;

@@ -5,7 +5,9 @@
 
       <!-- Brand -->
       <div class="footer-brand">
-        <RouterLink to="/" class="footer-logo">GFD</RouterLink>
+        <RouterLink to="/" class="footer-logo">
+          <img src="@/assets/logo.png" alt="GFD" class="footer-logo-img" />
+        </RouterLink>
         <p class="footer-tagline">
           Elite developer marketplace for teams and builders.
         </p>
@@ -115,11 +117,14 @@ const footerColumns = [
 }
 
 .footer-logo {
-  font-family: var(--font-headline);
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--primary);
   text-decoration: none;
+}
+
+.footer-logo-img {
+  height: 28px;
+  width: auto;
+  display: block;
+  object-fit: contain;
 }
 
 .footer-tagline {

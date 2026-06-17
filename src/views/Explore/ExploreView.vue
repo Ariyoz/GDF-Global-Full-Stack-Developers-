@@ -164,9 +164,12 @@
 </template>
 
 <script setup>
+import { useSeo, pageSeo } from '@/composables/useSeo'
 import { ref, computed, onMounted } from 'vue'
 import { SKILL_TAGS } from '@/constants'
 import { useDevelopersStore } from '@/store/developers'
+
+useSeo(pageSeo.explore)
 
 const devStore    = useDevelopersStore()
 

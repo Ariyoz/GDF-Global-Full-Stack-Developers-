@@ -20,9 +20,12 @@
 </template>
 
 <script setup>
+import { useSeo, pageSeo } from '@/composables/useSeo'
 import AboutSection from '@/components/common/AboutSection.vue'
 import TeamSection  from '@/components/common/TeamSection.vue'
-</script>
+
+useSeo(pageSeo.about)
+
 
 <style scoped>
 .about-view { background: var(--background); }

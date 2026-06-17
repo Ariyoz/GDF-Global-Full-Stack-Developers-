@@ -7,7 +7,9 @@
           <RouterLink to="/" class="dash-back-btn" aria-label="Back to home">
             <span class="material-symbols-outlined">arrow_back</span>
           </RouterLink>
-          <RouterLink to="/" class="dash-logo">GFD</RouterLink>
+          <RouterLink to="/" class="dash-logo">
+            <img src="@/assets/logo.png" alt="GFD" class="dash-logo-img" />
+          </RouterLink>
           <nav class="dash-topnav-links">
             <RouterLink to="/dashboard" class="dash-topnav-link" :class="{ active: $route.name === 'dashboard' }">Dashboard</RouterLink>
             <RouterLink to="/explore"   class="dash-topnav-link">Explore</RouterLink>
@@ -482,11 +484,15 @@ function handleSignOut() {
 }
 
 .dash-logo {
-  font-family: var(--font-headline);
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--on-surface);
   text-decoration: none;
+  flex-shrink: 0;
+}
+
+.dash-logo-img {
+  height: 28px;
+  width: auto;
+  display: block;
+  object-fit: contain;
 }
 
 .dash-back-btn {

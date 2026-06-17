@@ -175,11 +175,14 @@
 </template>
 
 <script setup>
+import { useSeo, pageSeo } from '@/composables/useSeo'
 import { ref, reactive, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import GfdInput  from '@/components/ui/GfdInput.vue'
 import GfdButton from '@/components/ui/GfdButton.vue'
 import { BUDGET_RANGES, TIMELINES } from '@/constants'
+
+useSeo(pageSeo.hire)
 
 const route = useRoute()
 
