@@ -2,7 +2,7 @@
   <aside class="dash-sidebar" :class="{ open: sidebarOpen }">
     <div class="sidebar-header">
       <RouterLink to="/" class="sidebar-logo">
-        <img src="@/assets/logo.png" alt="GFD" class="sidebar-logo-img" />
+        <span class="logo-badge">GFD</span>
       </RouterLink>
       <button class="sidebar-close" @click="sidebarOpen = false">✕</button>
     </div>
@@ -115,11 +115,14 @@ async function handleLogout() {
 
 .sidebar-logo { text-decoration: none; }
 
-.sidebar-logo-img {
-  height: 28px;
-  width: auto;
-  display: block;
-  object-fit: contain;
+.logo-badge {
+  font-size: 0.9rem;
+  font-weight: 900;
+  color: var(--gfd-green);
+  background: var(--gfd-green-dim);
+  border: 1px solid var(--glass-border-green);
+  padding: 0.3rem 0.7rem;
+  border-radius: var(--radius-sm);
 }
 
 .sidebar-close {

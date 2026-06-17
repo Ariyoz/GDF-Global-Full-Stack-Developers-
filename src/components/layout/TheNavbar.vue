@@ -4,7 +4,7 @@
 
       <!-- Logo -->
       <RouterLink to="/" class="navbar-logo" @click="closeMobileMenu">
-        <img src="@/assets/logo.png" alt="GFD" class="logo-img" />
+        <span class="logo-text">GFD</span>
       </RouterLink>
 
       <!-- Desktop Nav -->
@@ -195,11 +195,13 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
 /* ── Logo ── */
 .navbar-logo { text-decoration: none; flex-shrink: 0; }
 
-.logo-img {
-  height: 32px;
-  width: auto;
-  display: block;
-  object-fit: contain;
+.logo-text {
+  font-family: var(--font-headline);
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--on-surface);
+  letter-spacing: -0.02em;
+  transition: color 0.3s ease;
 }
 
 /* ── Desktop nav ── */

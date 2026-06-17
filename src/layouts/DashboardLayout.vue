@@ -7,9 +7,7 @@
           <RouterLink to="/" class="dash-back-btn" aria-label="Back to home">
             <span class="material-symbols-outlined">arrow_back</span>
           </RouterLink>
-          <RouterLink to="/" class="dash-logo">
-            <img src="@/assets/logo.png" alt="GFD" class="dash-logo-img" />
-          </RouterLink>
+          <RouterLink to="/" class="dash-logo">GFD</RouterLink>
           <nav class="dash-topnav-links">
             <RouterLink to="/dashboard" class="dash-topnav-link" :class="{ active: $route.name === 'dashboard' }">Dashboard</RouterLink>
             <RouterLink to="/explore"   class="dash-topnav-link">Explore</RouterLink>
@@ -39,7 +37,7 @@
             <RouterLink to="/dashboard/profile" class="dash-avatar" aria-label="Profile">
               <span class="avatar-initials">{{ userInitials }}</span>
             </RouterLink>
-            <span class="topnav-username">{{ user?.name?.split(' ')[0] || 'Account' }}</span>
+            <span class="topnav-username">{{ (user?.full_name || profile?.full_name || 'Account').split(' ')[0] }}</span>
             <button type="button" class="dash-signout-btn" @click="handleSignOut">
               <span class="material-symbols-outlined">logout</span>
             </button>
@@ -372,7 +370,7 @@ async function submitCompose() {
 
 // ── User ──
 const userInitials = computed(() => {
-  const name = user.value?.name || 'GFD'
+  const name = user.value?.full_name || profile.value?.full_name || user.value?.email || 'GFD'
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 })
 
@@ -484,15 +482,11 @@ function handleSignOut() {
 }
 
 .dash-logo {
+  font-family: var(--font-headline);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--on-surface);
   text-decoration: none;
-  flex-shrink: 0;
-}
-
-.dash-logo-img {
-  height: 28px;
-  width: auto;
-  display: block;
-  object-fit: contain;
 }
 
 .dash-back-btn {

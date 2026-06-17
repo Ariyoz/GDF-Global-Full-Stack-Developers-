@@ -8,7 +8,7 @@
 
     <!-- Brand -->
     <RouterLink to="/" class="auth-brand">
-      <img src="@/assets/logo.png" alt="GFD" class="auth-brand-logo-img" />
+      <span class="auth-brand-logo">GFD</span>
       <span class="auth-brand-name">Global Full-Stack Developers</span>
     </RouterLink>
 
@@ -60,11 +60,11 @@ import ToastContainer from '@/components/ui/ToastContainer.vue'
   z-index: 10;
 }
 
-.auth-brand-logo-img {
-  height: 28px;
-  width: auto;
-  display: block;
-  object-fit: contain;
+.auth-brand-logo {
+  font-family: var(--font-headline);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--on-surface);
 }
 
 .auth-brand-name {
