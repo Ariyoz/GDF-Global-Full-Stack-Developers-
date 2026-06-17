@@ -41,7 +41,7 @@
       <div class="container-gfd footer-bottom-inner">
         <p class="footer-copy">© {{ year }} GFD Inc. Built for developers, by developers.</p>
         <div class="footer-bottom-links">
-          <a href="#" class="footer-link">Privacy Policy</a>
+          <RouterLink to="/privacy-policy" class="footer-link">Privacy Policy</RouterLink>
           <a href="#" class="footer-link">Terms of Service</a>
           <a href="#" class="footer-link">Cookie Policy</a>
         </div>
@@ -73,7 +73,7 @@ const footerColumns = [
   {
     title: 'Legal',
     links: [
-      { label: 'Privacy Policy',  href: '#' },
+      { label: 'Privacy Policy',  to: '/privacy-policy' },
       { label: 'Terms of Service',href: '#' },
       { label: 'Cookie Policy',   href: '#' },
     ],

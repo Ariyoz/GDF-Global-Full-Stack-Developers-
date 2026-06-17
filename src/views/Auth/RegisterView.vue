@@ -153,7 +153,7 @@
     <p class="auth-terms">
       By creating an account you agree to our
       <a href="#" class="auth-link">Terms of Service</a> and
-      <a href="#" class="auth-link">Privacy Policy</a>.
+      <RouterLink to="/privacy-policy" class="auth-link">Privacy Policy</RouterLink>.
     </p>
   </div>
 </template>

@@ -198,6 +198,13 @@ const routes = [
     ],
   },
 
+  // ── Legal ──
+  {
+    path: '/privacy-policy',
+    component: DefaultLayout,
+    children: [{ path: '', name: 'privacy-policy', component: () => import('@/views/Legal/PrivacyPolicyView.vue') }],
+  },
+
   // ── 404 ──
   { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView },
 ]
