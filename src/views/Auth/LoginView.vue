@@ -27,8 +27,21 @@
       </div>
 
       <GfdButton type="submit" variant="primary" :loading="loading" full>
-        Sign In
+        {{ loading && wakingUp ? 'Waking up server…' : loading ? 'Signing in…' : 'Sign In' }}
       </GfdButton>
+
+      <!-- Cold-start progress indicator -->
+      <Transition name="fade">
+        <div v-if="wakingUp || (loading && authStore.error?.includes('waking'))" class="wakeup-notice">
+          <div class="wakeup-bar">
+            <div class="wakeup-progress"></div>
+          </div>
+          <p class="wakeup-text">
+            ☕ Server is waking up on free hosting — this takes ~30 seconds.
+            We're retrying automatically, please wait…
+          </p>
+        </div>
+      </Transition>
     </form>
 
     <p class="auth-footer">
@@ -67,6 +80,7 @@ const authStore = useAuthStore()
 const uiStore   = useUiStore()
 
 const loading = ref(false)
+const wakingUp = ref(false)
 const form    = reactive({ email: '', password: '' })
 const errors  = reactive({ email: '', password: '' })
 
@@ -81,20 +95,27 @@ function validate() {
 async function handleLogin() {
   if (!validate()) return
   loading.value = true
+  wakingUp.value = false
   try {
     await authStore.login(form)
     uiStore.showSuccess('Welcome back!')
     router.push(route.query.redirect || '/dashboard')
   } catch (err) {
-    const msg = authStore.error || 'Login failed. Please try again.'
-    // If it's a server cold start issue, show helpful message
-    if (!err.response) {
-      uiStore.showError('Server is waking up — please wait 30 seconds and try again.')
+    // Check if we're in the retry/waking phase
+    if (!err.response && authStore.error?.includes('waking')) {
+      wakingUp.value = true
+      // Don't show toast — the inline message is enough
+    } else if (!err.response) {
+      uiStore.showError('Server is still starting — please wait a moment and try again.')
     } else {
-      uiStore.showError(msg)
+      uiStore.showError(authStore.error || 'Login failed.')
     }
   } finally {
     loading.value = false
+    // Keep wakingUp shown if error still references wakeup
+    if (!authStore.error?.includes('waking') && !authStore.error?.includes('starting')) {
+      wakingUp.value = false
+    }
   }
 }
 
@@ -224,6 +245,45 @@ async function loginWithGoogle() {
   color: var(--primary);
   background: rgba(99,14,212,0.03);
 }
+
+/* ── Cold-start wakeup notice ── */
+.wakeup-notice {
+  padding: 0.875rem 1rem;
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.wakeup-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--surface-container);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.wakeup-progress {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 2px;
+  animation: wakeupSweep 2.5s ease-in-out infinite;
+}
+@keyframes wakeupSweep {
+  0%   { width: 0%; margin-left: 0%; }
+  50%  { width: 60%; margin-left: 20%; }
+  100% { width: 0%; margin-left: 100%; }
+}
+.wakeup-text {
+  font-size: 0.78rem;
+  color: var(--on-surface-variant);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Transitions */
+.fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
 
 .demo-title {
   font-family: var(--font-headline);
