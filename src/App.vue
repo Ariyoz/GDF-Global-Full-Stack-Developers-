@@ -29,7 +29,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { websocketService } from '@/services/websocket.service'
 
@@ -37,8 +37,30 @@ const router = useRouter()
 const incomingAlert = ref(null)
 const alertQueue = ref([])
 let alertTimeout = null
+let keepAliveTimer = null
+
+// ── Keep-alive ping: hits /health every 10 min so Render never cold-starts ──
+function startKeepAlive() {
+  const baseUrl = (import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1')
+    .replace('/api/v1', '')
+
+  const ping = () => {
+    fetch(`${baseUrl}/health`, { method: 'GET', cache: 'no-cache' }).catch(() => {})
+  }
+
+  ping() // ping immediately on load
+  keepAliveTimer = setInterval(ping, 10 * 60 * 1000) // then every 10 minutes
+}
+
+function stopKeepAlive() {
+  if (keepAliveTimer) { clearInterval(keepAliveTimer); keepAliveTimer = null }
+}
+
+onUnmounted(stopKeepAlive)
 
 onMounted(() => {
+  startKeepAlive()
+
   websocketService.onEvent((event) => {
     // Incoming message
     if (event.type === 'message_sent') {

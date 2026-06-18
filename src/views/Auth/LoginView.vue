@@ -67,7 +67,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
 import { useUiStore }   from '@/store/ui'
@@ -79,10 +79,28 @@ const route     = useRoute()
 const authStore = useAuthStore()
 const uiStore   = useUiStore()
 
-const loading = ref(false)
+const loading  = ref(false)
 const wakingUp = ref(false)
-const form    = reactive({ email: '', password: '' })
-const errors  = reactive({ email: '', password: '' })
+const serverReady = ref(false)
+const form   = reactive({ email: '', password: '' })
+const errors = reactive({ email: '', password: '' })
+
+// Pre-warm the server as soon as the login page loads
+onMounted(async () => {
+  try {
+    const baseUrl = (import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1')
+      .replace('/api/v1', '')
+    const res = await fetch(`${baseUrl}/health`, {
+      method: 'GET',
+      signal: AbortSignal.timeout(3000),
+    })
+    serverReady.value = res.ok
+  } catch {
+    // Server is cold — quietly wake it in background
+    // Don't block or show anything yet — let _wakeUpServer handle it if login fails
+    serverReady.value = false
+  }
+})
 
 function validate() {
   errors.email = errors.password = ''
