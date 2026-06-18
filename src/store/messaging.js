@@ -338,6 +338,16 @@ export const useMessagingStore = defineStore('messaging', () => {
     return messagingService.uploadAttachment(file)
   }
 
+  async function editMessage(messageId, content) {
+    try {
+      await messagingService.editMessage(messageId, content)
+      const msg = messages.value.find(m => m.id === messageId)
+      if (msg) { msg.content = content; msg.is_edited = true }
+    } catch (err) {
+      console.error('Edit failed:', err)
+    }
+  }
+
   async function deleteMessage(messageId) {
     try {
       await messagingService.deleteMessage(messageId)
@@ -446,7 +456,7 @@ export const useMessagingStore = defineStore('messaging', () => {
     searchResults, searchQuery, isSearching,
     fetchConversations, fetchMessages, sendMessage, startConversation,
     setActiveConversation, sendTyping, sendStopTyping,
-    reactToMessage, searchMessages, uploadAttachment,
+    reactToMessage, searchMessages, uploadAttachment, editMessage,
     deleteMessage, deleteConversation,
     isUserTyping, isUserOnline, pinChat,
     sendCallSignal, clearCallEvent,
