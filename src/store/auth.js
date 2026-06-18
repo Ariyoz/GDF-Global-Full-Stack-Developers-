@@ -127,7 +127,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // Login with email/password
+  // Login with email/password — with automatic cold-start retry
   async function login({ email, password }) {
     loading.value = true
     error.value = null
@@ -142,18 +142,42 @@ export const useAuthStore = defineStore('auth', () => {
       profile.value = { id: data.user_id, email, role: data.role }
       persistSession()
 
-      // Fetch full profile in background (don't block login)
       fetchProfile().catch(() => {})
-
-      // Connect WebSocket for real-time updates
       websocketService.connect(data.access_token)
 
       return data
     } catch (err) {
-      // Improve error message for users
       if (!err.response) {
-        // No response = network/CORS issue or server down
-        error.value = 'Server is starting up. Please wait 30 seconds and try again.'
+        // No response = server cold start — wake it up and retry automatically
+        error.value = 'Server is waking up… retrying in a moment ☕'
+
+        try {
+          // Ping the health endpoint to wake up the server
+          await _wakeUpServer()
+          // Retry login once after wakeup
+          const data = await http.post(auth.login, { email, password })
+
+          session.value = { access_token: data.access_token }
+          localStorage.setItem('gfd_token', data.access_token)
+          localStorage.setItem('gfd_refresh_token', data.refresh_token)
+
+          user.value = { id: data.user_id, email, role: data.role }
+          profile.value = { id: data.user_id, email, role: data.role }
+          error.value = null
+          persistSession()
+
+          fetchProfile().catch(() => {})
+          websocketService.connect(data.access_token)
+
+          return data
+        } catch (retryErr) {
+          if (!retryErr.response) {
+            error.value = 'Server is still starting up — please try again in 10 seconds.'
+          } else {
+            error.value = retryErr.response?.data?.detail || 'Invalid email or password'
+          }
+          throw retryErr
+        }
       } else {
         error.value = err.response?.data?.detail || err.message || 'Invalid email or password'
       }
@@ -161,6 +185,28 @@ export const useAuthStore = defineStore('auth', () => {
     } finally {
       loading.value = false
     }
+  }
+
+  // Wake the Render backend by polling /health until it responds
+  async function _wakeUpServer() {
+    const baseUrl = (import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1')
+      .replace('/api/v1', '')
+    const healthUrl = `${baseUrl}/health`
+
+    const MAX_WAIT = 55000   // 55 seconds max
+    const POLL_INTERVAL = 3000  // check every 3 seconds
+    const start = Date.now()
+
+    while (Date.now() - start < MAX_WAIT) {
+      try {
+        const res = await fetch(healthUrl, { method: 'GET', signal: AbortSignal.timeout(5000) })
+        if (res.ok) return true
+      } catch {
+        // still starting — keep waiting
+      }
+      await new Promise(r => setTimeout(r, POLL_INTERVAL))
+    }
+    throw new Error('Server did not wake up in time')
   }
 
   // Login with OAuth provider (GitHub/Google)

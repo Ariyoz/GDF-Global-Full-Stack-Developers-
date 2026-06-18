@@ -1,4 +1,4 @@
-// ── Feed Store — Real Backend with Real-time ──
+// â”€â”€ Feed Store â€” upgraded with link previews, video, documents, trending â”€â”€
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { postsService } from '@/services/posts.service'
@@ -11,12 +11,11 @@ export const useFeedStore = defineStore('feed', () => {
   const error = ref(null)
   const page = ref(1)
   const hasMore = ref(true)
-  const feedType = ref('explore') // 'explore', 'following'
+  const feedType = ref('explore')
 
   // Listen for real-time post events
   websocketService.onEvent((event) => {
     if (event.type === 'post_created' && event.data) {
-      // New post from someone — add to top of feed if not already there
       const exists = posts.value.find(p => p.id === event.data.post_id)
       if (!exists) {
         posts.value.unshift({
@@ -24,13 +23,18 @@ export const useFeedStore = defineStore('feed', () => {
           content: event.data.content,
           post_type: event.data.post_type || 'text',
           media_urls: [],
+          video_url: null,
+          document_url: null,
+          document_name: null,
           hashtags: [],
+          link_preview: null,
           like_count: 0,
           comment_count: 0,
           repost_count: 0,
           bookmark_count: 0,
           is_liked: false,
           is_bookmarked: false,
+          expanded: false,
           created_at: event.data.created_at || new Date().toISOString(),
           author: {
             id: event.data.author_id,
@@ -73,15 +77,13 @@ export const useFeedStore = defineStore('feed', () => {
         limit: 20,
         feed_type: feedType.value,
       })
-      const newPosts = result.data || []
+      const newPosts = (result.data || []).map(p => ({ ...p, expanded: false }))
 
       if (reset) {
         posts.value = newPosts
       } else {
-        // Avoid duplicates
         const existingIds = new Set(posts.value.map(p => p.id))
-        const unique = newPosts.filter(p => !existingIds.has(p.id))
-        posts.value.push(...unique)
+        posts.value.push(...newPosts.filter(p => !existingIds.has(p.id)))
       }
       hasMore.value = result.hasMore || newPosts.length === 20
       page.value++
@@ -108,6 +110,9 @@ export const useFeedStore = defineStore('feed', () => {
         content: postData.content || postData.text,
         post_type: postData.post_type || (postData.media_urls?.length ? 'image' : 'text'),
         media_urls: postData.media_urls || [],
+        video_url: postData.video_url || null,
+        document_url: postData.document_url || null,
+        document_name: postData.document_name || null,
         hashtags: postData.hashtags || [],
         code_snippet: postData.code_snippet,
         code_language: postData.code_language,
@@ -118,13 +123,18 @@ export const useFeedStore = defineStore('feed', () => {
         content: newPost.content || postData.content || postData.text,
         post_type: newPost.post_type || 'text',
         media_urls: newPost.media_urls || postData.media_urls || [],
+        video_url: newPost.video_url || null,
+        document_url: newPost.document_url || null,
+        document_name: newPost.document_name || null,
         hashtags: newPost.hashtags || [],
+        link_preview: newPost.link_preview || null,
         like_count: 0,
         comment_count: 0,
         repost_count: 0,
         bookmark_count: 0,
         is_liked: false,
         is_bookmarked: false,
+        expanded: false,
         created_at: newPost.created_at || new Date().toISOString(),
         author: newPost.author || {
           id: authStore.user.id || authStore.profile?.id,
@@ -153,44 +163,28 @@ export const useFeedStore = defineStore('feed', () => {
   }
 
   async function likePost(postId) {
-    // Optimistic update — show immediately
     const post = posts.value.find(p => p.id === postId)
-    if (post) {
-      post.like_count = (post.like_count || 0) + 1
-      post.is_liked = true
-    }
+    if (post) { post.like_count = (post.like_count || 0) + 1; post.is_liked = true }
     try {
       await postsService.like(postId)
     } catch {
-      // Revert on failure
-      if (post) {
-        post.like_count = Math.max((post.like_count || 1) - 1, 0)
-        post.is_liked = false
-      }
+      if (post) { post.like_count = Math.max((post.like_count || 1) - 1, 0); post.is_liked = false }
     }
   }
 
   async function unlikePost(postId) {
-    // Optimistic update — show immediately
     const post = posts.value.find(p => p.id === postId)
-    if (post) {
-      post.like_count = Math.max((post.like_count || 1) - 1, 0)
-      post.is_liked = false
-    }
+    if (post) { post.like_count = Math.max((post.like_count || 1) - 1, 0); post.is_liked = false }
     try {
       await postsService.unlike(postId)
     } catch {
-      // Revert on failure
-      if (post) {
-        post.like_count = (post.like_count || 0) + 1
-        post.is_liked = true
-      }
+      if (post) { post.like_count = (post.like_count || 0) + 1; post.is_liked = true }
     }
   }
 
-  async function commentOnPost(postId, content) {
+  async function commentOnPost(postId, content, parentId = null) {
     try {
-      const result = await postsService.addComment(postId, null, content)
+      const result = await postsService.addComment(postId, parentId, content)
       const post = posts.value.find(p => p.id === postId)
       if (post) {
         post.comment_count = result?.comment_count || (post.comment_count || 0) + 1
@@ -199,7 +193,9 @@ export const useFeedStore = defineStore('feed', () => {
           id: result?.id || Date.now(),
           content,
           author: useAuthStore().profile?.full_name || 'You',
+          author_id: useAuthStore().user?.id,
           created_at: new Date().toISOString(),
+          parent_comment_id: parentId || null,
         })
       }
       return result
@@ -210,59 +206,35 @@ export const useFeedStore = defineStore('feed', () => {
   }
 
   async function repostPost(postId) {
-    // Optimistic toggle
     const post = posts.value.find(p => p.id === postId)
     const wasReposted = post?.is_reposted
     if (post) {
-      if (wasReposted) {
-        post.repost_count = Math.max((post.repost_count || 1) - 1, 0)
-        post.is_reposted = false
-      } else {
-        post.repost_count = (post.repost_count || 0) + 1
-        post.is_reposted = true
-      }
+      if (wasReposted) { post.repost_count = Math.max((post.repost_count || 1) - 1, 0); post.is_reposted = false }
+      else { post.repost_count = (post.repost_count || 0) + 1; post.is_reposted = true }
     }
     try {
       const result = await postsService.repost(postId)
-      // Sync with server response
-      if (post && result) {
-        post.is_reposted = result.reposted !== false
-      }
+      if (post && result) post.is_reposted = result.reposted !== false
     } catch {
-      // Revert
       if (post) {
-        if (wasReposted) {
-          post.repost_count = (post.repost_count || 0) + 1
-          post.is_reposted = true
-        } else {
-          post.repost_count = Math.max((post.repost_count || 1) - 1, 0)
-          post.is_reposted = false
-        }
+        if (wasReposted) { post.repost_count = (post.repost_count || 0) + 1; post.is_reposted = true }
+        else { post.repost_count = Math.max((post.repost_count || 1) - 1, 0); post.is_reposted = false }
       }
     }
   }
 
   async function bookmarkPost(postId) {
-    // Optimistic
     const post = posts.value.find(p => p.id === postId)
-    if (post) {
-      post.bookmark_count = (post.bookmark_count || 0) + 1
-      post.is_bookmarked = true
-    }
+    if (post) { post.bookmark_count = (post.bookmark_count || 0) + 1; post.is_bookmarked = true }
     try {
       await postsService.bookmark(postId)
     } catch {
-      if (post) {
-        post.bookmark_count = Math.max((post.bookmark_count || 1) - 1, 0)
-        post.is_bookmarked = false
-      }
+      if (post) { post.bookmark_count = Math.max((post.bookmark_count || 1) - 1, 0); post.is_bookmarked = false }
     }
   }
 
   async function loadMore() {
-    if (hasMore.value && !loading.value) {
-      await fetchFeed(false)
-    }
+    if (hasMore.value && !loading.value) await fetchFeed(false)
   }
 
   return {

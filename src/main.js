@@ -22,9 +22,40 @@ const app = createApp(App)
 const pinia = createPinia()
 app.use(pinia)
 app.use(router)
+
+// ── v-click-outside directive (used in Messaging and Jobs views) ──
+app.directive('click-outside', {
+  mounted(el, binding) {
+    el._clickOutsideHandler = (event) => {
+      if (!el.contains(event.target)) binding.value(event)
+    }
+    document.addEventListener('click', el._clickOutsideHandler, true)
+  },
+  unmounted(el) {
+    document.removeEventListener('click', el._clickOutsideHandler, true)
+  },
+})
+
 app.mount('#app')
 
-// Initialize auth state after mount (non-blocking)
+// ── Initialize auth then pre-warm notification count ──
 import { useAuthStore } from './store/auth'
+import { useNotificationsStore } from './store/notifications'
+
 const authStore = useAuthStore()
-authStore.init()
+
+// init() returns void in some builds — always wrap safely
+const initResult = authStore.init()
+const afterInit = () => {
+  if (authStore.isAuthenticated) {
+    const notifsStore = useNotificationsStore()
+    notifsStore.fetchUnreadCount()
+  }
+}
+
+if (initResult && typeof initResult.then === 'function') {
+  initResult.then(afterInit).catch(() => {})
+} else {
+  // init is synchronous or void — check after a tick
+  setTimeout(afterInit, 100)
+}

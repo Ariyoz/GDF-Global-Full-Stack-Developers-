@@ -191,8 +191,15 @@
 
             <!-- Post Content -->
             <div class="post-content">
-              <p v-if="post.content" class="post-text" v-html="linkifyText(post.content)"></p>
-              <p v-else-if="!post.media_urls?.length" class="post-text" style="color:var(--on-surface-variant);font-style:italic;">No content</p>
+              <!-- "Read More" collapsible text -->
+              <div v-if="post.content" class="post-text-wrap">
+                <p class="post-text" :class="{ collapsed: !post.expanded && post.content.length > 300 }"
+                  v-html="linkifyText(post.content)"></p>
+                <button v-if="post.content.length > 300 && !post.expanded" class="read-more-btn"
+                  @click="post.expanded = true">Read more</button>
+                <button v-if="post.content.length > 300 && post.expanded" class="read-more-btn"
+                  @click="post.expanded = false">Show less</button>
+              </div>
 
               <!-- Media (images/videos) — shown BELOW text -->
               <div v-if="post.media_urls && post.media_urls.length && post.media_urls[0]" class="post-media">
@@ -214,9 +221,38 @@
                 <pre class="code-content"><code>{{ post.code_snippet }}</code></pre>
               </div>
 
+              <!-- Video attachment -->
+              <video v-if="post.video_url" :src="post.video_url" controls class="post-video" preload="metadata" />
+
+              <!-- Document attachment -->
+              <a v-if="post.document_url" :href="post.document_url" target="_blank" rel="noopener noreferrer" class="post-document-link">
+                <span class="material-symbols-outlined">description</span>
+                <span>{{ post.document_name || 'View Document' }}</span>
+              </a>
+
+              <!-- Link preview card -->
+              <div v-if="post.link_preview" class="post-link-preview">
+                <img v-if="post.link_preview.image" :src="post.link_preview.image" class="lp-image" />
+                <div class="lp-body">
+                  <span v-if="post.link_preview.site_name" class="lp-site">{{ post.link_preview.site_name }}</span>
+                  <a :href="post.link_preview.url" target="_blank" rel="noopener noreferrer" class="lp-title">{{ post.link_preview.title }}</a>
+                  <span v-if="post.link_preview.description" class="lp-desc">{{ post.link_preview.description }}</span>
+                </div>
+              </div>
+
+              <!-- Reposted content preview -->
+              <div v-if="post.parent_post" class="repost-quote-card">
+                <div class="repost-author">
+                  <img v-if="post.parent_post.author?.avatar" :src="post.parent_post.author.avatar" class="rp-avatar" />
+                  <span class="rp-name">{{ post.parent_post.author?.full_name }}</span>
+                  <span class="rp-handle">@{{ post.parent_post.author?.username }}</span>
+                </div>
+                <p class="rp-text">{{ post.parent_post.content?.slice(0, 200) }}</p>
+              </div>
+
               <!-- Hashtags -->
               <div v-if="post.hashtags && post.hashtags.length" class="post-hashtags">
-                <span v-for="tag in post.hashtags" :key="tag" class="hashtag">#{{ tag }}</span>
+                <span v-for="tag in post.hashtags" :key="tag" class="hashtag" @click="searchByHashtag(tag)">#{{ tag }}</span>
               </div>
             </div>
 
@@ -371,6 +407,30 @@
 
       <!-- Right Sidebar -->
       <aside class="feed-right-sidebar">
+        <!-- Trending Posts -->
+        <div class="glass-card-static sidebar-card">
+          <h3 class="sidebar-section-title">
+            <span class="material-symbols-outlined" style="font-size:18px;color:var(--primary)">local_fire_department</span>
+            Trending Today
+          </h3>
+          <div v-if="trendingPosts.length" class="trending-posts-list">
+            <div v-for="tp in trendingPosts.slice(0,5)" :key="tp.id" class="trending-post-item"
+              @click="openTrendingPost(tp)">
+              <div class="tp-author">
+                <img v-if="tp.author?.avatar" :src="tp.author.avatar" class="tp-avatar" />
+                <span v-else class="tp-avatar-init">{{ (tp.author?.full_name || 'U')[0] }}</span>
+                <span class="tp-name">{{ tp.author?.full_name }}</span>
+              </div>
+              <p class="tp-content">{{ tp.content?.slice(0, 80) }}{{ tp.content?.length > 80 ? '…' : '' }}</p>
+              <div class="tp-stats">
+                <span>❤️ {{ tp.like_count }}</span>
+                <span>💬 {{ tp.comment_count }}</span>
+              </div>
+            </div>
+          </div>
+          <p v-else class="sidebar-empty">No trending posts yet</p>
+        </div>
+
         <!-- Trending Skills -->
         <div class="glass-card-static sidebar-card">
           <h3 class="sidebar-section-title">
@@ -378,29 +438,9 @@
             Trending Skills
           </h3>
           <div class="trending-skills">
-            <span v-for="skill in trendingSkills" :key="skill.name" class="skill-chip" :class="{ hot: skill.hot }">
-              {{ skill.name }}
+            <span v-for="skill in trendingSkills" :key="skill.skill || skill.name || skill" class="skill-chip">
+              {{ skill.skill || skill.name || skill }}
             </span>
-          </div>
-          <button class="btn-ghost" style="width:100%;justify-content:center;margin-top:1rem;font-size:0.8rem">
-            View Market Report
-          </button>
-        </div>
-
-        <!-- Top Developers -->
-        <div class="glass-card-static sidebar-card">
-          <h3 class="sidebar-section-title">Top Developers</h3>
-          <div class="top-devs">
-            <div v-for="dev in topDevs" :key="dev.name" class="top-dev-item">
-              <div class="top-dev-info">
-                <div class="top-dev-avatar">{{ dev.name[0] }}</div>
-                <div>
-                  <p class="top-dev-name">{{ dev.name }}</p>
-                  <p class="top-dev-meta">{{ dev.projects }} projects</p>
-                </div>
-              </div>
-              <button class="follow-btn">Follow</button>
-            </div>
           </div>
         </div>
       </aside>
@@ -409,7 +449,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
@@ -432,9 +472,20 @@ onMounted(() => {
   if (authStore.isAuthenticated) {
     feedStore.fetchFeed(true)
   }
+  // Load trending sidebar data
+  http.get('/explore/trending').then(data => {
+    trendingSkills.value = data.skills || []
+  }).catch(() => {})
+  http.get('/feed/trending-posts').then(data => {
+    trendingPosts.value = data.posts || []
+  }).catch(() => {})
 
   // Infinite scroll
   window.addEventListener('scroll', handleScroll)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
 })
 
 function handleScroll() {
@@ -489,9 +540,14 @@ function switchFeedType(type) {
   feedStore.setFeedType(type)
 }
 
-function deletePost(postId) {
-  feedStore.deletePost(postId)
-  openMenuId.value = null
+function searchByHashtag(tag) {
+  feedStore.setFeedType('explore')
+  // TODO: pass hashtag filter to feed service
+}
+
+function openTrendingPost(post) {
+  // Navigate to post detail or open inline
+  window.location.href = `/feed/${post.id}`
 }
 
 const showCompose = ref(false)
@@ -558,22 +614,13 @@ function linkifyText(text) {
 
 // Seed data is now in the store — no local posts array needed
 
-const trendingSkills = []
+const trendingSkills = ref([])
+const trendingPosts = ref([])
+const topDevs = ref([])
 
-const topDevs = []
-
-function toggleReaction(post, emoji) {
-  if (!post.reactions) post.reactions = {}
-  if (!post.reactions[emoji]) post.reactions[emoji] = []
-
-  const userId = authStore.user?.uid || 'current-user'
-  const hasReacted = post.reactions[emoji].includes(userId)
-
-  if (hasReacted) {
-    post.reactions[emoji] = post.reactions[emoji].filter(id => id !== userId)
-  } else {
-    post.reactions[emoji].push(userId)
-  }
+function deletePost(postId) {
+  feedStore.deletePost(postId)
+  openMenuId.value = null
 }
 
 function openImagePicker(source) {
@@ -1590,6 +1637,48 @@ function submitComment(post, e) {
   color: var(--on-surface-variant); cursor: pointer; transition: all 0.15s ease;
 }
 .skill-chip.hot { background: rgba(168,85,247,0.08); border-color: rgba(168,85,247,0.2); color: var(--primary); }
+
+/* ── Read More ── */
+.post-text-wrap { position:relative; }
+.post-text.collapsed { display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; }
+.read-more-btn { background:none; border:none; color:var(--primary); font-size:0.82rem; font-weight:600; cursor:pointer; padding:0; margin-top:0.2rem; }
+.read-more-btn:hover { text-decoration:underline; }
+
+/* ── Link Preview ── */
+.post-link-preview { margin-top:0.75rem; border:1px solid var(--outline-variant); border-radius:var(--radius-xl); overflow:hidden; background:var(--surface-container-low); cursor:pointer; }
+.post-link-preview .lp-image { width:100%; height:180px; object-fit:cover; display:block; }
+.post-link-preview .lp-body { padding:0.65rem 0.875rem; display:flex; flex-direction:column; gap:0.2rem; }
+.post-link-preview .lp-site { font-size:0.68rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--on-surface-variant); }
+.post-link-preview .lp-title { font-size:0.9rem; font-weight:700; color:var(--on-surface); text-decoration:none; line-height:1.3; }
+.post-link-preview .lp-title:hover { text-decoration:underline; color:var(--primary); }
+.post-link-preview .lp-desc { font-size:0.78rem; color:var(--on-surface-variant); line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+
+/* ── Repost quote card ── */
+.repost-quote-card { margin-top:0.75rem; border:1px solid var(--outline-variant); border-radius:var(--radius-xl); padding:0.75rem 1rem; background:var(--surface-container-low); }
+.repost-author { display:flex; align-items:center; gap:0.5rem; margin-bottom:0.4rem; }
+.rp-avatar { width:24px; height:24px; border-radius:50%; object-fit:cover; }
+.rp-name { font-size:0.82rem; font-weight:600; color:var(--on-surface); }
+.rp-handle { font-size:0.78rem; color:var(--on-surface-variant); }
+.rp-text { font-size:0.83rem; color:var(--on-surface-variant); line-height:1.5; }
+
+/* ── Post video ── */
+.post-video { width:100%; max-height:360px; border-radius:var(--radius-xl); object-fit:cover; margin-top:0.5rem; background:#000; }
+
+/* ── Post document link ── */
+.post-document-link { display:inline-flex; align-items:center; gap:0.4rem; margin-top:0.5rem; padding:0.5rem 0.875rem; background:var(--surface-container); border:1px solid var(--outline-variant); border-radius:var(--radius-full); font-size:0.82rem; font-weight:500; color:var(--primary); text-decoration:none; }
+.post-document-link:hover { background:var(--surface-container-low); }
+
+/* ── Trending posts sidebar ── */
+.trending-posts-list { display:flex; flex-direction:column; gap:0.75rem; }
+.trending-post-item { cursor:pointer; padding:0.5rem 0; border-bottom:1px solid var(--outline-variant); }
+.trending-post-item:last-child { border-bottom:none; }
+.tp-author { display:flex; align-items:center; gap:0.4rem; margin-bottom:0.3rem; }
+.tp-avatar { width:22px; height:22px; border-radius:50%; object-fit:cover; }
+.tp-avatar-init { width:22px; height:22px; border-radius:50%; background:var(--primary-fixed); display:flex; align-items:center; justify-content:center; font-size:0.7rem; font-weight:700; color:var(--primary); }
+.tp-name { font-size:0.78rem; font-weight:600; color:var(--on-surface); }
+.tp-content { font-size:0.78rem; color:var(--on-surface-variant); line-height:1.4; margin-bottom:0.3rem; }
+.tp-stats { display:flex; gap:0.75rem; font-size:0.72rem; color:var(--on-surface-variant); }
+.sidebar-empty { font-size:0.8rem; color:var(--on-surface-variant); text-align:center; padding:0.5rem; }
 
 .top-devs { display: flex; flex-direction: column; gap: 0.875rem; }
 
