@@ -1217,7 +1217,7 @@ function submitComment(post, e) {
   border-bottom: 1px solid var(--outline-variant);
   background: var(--surface-container-lowest);
   position: sticky;
-  top: calc(72px + 110px);  /* topnav + create-post height */
+  top: calc(72px + 110px);
   z-index: 20;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
