@@ -1,4 +1,4 @@
-﻿// â”€â”€ Feed Store â€” upgraded with link previews, video, documents, trending â”€â”€
+// â”€â”€ Feed Store â€” upgraded with link previews, video, documents, trending â”€â”€
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { postsService } from '@/services/posts.service'

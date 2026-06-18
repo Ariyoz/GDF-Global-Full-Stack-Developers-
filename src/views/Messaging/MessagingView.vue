@@ -229,7 +229,7 @@
           <div class="input-wrap">
             <textarea v-model="newMessage" class="chat-input" rows="1"
               placeholder="Type a message…"
-              @input="autoResize; handleTyping()"
+              @input="handleTyping()"
               @keydown.enter.exact.prevent="sendMessage"
               @keydown.enter.shift.exact="() => {}" />
           </div>

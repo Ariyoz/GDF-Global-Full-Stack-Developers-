@@ -4,7 +4,6 @@ import { ref, computed } from 'vue'
 import http from '@/services/http'
 import { API_ENDPOINTS } from '@/config/api'
 import { websocketService } from '@/services/websocket.service'
-import { useRouter } from 'vue-router'
 
 const { notifications: eps } = API_ENDPOINTS
 

@@ -38,22 +38,24 @@ app.directive('click-outside', {
 
 app.mount('#app')
 
-// ── Initialize auth (non-blocking) then pre-warm notification count ──
+// ── Initialize auth then pre-warm notification count ──
 import { useAuthStore } from './store/auth'
 import { useNotificationsStore } from './store/notifications'
 
 const authStore = useAuthStore()
 
-authStore.init().then(() => {
+// init() returns void in some builds — always wrap safely
+const initResult = authStore.init()
+const afterInit = () => {
   if (authStore.isAuthenticated) {
     const notifsStore = useNotificationsStore()
     notifsStore.fetchUnreadCount()
   }
-}).catch(() => {
-  // init() may not return a promise in all versions — call it silently
-})
+}
 
-// Fallback: if init doesn't return a promise, still call it
-if (!authStore.initialized) {
-  // authStore.init() was already called above; just guard against non-promise version
+if (initResult && typeof initResult.then === 'function') {
+  initResult.then(afterInit).catch(() => {})
+} else {
+  // init is synchronous or void — check after a tick
+  setTimeout(afterInit, 100)
 }

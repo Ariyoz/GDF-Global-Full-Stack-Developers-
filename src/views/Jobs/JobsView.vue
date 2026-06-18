@@ -128,7 +128,7 @@
               Apply Now
             </button>
             <div v-else-if="isClient || selectedJob?.poster_name === authStore.profile?.full_name" class="modal-footer-row">
-              <button class="btn-primary apply-btn" @click="viewApplicants(selectedJob); currentReviewJob = selectedJob">
+              <button class="btn-primary apply-btn" @click="viewApplicants(selectedJob); currentReviewJob.value = selectedJob">
                 <span class="material-symbols-outlined">group</span>
                 Applicants ({{ selectedJob?.application_count || 0 }})
               </button>
