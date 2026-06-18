@@ -67,7 +67,6 @@ const authStore = useAuthStore()
 const uiStore   = useUiStore()
 
 const loading  = ref(false)
-const loading = ref(false)
 const form   = reactive({ email: '', password: '' })
 const errors = reactive({ email: '', password: '' })
 
