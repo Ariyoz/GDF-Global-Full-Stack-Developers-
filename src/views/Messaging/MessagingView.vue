@@ -145,7 +145,7 @@
                 </div>
 
                 <!-- Bubble -->
-                <div class="bubble" :class="[msg.mine ? 'bubble-mine' : 'bubble-theirs', { 'bubble-deleted': msg.is_deleted }]">
+                <div class="bubble" :class="[msg.mine ? 'bubble-mine' : 'bubble-theirs', { 'bubble-deleted': msg.is_deleted, 'has-image': msg.message_type === 'image' && msg.media_url && !msg.is_deleted }]">
                   <!-- Deleted -->
                   <span v-if="msg.is_deleted" class="deleted-label">
                     <span class="material-symbols-outlined" style="font-size:14px;vertical-align:-2px">block</span>
@@ -156,6 +156,20 @@
                     <!-- Image -->
                     <div v-if="msg.message_type === 'image' && msg.media_url" class="bubble-img-wrap">
                       <img :src="msg.media_url" class="bubble-img" @click.stop="lightboxUrl = msg.media_url" />
+                    </div>
+
+                    <!-- Voice note -->
+                    <div v-else-if="msg.message_type === 'voice'" class="voice-player"
+                      :class="msg.mine ? 'vp-mine' : 'vp-theirs'">
+                      <button class="vp-play-btn" @click.stop="toggleVoice(msg)">
+                        <span class="material-symbols-outlined">{{ playingVoiceId === msg.id ? 'pause' : 'play_arrow' }}</span>
+                      </button>
+                      <div class="vp-waveform">
+                        <div v-for="b in 20" :key="b" class="vp-bar"
+                          :style="{ height: getBarHeight(msg.id, b) + 'px', opacity: getBarProgress(msg.id, b) ? 1 : 0.4 }">
+                        </div>
+                      </div>
+                      <span class="vp-dur">{{ getVoiceDuration(msg) }}</span>
                     </div>
 
                     <!-- File -->
@@ -223,6 +237,18 @@
           </div>
         </div>
 
+        <!-- Voice note recording indicator -->
+        <Transition name="slide-up">
+          <div v-if="isRecording" class="voice-recording-bar">
+            <div class="vr-pulse"></div>
+            <span class="vr-time">{{ formatRecordTime(recordSeconds) }}</span>
+            <span class="vr-hint">Release to send · Swipe left to cancel</span>
+            <button class="vr-cancel" @click="cancelRecording">
+              <span class="material-symbols-outlined">delete</span>
+            </button>
+          </div>
+        </Transition>
+
         <!-- Image preview before send -->
         <Transition name="slide-up">
           <div v-if="pendingImage" class="img-preview-bar">
@@ -273,8 +299,15 @@
             <button v-if="canSend" class="send-btn" @click="send" key="send">
               <span class="material-symbols-outlined">send</span>
             </button>
-            <button v-else class="icon-btn ib-icon" @click="triggerFile" key="attach">
-              <span class="material-symbols-outlined">image</span>
+            <button v-else class="voice-btn"
+              key="mic"
+              @mousedown="startRecording"
+              @mouseup="stopRecording"
+              @touchstart.prevent="startRecording"
+              @touchend.prevent="stopRecording"
+              :class="{ recording: isRecording }"
+              title="Hold to record voice note">
+              <span class="material-symbols-outlined">mic</span>
             </button>
           </Transition>
         </div>
@@ -397,6 +430,17 @@ const incomingCall   = ref(null)
 const pendingImage   = ref(null)
 const pendingImagePreview = ref(null)
 const editingMsgId   = ref(null)
+
+// Voice note state
+const isRecording      = ref(false)
+const recordSeconds    = ref(0)
+const playingVoiceId   = ref(null)
+const voiceAudios      = {}        // cache of Audio objects keyed by msg.id
+const voiceProgress    = ref({})   // { msgId: 0..1 }
+let mediaRecorder      = null
+let recordChunks       = []
+let recordTimer        = null
+let activeAudio        = null
 
 const ctx = ref({ show: false, x: 0, y: 0, msg: null })
 const emojiPicker = ref({ show: false, x: 0, y: 0, msg: null })
@@ -673,6 +717,123 @@ function acceptCall() {
   }
 }
 
+// ── Voice Notes ───────────────────────────────────────────────────────────
+async function startRecording() {
+  if (isRecording.value) return
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    recordChunks = []
+    mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' })
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordChunks.push(e.data) }
+    mediaRecorder.start(100)
+    isRecording.value = true
+    recordSeconds.value = 0
+    recordTimer = setInterval(() => { recordSeconds.value++ }, 1000)
+  } catch (err) {
+    console.error('Microphone access denied:', err)
+    alert('Microphone permission is required to send voice notes.')
+  }
+}
+
+async function stopRecording() {
+  if (!isRecording.value || !mediaRecorder) return
+  clearInterval(recordTimer)
+  isRecording.value = false
+
+  await new Promise(resolve => {
+    mediaRecorder.onstop = resolve
+    mediaRecorder.stop()
+    mediaRecorder.stream?.getTracks().forEach(t => t.stop())
+  })
+
+  if (recordSeconds.value < 1) { recordChunks = []; return } // too short
+
+  const blob = new Blob(recordChunks, { type: 'audio/webm' })
+  const file = new File([blob], `voice-${Date.now()}.webm`, { type: 'audio/webm' })
+  recordChunks = []
+
+  try {
+    const result = await messagingStore.uploadAttachment(file)
+    await messagingStore.sendMessage({
+      content: '',
+      message_type: 'voice',
+      media_url: result.url,
+      file_name: file.name,
+      file_size: file.size,
+      reply_to_id: replyTo.value?.id || null,
+    })
+    replyTo.value = null
+    scrollBottom()
+  } catch (err) {
+    console.error('Voice send failed:', err)
+  }
+}
+
+function cancelRecording() {
+  clearInterval(recordTimer)
+  isRecording.value = false
+  recordSeconds.value = 0
+  recordChunks = []
+  if (mediaRecorder) {
+    try { mediaRecorder.stop(); mediaRecorder.stream?.getTracks().forEach(t => t.stop()) } catch {}
+    mediaRecorder = null
+  }
+}
+
+function formatRecordTime(s) {
+  const m = Math.floor(s / 60).toString().padStart(2, '0')
+  const sec = (s % 60).toString().padStart(2, '0')
+  return `${m}:${sec}`
+}
+
+function toggleVoice(msg) {
+  if (!msg.media_url) return
+
+  if (playingVoiceId.value === msg.id) {
+    // Pause
+    activeAudio?.pause()
+    playingVoiceId.value = null
+    return
+  }
+
+  // Stop any current
+  if (activeAudio) { activeAudio.pause(); activeAudio = null }
+  playingVoiceId.value = msg.id
+
+  let audio = voiceAudios[msg.id]
+  if (!audio) {
+    audio = new Audio(msg.media_url)
+    voiceAudios[msg.id] = audio
+    audio.ontimeupdate = () => {
+      voiceProgress.value = { ...voiceProgress.value, [msg.id]: audio.currentTime / (audio.duration || 1) }
+    }
+    audio.onended = () => {
+      playingVoiceId.value = null
+      voiceProgress.value = { ...voiceProgress.value, [msg.id]: 0 }
+    }
+  }
+  activeAudio = audio
+  audio.currentTime = 0
+  audio.play().catch(() => { playingVoiceId.value = null })
+}
+
+function getBarHeight(msgId, barIdx) {
+  // Pseudo-random waveform based on msgId + barIdx
+  const seed = [...(msgId || '')].reduce((a, c) => a + c.charCodeAt(0), 0)
+  return 4 + ((seed * barIdx * 7 + barIdx * 13) % 14)
+}
+
+function getBarProgress(msgId, barIdx) {
+  const progress = voiceProgress.value[msgId] || 0
+  return barIdx / 20 <= progress
+}
+
+function getVoiceDuration(msg) {
+  const audio = voiceAudios[msg.id]
+  if (audio?.duration && isFinite(audio.duration)) return formatRecordTime(Math.round(audio.duration))
+  return '0:00'
+}
+
 // ── Watchers ───────────────────────────────────────────────────────────────
 watch(() => messagingStore.messages.length, () => scrollBottom())
 
@@ -729,9 +890,13 @@ onMounted(() => messagingStore.fetchConversations())
   background-color: var(--background); }
 
 /* Header */
-.chat-header { display:flex; align-items:center; gap:.6rem; padding:.75rem 1rem; background:var(--surface-container-lowest); border-bottom:1px solid var(--outline-variant); flex-shrink:0; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+.chat-header { display:flex; align-items:center; gap:.6rem; padding:.65rem 1rem; background:var(--surface-container-lowest); border-bottom:1px solid var(--outline-variant); flex-shrink:0; box-shadow:0 1px 4px rgba(0,0,0,.06); min-height:60px; }
 .back-btn { display:none; }
 @media(max-width:767px) { .back-btn { display:flex; } .conv-panel { width:100%; } .hidden-mobile { display:none !important; } }
+/* Header avatar — small, exactly like WhatsApp */
+.ch-avatar { position:relative; width:38px; height:38px; min-width:38px; min-height:38px; border-radius:50%; background:var(--primary-fixed); display:flex; align-items:center; justify-content:center; overflow:hidden; flex-shrink:0; }
+.ch-avatar .c-avatar-img { width:38px; height:38px; object-fit:cover; border-radius:50%; display:block; }
+.ch-avatar .c-avatar-txt { font-size:.85rem; font-weight:700; color:var(--primary); }
 .ch-info { flex:1; min-width:0; display:flex; flex-direction:column; }
 .ch-name { font-size:.925rem; font-weight:700; color:var(--on-surface); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .ch-status { font-size:.73rem; }
@@ -799,7 +964,8 @@ onMounted(() => messagingStore.fetchConversations())
 .reply-snap-img { width:36px; height:36px; border-radius:4px; object-fit:cover; margin-top:.2rem; }
 
 /* Bubble */
-.bubble { padding:.55rem .85rem; border-radius:18px; word-break:break-word; position:relative; max-width:480px; min-width:60px; box-shadow:0 1px 2px rgba(0,0,0,.1); }
+.bubble { padding:.55rem .85rem; border-radius:18px; word-break:break-word; position:relative; max-width:320px; min-width:60px; box-shadow:0 1px 2px rgba(0,0,0,.1); }
+.bubble.has-image { padding:.3rem .3rem .55rem; }
 .bubble-mine { background:var(--primary); color:#fff; border-bottom-right-radius:4px; }
 .bubble-theirs { background:var(--surface-container-high); color:var(--on-surface); border-bottom-left-radius:4px; }
 [data-theme="dark"] .bubble-theirs { background:#2a2a3e; }
@@ -807,8 +973,9 @@ onMounted(() => messagingStore.fetchConversations())
 .deleted-label { font-size:.8rem; font-style:italic; display:flex; align-items:center; gap:.3rem; color:inherit; opacity:.75; }
 
 /* Bubble content */
-.bubble-img-wrap { border-radius:12px; overflow:hidden; max-width:260px; cursor:pointer; }
-.bubble-img { width:100%; display:block; max-height:300px; object-fit:cover; }
+.bubble-img-wrap { border-radius:10px; overflow:hidden; max-width:200px; cursor:pointer; position:relative; }
+.bubble-img { width:100%; display:block; max-height:200px; object-fit:cover; border-radius:10px; min-width:120px; }
+.bubble-img-wrap::after { content:''; position:absolute; inset:0; background:rgba(0,0,0,.04); border-radius:10px; pointer-events:none; }
 .bubble-text { font-size:.875rem; line-height:1.5; margin:0; white-space:pre-wrap; }
 .bubble-mine .bubble-text :deep(a) { color:#ddd6fe; }
 .bubble-theirs .bubble-text :deep(a) { color:var(--primary); }
@@ -927,5 +1094,33 @@ onMounted(() => messagingStore.fetchConversations())
 .ctx-pop-enter-active, .ctx-pop-leave-active { transition:all .12s ease; }
 .ctx-pop-enter-from, .ctx-pop-leave-to { transform:scale(.93); opacity:0; }
 .btn-swap-enter-active, .btn-swap-leave-active { transition:all .15s ease; }
-.btn-swap-enter-from, .btn-swap-leave-to { opacity:0; transform:scale(.7); }
+.btn-swap-enter-from, .btn-swap-leave-to { opacity:0; transform:scale(.7); }/* ═══════════════════════════ Voice Notes ═══════════════════════════ */
+/* Recording bar */
+.voice-recording-bar { flex-shrink:0; display:flex; align-items:center; gap:.75rem; padding:.6rem 1rem; background:color-mix(in srgb,#ef4444 8%,var(--surface-container-lowest)); border-top:1px solid color-mix(in srgb,#ef4444 20%,transparent); }
+.vr-pulse { width:12px; height:12px; border-radius:50%; background:#ef4444; animation:vrPulse 1s ease-in-out infinite; flex-shrink:0; }
+@keyframes vrPulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.4);opacity:.7} }
+.vr-time { font-family:var(--font-headline); font-size:.9rem; font-weight:700; color:#ef4444; min-width:2.5rem; }
+.vr-hint { flex:1; font-size:.75rem; color:var(--on-surface-variant); }
+.vr-cancel { width:32px; height:32px; border-radius:50%; background:rgba(239,68,68,.12); border:none; color:#ef4444; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+.vr-cancel .material-symbols-outlined { font-size:18px; }
+
+/* Voice button in input bar */
+.voice-btn { width:42px; height:42px; border-radius:50%; background:var(--surface-container); border:none; color:var(--on-surface-variant); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; transition:.15s; }
+.voice-btn:hover { background:var(--primary); color:#fff; }
+.voice-btn.recording { background:#ef4444; color:#fff; animation:vrPulse .8s ease-in-out infinite; }
+.voice-btn .material-symbols-outlined { font-size:22px; }
+
+/* Voice player bubble */
+.voice-player { display:flex; align-items:center; gap:.5rem; padding:.25rem 0; min-width:180px; max-width:240px; }
+.vp-play-btn { width:34px; height:34px; border-radius:50%; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; transition:.12s; }
+.vp-mine .vp-play-btn { background:rgba(255,255,255,.2); color:#fff; }
+.vp-theirs .vp-play-btn { background:var(--primary); color:#fff; }
+.vp-play-btn:hover { transform:scale(1.08); }
+.vp-play-btn .material-symbols-outlined { font-size:20px; }
+.vp-waveform { display:flex; align-items:center; gap:2px; height:24px; flex:1; }
+.vp-bar { width:3px; border-radius:2px; background:currentColor; transition:opacity .1s; }
+.vp-mine .vp-waveform { color:rgba(255,255,255,.85); }
+.vp-theirs .vp-waveform { color:var(--primary); }
+.vp-dur { font-size:.68rem; font-weight:600; opacity:.75; min-width:28px; }
+
 </style>
