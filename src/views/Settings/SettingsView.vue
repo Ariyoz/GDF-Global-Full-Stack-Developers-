@@ -42,15 +42,33 @@
           <GfdInput v-model="profile.name"      label="Full Name"    placeholder="Your full name" />
           <GfdInput v-model="profile.email"     label="Email"        type="email" placeholder="your@email.com" />
           <GfdInput v-model="profile.jobTitle"  label="Job Title"    placeholder="e.g. Senior Full-Stack Developer" />
-          <GfdInput v-model="profile.location"  label="Location"     placeholder="City, Country" />
+          <div class="form-field-wrap">
+            <label class="field-label-sm">Location</label>
+            <select v-model="profile.location" class="country-sel">
+              <option value="">Select country…</option>
+              <option v-for="c in COUNTRIES" :key="c" :value="c">{{ c }}</option>
+            </select>
+          </div>
         </div>
 
         <GfdInput v-model="profile.bio" label="Bio" type="textarea" placeholder="Tell the world about yourself..." :rows="4" style="margin-top:1rem" />
 
         <div class="form-grid" style="margin-top:1rem">
-          <GfdInput v-model="profile.github"   label="GitHub"   prefix="github.com/"   placeholder="username" />
-          <GfdInput v-model="profile.linkedin" label="LinkedIn" prefix="linkedin.com/in/" placeholder="username" />
-          <GfdInput v-model="profile.twitter"  label="Twitter"  prefix="twitter.com/"  placeholder="username" />
+          <div class="form-field-wrap">
+            <label class="field-label-sm">GitHub</label>
+            <div class="pfx-wrap">
+              <span class="pfx">github.com/</span>
+              <input v-model="profile.github" class="pfx-input" placeholder="username" @input="cleanGithub" />
+            </div>
+          </div>
+          <div class="form-field-wrap">
+            <label class="field-label-sm">LinkedIn</label>
+            <div class="pfx-wrap">
+              <span class="pfx">linkedin.com/in/</span>
+              <input v-model="profile.linkedin" class="pfx-input" placeholder="username" @input="cleanLinkedin" />
+            </div>
+          </div>
+          <GfdInput v-model="profile.twitter"  label="Twitter"  placeholder="@username" />
           <GfdInput v-model="profile.website"  label="Website"  placeholder="https://yoursite.com" />
         </div>
 
@@ -195,16 +213,54 @@ const tabs = [
 ]
 
 const profile = ref({
-  name: user.value?.name || '',
+  name: user.value?.name || user.value?.full_name || '',
   email: user.value?.email || '',
-  jobTitle: user.value?.jobTitle || user.value?.role || '',
+  jobTitle: user.value?.jobTitle || user.value?.experience_level || user.value?.role || '',
   location: user.value?.location || '',
   bio: user.value?.bio || '',
-  github: user.value?.github || '',
-  linkedin: user.value?.linkedin || '',
-  twitter: '',
-  website: user.value?.website || '',
+  github: _stripPfx(user.value?.github_url || user.value?.github, 'github.com/'),
+  linkedin: _stripPfx(user.value?.linkedin_url || user.value?.linkedin, 'linkedin.com/in/'),
+  twitter: user.value?.twitter || '',
+  website: user.value?.website || user.value?.portfolio_url || '',
 })
+
+function _stripPfx(url, pfx) {
+  if (!url) return ''
+  return url.replace(/https?:\/\/(www\.)?/, '').replace(pfx, '').replace(/^\//, '')
+}
+
+function cleanGithub() {
+  profile.value.github = profile.value.github.replace(/https?:\/\/(www\.)?github\.com\//g, '').replace(/^\//, '')
+}
+
+function cleanLinkedin() {
+  profile.value.linkedin = profile.value.linkedin.replace(/https?:\/\/(www\.)?linkedin\.com\/in\//g, '').replace(/^\//, '')
+}
+
+const COUNTRIES = [
+  'Afghanistan','Albania','Algeria','Andorra','Angola','Argentina','Armenia','Australia',
+  'Austria','Azerbaijan','Bahamas','Bahrain','Bangladesh','Belarus','Belgium','Belize',
+  'Benin','Bolivia','Bosnia and Herzegovina','Botswana','Brazil','Brunei','Bulgaria',
+  'Burkina Faso','Burundi','Cambodia','Cameroon','Canada','Central African Republic',
+  'Chad','Chile','China','Colombia','Congo','Costa Rica','Croatia','Cuba','Cyprus',
+  'Czech Republic','Denmark','DR Congo','Ecuador','Egypt','El Salvador','Eritrea',
+  'Estonia','Eswatini','Ethiopia','Fiji','Finland','France','Gabon','Gambia','Georgia',
+  'Germany','Ghana','Greece','Guatemala','Guinea','Guyana','Haiti','Honduras','Hungary',
+  'Iceland','India','Indonesia','Iran','Iraq','Ireland','Israel','Italy','Jamaica',
+  'Japan','Jordan','Kazakhstan','Kenya','Kuwait','Kyrgyzstan','Laos','Latvia','Lebanon',
+  'Liberia','Libya','Lithuania','Luxembourg','Madagascar','Malawi','Malaysia','Mali',
+  'Malta','Mauritania','Mauritius','Mexico','Moldova','Monaco','Mongolia','Montenegro',
+  'Morocco','Mozambique','Myanmar','Namibia','Nepal','Netherlands','New Zealand',
+  'Nicaragua','Niger','Nigeria','North Korea','North Macedonia','Norway','Oman',
+  'Pakistan','Panama','Papua New Guinea','Paraguay','Peru','Philippines','Poland',
+  'Portugal','Qatar','Romania','Russia','Rwanda','Saudi Arabia','Senegal','Serbia',
+  'Sierra Leone','Singapore','Slovakia','Slovenia','Somalia','South Africa',
+  'South Korea','South Sudan','Spain','Sri Lanka','Sudan','Sweden','Switzerland',
+  'Syria','Taiwan','Tajikistan','Tanzania','Thailand','Togo','Trinidad and Tobago',
+  'Tunisia','Turkey','Turkmenistan','Uganda','Ukraine','United Arab Emirates',
+  'United Kingdom','United States','Uruguay','Uzbekistan','Venezuela','Vietnam',
+  'Yemen','Zambia','Zimbabwe',
+]
 
 const security = ref({ current: '', newPass: '', confirm: '', twoFA: false })
 
@@ -238,19 +294,23 @@ const privacy = ref({ visibility: 'public' })
 
 async function saveProfile() {
   saving.value = true
-  await new Promise(r => setTimeout(r, 800))
-  authStore.updateUser({
-    name: profile.value.name,
-    email: profile.value.email,
-    jobTitle: profile.value.jobTitle,
-    location: profile.value.location,
-    bio: profile.value.bio,
-    github: profile.value.github,
-    linkedin: profile.value.linkedin,
-    website: profile.value.website,
-  })
-  saving.value = false
-  uiStore.showSuccess('Profile updated successfully!')
+  try {
+    await authStore.updateProfile({
+      full_name:    profile.value.name,
+      experience_level: profile.value.jobTitle,
+      location:     profile.value.location,
+      bio:          profile.value.bio,
+      github_url:   profile.value.github ? `https://github.com/${profile.value.github}` : '',
+      linkedin_url: profile.value.linkedin ? `https://www.linkedin.com/in/${profile.value.linkedin}` : '',
+      website_url:  profile.value.website,
+      twitter_url:  profile.value.twitter,
+    })
+    uiStore.showSuccess('Profile updated successfully!')
+  } catch {
+    uiStore.showError('Failed to save profile.')
+  } finally {
+    saving.value = false
+  }
 }
 
 function changePassword() {
@@ -483,4 +543,23 @@ function revokeSession(session) {
 .danger-zone { border-color: rgba(186,26,26,0.2); }
 .danger-title { color: var(--error); }
 .danger-item { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+
+/* Country select & prefix inputs */
+.form-field-wrap { display:flex; flex-direction:column; gap:.3rem; }
+.field-label-sm { font-family:var(--font-headline); font-size:.8rem; font-weight:600; color:var(--on-surface); }
+.country-sel {
+  width:100%; padding:.65rem .875rem;
+  background:var(--surface-container-low);
+  border:1px solid var(--outline-variant);
+  border-radius:var(--radius-lg);
+  font-size:.875rem; color:var(--on-surface); outline:none; cursor:pointer;
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right .75rem center; padding-right:2.5rem;
+}
+.country-sel:focus { border-color:var(--primary); }
+.pfx-wrap { display:flex; align-items:center; background:var(--surface-container-low); border:1px solid var(--outline-variant); border-radius:var(--radius-lg); overflow:hidden; }
+.pfx-wrap:focus-within { border-color:var(--primary); }
+.pfx { padding:0 .6rem 0 .875rem; font-size:.78rem; color:var(--on-surface-variant); white-space:nowrap; flex-shrink:0; border-right:1px solid var(--outline-variant); background:var(--surface-container); line-height:2.6rem; }
+.pfx-input { flex:1; padding:.65rem .875rem; background:transparent; border:none; outline:none; font-size:.875rem; color:var(--on-surface); min-width:0; }
 </style>

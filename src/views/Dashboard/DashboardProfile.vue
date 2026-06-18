@@ -40,7 +40,13 @@
         </div>
         <div class="form-row">
           <GfdInput v-model="form.experience_level" label="Job Title" placeholder="Senior Full-Stack Engineer" />
-          <GfdInput v-model="form.location" label="Location" placeholder="City, Country" />
+          <div class="form-field-wrap">
+            <label class="input-label">Location</label>
+            <select v-model="form.location" class="country-select">
+              <option value="">Select country…</option>
+              <option v-for="c in COUNTRIES" :key="c" :value="c">{{ c }}</option>
+            </select>
+          </div>
         </div>
 
         <GfdInput v-model="form.bio" label="Bio" type="textarea" placeholder="Tell the community about your expertise..." :rows="3" />
@@ -86,8 +92,23 @@
         </div>
 
         <div class="form-row">
-          <GfdInput v-model="form.github_url" label="GitHub" placeholder="https://github.com/username" />
-          <GfdInput v-model="form.portfolio" label="Website" placeholder="https://yourportfolio.com" />
+          <div class="form-field-wrap">
+            <label class="input-label">GitHub</label>
+            <div class="prefix-input-wrap">
+              <span class="input-prefix">github.com/</span>
+              <input v-model="form.github_url" class="prefix-input" placeholder="username" @input="fixGithub" />
+            </div>
+          </div>
+          <div class="form-field-wrap">
+            <label class="input-label">LinkedIn</label>
+            <div class="prefix-input-wrap">
+              <span class="input-prefix">linkedin.com/in/</span>
+              <input v-model="form.linkedin_url" class="prefix-input" placeholder="username" @input="fixLinkedin" />
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <GfdInput v-model="form.portfolio" label="Portfolio Website" placeholder="https://yourportfolio.com" />
         </div>
 
         <div class="form-actions">
@@ -159,9 +180,49 @@ const form = reactive({
   bio:              profile.value?.bio || '',
   skills:           Array.isArray(profile.value?.skills) ? [...profile.value.skills] : [],
   available:        profile.value?.available !== false,
-  github_url:       profile.value?.github_url || '',
+  github_url:       _stripPrefix(profile.value?.github_url, 'https://github.com/'),
+  linkedin_url:     _stripPrefix(profile.value?.linkedin_url, 'https://www.linkedin.com/in/'),
   portfolio:        profile.value?.portfolio || '',
 })
+
+function _stripPrefix(url, prefix) {
+  if (!url) return ''
+  return url.replace(prefix, '').replace('https://github.com/', '').replace('https://linkedin.com/in/', '').replace('linkedin.com/in/', '').replace('github.com/', '')
+}
+
+function fixGithub() {
+  form.github_url = form.github_url.replace(/https?:\/\/(www\.)?github\.com\//g, '').replace(/^\//, '')
+}
+
+function fixLinkedin() {
+  form.linkedin_url = form.linkedin_url.replace(/https?:\/\/(www\.)?linkedin\.com\/in\//g, '').replace(/^\//, '')
+}
+
+const COUNTRIES = [
+  'Afghanistan','Albania','Algeria','Andorra','Angola','Argentina','Armenia','Australia',
+  'Austria','Azerbaijan','Bahamas','Bahrain','Bangladesh','Belarus','Belgium','Belize',
+  'Benin','Bhutan','Bolivia','Bosnia and Herzegovina','Botswana','Brazil','Brunei',
+  'Bulgaria','Burkina Faso','Burundi','Cambodia','Cameroon','Canada','Cape Verde',
+  'Central African Republic','Chad','Chile','China','Colombia','Comoros','Congo',
+  'Costa Rica','Croatia','Cuba','Cyprus','Czech Republic','Denmark','Djibouti',
+  'Dominican Republic','DR Congo','Ecuador','Egypt','El Salvador','Equatorial Guinea',
+  'Eritrea','Estonia','Eswatini','Ethiopia','Fiji','Finland','France','Gabon','Gambia',
+  'Georgia','Germany','Ghana','Greece','Guatemala','Guinea','Guinea-Bissau','Guyana',
+  'Haiti','Honduras','Hungary','Iceland','India','Indonesia','Iran','Iraq','Ireland',
+  'Israel','Italy','Jamaica','Japan','Jordan','Kazakhstan','Kenya','Kuwait','Kyrgyzstan',
+  'Laos','Latvia','Lebanon','Lesotho','Liberia','Libya','Liechtenstein','Lithuania',
+  'Luxembourg','Madagascar','Malawi','Malaysia','Maldives','Mali','Malta','Mauritania',
+  'Mauritius','Mexico','Moldova','Monaco','Mongolia','Montenegro','Morocco','Mozambique',
+  'Myanmar','Namibia','Nepal','Netherlands','New Zealand','Nicaragua','Niger','Nigeria',
+  'North Korea','North Macedonia','Norway','Oman','Pakistan','Panama','Papua New Guinea',
+  'Paraguay','Peru','Philippines','Poland','Portugal','Qatar','Romania','Russia','Rwanda',
+  'Saudi Arabia','Senegal','Serbia','Sierra Leone','Singapore','Slovakia','Slovenia',
+  'Somalia','South Africa','South Korea','South Sudan','Spain','Sri Lanka','Sudan',
+  'Sweden','Switzerland','Syria','Taiwan','Tajikistan','Tanzania','Thailand','Togo',
+  'Trinidad and Tobago','Tunisia','Turkey','Turkmenistan','Uganda','Ukraine',
+  'United Arab Emirates','United Kingdom','United States','Uruguay','Uzbekistan',
+  'Venezuela','Vietnam','Yemen','Zambia','Zimbabwe',
+]
 
 // Sync form when profile loads/changes
 watch(profile, (p) => {
@@ -173,7 +234,8 @@ watch(profile, (p) => {
     form.bio = p.bio || ''
     form.skills = Array.isArray(p.skills) ? [...p.skills] : []
     form.available = p.available !== false
-    form.github_url = p.github_url || ''
+    form.github_url = _stripPrefix(p.github_url, 'https://github.com/')
+    form.linkedin_url = _stripPrefix(p.linkedin_url, 'https://www.linkedin.com/in/')
     form.portfolio = p.portfolio || ''
   }
 }, { immediate: true })
@@ -221,7 +283,8 @@ async function handleSave() {
       bio:              form.bio,
       skills:           [...form.skills],
       available:        form.available,
-      github_url:       form.github_url,
+      github_url:       form.github_url ? `https://github.com/${form.github_url}` : '',
+      linkedin_url:     form.linkedin_url ? `https://www.linkedin.com/in/${form.linkedin_url}` : '',
       portfolio:        form.portfolio,
     })
     uiStore.showSuccess('Profile updated!')
@@ -372,4 +435,45 @@ async function handleSave() {
 
 .toggle-knob { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.2); transition: transform 0.2s ease; display: block; }
 .toggle-btn.on .toggle-knob { transform: translateX(20px); }
+
+/* ── Country select & prefix inputs ── */
+.form-field-wrap { display: flex; flex-direction: column; gap: 0.3rem; flex: 1; min-width: 0; }
+.input-label { font-family: var(--font-headline); font-size: 0.8rem; font-weight: 600; color: var(--on-surface); }
+.country-select {
+  width: 100%; padding: 0.65rem 0.875rem;
+  background: var(--surface-container-low);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  font-size: 0.875rem; color: var(--on-surface);
+  outline: none; cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2.5rem;
+}
+.country-select:focus { border-color: var(--primary); }
+
+.prefix-input-wrap {
+  display: flex; align-items: center;
+  background: var(--surface-container-low);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.prefix-input-wrap:focus-within { border-color: var(--primary); }
+.input-prefix {
+  padding: 0 0.6rem 0 0.875rem;
+  font-size: 0.82rem; color: var(--on-surface-variant);
+  white-space: nowrap; flex-shrink: 0;
+  border-right: 1px solid var(--outline-variant);
+  background: var(--surface-container);
+  line-height: 2.6rem;
+}
+.prefix-input {
+  flex: 1; padding: 0.65rem 0.875rem;
+  background: transparent; border: none; outline: none;
+  font-size: 0.875rem; color: var(--on-surface);
+  min-width: 0;
+}
 </style>

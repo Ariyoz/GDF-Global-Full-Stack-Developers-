@@ -819,7 +819,7 @@ function submitComment(post, e) {
   }
 }
 
-/* ── Sidebars: hidden on mobile ── */
+/* ── Sidebars: sticky so they stay visible while feed scrolls ── */
 .feed-sidebar,
 .feed-right-sidebar { display: none; }
 
@@ -828,8 +828,13 @@ function submitComment(post, e) {
   .feed-right-sidebar {
     display: block;
     position: sticky;
-    top: 80px;
+    top: 88px;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    scrollbar-width: none;
   }
+  .feed-sidebar::-webkit-scrollbar,
+  .feed-right-sidebar::-webkit-scrollbar { display: none; }
 }
 
 .sidebar-card {
@@ -890,6 +895,9 @@ function submitComment(post, e) {
   padding: 1rem;
   background: var(--surface-container-lowest);
   border-bottom: 1px solid var(--outline-variant);
+  position: sticky;
+  top: 72px;
+  z-index: 19;
 }
 
 .create-post-top {
@@ -1209,8 +1217,10 @@ function submitComment(post, e) {
   border-bottom: 1px solid var(--outline-variant);
   background: var(--surface-container-lowest);
   position: sticky;
-  top: 72px;
-  z-index: 10;
+  top: calc(72px + 110px);  /* topnav + create-post height */
+  z-index: 20;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .feed-tab {
