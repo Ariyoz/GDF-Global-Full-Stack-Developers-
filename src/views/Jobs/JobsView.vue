@@ -357,6 +357,7 @@
 <script setup>
 import { useSeo, pageSeo } from '@/composables/useSeo'
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
 import { useUiStore } from '@/store/ui'
 import http from '@/services/http'
@@ -365,6 +366,7 @@ useSeo(pageSeo.jobs)
 
 const authStore = useAuthStore()
 const uiStore = useUiStore()
+const router = useRouter()
 
 const jobs = ref([])
 const loading = ref(true)
@@ -503,6 +505,7 @@ async function deleteJob(job) {
 
 async function viewApplicants(job) {
   if (!job) return
+  currentReviewJob.value = job
   try {
     const data = await http.get(`/jobs/${job.id}/applications`)
     applicants.value = data.applications || []
@@ -528,11 +531,13 @@ async function updateApplicationStatus(app, newStatus) {
 }
 
 async function openHiringChat(job, app) {
+  const jobToUse = job || currentReviewJob.value
+  if (!jobToUse) { uiStore.showError('Job not found'); return }
   try {
-    const data = await http.post(`/jobs/${currentReviewJob.value?.id || job.id}/applications/${app.id}/open-chat`, {})
-    uiStore.showSuccess('Hiring conversation started!')
+    const data = await http.post(`/jobs/${jobToUse.id}/applications/${app.id}/open-chat`, {})
+    uiStore.showSuccess('Opening chat with ' + (app.applicant_name || 'applicant'))
     showApplicants.value = false
-    window.location.href = '/messaging'
+    router.push({ path: '/messaging', query: { conv: data.conversation_id } })
   } catch {
     uiStore.showError('Failed to open chat')
   }

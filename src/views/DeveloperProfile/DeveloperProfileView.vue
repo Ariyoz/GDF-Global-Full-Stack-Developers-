@@ -538,8 +538,11 @@ function toggleFollow() {
 
 async function startMessage() {
   try {
-    const conv = await messagingService.startConversation(authStore.user?.id, route.params.id)
-    router.push('/messaging')
+    // Pass the developer's ID as the other user, not the current user's ID
+    const developerName = profileData.value?.full_name || 'User'
+    const conv = await messagingService.startConversation(route.params.id, 'direct', null, null)
+    // Navigate to messaging with the conversation pre-selected via query param
+    router.push({ path: '/messaging', query: { conv: conv.id, name: developerName } })
   } catch {
     router.push('/messaging')
   }

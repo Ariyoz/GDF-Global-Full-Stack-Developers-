@@ -88,6 +88,12 @@
           </div>
         </div>
 
+        <!-- E2E encryption notice -->
+        <div class="e2e-notice">
+          <span class="material-symbols-outlined" style="font-size:12px">lock</span>
+          Messages are end-to-end encrypted
+        </div>
+
         <!-- Search bar -->
         <Transition name="slide-down">
           <div v-if="showSearch" class="search-bar">
@@ -409,9 +415,11 @@
 import { ref, computed, nextTick, onMounted, watch } from 'vue'
 import { useMessagingStore } from '@/store/messaging'
 import { useAuthStore } from '@/store/auth'
+import { useRoute } from 'vue-router'
 
 const messagingStore = useMessagingStore()
 const authStore = useAuthStore()
+const route = useRoute()
 
 const REACTIONS = ['👍','❤️','😂','😮','😢','🔥','🚀']
 
@@ -844,7 +852,23 @@ watch(() => messagingStore.callEvent, (event) => {
   messagingStore.clearCallEvent()
 })
 
-onMounted(() => messagingStore.fetchConversations())
+onMounted(async () => {
+  await messagingStore.fetchConversations()
+
+  // Auto-open conversation if navigated from profile "Message" button
+  const targetConvId = route.query.conv
+  if (targetConvId) {
+    const conv = messagingStore.conversations.find(c => c.id === targetConvId)
+    if (conv) {
+      selectConv(conv)
+    } else {
+      // Conversation just created — fetch again then open
+      await messagingStore.fetchConversations()
+      const freshConv = messagingStore.conversations.find(c => c.id === targetConvId)
+      if (freshConv) selectConv(freshConv)
+    }
+  }
+})
 </script>
 
 <style scoped>
@@ -1122,5 +1146,7 @@ onMounted(() => messagingStore.fetchConversations())
 .vp-mine .vp-waveform { color:rgba(255,255,255,.85); }
 .vp-theirs .vp-waveform { color:var(--primary); }
 .vp-dur { font-size:.68rem; font-weight:600; opacity:.75; min-width:28px; }
+/* E2E notice */
+.e2e-notice { display:flex; align-items:center; justify-content:center; gap:.3rem; padding:.3rem; background:color-mix(in srgb,#22c55e 8%,transparent); color:var(--on-surface-variant); font-size:.68rem; flex-shrink:0; border-bottom:1px solid var(--outline-variant); }
 
 </style>
