@@ -87,16 +87,13 @@ export const API_ENDPOINTS = {
 
   // Messaging
   messages: {
-    conversations:  '/messages/conversations',
-    messages:       (convId) => `/messages/conversations/${convId}/messages`,
-    send:           (convId) => `/messages/conversations/${convId}/messages`,
-    search:         (convId) => `/messages/conversations/${convId}/messages/search`,
-    react:          (convId, msgId) => `/messages/conversations/${convId}/messages/${msgId}/react`,
-    delivered:      (convId, msgId) => `/messages/conversations/${convId}/messages/${msgId}/delivered`,
-    markRead:       (msgId) => `/messages/messages/${msgId}/read`,
-    deleteMsg:      (msgId) => `/messages/messages/${msgId}`,
-    editMsg:        (msgId) => `/messages/messages/${msgId}`,
-    deleteConv:     (convId) => `/messages/conversations/${convId}`,
+    conversations:    '/messages/conversations',
+    messages:         (convId) => `/messages/conversations/${convId}/messages`,
+    send:             (convId) => `/messages/conversations/${convId}/messages`,
+    react:            (convId, msgId) => `/messages/conversations/${convId}/messages/${msgId}/react`,
+    deleteMsg:        (msgId) => `/messages/messages/${msgId}`,
+    editMsg:          (msgId) => `/messages/messages/${msgId}`,
+    deleteConv:       (convId) => `/messages/conversations/${convId}`,
     uploadAttachment: '/messages/upload-attachment',
   },
 

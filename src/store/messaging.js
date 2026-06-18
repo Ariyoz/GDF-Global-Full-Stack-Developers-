@@ -321,20 +321,17 @@ export const useMessagingStore = defineStore('messaging', () => {
   }
 
   async function searchMessages(query) {
-    if (!activeConversation.value || !query.trim()) {
+    // Local search through loaded messages (no backend endpoint needed)
+    if (!query.trim()) {
       searchResults.value = []
+      searchQuery.value = ''
       return
     }
-    isSearching.value = true
     searchQuery.value = query
-    try {
-      const data = await messagingService.searchMessages(activeConversation.value.id, query)
-      searchResults.value = data.map(_normaliseMessage)
-    } catch (err) {
-      console.error('Search failed:', err)
-    } finally {
-      isSearching.value = false
-    }
+    const q = query.toLowerCase()
+    searchResults.value = messages.value.filter(m =>
+      m.content && m.content.toLowerCase().includes(q)
+    )
   }
 
   async function uploadAttachment(file) {
