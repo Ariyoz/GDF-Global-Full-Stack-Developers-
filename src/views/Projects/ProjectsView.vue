@@ -55,21 +55,29 @@
                 <span v-for="tag in project.tags.slice(0, 4)" :key="tag" class="chip">{{ tag }}</span>
               </div>
               <div class="project-footer">
-                <div class="project-author">
-                  <div class="author-avatar">{{ project.author[0] }}</div>
-                  <span class="author-name">{{ project.author }}</span>
+                <div class="project-author" @click="goToAuthorProfile(project, $event)" :title="`View ${project.author}'s profile`" style="cursor:pointer">
+                  <div class="author-avatar">
+                    <img v-if="project.author_avatar" :src="project.author_avatar" class="author-avatar-img" :alt="project.author" />
+                    <span v-else>{{ (project.author || 'U')[0].toUpperCase() }}</span>
+                  </div>
+                  <div class="author-info">
+                    <span class="author-name">{{ project.author }}</span>
+                    <span v-if="project.author_username" class="author-handle">@{{ project.author_username }}</span>
+                  </div>
                 </div>
                 <div class="project-stats">
                   <a v-if="project.repo_url" :href="project.repo_url" target="_blank" rel="noopener"
-                    class="pstat link-btn" title="View project link" @click.stop>
-                    <span class="material-symbols-outlined" style="font-size:14px;">open_in_new</span>
+                    class="pstat link-btn" title="View project" @click.stop>
+                    <span class="material-symbols-outlined" style="font-size:15px;">open_in_new</span>
                   </a>
                   <span class="pstat">
                     <span class="material-symbols-outlined" style="font-size:14px;">visibility</span>
                     {{ project.views }}
                   </span>
-                  <button class="pstat like-btn" :class="{ liked: project.is_liked }" @click="likeProject(project)">
-                    <span class="material-symbols-outlined" style="font-size:14px;" :style="project.is_liked ? 'font-variation-settings:\'FILL\' 1' : ''">favorite</span>
+                  <button class="pstat like-btn" :class="{ liked: project.is_liked }" @click.stop="likeProject(project)"
+                    :title="project.is_liked ? 'Unlike' : 'Like'">
+                    <span class="material-symbols-outlined" style="font-size:14px;"
+                      :style="project.is_liked ? 'font-variation-settings:\'FILL\' 1' : ''">favorite</span>
                     {{ project.likes }}
                   </button>
                 </div>
@@ -92,6 +100,7 @@
 <script setup>
 import { useSeo, pageSeo } from '@/composables/useSeo'
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { PROJECT_CATEGORIES } from '@/constants'
 import http from '@/services/http'
 import { useUiStore } from '@/store/ui'
@@ -99,6 +108,7 @@ import { useUiStore } from '@/store/ui'
 useSeo(pageSeo.projects)
 
 const uiStore = useUiStore()
+const router = useRouter()
 const activeFilter = ref('All')
 
 const projects = ref([])
@@ -138,7 +148,7 @@ onMounted(async () => {
       author_username: p.author_username || '',
       author_avatar: p.author_avatar || null,
       author_id: p.author_id || null,
-      repo_url: p.repo_url || p.repository_url || null,
+      repo_url: p.repository_url || p.repo_url || null,
       year: p.created_at ? new Date(p.created_at).getFullYear() : new Date().getFullYear(),
       icon: categoryIcons[p.project_type] || 'code',
       gradient: categoryGradients[i % categoryGradients.length],
@@ -158,6 +168,13 @@ async function likeProject(project) {
       project.is_liked = false
     }
   } catch { /* ignore */ }
+}
+
+function goToAuthorProfile(project, e) {
+  e.stopPropagation()
+  if (project.author_id) {
+    router.push(`/developer/${project.author_id}`)
+  }
 }
 
 async function viewProject(project) {
@@ -312,23 +329,21 @@ const filteredProjects = computed(() => {
   border-top: 1px solid rgba(204,195,216,0.3);
 }
 
-.project-author { display: flex; align-items: center; gap: 0.5rem; }
+.project-author { display: flex; align-items: center; gap: 0.5rem; transition: opacity .15s; }
+.project-author:hover { opacity: .8; }
 
 .author-avatar {
-  width: 24px;
-  height: 24px;
-  border-radius: var(--radius-full);
-  background: var(--primary-fixed);
-  color: var(--primary);
-  font-family: var(--font-headline);
-  font-size: 0.65rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--primary-fixed); color: var(--primary);
+  font-family: var(--font-headline); font-size: 0.72rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; overflow: hidden;
 }
+.author-avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 
-.author-name { font-size: 0.75rem; color: var(--on-surface-variant); font-family: var(--font-headline); }
+.author-info { display: flex; flex-direction: column; gap: 0; }
+.author-name { font-size: 0.75rem; color: var(--on-surface-variant); font-family: var(--font-headline); font-weight: 600; line-height: 1.2; }
+.author-handle { font-size: 0.65rem; color: var(--outline); }
 
 .project-stats { display: flex; gap: 0.75rem; }
 
