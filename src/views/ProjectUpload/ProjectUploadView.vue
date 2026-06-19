@@ -310,14 +310,16 @@ async function handlePublish() {
       requirements: form.description,
       experience_level: 'mid',
       cover_image: coverImageUrl || undefined,
-      live_url: form.liveUrl || undefined,
+      repository_url: form.liveUrl || form.githubUrl || undefined,
       github_url: form.githubUrl || undefined,
+      live_url: form.liveUrl || undefined,
     })
     uiStore.showSuccess('Project added successfully!')
     currentStep.value = 3
   } catch (err) {
     console.error('Failed to publish project:', err)
-    uiStore.showError('Failed to publish project. Please try again.')
+    const detail = err.response?.data?.detail || err.message || 'Please check your connection and try again.'
+    uiStore.showError(`Failed to publish project: ${detail}`)
   } finally {
     loading.value = false
   }
