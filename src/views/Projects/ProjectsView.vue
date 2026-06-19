@@ -60,6 +60,10 @@
                   <span class="author-name">{{ project.author }}</span>
                 </div>
                 <div class="project-stats">
+                  <a v-if="project.repo_url" :href="project.repo_url" target="_blank" rel="noopener"
+                    class="pstat link-btn" title="View project link" @click.stop>
+                    <span class="material-symbols-outlined" style="font-size:14px;">open_in_new</span>
+                  </a>
                   <span class="pstat">
                     <span class="material-symbols-outlined" style="font-size:14px;">visibility</span>
                     {{ project.views }}
@@ -130,7 +134,11 @@ onMounted(async () => {
       likes: p.like_count || 0,
       is_liked: false,
       cover_image: p.cover_image || '',
-      author: 'Developer',
+      author: p.author_name || 'Member',
+      author_username: p.author_username || '',
+      author_avatar: p.author_avatar || null,
+      author_id: p.author_id || null,
+      repo_url: p.repo_url || p.repository_url || null,
       year: p.created_at ? new Date(p.created_at).getFullYear() : new Date().getFullYear(),
       icon: categoryIcons[p.project_type] || 'code',
       gradient: categoryGradients[i % categoryGradients.length],
@@ -348,6 +356,23 @@ const filteredProjects = computed(() => {
 
 .like-btn.liked {
   color: #e91e63;
+}
+
+.link-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.4rem;
+  border-radius: var(--radius-md);
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 0.72rem;
+  font-weight: 600;
+  transition: background 0.15s;
+  cursor: pointer;
+}
+.link-btn:hover {
+  background: rgba(168,85,247,0.1);
 }
 
 .empty-state {

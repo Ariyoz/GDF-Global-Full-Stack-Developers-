@@ -223,18 +223,47 @@ function statusTextClass(status) {
 }
 
 async function toggleSuspend(user) {
-  try {
-    if (user.status === 'suspended') {
+  if (user.status === 'suspended') {
+    // Reinstate immediately
+    try {
       await adminService.reinstateUser(user.id)
       user.status = 'active'
       user.statusLabel = 'Active'
-    } else {
-      await adminService.suspendUser(user.id)
-      user.status = 'suspended'
-      user.statusLabel = 'Suspended'
+    } catch (err) {
+      console.error('Failed to reinstate user:', err)
     }
+    return
+  }
+
+  // Show timed suspension dialog
+  const options = [
+    '1 hour', '6 hours', '12 hours', '24 hours',
+    '3 days', '7 days', '30 days', 'Indefinite'
+  ]
+  const hoursMap = {
+    '1 hour': 1, '6 hours': 6, '12 hours': 12, '24 hours': 24,
+    '3 days': 72, '7 days': 168, '30 days': 720, 'Indefinite': 0
+  }
+
+  const choice = prompt(
+    `Suspend ${user.name}?\n\nChoose duration:\n${options.map((o, i) => `${i+1}. ${o}`).join('\n')}\n\nEnter number (1-${options.length}):`
+  )
+  if (!choice) return
+
+  const idx = parseInt(choice) - 1
+  if (isNaN(idx) || idx < 0 || idx >= options.length) return
+
+  const label = options[idx]
+  const hours = hoursMap[label]
+  const reason = prompt(`Reason for suspension (optional):`) || ''
+
+  try {
+    await adminService.suspendUser(user.id, hours, reason)
+    user.status = 'suspended'
+    user.statusLabel = hours > 0 ? `Suspended (${label})` : 'Suspended (Indefinite)'
+    alert(`${user.name} has been suspended for ${label}.`)
   } catch (err) {
-    console.error('Failed to update user status:', err)
+    console.error('Failed to suspend user:', err)
   }
 }
 </script>

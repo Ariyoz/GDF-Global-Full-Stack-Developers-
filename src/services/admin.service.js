@@ -32,8 +32,11 @@ export const adminService = {
     return { users: data.users || [], total: data.total || data.users?.length || 0 }
   },
 
-  async suspendUser(userId) {
-    return http.patch(admin.suspend(userId))
+  async suspendUser(userId, durationHours = 0, reason = '') {
+    return http.patch(admin.suspend(userId), {
+      duration_hours: durationHours,
+      reason,
+    })
   },
 
   async reinstateUser(userId) {
