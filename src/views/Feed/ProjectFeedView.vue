@@ -801,57 +801,61 @@ function submitComment(post, e) {
   padding-bottom: 2rem;
 }
 
-/* ── Layout: single col mobile → 3-col desktop ── */
+/* ── Layout: single col mobile → full-width on desktop (sidebars are fixed) ── */
 .feed-layout {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
+  display: block;
   padding: 0.75rem 0 2rem;
-  /* No extra horizontal padding — container-gfd handles it */
 }
 
 @media (min-width: 1024px) {
   .feed-layout {
-    grid-template-columns: 220px 1fr 240px;
-    gap: 1.5rem;
-    align-items: start;
     padding-top: 1rem;
   }
 }
 
-/* ── Sidebars: FIXED so they never scroll ── */
+/* ── Sidebars: position:fixed — guaranteed to never scroll ── */
 .feed-sidebar,
 .feed-right-sidebar { display: none; }
 
 @media (min-width: 1024px) {
-  /* Use sticky on the grid items — works because .feed-view is the scroll container */
+  /* Left sidebar: fixed, positioned after the dashboard nav sidebar (256px) */
   .feed-sidebar {
     display: block;
-    position: sticky;
+    position: fixed;
     top: 88px;
+    left: calc(256px + 1rem);   /* dashboard sidebar width + gap */
+    width: 220px;
     max-height: calc(100vh - 96px);
     overflow-y: auto;
     scrollbar-width: none;
-    align-self: start;
+    z-index: 10;
   }
+  .feed-sidebar::-webkit-scrollbar { display: none; }
+
+  /* Right sidebar: fixed, flush to the right edge */
   .feed-right-sidebar {
     display: block;
-    position: sticky;
+    position: fixed;
     top: 88px;
+    right: 1rem;
+    width: 240px;
     max-height: calc(100vh - 96px);
     overflow-y: auto;
     scrollbar-width: none;
-    align-self: start;
+    z-index: 10;
   }
-  .feed-sidebar::-webkit-scrollbar,
   .feed-right-sidebar::-webkit-scrollbar { display: none; }
+
+  /* Center feed: add matching margins so posts don't go behind fixed sidebars */
+  .feed-main {
+    margin-left: calc(220px + 1.5rem);   /* left sidebar width + gap */
+    margin-right: calc(240px + 1.5rem);  /* right sidebar width + gap */
+  }
 }
 
-/* Make the grid align items to top so sticky works per column */
+/* Keep grid rows aligned to start */
 @media (min-width: 1024px) {
-  .feed-layout {
-    align-items: start;
-  }
+  .feed-layout { align-items: start; }
 }
 
 .sidebar-card {
