@@ -109,14 +109,22 @@
               </td>
               <td>
                 <div class="row-actions">
-                  <button class="row-action-btn view" title="View Profile">
+                  <button class="row-action-btn view" title="View Profile"
+                    @click="viewUserProfile(user)">
                     <span class="material-symbols-outlined">visibility</span>
                   </button>
-                  <button class="row-action-btn edit" title="Edit">
-                    <span class="material-symbols-outlined">edit</span>
-                  </button>
-                  <button class="row-action-btn danger" :title="user.status === 'suspended' ? 'Lift Ban' : 'Suspend'" @click="toggleSuspend(user)">
+                  <button class="row-action-btn" :class="user.status === 'suspended' ? 'edit' : 'danger'"
+                    :title="user.status === 'suspended' ? 'Lift Suspension' : 'Suspend User'"
+                    @click="toggleSuspend(user)">
                     <span class="material-symbols-outlined">{{ user.status === 'suspended' ? 'lock_open' : 'block' }}</span>
+                  </button>
+                  <button class="row-action-btn" style="background:rgba(239,68,68,.12);color:#ef4444"
+                    title="Delete User Permanently" @click="deleteUser(user)">
+                    <span class="material-symbols-outlined">delete_forever</span>
+                  </button>
+                  <button class="row-action-btn" style="background:rgba(251,146,60,.1);color:#f97316"
+                    title="Manage User Content" @click="openContentPanel(user)">
+                    <span class="material-symbols-outlined">manage_accounts</span>
                   </button>
                 </div>
               </td>
@@ -142,9 +150,100 @@
   </div>
 </template>
 
+<!-- Content Management Modal -->
+<Teleport to="body">
+  <Transition name="modal">
+    <div v-if="contentPanel.show" class="modal-overlay" @click.self="contentPanel.show = false">
+      <div class="content-modal">
+        <div class="cm-header">
+          <div>
+            <h3 class="cm-title">Content Management</h3>
+            <p class="cm-sub">{{ contentPanel.user?.name }}</p>
+          </div>
+          <button class="icon-close" @click="contentPanel.show = false">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <div class="cm-body">
+          <!-- Loading -->
+          <div v-if="contentPanel.loading" class="cm-loading">Loading content…</div>
+
+          <template v-else>
+            <!-- Posts section -->
+            <div class="cm-section">
+              <h4 class="cm-section-title">
+                <span class="material-symbols-outlined">article</span>
+                Posts ({{ contentPanel.posts.length }})
+              </h4>
+              <div v-if="!contentPanel.posts.length" class="cm-empty">No posts</div>
+              <div v-for="post in contentPanel.posts" :key="post.id" class="cm-item">
+                <div class="cm-item-info">
+                  <span class="cm-item-text">{{ post.content?.slice(0,80) || 'No text' }}</span>
+                  <span class="cm-item-meta">{{ formatDate(post.created_at) }}</span>
+                </div>
+                <button class="cm-del-btn" @click="deleteContent('post', post.id)" title="Delete post">
+                  <span class="material-symbols-outlined">delete</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Projects section -->
+            <div class="cm-section">
+              <h4 class="cm-section-title">
+                <span class="material-symbols-outlined">folder</span>
+                Projects ({{ contentPanel.projects.length }})
+              </h4>
+              <div v-if="!contentPanel.projects.length" class="cm-empty">No projects</div>
+              <div v-for="proj in contentPanel.projects" :key="proj.id" class="cm-item">
+                <div class="cm-item-info">
+                  <span class="cm-item-text">{{ proj.title }}</span>
+                  <span class="cm-item-meta">{{ proj.status }}</span>
+                </div>
+                <button class="cm-del-btn" @click="deleteContent('project', proj.id)" title="Delete project">
+                  <span class="material-symbols-outlined">delete</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Jobs section -->
+            <div class="cm-section">
+              <h4 class="cm-section-title">
+                <span class="material-symbols-outlined">work</span>
+                Job Postings ({{ contentPanel.jobs.length }})
+              </h4>
+              <div v-if="!contentPanel.jobs.length" class="cm-empty">No job postings</div>
+              <div v-for="job in contentPanel.jobs" :key="job.id" class="cm-item">
+                <div class="cm-item-info">
+                  <span class="cm-item-text">{{ job.title }}</span>
+                  <span class="cm-item-meta">{{ job.status }}</span>
+                </div>
+                <button class="cm-del-btn" @click="deleteContent('job', job.id)" title="Delete job">
+                  <span class="material-symbols-outlined">delete</span>
+                </button>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <div class="cm-footer">
+          <button class="cm-danger-btn" @click="deleteAllContent(contentPanel.user)">
+            <span class="material-symbols-outlined">delete_sweep</span>
+            Delete ALL Content
+          </button>
+        </div>
+      </div>
+    </div>
+  </Transition>
+</Teleport>
+
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { adminService } from '@/services/admin.service'
+import http from '@/services/http'
+
+const router = useRouter()
 
 const activeTab    = ref('all')
 const roleFilter   = ref('')
@@ -261,10 +360,92 @@ async function toggleSuspend(user) {
     await adminService.suspendUser(user.id, hours, reason)
     user.status = 'suspended'
     user.statusLabel = hours > 0 ? `Suspended (${label})` : 'Suspended (Indefinite)'
-    alert(`${user.name} has been suspended for ${label}.`)
+    if (hours === 0) {
+      // Remove from local list — all content deleted
+      users.value = users.value.filter(u => u.id !== user.id)
+      alert(`${user.name} has been permanently suspended and all their content deleted.`)
+    } else {
+      alert(`${user.name} has been suspended for ${label}.`)
+    }
   } catch (err) {
     console.error('Failed to suspend user:', err)
   }
+}
+
+// ── Delete user permanently ────────────────────────────────────────────────
+async function deleteUser(user) {
+  if (!confirm(`PERMANENTLY DELETE ${user.name}?\n\nThis will delete their account AND all their posts, projects, and jobs. This cannot be undone.`)) return
+  try {
+    await http.request({ method: 'DELETE', url: `/admin/users/${user.id}/delete` })
+    users.value = users.value.filter(u => u.id !== user.id)
+    alert(`${user.name} has been permanently deleted.`)
+  } catch (err) {
+    alert('Failed to delete user: ' + (err.response?.data?.detail || err.message))
+  }
+}
+
+// ── View user profile ──────────────────────────────────────────────────────
+function viewUserProfile(user) {
+  if (user.id) router.push(`/developer/${user.id}`)
+}
+
+// ── Content management panel ───────────────────────────────────────────────
+const contentPanel = ref({ show: false, user: null, loading: false, posts: [], projects: [], jobs: [] })
+
+async function openContentPanel(user) {
+  contentPanel.value = { show: true, user, loading: true, posts: [], projects: [], jobs: [] }
+  try {
+    // Fetch posts
+    const feedData = await http.get(`/feed?feed_type=user&user_id=${user.id}&limit=50`)
+    contentPanel.value.posts = feedData.posts || []
+    // Fetch projects
+    const projData = await http.get(`/projects?limit=50`)
+    contentPanel.value.projects = (projData.projects || []).filter(p => p.author_id === user.id)
+    // Fetch jobs
+    const jobData = await http.get(`/jobs?limit=50`)
+    contentPanel.value.jobs = (jobData.jobs || []).filter(j => j.poster_name === user.name)
+  } catch (err) {
+    console.error('Failed to load user content:', err)
+  } finally {
+    contentPanel.value.loading = false
+  }
+}
+
+async function deleteContent(type, id) {
+  if (!confirm(`Delete this ${type}?`)) return
+  try {
+    await http.request({ method: 'DELETE', url: `/admin/content/${type}/${id}` })
+    if (type === 'post') contentPanel.value.posts = contentPanel.value.posts.filter(p => p.id !== id)
+    if (type === 'project') contentPanel.value.projects = contentPanel.value.projects.filter(p => p.id !== id)
+    if (type === 'job') contentPanel.value.jobs = contentPanel.value.jobs.filter(j => j.id !== id)
+  } catch (err) {
+    alert('Failed to delete: ' + (err.response?.data?.detail || err.message))
+  }
+}
+
+async function deleteAllContent(user) {
+  if (!confirm(`Delete ALL content from ${user.name}? (posts, projects, jobs)`)) return
+  const ids = {
+    posts: contentPanel.value.posts.map(p => p.id),
+    projects: contentPanel.value.projects.map(p => p.id),
+    jobs: contentPanel.value.jobs.map(j => j.id),
+  }
+  try {
+    for (const id of ids.posts) await http.request({ method: 'DELETE', url: `/admin/content/post/${id}` })
+    for (const id of ids.projects) await http.request({ method: 'DELETE', url: `/admin/content/project/${id}` })
+    for (const id of ids.jobs) await http.request({ method: 'DELETE', url: `/admin/content/job/${id}` })
+    contentPanel.value.posts = []
+    contentPanel.value.projects = []
+    contentPanel.value.jobs = []
+    alert('All content deleted.')
+  } catch (err) {
+    alert('Some deletions failed: ' + (err.response?.data?.detail || err.message))
+  }
+}
+
+function formatDate(d) {
+  if (!d) return ''
+  return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 </script>
 
@@ -428,4 +609,36 @@ async function toggleSuspend(user) {
 .page-btn.active { background: var(--primary-fixed); color: var(--on-primary-fixed); border-color: transparent; font-weight: 700; }
 .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 .page-btn .material-symbols-outlined { font-size: 20px; }
+
+/* ── Content Modal ── */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:1000; display:flex; align-items:center; justify-content:center; padding:1rem; }
+.content-modal { background:var(--surface-container-lowest); border:1px solid var(--outline-variant); border-radius:var(--radius-2xl); width:100%; max-width:560px; max-height:85vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 16px 48px rgba(0,0,0,.4); }
+.cm-header { display:flex; align-items:center; justify-content:space-between; padding:1.25rem 1.25rem .75rem; border-bottom:1px solid var(--outline-variant); flex-shrink:0; }
+.cm-title { font-family:var(--font-headline); font-size:1.05rem; font-weight:700; color:var(--on-surface); margin:0; }
+.cm-sub { font-size:.8rem; color:var(--on-surface-variant); margin:.15rem 0 0; }
+.icon-close { width:32px; height:32px; border-radius:50%; background:var(--surface-container); border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--on-surface-variant); }
+.icon-close .material-symbols-outlined { font-size:18px; }
+
+.cm-body { flex:1; overflow-y:auto; padding:1rem 1.25rem; display:flex; flex-direction:column; gap:1.25rem; }
+.cm-loading { text-align:center; color:var(--on-surface-variant); padding:2rem; font-size:.875rem; }
+.cm-section { display:flex; flex-direction:column; gap:.5rem; }
+.cm-section-title { display:flex; align-items:center; gap:.4rem; font-family:var(--font-headline); font-size:.85rem; font-weight:700; color:var(--on-surface); margin:0; }
+.cm-section-title .material-symbols-outlined { font-size:16px; color:var(--primary); }
+.cm-empty { font-size:.78rem; color:var(--on-surface-variant); padding:.4rem .5rem; }
+
+.cm-item { display:flex; align-items:center; gap:.75rem; padding:.55rem .75rem; background:var(--surface-container-low); border-radius:var(--radius-lg); border:1px solid var(--outline-variant); }
+.cm-item-info { flex:1; min-width:0; display:flex; flex-direction:column; gap:.1rem; }
+.cm-item-text { font-size:.82rem; color:var(--on-surface); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cm-item-meta { font-size:.7rem; color:var(--on-surface-variant); }
+.cm-del-btn { width:28px; height:28px; border-radius:50%; background:rgba(239,68,68,.1); border:none; color:#ef4444; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; }
+.cm-del-btn:hover { background:rgba(239,68,68,.2); }
+.cm-del-btn .material-symbols-outlined { font-size:16px; }
+
+.cm-footer { padding:.875rem 1.25rem; border-top:1px solid var(--outline-variant); flex-shrink:0; }
+.cm-danger-btn { display:flex; align-items:center; gap:.4rem; width:100%; padding:.65rem 1rem; background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3); border-radius:var(--radius-lg); color:#ef4444; font-family:var(--font-headline); font-size:.875rem; font-weight:600; cursor:pointer; justify-content:center; }
+.cm-danger-btn:hover { background:rgba(239,68,68,.2); }
+.cm-danger-btn .material-symbols-outlined { font-size:18px; }
+
+.modal-enter-active, .modal-leave-active { transition:opacity .2s ease, transform .2s ease; }
+.modal-enter-from, .modal-leave-to { opacity:0; transform:scale(.96); }
 </style>
