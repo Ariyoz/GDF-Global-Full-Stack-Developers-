@@ -786,14 +786,14 @@ function handleSignOut() {
   padding: var(--space-md);
   max-width: 1200px;
   width: 100%;
-  overflow-y: auto;
   min-height: calc(100vh - 72px);
+  /* NO overflow-y: auto here — page-level scroll needed for sticky children */
 }
 
 @media (min-width: 768px) {
   .dash-main {
     padding: var(--space-lg);
-    margin-left: 256px; /* push content right so it clears the fixed sidebar */
+    margin-left: 256px;
   }
 }
 

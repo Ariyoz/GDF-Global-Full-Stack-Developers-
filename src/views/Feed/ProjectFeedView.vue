@@ -819,22 +819,39 @@ function submitComment(post, e) {
   }
 }
 
-/* ── Sidebars: sticky so they stay visible while feed scrolls ── */
+/* ── Sidebars: FIXED so they never scroll ── */
 .feed-sidebar,
 .feed-right-sidebar { display: none; }
 
 @media (min-width: 1024px) {
-  .feed-sidebar,
+  /* Use sticky on the grid items — works because .feed-view is the scroll container */
+  .feed-sidebar {
+    display: block;
+    position: sticky;
+    top: 88px;
+    max-height: calc(100vh - 96px);
+    overflow-y: auto;
+    scrollbar-width: none;
+    align-self: start;
+  }
   .feed-right-sidebar {
     display: block;
     position: sticky;
     top: 88px;
-    max-height: calc(100vh - 100px);
+    max-height: calc(100vh - 96px);
     overflow-y: auto;
     scrollbar-width: none;
+    align-self: start;
   }
   .feed-sidebar::-webkit-scrollbar,
   .feed-right-sidebar::-webkit-scrollbar { display: none; }
+}
+
+/* Make the grid align items to top so sticky works per column */
+@media (min-width: 1024px) {
+  .feed-layout {
+    align-items: start;
+  }
 }
 
 .sidebar-card {
