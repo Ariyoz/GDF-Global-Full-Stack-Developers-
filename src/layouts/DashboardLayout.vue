@@ -673,19 +673,24 @@ function handleSignOut() {
   min-height: 100vh;
 }
 
-/* Sidebar */
+/* Sidebar — FIXED so it never scrolls with the content */
 .dash-sidebar {
   display: none;
   width: 256px;
   flex-direction: column;
   background: var(--surface-container-lowest);
   border-right: 1px solid var(--outline-variant);
-  position: sticky;
-  top: 72px;
-  height: calc(100vh - 72px);
+  position: fixed;
+  top: calc(72px + env(safe-area-inset-top, 0px));
+  left: 0;
+  height: calc(100vh - 72px - env(safe-area-inset-top, 0px));
   padding: var(--space-md);
   overflow-y: auto;
+  overflow-x: hidden;
   transition: background-color 0.3s ease;
+  z-index: 100;
+  scrollbar-width: thin;
+  scrollbar-color: var(--outline-variant) transparent;
 }
 
 /* Dark mode sidebar — slightly elevated so links are readable */
@@ -775,17 +780,21 @@ function handleSignOut() {
   box-shadow: 0 4px 12px rgba(99,14,212,0.2);
 }
 
-/* Main */
+/* Main — offset by sidebar width on desktop */
 .dash-main {
   flex: 1;
   padding: var(--space-md);
   max-width: 1200px;
   width: 100%;
   overflow-y: auto;
+  min-height: calc(100vh - 72px);
 }
 
 @media (min-width: 768px) {
-  .dash-main { padding: var(--space-lg); }
+  .dash-main {
+    padding: var(--space-lg);
+    margin-left: 256px; /* push content right so it clears the fixed sidebar */
+  }
 }
 
 /* Mobile Bottom Nav */
