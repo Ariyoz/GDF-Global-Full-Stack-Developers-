@@ -148,12 +148,11 @@
       </div>
     </div>
   </div>
-</template>
 
-<!-- Content Management Modal -->
-<Teleport to="body">
-  <Transition name="modal">
-    <div v-if="contentPanel.show" class="modal-overlay" @click.self="contentPanel.show = false">
+  <!-- Content Management Modal — must be inside <template> -->
+  <Teleport to="body">
+    <Transition name="modal">
+      <div v-if="contentPanel.show" class="modal-overlay" @click.self="contentPanel.show = false">
       <div class="content-modal">
         <div class="cm-header">
           <div>
@@ -236,6 +235,7 @@
     </div>
   </Transition>
 </Teleport>
+</template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
