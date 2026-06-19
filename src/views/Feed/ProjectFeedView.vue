@@ -131,8 +131,37 @@
             :key="post.id"
             class="feed-post"
           >
-            <!-- Post Header -->
-            <div class="post-header">
+            <!-- Repost label — shown above the header for reposts -->
+            <div v-if="post.parent_post_id && post.parent_post" class="repost-label">
+              <span class="material-symbols-outlined" style="font-size:14px">repeat</span>
+              <span>{{ post.author?.full_name || 'Someone' }} reposted</span>
+            </div>
+
+            <!-- For reposts: show ORIGINAL author in header, not the reposter -->
+            <div class="post-header" v-if="post.parent_post_id && post.parent_post">
+              <div class="post-author-info" @click="goToProfile(post.parent_post.author?.id)">
+                <div class="post-avatar">
+                  <img v-if="post.parent_post.author?.avatar" :src="post.parent_post.author.avatar" :alt="post.parent_post.author.full_name" class="post-avatar-img" />
+                  <span v-else>{{ getInitials(post.parent_post.author?.full_name) }}</span>
+                </div>
+                <div class="post-author-text">
+                  <div class="post-author-line">
+                    <span class="post-author-name">{{ post.parent_post.author?.full_name }}</span>
+                    <span class="post-author-username">@{{ post.parent_post.author?.username }}</span>
+                    <span class="post-time-dot">·</span>
+                    <span class="post-time">{{ formatTime(post.parent_post.created_at) }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="post-menu-wrap">
+                <button class="btn-ghost icon-only" @click="togglePostMenu(post.id)">
+                  <span class="material-symbols-outlined">more_horiz</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Normal header for non-reposts -->
+            <div class="post-header" v-else>
               <div class="post-author-info" @click="goToProfile(post.author?.id)">
                 <div class="post-avatar">
                   <img v-if="post.author?.avatar" :src="post.author.avatar" :alt="post.author.full_name" class="post-avatar-img" />
@@ -191,8 +220,24 @@
 
             <!-- Post Content -->
             <div class="post-content">
-              <!-- "Read More" collapsible text -->
-              <div v-if="post.content" class="post-text-wrap">
+              <!-- Post content: for reposts show original content, for normal show own content -->
+              <div v-if="post.parent_post_id && post.parent_post" class="post-text-wrap">
+                <p v-if="post.parent_post.content" class="post-text"
+                  :class="{ collapsed: !post.expanded && post.parent_post.content.length > 300 }"
+                  v-html="linkifyText(post.parent_post.content)"></p>
+                <button v-if="post.parent_post.content?.length > 300 && !post.expanded"
+                  class="read-more-btn" @click="post.expanded = true">Read more</button>
+                <button v-if="post.parent_post.content?.length > 300 && post.expanded"
+                  class="read-more-btn" @click="post.expanded = false">Show less</button>
+              </div>
+              <!-- Original post media for reposts -->
+              <div v-if="post.parent_post_id && post.parent_post?.media_urls?.length" class="post-media">
+                <img v-for="(url, idx) in post.parent_post.media_urls.filter(u => u)" :key="idx"
+                  :src="url" alt="Post media" class="post-image" loading="lazy" />
+              </div>
+
+              <!-- "Read More" collapsible text for normal posts -->
+              <div v-else-if="!post.parent_post_id && post.content" class="post-text-wrap">
                 <p class="post-text" :class="{ collapsed: !post.expanded && post.content.length > 300 }"
                   v-html="linkifyText(post.content)"></p>
                 <button v-if="post.content.length > 300 && !post.expanded" class="read-more-btn"
@@ -201,8 +246,8 @@
                   @click="post.expanded = false">Show less</button>
               </div>
 
-              <!-- Media (images/videos) — shown BELOW text -->
-              <div v-if="post.media_urls && post.media_urls.length && post.media_urls[0]" class="post-media">
+              <!-- Media (images/videos) for normal posts — shown BELOW text -->
+              <div v-if="!post.parent_post_id && post.media_urls && post.media_urls.length && post.media_urls[0]" class="post-media">
                 <img
                   v-for="(url, idx) in post.media_urls.filter(u => u)"
                   :key="idx"
@@ -238,16 +283,6 @@
                   <a :href="post.link_preview.url" target="_blank" rel="noopener noreferrer" class="lp-title">{{ post.link_preview.title }}</a>
                   <span v-if="post.link_preview.description" class="lp-desc">{{ post.link_preview.description }}</span>
                 </div>
-              </div>
-
-              <!-- Reposted content preview -->
-              <div v-if="post.parent_post" class="repost-quote-card">
-                <div class="repost-author">
-                  <img v-if="post.parent_post.author?.avatar" :src="post.parent_post.author.avatar" class="rp-avatar" />
-                  <span class="rp-name">{{ post.parent_post.author?.full_name }}</span>
-                  <span class="rp-handle">@{{ post.parent_post.author?.username }}</span>
-                </div>
-                <p class="rp-text">{{ post.parent_post.content?.slice(0, 200) }}</p>
               </div>
 
               <!-- Hashtags -->
@@ -911,13 +946,15 @@ function submitComment(post, e) {
   .post-actions-bar { padding-left: 1rem; }
 }
 
-/* ── Create Post ── */
+/* ── Create Post — fixed so it never scrolls ── */
 .create-post {
   padding: 1rem;
   background: var(--surface-container-lowest);
   border-bottom: 1px solid var(--outline-variant);
-  position: sticky;
+  position: fixed;
   top: 72px;
+  left: calc(256px + 220px + 3rem);  /* dash-sidebar + feed-left-sidebar + gaps */
+  right: calc(240px + 2rem);          /* feed-right-sidebar + gap */
   z-index: 19;
 }
 
@@ -1232,13 +1269,15 @@ function submitComment(post, e) {
   font-variation-settings: 'FILL' 1;
 }
 
-/* ── Feed Tabs ── */
+/* ── Feed Tabs — fixed below create-post ── */
 .feed-tabs {
   display: flex;
   border-bottom: 1px solid var(--outline-variant);
   background: var(--surface-container-lowest);
-  position: sticky;
+  position: fixed;
   top: calc(72px + 110px);
+  left: calc(256px + 220px + 3rem);
+  right: calc(240px + 2rem);
   z-index: 20;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -1383,6 +1422,20 @@ function submitComment(post, e) {
 .retweet-btn:hover { color: #00ba7c; }
 
 .repost-btn:hover { color: var(--primary); }
+
+/* ── Repost Label (Twitter/X style — above the post card) ── */
+.repost-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0;
+  margin-bottom: 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  font-family: var(--font-headline);
+}
+.repost-label .material-symbols-outlined { color: #22c55e; }
 
 /* ── Reposted Label ── */
 .reposted-label {
