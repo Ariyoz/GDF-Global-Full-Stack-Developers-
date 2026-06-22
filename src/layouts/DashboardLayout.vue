@@ -34,7 +34,7 @@
           <RouterLink to="/wallet" class="icon-btn topnav-hide-mobile" aria-label="Wallet">
             <span class="material-symbols-outlined">account_balance_wallet</span>
           </RouterLink>
-          <!-- User pill: avatar + name + sign out — all in one row -->
+          <!-- User pill: avatar + name + sign out â€” all in one row -->
           <div class="topnav-user-pill">
             <RouterLink to="/dashboard/profile" class="dash-avatar" aria-label="Profile">
               <span class="avatar-initials">{{ userInitials }}</span>
@@ -82,35 +82,35 @@
       </main>
     </div>
 
-    <!-- Mobile Bottom Nav -->
+    <!-- Mobile Bottom Nav â€” WhatsApp floating pill style -->
     <nav class="mobile-bottom-nav">
-      <RouterLink to="/dashboard" class="bottom-nav-item" :class="{ active: $route.path === '/dashboard' }">
-        <span class="material-symbols-outlined" :style="$route.path === '/dashboard' ? 'font-variation-settings:\'FILL\' 1' : ''">home</span>
-        <span>Home</span>
-      </RouterLink>
-      <RouterLink to="/feed" class="bottom-nav-item" :class="{ active: $route.path === '/feed' }">
-        <span class="material-symbols-outlined" :style="$route.path === '/feed' ? 'font-variation-settings:\'FILL\' 1' : ''">dynamic_feed</span>
-        <span>Feed</span>
-      </RouterLink>
+      <div class="nav-pill">
+        <RouterLink to="/dashboard" class="pill-item" :class="{ active: $route.path === '/dashboard' }">
+          <span class="material-symbols-outlined" :style="$route.path === '/dashboard' ? 'font-variation-settings:\'FILL\' 1' : ''">home</span>
+          <span class="pill-label">Home</span>
+        </RouterLink>
 
-      <!-- Center Post Button -->
-      <button type="button" class="bottom-nav-post" @click="openCompose">
-        <div class="post-btn">
+        <RouterLink to="/feed" class="pill-item" :class="{ active: $route.path === '/feed' }">
+          <span class="material-symbols-outlined" :style="$route.path === '/feed' ? 'font-variation-settings:\'FILL\' 1' : ''">dynamic_feed</span>
+          <span class="pill-label">Feed</span>
+        </RouterLink>
+
+        <!-- Center floating + button -->
+        <button type="button" class="pill-center-btn" @click="openCompose">
           <span class="material-symbols-outlined">add</span>
-        </div>
-      </button>
+        </button>
 
-      <RouterLink to="/messaging" class="bottom-nav-item" :class="{ active: $route.path === '/messaging' }">
-        <span class="material-symbols-outlined" :style="$route.path === '/messaging' ? 'font-variation-settings:\'FILL\' 1' : ''">chat</span>
-        <span>Messages</span>
-        <span v-if="messagingStore.totalUnread > 0" class="bottom-badge">{{ messagingStore.totalUnread > 9 ? '9+' : messagingStore.totalUnread }}</span>
-      </RouterLink>
+        <RouterLink to="/messaging" class="pill-item" :class="{ active: $route.path === '/messaging' }">
+          <span class="material-symbols-outlined" :style="$route.path === '/messaging' ? 'font-variation-settings:\'FILL\' 1' : ''">chat</span>
+          <span class="pill-label">Messages</span>
+          <span v-if="messagingStore.totalUnread > 0" class="pill-badge">{{ messagingStore.totalUnread > 9 ? '9+' : messagingStore.totalUnread }}</span>
+        </RouterLink>
 
-      <!-- More button -->
-      <button type="button" class="bottom-nav-item" :class="{ active: showMoreMenu }" @click="showMoreMenu = !showMoreMenu">
-        <span class="material-symbols-outlined">grid_view</span>
-        <span>More</span>
-      </button>
+        <button type="button" class="pill-item" :class="{ active: showMoreMenu }" @click="showMoreMenu = !showMoreMenu">
+          <span class="material-symbols-outlined">grid_view</span>
+          <span class="pill-label">More</span>
+        </button>
+      </div>
     </nav>
 
     <!-- Mobile More Menu Drawer -->
@@ -149,7 +149,7 @@
       </div>
     </Transition>
 
-    <!-- ── Mobile Compose Sheet ── -->
+    <!-- â”€â”€ Mobile Compose Sheet â”€â”€ -->
     <Transition name="sheet">
       <div v-if="showCompose" class="compose-overlay" @click.self="closeCompose">
         <div class="compose-sheet">
@@ -295,7 +295,7 @@ onMounted(() => {
   }
 })
 
-// ── Compose Sheet ──
+// â”€â”€ Compose Sheet â”€â”€
 const showCompose     = ref(false)
 const composeText     = ref('')
 const composeTextarea = ref(null)
@@ -383,13 +383,13 @@ async function submitCompose() {
   router.push({ name: 'feed' })
 }
 
-// ── User ──
+// â”€â”€ User â”€â”€
 const userInitials = computed(() => {
   const name = user.value?.full_name || authStore.profile?.full_name || user.value?.email || 'GFD'
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 })
 
-// ── More menu (all sections reachable on mobile) ──
+// â”€â”€ More menu (all sections reachable on mobile) â”€â”€
 const showMoreMenu = ref(false)
 
 const navItems = [
@@ -463,7 +463,7 @@ function handleSignOut() {
   transition: background-color 0.3s ease;
 }
 
-/* Dark mode topnav — elevated surface so content is visible */
+/* Dark mode topnav â€” elevated surface so content is visible */
 :global([data-theme="dark"]) .dash-topnav {
   background: #16161f;
   border-bottom-color: rgba(168, 85, 247, 0.12);
@@ -558,7 +558,7 @@ function handleSignOut() {
   align-items: center;
   gap: 0.25rem;
   flex-shrink: 0;
-  /* NO flex-wrap — everything stays on one row */
+  /* NO flex-wrap â€” everything stays on one row */
 }
 
 .icon-btn {
@@ -589,7 +589,7 @@ function handleSignOut() {
   padding: 0 3px; pointer-events: none;
   border: 1.5px solid var(--surface-container-lowest);
 }
-.bottom-nav-item { position: relative; }
+
 .bottom-badge {
   position: absolute; top: 0; right: 2px;
   min-width: 15px; height: 15px; border-radius: 8px;
@@ -641,7 +641,7 @@ function handleSignOut() {
   text-overflow: ellipsis;
 }
 
-/* Sign out — icon-only button inside the pill */
+/* Sign out â€” icon-only button inside the pill */
 .dash-signout-btn {
   width: 26px;
   height: 26px;
@@ -660,7 +660,7 @@ function handleSignOut() {
 .dash-signout-btn:hover { color: var(--error); background: rgba(186,26,26,0.08); }
 .dash-signout-btn .material-symbols-outlined { font-size: 16px; }
 
-/* Hide mail/notifications on small screens — accessible via bottom nav */
+/* Hide mail/notifications on small screens â€” accessible via bottom nav */
 @media (max-width: 767px) {
   .topnav-hide-mobile { display: none; }
   .topnav-username { display: none; }
@@ -673,7 +673,7 @@ function handleSignOut() {
   min-height: 100vh;
 }
 
-/* Sidebar — FIXED so it never scrolls with the content */
+/* Sidebar â€” FIXED so it never scrolls with the content */
 .dash-sidebar {
   display: none;
   width: 256px;
@@ -693,7 +693,7 @@ function handleSignOut() {
   scrollbar-color: var(--outline-variant) transparent;
 }
 
-/* Dark mode sidebar — slightly elevated so links are readable */
+/* Dark mode sidebar â€” slightly elevated so links are readable */
 :global([data-theme="dark"]) .dash-sidebar {
   background: #13131c;
   border-right-color: rgba(168, 85, 247, 0.1);
@@ -780,14 +780,14 @@ function handleSignOut() {
   box-shadow: 0 4px 12px rgba(99,14,212,0.2);
 }
 
-/* Main — offset by sidebar width on desktop */
+/* Main â€” offset by sidebar width on desktop */
 .dash-main {
   flex: 1;
   padding: var(--space-md);
   max-width: 1200px;
   width: 100%;
   min-height: calc(100vh - 72px);
-  /* NO overflow-y: auto here — page-level scroll needed for sticky children */
+  /* NO overflow-y: auto here â€” page-level scroll needed for sticky children */
 }
 
 @media (min-width: 768px) {
@@ -797,80 +797,68 @@ function handleSignOut() {
   }
 }
 
-/* Mobile Bottom Nav */
+/* Mobile Bottom Nav — WhatsApp floating pill style */
 .mobile-bottom-nav {
   display: none;
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  bottom: 0; left: 0; right: 0;
   z-index: 500;
-  justify-content: space-around;
-  align-items: center;
-  padding: 0.5rem 1rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
-  background: var(--surface-container-lowest);
-  backdrop-filter: blur(16px);
-  border-top: 1px solid var(--outline-variant);
-  box-shadow: 0 -2px 16px rgba(0,0,0,0.06);
-  transition: background-color 0.3s ease;
+  justify-content: center;
+  align-items: flex-end;
+  padding: 0 1rem calc(0.875rem + env(safe-area-inset-bottom, 0px));
+  background: transparent;
+  pointer-events: none;
 }
-
-:global([data-theme="dark"]) .mobile-bottom-nav {
-  background: rgba(18, 18, 28, 0.98);
-  border-top-color: rgba(168, 85, 247, 0.12);
-  box-shadow: 0 -2px 20px rgba(0,0,0,0.4);
-}
-
-:global([data-theme="dark"]) .bottom-nav-item {
-  color: rgba(255, 255, 255, 0.55);
-}
-:global([data-theme="dark"]) .bottom-nav-item.active {
-  color: var(--primary);
-}
-
 @media (max-width: 767px) {
   .mobile-bottom-nav { display: flex; }
-  .dash-main { padding-bottom: 80px; }
+  .dash-main { padding-bottom: 96px; }
 }
-
-.bottom-nav-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  text-decoration: none;
-  color: var(--on-surface-variant);
-  font-family: var(--font-headline);
-  font-size: 0.625rem;
-  font-weight: 500;
-  transition: var(--transition-fast);
-  padding: 0.25rem 0.5rem;
+.nav-pill {
+  display: flex; align-items: center; justify-content: space-around;
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant);
+  border-radius: 999px;
+  padding: 0.5rem 0.75rem;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.15), 0 1px 4px rgba(0,0,0,0.08);
+  width: 100%; max-width: 400px;
+  position: relative; pointer-events: all;
 }
-
-.bottom-nav-item .material-symbols-outlined { font-size: 22px; }
-.bottom-nav-item.active { color: var(--primary); }
-
-.bottom-nav-post {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: -2rem;
-  text-decoration: none;
+:global([data-theme="dark"]) .nav-pill {
+  background: #1a1a2e;
+  border-color: rgba(255,255,255,0.1);
+  box-shadow: 0 4px 32px rgba(0,0,0,0.5);
 }
-
-.post-btn {
-  width: 48px;
-  height: 48px;
-  background: var(--primary);
-  border-radius: var(--radius-xl);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--on-primary);
-  box-shadow: 0 4px 20px rgba(99,14,212,0.4);
+.pill-item {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  text-decoration: none; color: var(--on-surface-variant);
+  font-family: var(--font-headline); font-size: 0.6rem; font-weight: 600;
+  padding: 0.3rem 0.75rem; border-radius: 999px;
+  transition: all 0.15s; background: none; border: none; cursor: pointer;
+  position: relative; flex: 1; min-width: 0;
 }
-
-.post-btn .material-symbols-outlined { font-size: 22px; }
+.pill-item .material-symbols-outlined { font-size: 22px; }
+.pill-item.active { color: var(--primary); }
+:global([data-theme="dark"]) .pill-item { color: rgba(255,255,255,0.55); }
+:global([data-theme="dark"]) .pill-item.active { color: var(--primary); }
+.pill-label { font-size: 0.62rem; font-weight: 600; white-space: nowrap; }
+.pill-badge {
+  position: absolute; top: 1px; right: 2px;
+  min-width: 16px; height: 16px; border-radius: 8px;
+  background: #22c55e; color: #fff;
+  font-size: 0.55rem; font-weight: 800;
+  display: flex; align-items: center; justify-content: center; padding: 0 3px;
+}
+.pill-center-btn {
+  width: 52px; height: 52px; border-radius: 16px;
+  background: var(--primary); border: none; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+  margin: -20px 0.35rem 0;
+  box-shadow: 0 4px 16px rgba(99,14,212,0.45), 0 0 0 4px var(--surface-container-lowest);
+  transition: transform 0.15s, box-shadow 0.15s; position: relative; z-index: 1;
+}
+.pill-center-btn:hover { transform: scale(1.06); }
+.pill-center-btn .material-symbols-outlined { font-size: 26px; }
 
 /* Page transition */
 .page-enter-active,
@@ -878,7 +866,7 @@ function handleSignOut() {
 .page-enter-from,
 .page-leave-to { opacity: 0; }
 
-/* ── Mobile Compose Sheet ── */
+/* â”€â”€ Mobile Compose Sheet â”€â”€ */
 .compose-overlay {
   position: fixed;
   inset: 0;
@@ -1202,7 +1190,7 @@ function handleSignOut() {
 .sheet-enter-from   { transform: translateY(100%); opacity: 0; }
 .sheet-leave-to     { transform: translateY(100%); opacity: 0; }
 
-/* ── More Menu Drawer ── */
+/* â”€â”€ More Menu Drawer â”€â”€ */
 .more-overlay {
   position: fixed;
   inset: 0;
