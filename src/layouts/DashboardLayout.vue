@@ -1,5 +1,5 @@
 <template>
-  <div class="dash-layout">
+  <div class="dash-layout" :class="{ 'messaging-fullscreen': $route.path.startsWith('/messaging') }">
     <!-- Top Nav -->
     <header class="dash-topnav glass-nav">
       <div class="dash-topnav-inner">
@@ -82,34 +82,26 @@
       </main>
     </div>
 
-    <!-- Mobile Bottom Nav â€” WhatsApp floating pill style -->
+            <!-- Mobile Bottom Nav -->
     <nav class="mobile-bottom-nav">
       <div class="nav-pill">
         <RouterLink to="/dashboard" class="pill-item" :class="{ active: $route.path === '/dashboard' }">
-          <span class="material-symbols-outlined" :style="$route.path === '/dashboard' ? 'font-variation-settings:\'FILL\' 1' : ''">home</span>
+          <span class="material-symbols-outlined">home</span>
           <span class="pill-label">Home</span>
         </RouterLink>
-
-        <RouterLink to="/feed" class="pill-item" :class="{ active: $route.path === '/feed' }">
-          <span class="material-symbols-outlined" :style="$route.path === '/feed' ? 'font-variation-settings:\'FILL\' 1' : ''">dynamic_feed</span>
-          <span class="pill-label">Feed</span>
+        <RouterLink to="/explore" class="pill-item" :class="{ active: $route.path === '/explore' }">
+          <span class="material-symbols-outlined">search</span>
+          <span class="pill-label">Explore</span>
         </RouterLink>
-
-        <!-- Center floating + button -->
-        <button type="button" class="pill-center-btn" @click="openCompose">
-          <span class="material-symbols-outlined">add</span>
-        </button>
-
-        <RouterLink to="/messaging" class="pill-item" :class="{ active: $route.path === '/messaging' }">
-          <span class="material-symbols-outlined" :style="$route.path === '/messaging' ? 'font-variation-settings:\'FILL\' 1' : ''">chat</span>
-          <span class="pill-label">Messages</span>
-          <span v-if="messagingStore.totalUnread > 0" class="pill-badge">{{ messagingStore.totalUnread > 9 ? '9+' : messagingStore.totalUnread }}</span>
+        <button type="button" class="pill-center-btn" @click="openCompose"><span class="material-symbols-outlined">add</span></button>
+        <RouterLink to="/jobs" class="pill-item" :class="{ active: $route.path === '/jobs' }">
+          <span class="material-symbols-outlined">work_outline</span>
+          <span class="pill-label">Jobs</span>
         </RouterLink>
-
-        <button type="button" class="pill-item" :class="{ active: showMoreMenu }" @click="showMoreMenu = !showMoreMenu">
-          <span class="material-symbols-outlined">grid_view</span>
-          <span class="pill-label">More</span>
-        </button>
+        <RouterLink to="/dashboard/profile" class="pill-item" :class="{ active: $route.path === '/dashboard/profile' }">
+          <span class="material-symbols-outlined">person</span>
+          <span class="pill-label">Profile</span>
+        </RouterLink>
       </div>
     </nav>
 
@@ -857,6 +849,8 @@ function handleSignOut() {
   box-shadow: 0 4px 16px rgba(99,14,212,0.45), 0 0 0 4px var(--surface-container-lowest);
   transition: transform 0.15s, box-shadow 0.15s; position: relative; z-index: 1;
 }
+.pill-avatar { width:24px; height:24px; border-radius:50%; overflow:hidden; flex-shrink:0; }
+.pill-avatar-img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
 .pill-center-btn:hover { transform: scale(1.06); }
 .pill-center-btn .material-symbols-outlined { font-size: 26px; }
 
@@ -1324,4 +1318,12 @@ function handleSignOut() {
 }
 
 .more-signout-btn .material-symbols-outlined { font-size: 18px; }
+
+/* Messaging full-screen on mobile */
+@media (max-width: 767px) {
+  .messaging-fullscreen .dash-topnav { display: none !important; }
+  .messaging-fullscreen .dash-sidebar { display: none !important; }
+  .messaging-fullscreen .dash-main { margin-left: 0 !important; padding: 0 !important; padding-bottom: 90px !important; }
+  .messaging-fullscreen .dash-body { padding-top: 0 !important; }
+}
 </style>
