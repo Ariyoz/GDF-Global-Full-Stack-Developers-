@@ -82,26 +82,29 @@
       </main>
     </div>
 
-            <!-- Mobile Bottom Nav -->
+                <!-- Mobile Bottom Nav — floating pill -->
     <nav class="mobile-bottom-nav">
       <div class="nav-pill">
         <RouterLink to="/dashboard" class="pill-item" :class="{ active: $route.path === '/dashboard' }">
-          <span class="material-symbols-outlined">home</span>
+          <span class="material-symbols-outlined" :style="$route.path === '/dashboard' ? 'font-variation-settings:\'FILL\' 1' : ''">home</span>
           <span class="pill-label">Home</span>
         </RouterLink>
-        <RouterLink to="/explore" class="pill-item" :class="{ active: $route.path === '/explore' }">
-          <span class="material-symbols-outlined">search</span>
-          <span class="pill-label">Explore</span>
+        <RouterLink to="/feed" class="pill-item" :class="{ active: $route.path === '/feed' }">
+          <span class="material-symbols-outlined" :style="$route.path === '/feed' ? 'font-variation-settings:\'FILL\' 1' : ''">dynamic_feed</span>
+          <span class="pill-label">Feed</span>
         </RouterLink>
-        <button type="button" class="pill-center-btn" @click="openCompose"><span class="material-symbols-outlined">add</span></button>
-        <RouterLink to="/jobs" class="pill-item" :class="{ active: $route.path === '/jobs' }">
-          <span class="material-symbols-outlined">work_outline</span>
-          <span class="pill-label">Jobs</span>
+        <button type="button" class="pill-center-btn" @click="openCompose">
+          <span class="material-symbols-outlined">add</span>
+        </button>
+        <RouterLink to="/messaging" class="pill-item" :class="{ active: $route.path === '/messaging' }">
+          <span class="material-symbols-outlined" :style="$route.path === '/messaging' ? 'font-variation-settings:\'FILL\' 1' : ''">chat</span>
+          <span class="pill-label">Messages</span>
+          <span v-if="messagingStore.totalUnread > 0" class="pill-badge">{{ messagingStore.totalUnread > 9 ? '9+' : messagingStore.totalUnread }}</span>
         </RouterLink>
-        <RouterLink to="/dashboard/profile" class="pill-item" :class="{ active: $route.path === '/dashboard/profile' }">
-          <span class="material-symbols-outlined">person</span>
-          <span class="pill-label">Profile</span>
-        </RouterLink>
+        <button type="button" class="pill-item" :class="{ active: showMoreMenu }" @click="showMoreMenu = !showMoreMenu">
+          <span class="material-symbols-outlined">grid_view</span>
+          <span class="pill-label">More</span>
+        </button>
       </div>
     </nav>
 
