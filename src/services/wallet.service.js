@@ -1,36 +1,67 @@
-// ── Wallet Service — Paystack integration ──
+// ── Wallet Service — Full Paystack integration ──
 import http from './http'
 
 export const walletService = {
+  // Balance + stats
   async getWallet() {
     return http.get('/wallet')
   },
+
+  // Last 100 transactions
   async getTransactions() {
     const data = await http.get('/wallet/transactions')
     return data.transactions || []
   },
-  async getMonthlyEarnings() {
-    const w = await http.get('/wallet')
-    return w.monthly_earnings || 0
-  },
-  // Initialize Paystack payment — returns authorization_url
+
+  // Initialize Paystack payment — returns { authorization_url, reference }
   async initializePayment(amountNaira, callbackUrl) {
     return http.post('/wallet/initialize', {
-      amount: amountNaira,
+      amount:       amountNaira,
       callback_url: callbackUrl || window.location.origin + '/wallet?verify=1',
     })
   },
+
   // Verify after Paystack redirect
   async verifyPayment(reference) {
     return http.post('/wallet/verify', { reference })
   },
-  // Withdrawal request
-  async requestWithdrawal(amount, bankName, accountNumber, accountName) {
+
+  // Fetch live bank list from Paystack (via our backend)
+  async getBanks() {
+    const data = await http.get('/wallet/banks')
+    return data.banks || []
+  },
+
+  // Resolve account number → account name
+  async verifyBankAccount(accountNumber, bankCode) {
+    return http.post('/wallet/verify-account', {
+      account_number: accountNumber,
+      bank_code:      bankCode,
+    })
+  },
+
+  // Initiate Paystack transfer (instant withdrawal)
+  async requestWithdrawal({ amount, bankCode, accountNumber, accountName }) {
     return http.post('/wallet/withdraw', {
       amount,
-      bank_name: bankName,
+      bank_code:      bankCode,
       account_number: accountNumber,
-      account_name: accountName,
+      account_name:   accountName,
     })
+  },
+
+  // Admin: platform stats
+  async adminOverview() {
+    return http.get('/wallet/admin/overview')
+  },
+
+  // Admin: credit a user
+  async adminCreditUser(userId, amount, description) {
+    return http.post('/wallet/admin/credit-user', { user_id: userId, amount, description })
+  },
+
+  // Admin: pending withdrawals
+  async adminPendingWithdrawals() {
+    return http.get('/wallet/admin/pending-withdrawals')
   },
 }

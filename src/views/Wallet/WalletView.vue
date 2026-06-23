@@ -201,27 +201,40 @@
                   placeholder="Min ₦500" min="500" :max="balance" />
               </div>
             </div>
+
             <div class="field-group">
-              <label class="field-label">Bank Name</label>
-              <select v-model="wd.bank" class="modal-sel">
-                <option value="">Select bank…</option>
-                <option v-for="b in banks" :key="b" :value="b">{{ b }}</option>
+              <label class="field-label">Bank</label>
+              <select v-model="wd.bank_code" class="modal-sel" @change="wd.account_name = ''; wd.verified = false">
+                <option value="">{{ banksLoading ? 'Loading banks…' : 'Select your bank…' }}</option>
+                <option v-for="b in liveBanks" :key="b.code" :value="b.code">{{ b.name }}</option>
               </select>
             </div>
+
             <div class="field-group">
               <label class="field-label">Account Number</label>
-              <input v-model="wd.account_number" type="text" class="modal-inp"
-                placeholder="10-digit account number" maxlength="10" />
+              <div class="input-group">
+                <input v-model="wd.account_number" type="text" class="modal-inp"
+                  placeholder="10-digit NUBAN" maxlength="10"
+                  @input="wd.account_name = ''; wd.verified = false; autoVerifyAccount()" />
+                <button v-if="wd.account_number.length === 10 && wd.bank_code && !wd.verified"
+                  class="verify-btn" :disabled="verifyingAccount" @click="verifyAccount">
+                  <span v-if="verifyingAccount" class="btn-spinner"></span>
+                  <span v-else>Verify</span>
+                </button>
+              </div>
             </div>
-            <div class="field-group">
-              <label class="field-label">Account Name</label>
-              <input v-model="wd.account_name" type="text" class="modal-inp"
-                placeholder="As it appears on your bank statement" />
-            </div>
+
+            <!-- Account name (auto-filled after verification) -->
+            <Transition name="slide-down">
+              <div v-if="wd.account_name" class="account-verified">
+                <span class="material-symbols-outlined" style="color:#22c55e;font-size:18px">check_circle</span>
+                <span>{{ wd.account_name }}</span>
+              </div>
+            </Transition>
 
             <p class="ps-note">
               <span class="material-symbols-outlined" style="font-size:14px">schedule</span>
-              Withdrawals are processed within 24 hours
+              Withdrawals are processed instantly via Paystack
             </p>
           </div>
 
@@ -232,7 +245,7 @@
               @click="submitWithdraw">
               <span v-if="withdrawing" class="btn-spinner"></span>
               <span class="material-symbols-outlined" v-else style="font-size:18px">arrow_upward</span>
-              {{ withdrawing ? 'Submitting…' : 'Request Withdrawal' }}
+              {{ withdrawing ? 'Processing…' : `Withdraw ₦${(wd.amount||0).toLocaleString()}` }}
             </button>
           </div>
         </div>
@@ -266,18 +279,16 @@ const uiStore       = useUiStore()
 const route         = useRoute()
 const currencyStore = useCurrencyStore()
 
-// Wallet balances are stored in NGN on the backend
-// We convert to user's chosen currency for display
-const NGN_TO_USD = 1 / 1650  // 1 NGN → USD
+// NGN → user's chosen currency display
+const NGN_TO_USD = 1 / 1650
 function fmtWallet(ngnAmount) {
-  // Convert NGN → USD → user currency
   const usd = Number(ngnAmount || 0) * NGN_TO_USD
   return currencyStore.format(usd)
 }
 
 // ── State ──
-const loading  = ref(false)
-const balance  = ref(0)
+const loading         = ref(false)
+const balance         = ref(0)
 const monthlyEarnings = ref(0)
 const totalEarned     = ref(0)
 const transactions    = ref([])
@@ -289,27 +300,32 @@ const paying            = ref(false)
 const withdrawing       = ref(false)
 const verifyBanner      = ref('')
 
-const presets = [500, 1000, 2000, 5000, 10000, 20000]
+// Live bank list from Paystack
+const liveBanks      = ref([])
+const banksLoading   = ref(false)
 
-const wd = ref({ amount: 0, bank: '', account_number: '', account_name: '' })
+// Withdraw form
+const verifyingAccount = ref(false)
+let   verifyTimer      = null
+
+const wd = ref({
+  amount:         0,
+  bank_code:      '',
+  account_number: '',
+  account_name:   '',
+  verified:       false,
+})
 
 const canWithdraw = computed(() =>
   wd.value.amount >= 500 &&
   wd.value.amount <= balance.value &&
-  wd.value.bank &&
+  wd.value.bank_code &&
   wd.value.account_number.length === 10 &&
+  wd.value.verified &&
   wd.value.account_name.trim()
 )
 
-const banks = [
-  'Access Bank','Citibank Nigeria','Ecobank Nigeria','Fidelity Bank',
-  'First Bank of Nigeria','First City Monument Bank (FCMB)',
-  'Guaranty Trust Bank (GTBank)','Heritage Bank','Keystone Bank',
-  'Kuda Bank','Opay','PalmPay','Polaris Bank','Providus Bank',
-  'Stanbic IBTC Bank','Standard Chartered Bank','Sterling Bank',
-  'SunTrust Bank','Union Bank of Nigeria','United Bank for Africa (UBA)',
-  'Unity Bank','VFD Microfinance Bank','Wema Bank','Zenith Bank',
-]
+const presets = [500, 1000, 2000, 5000, 10000, 20000]
 
 // ── Helpers ──
 function fmt(n) {
@@ -325,14 +341,12 @@ function txIcon(tx) {
   return 'add_circle'
 }
 function txStyle(tx) {
-  if (tx.type === 'withdrawal')
-    return { bg: 'background:rgba(186,26,26,.08)', color: 'color:#ef4444' }
-  if (tx.type === 'earning')
-    return { bg: 'background:rgba(245,158,11,.1)', color: 'color:#f59e0b' }
+  if (tx.type === 'withdrawal') return { bg: 'background:rgba(186,26,26,.08)', color: 'color:#ef4444' }
+  if (tx.type === 'earning')    return { bg: 'background:rgba(245,158,11,.1)',  color: 'color:#f59e0b' }
   return { bg: 'background:rgba(99,14,212,.08)', color: 'color:var(--primary)' }
 }
 
-// ── Load wallet ──
+// ── Load wallet data ──
 async function loadWallet() {
   loading.value = true
   try {
@@ -340,14 +354,53 @@ async function loadWallet() {
       walletService.getWallet(),
       walletService.getTransactions(),
     ])
-    balance.value        = Number(wallet.balance || 0)
-    totalEarned.value    = Number(wallet.total_earned || 0)
+    balance.value         = Number(wallet.balance || 0)
+    totalEarned.value     = Number(wallet.total_earned || 0)
     monthlyEarnings.value = Number(wallet.monthly_earnings || 0)
-    transactions.value   = txns
+    transactions.value    = txns
   } catch (e) {
     console.error('Wallet load:', e)
   } finally {
     loading.value = false
+  }
+}
+
+// ── Load live bank list ──
+async function loadBanks() {
+  banksLoading.value = true
+  try {
+    liveBanks.value = await walletService.getBanks()
+  } catch {
+    // Fallback: empty list, user can still type
+  } finally {
+    banksLoading.value = false
+  }
+}
+
+// ── Auto-verify account number after user stops typing ──
+function autoVerifyAccount() {
+  clearTimeout(verifyTimer)
+  if (wd.value.account_number.length === 10 && wd.value.bank_code) {
+    verifyTimer = setTimeout(verifyAccount, 800)
+  }
+}
+
+async function verifyAccount() {
+  if (wd.value.account_number.length !== 10 || !wd.value.bank_code) return
+  verifyingAccount.value = true
+  try {
+    const result = await walletService.verifyBankAccount(
+      wd.value.account_number,
+      wd.value.bank_code,
+    )
+    wd.value.account_name = result.account_name
+    wd.value.verified     = true
+  } catch (e) {
+    uiStore.showError(e?.response?.data?.detail || 'Could not verify account number')
+    wd.value.account_name = ''
+    wd.value.verified     = false
+  } finally {
+    verifyingAccount.value = false
   }
 }
 
@@ -358,20 +411,18 @@ async function initiateFund() {
   try {
     const data = await walletService.initializePayment(
       fundAmount.value,
-      window.location.origin + '/wallet?verify=1'
+      window.location.origin + '/wallet?verify=1',
     )
     if (data.authorization_url) {
-      // Open Paystack in same tab — it will redirect back with ?reference=
       window.location.href = data.authorization_url
     }
   } catch (e) {
     uiStore.showError(e?.response?.data?.detail || 'Payment initialization failed')
-  } finally {
     paying.value = false
   }
 }
 
-// ── Verify payment after redirect ──
+// ── Verify after Paystack redirect ──
 async function verifyFromUrl() {
   const ref = route.query.reference || route.query.trxref
   if (!ref) return
@@ -384,9 +435,9 @@ async function verifyFromUrl() {
       verifyBanner.value = 'Payment already processed.'
     }
   } catch (e) {
-    uiStore.showError('Payment verification failed. Contact support if money was deducted.')
+    uiStore.showError('Verification failed. Contact support if money was deducted.')
   }
-  // Clean URL
+  // Clean URL params
   const url = new URL(window.location.href)
   url.searchParams.delete('reference')
   url.searchParams.delete('trxref')
@@ -394,23 +445,23 @@ async function verifyFromUrl() {
   window.history.replaceState({}, '', url.toString())
 }
 
-// ── Withdraw ──
+// ── Withdraw via Paystack Transfer ──
 async function submitWithdraw() {
   if (!canWithdraw.value) return
   withdrawing.value = true
   try {
-    const result = await walletService.requestWithdrawal(
-      wd.value.amount,
-      wd.value.bank,
-      wd.value.account_number,
-      wd.value.account_name
-    )
-    uiStore.showSuccess(result.message || 'Withdrawal request submitted!')
+    const result = await walletService.requestWithdrawal({
+      amount:        wd.value.amount,
+      bankCode:      wd.value.bank_code,
+      accountNumber: wd.value.account_number,
+      accountName:   wd.value.account_name,
+    })
+    uiStore.showSuccess(result.message || 'Withdrawal initiated!')
     showWithdrawModal.value = false
-    wd.value = { amount: 0, bank: '', account_number: '', account_name: '' }
+    wd.value = { amount: 0, bank_code: '', account_number: '', account_name: '', verified: false }
     await loadWallet()
   } catch (e) {
-    uiStore.showError(e?.response?.data?.detail || 'Withdrawal failed')
+    uiStore.showError(e?.response?.data?.detail || 'Withdrawal failed. Please try again.')
   } finally {
     withdrawing.value = false
   }
@@ -418,7 +469,7 @@ async function submitWithdraw() {
 
 onMounted(async () => {
   await loadWallet()
-  // Check if we're returning from Paystack
+  loadBanks() // load in background — non-blocking
   if (route.query.reference || route.query.trxref || route.query.verify) {
     await verifyFromUrl()
   }
@@ -452,6 +503,26 @@ onMounted(async () => {
 @keyframes spin { to { transform: rotate(360deg); } }
 .bc-curr { font-size: .7rem; font-weight: 700; opacity: .8; background: rgba(255,255,255,.15); padding: .1rem .4rem; border-radius: 4px; }
 .avail-converted { font-size: .8rem; color: var(--primary); margin-left: .35rem; }
+
+/* Account verify */
+.verify-btn {
+  padding: .5rem .875rem; background: var(--primary); color: #fff;
+  border: none; border-radius: 0 10px 10px 0; cursor: pointer;
+  font-size: .82rem; font-weight: 700; white-space: nowrap;
+  display: flex; align-items: center; gap: .3rem;
+  flex-shrink: 0;
+}
+.verify-btn:disabled { opacity: .6; cursor: not-allowed; }
+.account-verified {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .625rem .875rem;
+  background: rgba(34,197,94,.08);
+  border: 1px solid rgba(34,197,94,.25);
+  border-radius: 10px;
+  font-size: .875rem; font-weight: 600; color: var(--on-surface);
+}
+.slide-down-enter-active, .slide-down-leave-active { transition: all .2s ease; }
+.slide-down-enter-from, .slide-down-leave-to { opacity: 0; transform: translateY(-6px); }
 
 /* Balance Card */
 .balance-card {
