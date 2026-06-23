@@ -74,7 +74,7 @@
           </div>
         </div>
       </div>
-      <button class="btn-primary fm-fund-btn" @click="showFundModal = true">
+      <button class="btn-primary fm-fund-btn" @click="fundAmount = 500; showFundModal = true">
         <span class="material-symbols-outlined" style="font-size:18px">credit_card</span>
         Fund with Card
       </button>
@@ -329,7 +329,7 @@ const transactions    = ref([])
 
 const showFundModal     = ref(false)
 const showWithdrawModal = ref(false)
-const fundAmount        = ref(0)
+const fundAmount  = ref(500)  // default to ₦500 so button is never disabled on open
 const paying            = ref(false)
 const withdrawing       = ref(false)
 const verifyBanner      = ref('')
@@ -399,6 +399,10 @@ async function loadWallet() {
     monthlyEarnings.value = Number(wallet.monthly_earnings || 0)
     transactions.value    = txns
   } catch (e) {
+    if (!e?.response) {
+      // No response = server down / cold start
+      uiStore.showError('Server is starting up. Please wait 30 seconds and refresh.')
+    }
     console.error('Wallet load:', e)
   } finally {
     loading.value = false
@@ -552,10 +556,13 @@ async function submitWithdraw() {
 }
 
 onMounted(async () => {
+  // Wake up the backend immediately (Render free tier cold start)
+  const base = (import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1').replace('/api/v1', '')
+  fetch(`${base}/health`, { cache: 'no-cache' }).catch(() => {})
+
   await loadWallet()
-  loadBanks()           // non-blocking
-  loadVirtualAccount()  // non-blocking
-  // Paystack redirects back with ?reference=xxx&trxref=xxx
+  loadBanks()
+  loadVirtualAccount()
   if (route.query.reference || route.query.trxref) {
     await verifyFromUrl()
   }
