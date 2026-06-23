@@ -246,7 +246,7 @@
                 </div>
 
                 <!-- Quick actions on hover -->
-                <div class="msg-actions" :class="m.mine?'ma-left':'ma-right'">
+                <div class="msg-actions">
                   <button class="ma-btn" title="React" @click.stop="openEmoji(m)">
                     <span class="material-symbols-outlined">add_reaction</span>
                   </button>
@@ -1222,10 +1222,14 @@ watch(() => messagingStore.messages.length, () => scrollToBottom())
   transition: opacity .15s;
   position: absolute; top: 50%; transform: translateY(-50%);
 }
-.ma-left  { right: calc(100% + 4px); }
-.ma-right { left: calc(100% + 4px); }
-.msg-row.mine .msg-actions  { right: unset; left: calc(100% + 4px); }
-.msg-row:not(.mine) .msg-actions { left: unset; right: calc(100% + 4px); }
+/* Received messages: actions appear on the right */
+.msg-row:not(.mine) .msg-actions { left: calc(100% + 4px); }
+/* Sent messages: actions appear on the left */
+.msg-row.mine .msg-actions { right: calc(100% + 4px); }
+/* On mobile: always show (tap to reveal via touch) */
+@media (max-width: 767px) {
+  .msg-actions { display: none; }
+}
 .ma-btn {
   width: 26px; height: 26px; border-radius: 50%; border: none;
   background: var(--surface-container-high);
