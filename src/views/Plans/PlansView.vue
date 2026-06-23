@@ -42,12 +42,12 @@
 
         <!-- Price -->
         <div class="plan-price">
-          <span class="price-currency">$</span>
-          <span class="price-amount">{{ plan.priceMonthly }}</span>
+          <span class="price-currency">{{ currSym }}</span>
+          <span class="price-amount">{{ fmtPrice(plan.priceMonthly) }}</span>
           <span class="price-period">/ mo</span>
         </div>
         <p v-if="plan.priceYearly > 0" class="price-billed">
-          ${{ plan.priceYearly }}/year total
+          {{ currSym }}{{ fmtPrice(plan.priceYearly) }}/year total
         </p>
 
         <!-- CTA -->
@@ -113,7 +113,7 @@
             <div class="payment-plan-summary">
               <div class="payment-plan-name">{{ selectedPlanForPayment?.name }}</div>
               <div class="payment-plan-price">
-                <span class="payment-amount">${{ selectedPlanForPayment?.id === 'pro_yearly' ? selectedPlanForPayment?.priceYearly : selectedPlanForPayment?.priceMonthly }}</span>
+                <span class="payment-amount">{{ currSym }}{{ fmtPrice(selectedPlanForPayment?.id === 'pro_yearly' ? selectedPlanForPayment?.priceYearly : selectedPlanForPayment?.priceMonthly) }}</span>
                 <span class="payment-cycle">{{ selectedPlanForPayment?.id === 'pro_yearly' ? '/year' : '/month' }}</span>
               </div>
             </div>
@@ -151,6 +151,9 @@
                   <span class="bank-label">Amount</span>
                   <span class="bank-value amount-highlight">
                     ${{ selectedPlanForPayment?.id === 'pro_yearly' ? selectedPlanForPayment?.priceYearly : selectedPlanForPayment?.priceMonthly }} USDT
+                    <span v-if="currencyStore.code !== 'USD'" style="font-size:.8em;opacity:.7">
+                      (≈ {{ currSym }}{{ fmtPrice(selectedPlanForPayment?.id === 'pro_yearly' ? selectedPlanForPayment?.priceYearly : selectedPlanForPayment?.priceMonthly) }})
+                    </span>
                   </span>
                 </div>
               </div>
@@ -199,13 +202,24 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useUiStore } from '@/store/ui'
 import { useAuthStore } from '@/store/auth'
+import { useCurrencyStore } from '@/store/currency'
 import http from '@/services/http'
 
-const uiStore = useUiStore()
-const authStore = useAuthStore()
+const uiStore       = useUiStore()
+const authStore     = useAuthStore()
+const currencyStore = useCurrencyStore()
+
+// Format plan price (prices are in USD)
+const fmtPrice = (usd) => {
+  if (usd === 0) return '0'
+  const converted = currencyStore.fromUSD(usd)
+  const decimals = currencyStore.current.rate >= 100 ? 0 : 2
+  return converted.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
+}
+const currSym = computed(() => currencyStore.current.symbol)
 const openFaq    = ref(null)
 const currentPlan = ref('free')
 const subscribing = ref(false)
