@@ -476,12 +476,14 @@ const filteredConvs = computed(() => {
 onMounted(async () => {
   await messagingStore.fetchConversations()
 
-  // ── Keyboard fix: visualViewport API (works on ALL mobile browsers) ──
-  // When keyboard opens, vv.height shrinks. We set --vvh CSS var
-  // which the fixed inp-bar uses as its `bottom` offset.
+  // ── WhatsApp keyboard technique ──
+  // Set msg-root height = visualViewport.height directly.
+  // The flex column (header → msgs → input) then reflows naturally.
+  // No position:fixed tricks, no CSS padding hacks.
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', _onVV)
     window.visualViewport.addEventListener('scroll', _onVV)
+    _onVV() // set initial height immediately
   }
 
   const convId = route.query.conv
@@ -501,28 +503,19 @@ onUnmounted(() => {
     window.visualViewport.removeEventListener('resize', _onVV)
     window.visualViewport.removeEventListener('scroll', _onVV)
   }
-  // Reset CSS var
-  document.documentElement.style.removeProperty('--vvh')
+  // Reset root height
+  const root = document.querySelector('.msg-root')
+  if (root) root.style.height = ''
   cancelRec()
 })
 
 function _onVV() {
   const vv = window.visualViewport
-  const kbHeight = Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
-  document.documentElement.style.setProperty('--vvh', kbHeight + 'px')
-
-  // Also update inp-bar height variable for aux bar positioning
-  if (inpBarEl.value) {
-    document.documentElement.style.setProperty(
-      '--inp-bar-h',
-      inpBarEl.value.offsetHeight + 'px'
-    )
-  }
-
-  // Scroll to bottom when keyboard opens so latest messages are visible
-  if (kbHeight > 50) {
-    scrollToBottom()
-  }
+  // Resize the entire root to the visible viewport — same as WhatsApp
+  const root = document.querySelector('.msg-root')
+  if (root) root.style.height = vv.height + 'px'
+  // Scroll to bottom so latest messages are above the input bar
+  scrollToBottom()
 }
 
 // ── Helpers ──
@@ -781,7 +774,8 @@ watch(() => messagingStore.messages.length, () => scrollToBottom())
   height: calc(100vh - 72px);
 }
 @media (max-width: 767px) {
-  .msg-root { height: 100svh; height: 100vh; }
+  /* JS overrides this with visualViewport.height when keyboard opens */
+  .msg-root { height: 100svh; }
 }
 
 /* ══════════════════════════════════════════
@@ -1353,59 +1347,36 @@ watch(() => messagingStore.messages.length, () => scrollToBottom())
 .rec-time { font-family: var(--font-headline); font-size: .9rem; font-weight: 700; color: #ef4444; }
 .rec-hint { flex: 1; font-size: .75rem; color: var(--on-surface-variant); }
 
-/* ══════════════════════════════════════════
-   INPUT BAR + AUX BARS
-   position: fixed — always anchored to bottom of viewport.
-   --vvh CSS var (set by JS visualViewport listener) = keyboard height.
-   translateY lifts the bar above the keyboard on ALL mobile browsers.
-══════════════════════════════════════════ */
-:root { --vvh: 0px; }
-
 /* ═══════════════════════════════════════════════
-   MOBILE KEYBOARD-AWARE LAYOUT
+   MOBILE KEYBOARD-AWARE LAYOUT — WhatsApp technique
    
-   Fixed layout: header top, input bottom.
-   When keyboard opens (--vvh increases):
-   - inp-bar slides UP above keyboard
-   - msgs-area bottom-padding grows so last message
-     stays visible above the input bar
+   JS sets msg-root height = visualViewport.height.
+   When keyboard opens, root shrinks → flex column
+   reflows: header stays top, msgs-area fills middle,
+   inp-bar stays at bottom. No position:fixed needed.
 ═══════════════════════════════════════════════ */
-:root { --vvh: 0px; --inp-bar-h: 68px; }
 
 @media (max-width: 767px) {
 
-  /* Input bar: fixed at bottom, lifts above keyboard */
+  /* Input bar: normal flow at bottom of flex column */
   .inp-bar {
-    position: fixed !important;
-    left: 0; right: 0; bottom: 0;
-    transform: translateY(calc(-1 * var(--vvh)));
-    transition: transform 0.05s linear;
-    z-index: 200;
-    padding-bottom: calc(.625rem + env(safe-area-inset-bottom, 0px));
+    position: relative !important;
+    flex-shrink: 0;
   }
 
-  /* Aux bars (reply/preview/rec): stack directly above inp-bar */
+  /* Aux bars: also normal flow above input bar */
   .aux-bar {
-    position: fixed !important;
-    left: 0; right: 0;
-    bottom: var(--inp-bar-h);
-    transform: translateY(calc(-1 * var(--vvh)));
-    transition: transform 0.05s linear;
-    z-index: 199;
+    position: relative !important;
+    flex-shrink: 0;
   }
 
-  /* Messages area: fills space between fixed header and fixed input bar.
-     Bottom padding = inp-bar height + keyboard height so last message
-     is always visible above the input bar when keyboard is open. */
+  /* Messages area fills remaining space */
   .msgs-area {
     padding-top: 110px !important;
-    /* base 80px for inp-bar + extra for keyboard */
-    padding-bottom: calc(80px + var(--vvh) + env(safe-area-inset-bottom, 0px)) !important;
-    /* Smooth scroll when keyboard opens/closes */
-    scroll-behavior: auto !important;
+    padding-bottom: 1rem !important;
   }
 
-  /* Header: fixed at top, never moves */
+  /* Header FIXED at top — sits above the flex column */
   .chat-hdr {
     position: fixed !important;
     top: 0; left: 0; right: 0;
