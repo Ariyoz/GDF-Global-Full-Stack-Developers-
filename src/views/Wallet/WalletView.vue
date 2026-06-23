@@ -53,40 +53,30 @@
         How to Fund Your Wallet
       </div>
       <div class="fm-grid">
-        <!-- Bank Transfer -->
-        <div class="fm-item">
-          <div class="fm-ico" style="background:rgba(99,14,212,.1)">
-            <span class="material-symbols-outlined" style="color:var(--primary)">account_balance</span>
-          </div>
-          <div>
-            <p class="fm-name">Bank Transfer</p>
-            <p class="fm-desc">Get a one-time account number on the next screen. Transfer from any Nigerian bank.</p>
-          </div>
-        </div>
-        <!-- Card -->
-        <div class="fm-item">
+        <!-- Card — works now -->
+        <div class="fm-item fm-active">
           <div class="fm-ico" style="background:rgba(22,163,74,.1)">
             <span class="material-symbols-outlined" style="color:#16a34a">credit_card</span>
           </div>
           <div>
-            <p class="fm-name">Debit / Credit Card</p>
-            <p class="fm-desc">Pay instantly with Visa, Mastercard or Verve.</p>
+            <p class="fm-name">Debit / Credit Card <span class="fm-avail">Available now</span></p>
+            <p class="fm-desc">Pay instantly with Visa, Mastercard or Verve. Works immediately.</p>
           </div>
         </div>
-        <!-- USSD -->
-        <div class="fm-item">
-          <div class="fm-ico" style="background:rgba(245,158,11,.1)">
-            <span class="material-symbols-outlined" style="color:#f59e0b">dialpad</span>
+        <!-- Bank Transfer — needs verified account -->
+        <div class="fm-item fm-soon">
+          <div class="fm-ico" style="background:rgba(168,85,247,.08)">
+            <span class="material-symbols-outlined" style="color:var(--primary)">account_balance</span>
           </div>
           <div>
-            <p class="fm-name">USSD</p>
-            <p class="fm-desc">Dial a code on your phone — no internet needed.</p>
+            <p class="fm-name">Bank Transfer <span class="fm-pending">Requires verification</span></p>
+            <p class="fm-desc">Complete Paystack KYC in Settings → Compliance to unlock bank transfers & USSD.</p>
           </div>
         </div>
       </div>
       <button class="btn-primary fm-fund-btn" @click="showFundModal = true">
-        <span class="material-symbols-outlined" style="font-size:18px">add_circle</span>
-        Fund Wallet Now
+        <span class="material-symbols-outlined" style="font-size:18px">credit_card</span>
+        Fund with Card
       </button>
     </div>
 
@@ -500,6 +490,7 @@ async function initiateFund() {
       window.location.origin + '/wallet',
     )
     if (data.authorization_url) {
+      // Open in same tab — Paystack handles the redirect back
       window.location.href = data.authorization_url
     } else {
       uiStore.showError('No payment URL returned. Please try again.')
@@ -507,7 +498,7 @@ async function initiateFund() {
     }
   } catch (e) {
     const msg = e?.response?.data?.detail
-      || (e?.code === 'ECONNABORTED' ? 'Request timed out. The server is waking up — please try again in 30 seconds.' : null)
+      || (e?.code === 'ECONNABORTED' ? 'Server is starting up — please wait 30 seconds and try again.' : null)
       || e?.message
       || 'Payment initialization failed'
     uiStore.showError(msg)
@@ -676,8 +667,12 @@ onMounted(async () => {
   display: flex; align-items: center; justify-content: center;
 }
 .fm-ico .material-symbols-outlined { font-size: 20px; }
-.fm-name { font-family: var(--font-headline); font-size: .875rem; font-weight: 700; color: var(--on-surface); }
+.fm-name { font-family: var(--font-headline); font-size: .875rem; font-weight: 700; color: var(--on-surface); display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
 .fm-desc { font-size: .78rem; color: var(--on-surface-variant); margin-top: .2rem; line-height: 1.4; }
+.fm-avail { font-size: .65rem; font-weight: 700; padding: .15rem .45rem; border-radius: 999px; background: rgba(22,163,74,.12); color: #16a34a; }
+.fm-pending { font-size: .65rem; font-weight: 700; padding: .15rem .45rem; border-radius: 999px; background: rgba(168,85,247,.1); color: var(--primary); }
+.fm-active { border-color: rgba(22,163,74,.3) !important; }
+.fm-soon { opacity: .75; }
 .fm-fund-btn {
   display: flex; align-items: center; gap: .5rem;
   padding: .75rem 1.75rem; align-self: flex-start;
