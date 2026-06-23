@@ -397,10 +397,13 @@ const filteredConvs = computed(() => {
   return messagingStore.conversations.filter(c => !q || c.name?.toLowerCase().includes(q))
 })
 
-// ── Keyboard-aware: move input up when keyboard opens
+// ── Keyboard-aware: proper iOS/Android fix
+// We DON'T resize the root. Instead:
+// - inp-bar is position:fixed at the bottom
+// - when keyboard opens, visualViewport offset tells us how high the keyboard is
+// - we update a CSS variable --kb-offset that shifts the fixed inp-bar up
 onMounted(async () => {
   await messagingStore.fetchConversations()
-  // iOS/Android virtual keyboard detection
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', onViewport)
     window.visualViewport.addEventListener('scroll', onViewport)
@@ -423,23 +426,19 @@ onUnmounted(() => {
     window.visualViewport.removeEventListener('resize', onViewport)
     window.visualViewport.removeEventListener('scroll', onViewport)
   }
-  // Reset root height
-  const root = document.querySelector('.msg-root')
-  if (root) root.style.height = ''
+  // Clean up CSS variable
+  document.documentElement.style.removeProperty('--kb-offset')
   cancelRec()
 })
 
 function onViewport() {
-  // WhatsApp-style keyboard handling:
-  // When keyboard opens, visualViewport.height shrinks.
-  // We set the root height to match, pushing the input bar up naturally.
-  const root = document.querySelector('.msg-root')
-  if (!root) return
+  // keyboard offset = how many px the keyboard is pushing up from the bottom
   const vv = window.visualViewport
-  // vv.height already accounts for keyboard height
-  root.style.height = vv.height + 'px'
-  // Always scroll to bottom so latest messages stay visible above keyboard
-  scrollToBottom()
+  const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
+  // Store as CSS variable so the fixed inp-bar can shift up
+  document.documentElement.style.setProperty('--kb-offset', offset + 'px')
+  // Scroll messages to bottom so they're visible above the keyboard
+  if (offset > 50) scrollToBottom()
 }
 
 // ── Helpers
@@ -640,20 +639,19 @@ watch(()=>messagingStore.messages.length,()=>scrollToBottom())
 
 <style scoped>
 /* ═══════════════════════════════════════════
-   ROOT — fills exactly the visible screen,
-   keyboard shrinks it from the bottom (dvh)
+   ROOT — fills exactly the visible screen
 ════════════════════════════════════════════ */
 .msg-root{
   display:flex;
   overflow:hidden;
   background:var(--background);
   height:calc(100vh - 72px); /* desktop: minus topnav */
+  position:relative;
 }
 @media(max-width:767px){
   .msg-root{
-    /* dvh = dynamic viewport height — shrinks when keyboard opens */
-    height:100dvh;
-    height:-webkit-fill-available; /* iOS Safari fallback */
+    height:100vh;
+    height:100svh; /* small viewport height — excludes browser chrome */
   }
 }
 
@@ -706,7 +704,6 @@ watch(()=>messagingStore.messages.length,()=>scrollToBottom())
 .chat-win{
   flex:1;display:flex;flex-direction:column;overflow:hidden;
   position:relative;background:var(--background);
-  /* Critical: chat-win itself is a flex column that fills remaining space */
   min-height:0;
 }
 /* Subtle dot-grid background */
@@ -731,10 +728,8 @@ watch(()=>messagingStore.messages.length,()=>scrollToBottom())
   padding:.75rem 1rem;
   background:var(--surface-container-lowest);
   border-bottom:1px solid var(--outline-variant);
-  flex-shrink:0; /* NEVER shrink */
+  flex-shrink:0;
   position:relative;z-index:10;
-  /* Prevent any transform/scroll from affecting it */
-  will-change:auto;
 }
 .ch-back{display:none;}
 .ch-av{position:relative;width:38px;height:38px;border-radius:50%;background:var(--primary-fixed);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;}
@@ -768,21 +763,19 @@ watch(()=>messagingStore.messages.length,()=>scrollToBottom())
 .srch-time{font-size:.7rem;color:var(--on-surface-variant);flex-shrink:0;margin-left:.5rem;}
 .e2e-bar{display:flex;align-items:center;justify-content:center;gap:.3rem;padding:.25rem;background:color-mix(in srgb,#22c55e 8%,transparent);color:var(--on-surface-variant);font-size:.67rem;flex-shrink:0;position:relative;z-index:5;}
 
-/* ═══ Messages area — scrollable middle, fills all available space ═══ */
+/* ═══ Messages area — scrollable, fills space between header and input ═══ */
 .msgs-area{
   flex:1;
   overflow-y:auto;
   overflow-x:hidden;
-  padding:.75rem .875rem 1rem;
+  /* bottom padding = input bar height so last msg isn't hidden behind it */
+  padding:.75rem .875rem 72px;
   display:flex;
   flex-direction:column;
   gap:.25rem;
   position:relative;
   z-index:1;
-  /* Smooth momentum scroll on iOS */
   -webkit-overflow-scrolling:touch;
-  scroll-behavior:smooth;
-  /* Ensure it fills but doesn't overflow */
   min-height:0;
 }
 .sk-row{display:flex;}
@@ -960,16 +953,52 @@ watch(()=>messagingStore.messages.length,()=>scrollToBottom())
 .rec-time{font-family:var(--font-headline);font-size:.9rem;font-weight:700;color:#ef4444;min-width:2.5rem;}
 .rec-hint{flex:1;font-size:.75rem;color:var(--on-surface-variant);}
 
-/* ═══ Input bar — STATIC at bottom, keyboard pushes it up via dvh ═══ */
+/* ─────────────────────────────────────────────────────────
+   INPUT BAR
+   Desktop: normal flow at bottom of flex column.
+   Mobile:  position:fixed anchored to bottom of viewport.
+            JS sets --kb-offset (keyboard height in px),
+            translateY lifts the bar above the keyboard.
+───────────────────────────────────────────────────────── */
+:root{ --kb-offset: 0px; }
+
 .inp-bar{
   display:flex;align-items:flex-end;gap:.5rem;
-  padding:.6rem .75rem calc(.6rem + env(safe-area-inset-bottom, 0px));
+  padding:.6rem .75rem;
   background:var(--surface-container-lowest);
   border-top:1px solid var(--outline-variant);
-  flex-shrink:0; /* NEVER shrinks */
+  flex-shrink:0;
   position:relative;z-index:10;
-  /* No transform — keyboard handled by dvh on root */
 }
+
+@media(max-width:767px){
+  .inp-bar{
+    position:fixed;
+    left:0;right:0;bottom:0;
+    /* lift exactly the keyboard height */
+    transform:translateY(calc(-1 * var(--kb-offset)));
+    transition:transform 0.08s ease-out;
+    /* safe area for iPhone home bar */
+    padding-bottom:calc(.6rem + env(safe-area-inset-bottom, 0px));
+    z-index:100;
+    box-shadow:0 -2px 12px rgba(0,0,0,.08);
+  }
+  /* Extra bottom padding on msgs so last message is never
+     hidden under the fixed input bar (~68px tall) */
+  .msgs-area{
+    padding-bottom:calc(80px + env(safe-area-inset-bottom, 0px));
+  }
+  /* Slide reply/preview/recording bars above the fixed inp-bar */
+  .prev-bar,.reply-bar,.rec-bar{
+    position:fixed;
+    left:0;right:0;
+    bottom:calc(68px + env(safe-area-inset-bottom, 0px));
+    transform:translateY(calc(-1 * var(--kb-offset)));
+    transition:transform 0.08s ease-out;
+    z-index:99;
+  }
+}
+
 .inp-wrap{
   flex:1;
   background:var(--surface-container-low);
@@ -984,12 +1013,12 @@ watch(()=>messagingStore.messages.length,()=>scrollToBottom())
 .inp-ta{
   width:100%;background:transparent;border:none;outline:none;
   resize:none;
-  font-family:var(--font-body);font-size:.925rem;
+  font-family:var(--font-body);
+  /* 16px minimum prevents iOS auto-zoom on focus */
+  font-size:max(.9rem, 16px);
   color:var(--on-surface);
   line-height:1.45;
   max-height:110px;overflow-y:auto;
-  /* Prevent zoom on iOS */
-  font-size:max(.9rem, 16px);
 }
 .inp-ta::placeholder{color:var(--outline);}
 .hidden-f{display:none;}
@@ -999,7 +1028,7 @@ watch(()=>messagingStore.messages.length,()=>scrollToBottom())
   display:flex;align-items:center;justify-content:center;
   cursor:pointer;flex-shrink:0;
   box-shadow:0 2px 10px rgba(99,14,212,.4);
-  transition:transform .1s, box-shadow .1s;
+  transition:transform .1s;
 }
 .send-btn:active{transform:scale(.92);}
 .send-btn .material-symbols-outlined{font-size:20px;}
