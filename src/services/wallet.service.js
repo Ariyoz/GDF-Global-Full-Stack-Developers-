@@ -15,16 +15,15 @@ export const walletService = {
 
   // Initialize Paystack payment — returns { authorization_url, reference }
   async initializePayment(amountNaira, callbackUrl) {
+    // Use longer timeout — Paystack API can be slow on first call
     return http.post('/wallet/initialize', {
       amount:       amountNaira,
-      // Paystack appends ?reference=xxx&trxref=xxx automatically
       callback_url: callbackUrl || window.location.origin + '/wallet',
-    })
+    }, { timeout: 30000 })
   },
 
-  // Verify after Paystack redirect
   async verifyPayment(reference) {
-    return http.post('/wallet/verify', { reference })
+    return http.post('/wallet/verify', { reference }, { timeout: 30000 })
   },
 
   // Fetch live bank list from Paystack (via our backend)

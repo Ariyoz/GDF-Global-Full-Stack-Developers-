@@ -420,7 +420,10 @@ async function initiateFund() {
       paying.value = false
     }
   } catch (e) {
-    const msg = e?.response?.data?.detail || e?.message || 'Payment initialization failed'
+    const msg = e?.response?.data?.detail
+      || (e?.code === 'ECONNABORTED' ? 'Request timed out. The server is waking up — please try again in 30 seconds.' : null)
+      || e?.message
+      || 'Payment initialization failed'
     uiStore.showError(msg)
     paying.value = false
   }
