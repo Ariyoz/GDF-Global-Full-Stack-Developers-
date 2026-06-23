@@ -411,13 +411,17 @@ async function initiateFund() {
   try {
     const data = await walletService.initializePayment(
       fundAmount.value,
-      window.location.origin + '/wallet',   // Paystack appends ?reference=xxx automatically
+      window.location.origin + '/wallet',
     )
     if (data.authorization_url) {
       window.location.href = data.authorization_url
+    } else {
+      uiStore.showError('No payment URL returned. Please try again.')
+      paying.value = false
     }
   } catch (e) {
-    uiStore.showError(e?.response?.data?.detail || 'Payment initialization failed')
+    const msg = e?.response?.data?.detail || e?.message || 'Payment initialization failed'
+    uiStore.showError(msg)
     paying.value = false
   }
 }
