@@ -411,7 +411,7 @@ async function initiateFund() {
   try {
     const data = await walletService.initializePayment(
       fundAmount.value,
-      window.location.origin + '/wallet?verify=1',
+      window.location.origin + '/wallet',   // Paystack appends ?reference=xxx automatically
     )
     if (data.authorization_url) {
       window.location.href = data.authorization_url
@@ -469,8 +469,9 @@ async function submitWithdraw() {
 
 onMounted(async () => {
   await loadWallet()
-  loadBanks() // load in background — non-blocking
-  if (route.query.reference || route.query.trxref || route.query.verify) {
+  loadBanks() // non-blocking
+  // Paystack redirects back with ?reference=xxx&trxref=xxx
+  if (route.query.reference || route.query.trxref) {
     await verifyFromUrl()
   }
 })

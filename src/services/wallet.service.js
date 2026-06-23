@@ -17,7 +17,8 @@ export const walletService = {
   async initializePayment(amountNaira, callbackUrl) {
     return http.post('/wallet/initialize', {
       amount:       amountNaira,
-      callback_url: callbackUrl || window.location.origin + '/wallet?verify=1',
+      // Paystack appends ?reference=xxx&trxref=xxx automatically
+      callback_url: callbackUrl || window.location.origin + '/wallet',
     })
   },
 
