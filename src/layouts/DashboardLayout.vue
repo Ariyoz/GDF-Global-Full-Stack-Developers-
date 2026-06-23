@@ -807,6 +807,10 @@ function handleSignOut() {
 @media (max-width: 767px) {
   .mobile-bottom-nav { display: flex; }
   .dash-main { padding-bottom: 96px; }
+  /* Hide pill nav + topnav when messaging is fullscreen */
+  .messaging-fullscreen .mobile-bottom-nav { display: none !important; }
+  .messaging-fullscreen .dash-topnav { display: none !important; }
+  .messaging-fullscreen .dash-body { padding-top: 0 !important; }
 }
 .nav-pill {
   display: flex; align-items: center; justify-content: space-around;

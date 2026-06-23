@@ -4,7 +4,10 @@
     <!-- ═══ Conversation List ═══ -->
     <div class="conv-side" :class="{ 'conv-hidden': !!activeConv }">
       <div class="conv-topbar">
-        <h2 class="conv-title">Chats</h2>
+        <RouterLink to="/dashboard" class="conv-back-btn" aria-label="Back to Dashboard">
+          <span class="material-symbols-outlined">arrow_back</span>
+        </RouterLink>
+        <h2 class="conv-title">Messages</h2>
         <span v-if="messagingStore.totalUnread > 0" class="conv-badge">{{ messagingStore.totalUnread }}</span>
       </div>
       <div class="conv-search-row">
@@ -424,9 +427,14 @@ onUnmounted(() => {
 })
 
 function onViewport() {
-  // Move input bar above keyboard on mobile
-  if (!inpBarEl.value) return
+  // On mobile: shrink the msg-root to fit above the keyboard
+  const root = document.querySelector('.msg-root')
+  if (!root) return
   const vv = window.visualViewport
+  const newH = vv.height
+  root.style.height = newH + 'px'
+  // Also shift input bar up if needed (handles edge cases)
+  if (!inpBarEl.value) return
   const offset = window.innerHeight - vv.height - vv.offsetTop
   inpBarEl.value.style.transform = offset > 50 ? `translateY(-${offset}px)` : ''
   if (offset > 50) scrollToBottom()
@@ -632,9 +640,19 @@ watch(()=>messagingStore.messages.length,()=>scrollToBottom())
 /* ═══ Root ═══ */
 .msg-root{display:flex;height:calc(100vh - 72px);overflow:hidden;background:var(--background);}
 
+/* On mobile: messaging is fullscreen, topnav is hidden, so use full 100vh */
+@media(max-width:767px){
+  .msg-root{height:100dvh;height:100vh;}
+}
+
 /* ═══ Conversation sidebar ═══ */
 .conv-side{width:320px;flex-shrink:0;display:flex;flex-direction:column;background:var(--surface-container-lowest);border-right:1px solid var(--outline-variant);}
 .conv-topbar{display:flex;align-items:center;gap:.5rem;padding:1rem 1rem .5rem;flex-shrink:0;}
+.conv-back-btn{display:none;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;color:var(--on-surface-variant);text-decoration:none;transition:.12s;flex-shrink:0;}
+.conv-back-btn:hover{background:rgba(168,85,247,.08);color:var(--primary);}
+.conv-back-btn .material-symbols-outlined{font-size:22px;}
+/* Show back button only on mobile */
+@media(max-width:767px){.conv-back-btn{display:flex;}}
 .conv-title{font-family:var(--font-headline);font-size:1.15rem;font-weight:800;color:var(--on-surface);flex:1;}
 .conv-badge{min-width:20px;height:20px;border-radius:10px;background:var(--primary);color:#fff;font-size:.65rem;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 5px;}
 .conv-search-row{position:relative;padding:.5rem .75rem .5rem;flex-shrink:0;}
