@@ -1372,12 +1372,26 @@ watch(() => messagingStore.messages.length, () => scrollToBottom())
   /* Extra bottom padding so messages don't hide under fixed inp-bar */
   .msgs-area {
     padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
+    /* Top padding to clear the fixed header + e2e bar (~110px total) */
+    padding-top: 110px !important;
   }
-  /* Header stays locked at top — prevent any transform leaking */
+  /* Header FIXED at top — never moves even when keyboard opens */
   .chat-hdr {
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    position: fixed !important;
+    top: 0; left: 0; right: 0;
+    z-index: 150;
+  }
+  /* E2E bar also fixed, just below the header */
+  .e2e-bar {
+    position: fixed !important;
+    top: 65px; left: 0; right: 0;
+    z-index: 149;
+  }
+  /* Search bar also fixed, below header */
+  .srch-bar {
+    position: fixed !important;
+    top: 65px; left: 0; right: 0;
+    z-index: 148;
   }
 }
 
