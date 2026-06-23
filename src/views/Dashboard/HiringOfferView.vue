@@ -110,7 +110,7 @@
             <div class="offer-terms">
               <div class="offer-term">
                 <span class="term-label">Rate</span>
-                <p class="term-value">$120<span class="term-unit">/hr</span></p>
+                <p class="term-value">{{ currencyStore.format(120) }}<span class="term-unit">/hr</span></p>
               </div>
               <div class="offer-term">
                 <span class="term-label">Duration</span>
@@ -188,9 +188,11 @@
 import { ref, computed, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/store/auth'
+import { useCurrencyStore } from '@/store/currency'
 import GfdButton from '@/components/ui/GfdButton.vue'
 
-const authStore = useAuthStore()
+const authStore     = useAuthStore()
+const currencyStore = useCurrencyStore()
 const { user }  = storeToRefs(authStore)
 
 const activeApp     = ref(1)

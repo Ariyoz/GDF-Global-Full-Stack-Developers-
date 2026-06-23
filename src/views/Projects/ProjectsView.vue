@@ -104,6 +104,9 @@ import { useRouter } from 'vue-router'
 import { PROJECT_CATEGORIES } from '@/constants'
 import http from '@/services/http'
 import { useUiStore } from '@/store/ui'
+import { useCurrencyStore } from '@/store/currency'
+
+const currencyStore = useCurrencyStore()
 
 useSeo(pageSeo.projects)
 
@@ -137,7 +140,9 @@ onMounted(async () => {
       desc: p.description || '',
       category: p.project_type || 'contract',
       tags: p.skills_needed || [],
-      budget: p.budget_min ? `$${p.budget_min}${p.budget_max ? ' - $' + p.budget_max : ''}` : 'Negotiable',
+      budget: p.budget_min
+        ? `${currencyStore.format(p.budget_min)}${p.budget_max ? ' – ' + currencyStore.format(p.budget_max) : ''}`
+        : 'Negotiable',
       status: p.status,
       duration: p.duration,
       views: p.view_count || 0,
