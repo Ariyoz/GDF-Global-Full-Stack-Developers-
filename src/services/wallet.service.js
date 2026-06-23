@@ -32,6 +32,16 @@ export const walletService = {
     return data.banks || []
   },
 
+  // Get user's dedicated virtual account
+  async getVirtualAccount() {
+    return http.get('/wallet/virtual-account')
+  },
+
+  // Create dedicated virtual account (one time)
+  async createVirtualAccount() {
+    return http.post('/wallet/virtual-account/create', {})
+  },
+
   // Resolve account number → account name
   async verifyBankAccount(accountNumber, bankCode) {
     return http.post('/wallet/verify-account', {

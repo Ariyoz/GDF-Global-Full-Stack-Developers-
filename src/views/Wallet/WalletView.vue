@@ -46,6 +46,60 @@
       </div>
     </div>
 
+    <!-- ── Dedicated Virtual Account card ── -->
+    <div class="dva-card">
+      <div class="dva-hdr">
+        <div class="dva-hdr-left">
+          <span class="material-symbols-outlined dva-ico">account_balance</span>
+          <div>
+            <p class="dva-title">Your Personal Bank Account</p>
+            <p class="dva-sub">Transfer money to this account to fund your wallet instantly</p>
+          </div>
+        </div>
+        <span class="dva-badge">Free · Instant</span>
+      </div>
+
+      <!-- Has a virtual account -->
+      <template v-if="virtualAccount">
+        <div class="dva-details">
+          <div class="dva-row">
+            <span class="dva-lbl">Bank</span>
+            <span class="dva-val">{{ virtualAccount.bank_name }}</span>
+          </div>
+          <div class="dva-row">
+            <span class="dva-lbl">Account Name</span>
+            <span class="dva-val">{{ virtualAccount.account_name }}</span>
+          </div>
+          <div class="dva-row">
+            <span class="dva-lbl">Account Number</span>
+            <div class="dva-acct-row">
+              <span class="dva-acct-num">{{ virtualAccount.account_number }}</span>
+              <button class="dva-copy-btn" @click="copyAcctNum" :class="{ copied: acctCopied }">
+                <span class="material-symbols-outlined" style="font-size:16px">
+                  {{ acctCopied ? 'check' : 'content_copy' }}
+                </span>
+                {{ acctCopied ? 'Copied!' : 'Copy' }}
+              </button>
+            </div>
+          </div>
+        </div>
+        <p class="dva-note">
+          <span class="material-symbols-outlined" style="font-size:14px;color:#22c55e">check_circle</span>
+          Any bank transfer to this account will be credited to your GFD wallet within seconds.
+        </p>
+      </template>
+
+      <!-- No virtual account yet -->
+      <template v-else>
+        <p class="dva-empty">You don't have a personal account yet. Create one for free — takes 10 seconds.</p>
+        <button class="btn-primary dva-create-btn" :disabled="creatingDVA" @click="createVirtualAccount">
+          <span v-if="creatingDVA" class="btn-spinner"/>
+          <span class="material-symbols-outlined" v-else style="font-size:18px">add_card</span>
+          {{ creatingDVA ? 'Creating account…' : 'Create My Account Number' }}
+        </button>
+      </template>
+    </div>
+
     <!-- Quick Actions -->
     <div class="quick-grid">
       <button class="quick-btn" @click="showFundModal = true">
@@ -304,6 +358,11 @@ const verifyBanner      = ref('')
 const liveBanks      = ref([])
 const banksLoading   = ref(false)
 
+// Dedicated Virtual Account
+const virtualAccount = ref(null)
+const creatingDVA    = ref(false)
+const acctCopied     = ref(false)
+
 // Withdraw form
 const verifyingAccount = ref(false)
 let   verifyTimer      = null
@@ -371,10 +430,40 @@ async function loadBanks() {
   try {
     liveBanks.value = await walletService.getBanks()
   } catch {
-    // Fallback: empty list, user can still type
+    // silent fallback
   } finally {
     banksLoading.value = false
   }
+}
+
+// ── Load virtual account ──
+async function loadVirtualAccount() {
+  try {
+    const data = await walletService.getVirtualAccount()
+    virtualAccount.value = data.virtual_account
+  } catch { /* silent */ }
+}
+
+// ── Create virtual account ──
+async function createVirtualAccount() {
+  creatingDVA.value = true
+  try {
+    const data = await walletService.createVirtualAccount()
+    virtualAccount.value = data.virtual_account
+    uiStore.showSuccess(data.message || 'Your personal account number is ready!')
+  } catch (e) {
+    uiStore.showError(e?.response?.data?.detail || 'Could not create account. Please try again.')
+  } finally {
+    creatingDVA.value = false
+  }
+}
+
+// ── Copy account number ──
+async function copyAcctNum() {
+  if (!virtualAccount.value?.account_number) return
+  await navigator.clipboard.writeText(virtualAccount.value.account_number).catch(() => {})
+  acctCopied.value = true
+  setTimeout(() => acctCopied.value = false, 2000)
 }
 
 // ── Auto-verify account number after user stops typing ──
@@ -476,7 +565,8 @@ async function submitWithdraw() {
 
 onMounted(async () => {
   await loadWallet()
-  loadBanks() // non-blocking
+  loadBanks()           // non-blocking
+  loadVirtualAccount()  // non-blocking
   // Paystack redirects back with ?reference=xxx&trxref=xxx
   if (route.query.reference || route.query.trxref) {
     await verifyFromUrl()
@@ -560,9 +650,58 @@ onMounted(async () => {
 .bc-sl { font-size: .68rem; color: rgba(255,255,255,.45); margin-top: .1rem; }
 .bc-div { width: 1px; height: 38px; background: rgba(255,255,255,.15); }
 
+/* ── Dedicated Virtual Account card ── */
+.dva-card {
+  background: var(--surface-container-lowest);
+  border: 1.5px solid var(--outline-variant);
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex; flex-direction: column; gap: 1rem;
+}
+.dva-hdr { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.dva-hdr-left { display: flex; align-items: flex-start; gap: .75rem; }
+.dva-ico { font-size: 24px; color: var(--primary); margin-top: .1rem; flex-shrink: 0; }
+.dva-title { font-family: var(--font-headline); font-size: 1rem; font-weight: 700; color: var(--on-surface); }
+.dva-sub   { font-size: .8rem; color: var(--on-surface-variant); margin-top: .2rem; }
+.dva-badge {
+  padding: .25rem .75rem; border-radius: 999px;
+  background: rgba(34,197,94,.1); color: #16a34a;
+  font-size: .72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .04em; white-space: nowrap; flex-shrink: 0;
+}
+.dva-details { display: flex; flex-direction: column; gap: .625rem; }
+.dva-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.dva-lbl { font-size: .8rem; color: var(--on-surface-variant); flex-shrink: 0; }
+.dva-val { font-size: .875rem; font-weight: 600; color: var(--on-surface); }
+.dva-acct-row { display: flex; align-items: center; gap: .625rem; }
+.dva-acct-num {
+  font-family: var(--font-headline); font-size: 1.25rem; font-weight: 800;
+  color: var(--primary); letter-spacing: .08em;
+}
+.dva-copy-btn {
+  display: flex; align-items: center; gap: .25rem;
+  padding: .35rem .75rem; border-radius: 8px;
+  border: 1.5px solid var(--outline-variant);
+  background: var(--surface-container);
+  font-size: .78rem; font-weight: 600; color: var(--on-surface);
+  cursor: pointer; transition: all .15s;
+}
+.dva-copy-btn:hover { border-color: var(--primary); color: var(--primary); }
+.dva-copy-btn.copied { border-color: #22c55e; color: #22c55e; background: rgba(34,197,94,.08); }
+.dva-note {
+  display: flex; align-items: center; gap: .4rem;
+  font-size: .8rem; color: var(--on-surface-variant);
+  background: rgba(34,197,94,.06); padding: .625rem .875rem;
+  border-radius: 8px; border: 1px solid rgba(34,197,94,.2);
+}
+.dva-empty { font-size: .875rem; color: var(--on-surface-variant); }
+.dva-create-btn {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .75rem 1.5rem; align-self: flex-start;
+}
+
 /* Quick actions */
-.quick-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: .75rem; }
-.quick-btn {
+.quick-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: .75rem; }.quick-btn {
   display: flex; flex-direction: column; align-items: center; gap: .625rem;
   padding: 1rem .5rem;
   background: var(--surface-container-lowest);
