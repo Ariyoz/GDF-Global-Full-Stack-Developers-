@@ -156,9 +156,52 @@
       </div>
     </div>
 
-    <!-- Privacy Tab -->
-    <div v-if="activeTab === 'privacy'" class="tab-content">
+    <!-- Preferences Tab -->
+    <div v-if="activeTab === 'preferences'" class="tab-content">
       <div class="glass-card-static settings-card">
+        <h3 class="settings-section-title">Currency & Region</h3>
+        <p class="settings-section-desc">
+          Choose your display currency. All prices, earnings and wallet amounts will be shown in this currency.
+        </p>
+
+        <!-- Current selection banner -->
+        <div class="curr-current">
+          <div class="curr-flag-big">{{ currencyStore.current.symbol }}</div>
+          <div>
+            <p class="curr-sel-name">{{ currencyStore.current.name }}</p>
+            <p class="curr-sel-code">{{ currencyStore.current.code }} · {{ currencyStore.current.country }}</p>
+          </div>
+          <span class="curr-active-chip">Active</span>
+        </div>
+
+        <!-- Search -->
+        <div class="curr-search-wrap">
+          <span class="material-symbols-outlined curr-search-ico">search</span>
+          <input v-model="currSearch" class="curr-search" placeholder="Search currency or country…" />
+        </div>
+
+        <!-- Currency grid -->
+        <div class="curr-grid">
+          <button
+            v-for="c in filteredCurrencies" :key="c.code"
+            class="curr-btn"
+            :class="{ active: currencyStore.code === c.code }"
+            @click="selectCurrency(c.code)"
+          >
+            <div class="curr-symbol">{{ c.symbol }}</div>
+            <div class="curr-info">
+              <p class="curr-code">{{ c.code }}</p>
+              <p class="curr-name">{{ c.name }}</p>
+              <p class="curr-country">{{ c.country }}</p>
+            </div>
+            <span v-if="currencyStore.code === c.code" class="material-symbols-outlined curr-check">check_circle</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Privacy Tab -->
+    <div v-if="activeTab === 'privacy'" class="tab-content">      <div class="glass-card-static settings-card">
         <h3 class="settings-section-title">Profile Visibility</h3>
         <div class="radio-list">
           <label v-for="opt in visibilityOpts" :key="opt.value" class="radio-item">
@@ -190,12 +233,14 @@ import { ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/store/auth'
 import { useUiStore }   from '@/store/ui'
+import { useCurrencyStore, CURRENCIES } from '@/store/currency'
 import GfdInput  from '@/components/ui/GfdInput.vue'
 import GfdButton from '@/components/ui/GfdButton.vue'
 
-const authStore = useAuthStore()
-const uiStore   = useUiStore()
-const { user }  = storeToRefs(authStore)
+const authStore     = useAuthStore()
+const uiStore       = useUiStore()
+const currencyStore = useCurrencyStore()
+const { user }      = storeToRefs(authStore)
 
 const activeTab = ref('profile')
 const saving    = ref(false)
@@ -209,8 +254,25 @@ const tabs = [
   { value: 'profile',       label: 'Profile',       icon: 'person' },
   { value: 'security',      label: 'Security',      icon: 'lock' },
   { value: 'notifications', label: 'Notifications', icon: 'notifications' },
+  { value: 'preferences',   label: 'Preferences',   icon: 'tune' },
   { value: 'privacy',       label: 'Privacy',       icon: 'shield' },
 ]
+
+// ── Currency preference ──
+const currSearch = ref('')
+const filteredCurrencies = computed(() => {
+  const q = currSearch.value.toLowerCase()
+  if (!q) return CURRENCIES
+  return CURRENCIES.filter(c =>
+    c.code.toLowerCase().includes(q) ||
+    c.name.toLowerCase().includes(q) ||
+    c.country.toLowerCase().includes(q)
+  )
+})
+function selectCurrency(code) {
+  currencyStore.setCurrency(code)
+  uiStore.showSuccess(`Currency changed to ${CURRENCIES.find(c => c.code === code)?.name}`)
+}
 
 const profile = ref({
   name: user.value?.name || user.value?.full_name || '',
@@ -559,4 +621,72 @@ function revokeSession(session) {
 .pfx-wrap:focus-within { border-color:var(--primary); }
 .pfx { padding:0 .6rem 0 .875rem; font-size:.78rem; color:var(--on-surface-variant); white-space:nowrap; flex-shrink:0; border-right:1px solid var(--outline-variant); background:var(--surface-container); line-height:2.6rem; }
 .pfx-input { flex:1; padding:.65rem .875rem; background:transparent; border:none; outline:none; font-size:.875rem; color:var(--on-surface); min-width:0; }
+
+/* ── Currency Preferences ── */
+.settings-section-desc { font-size: .875rem; color: var(--on-surface-variant); margin: -.25rem 0 1rem; }
+.curr-current {
+  display: flex; align-items: center; gap: 1rem;
+  padding: .875rem 1rem;
+  background: color-mix(in srgb,var(--primary) 8%,transparent);
+  border: 1.5px solid color-mix(in srgb,var(--primary) 25%,transparent);
+  border-radius: 12px; margin-bottom: 1.25rem;
+}
+.curr-flag-big { font-size: 1.75rem; min-width: 2.5rem; text-align: center; }
+.curr-sel-name { font-family: var(--font-headline); font-size: .95rem; font-weight: 700; color: var(--on-surface); }
+.curr-sel-code { font-size: .75rem; color: var(--on-surface-variant); margin-top: .1rem; }
+.curr-active-chip {
+  margin-left: auto;
+  padding: .25rem .75rem; border-radius: 999px;
+  background: var(--primary); color: #fff;
+  font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+  flex-shrink: 0;
+}
+.curr-search-wrap {
+  position: relative; margin-bottom: 1rem;
+}
+.curr-search-ico {
+  position: absolute; left: .875rem; top: 50%; transform: translateY(-50%);
+  font-size: 18px; color: var(--on-surface-variant); pointer-events: none;
+}
+.curr-search {
+  width: 100%; padding: .625rem .875rem .625rem 2.5rem;
+  background: var(--surface-container);
+  border: 1.5px solid var(--outline-variant); border-radius: 10px;
+  font-size: .875rem; color: var(--on-surface); outline: none;
+  transition: border-color .15s;
+}
+.curr-search:focus { border-color: var(--primary); }
+.curr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: .625rem;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: .25rem;
+}
+@media (max-width: 600px) { .curr-grid { grid-template-columns: 1fr 1fr; } }
+.curr-btn {
+  display: flex; align-items: center; gap: .625rem;
+  padding: .75rem .875rem;
+  border: 1.5px solid var(--outline-variant);
+  border-radius: 12px;
+  background: var(--surface-container);
+  cursor: pointer; transition: all .12s;
+  text-align: left; position: relative;
+}
+.curr-btn:hover { border-color: var(--primary); background: color-mix(in srgb,var(--primary) 5%,transparent); }
+.curr-btn.active {
+  border-color: var(--primary);
+  background: color-mix(in srgb,var(--primary) 8%,transparent);
+  box-shadow: 0 0 0 1px var(--primary);
+}
+.curr-symbol {
+  font-size: 1.2rem; font-weight: 800; font-family: var(--font-headline);
+  min-width: 2rem; text-align: center; color: var(--primary); flex-shrink: 0;
+}
+.curr-info { flex: 1; min-width: 0; }
+.curr-code { font-family: var(--font-headline); font-size: .8rem; font-weight: 700; color: var(--on-surface); }
+.curr-name { font-size: .72rem; color: var(--on-surface-variant); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.curr-country { font-size: .67rem; color: var(--on-surface-variant); opacity: .75; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.curr-check { font-size: 18px; color: var(--primary); position: absolute; top: .5rem; right: .5rem; }
 </style>

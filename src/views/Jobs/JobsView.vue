@@ -48,7 +48,7 @@
         </div>
         <p class="job-desc">{{ job.description?.slice(0, 120) }}{{ job.description?.length > 120 ? '...' : '' }}</p>
         <div class="job-footer">
-          <span v-if="job.salary_min" class="job-salary">${{ job.salary_min }}{{ job.salary_max ? ' - $' + job.salary_max : '' }}/yr</span>
+          <span v-if="job.salary_min" class="job-salary">{{ fmtSalary(job.salary_min) }}{{ job.salary_max ? ' – ' + fmtSalary(job.salary_max) : '' }}/yr</span>
           <span class="job-time">{{ formatTime(job.created_at) }}</span>
           <button v-if="job.poster_name === authStore.profile?.full_name || isClient" class="job-delete-btn" @click.stop="deleteJob(job)" title="Delete job">
             <span class="material-symbols-outlined">delete</span>
@@ -101,7 +101,7 @@
               <span v-if="selectedJob.experience_level" class="job-tag">{{ selectedJob.experience_level }}</span>
             </div>
             <div v-if="selectedJob.salary_min" class="detail-salary">
-              💰 ${{ selectedJob.salary_min }}{{ selectedJob.salary_max ? ' - $' + selectedJob.salary_max : '' }} / year
+              💰 {{ fmtSalary(selectedJob.salary_min) }}{{ selectedJob.salary_max ? ' – ' + fmtSalary(selectedJob.salary_max) : '' }} / year
             </div>
             <div class="detail-section">
               <h4>Description</h4>
@@ -360,7 +360,12 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
 import { useUiStore } from '@/store/ui'
+import { useCurrencyStore } from '@/store/currency'
 import http from '@/services/http'
+
+const currencyStore = useCurrencyStore()
+// Salaries are stored in USD
+const fmtSalary = (usd) => currencyStore.format(usd)
 
 useSeo(pageSeo.jobs)
 

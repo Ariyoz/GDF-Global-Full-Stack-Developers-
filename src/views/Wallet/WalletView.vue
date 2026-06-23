@@ -7,9 +7,16 @@
         <h2 class="pg-title">Wallet</h2>
         <p class="pg-sub">Manage your GFD earnings and payments</p>
       </div>
-      <button class="btn-refresh icon-only" @click="loadWallet" :disabled="loading">
-        <span class="material-symbols-outlined" :class="{ spin: loading }">refresh</span>
-      </button>
+      <div class="hdr-actions">
+        <RouterLink to="/settings" class="curr-chip" title="Change currency">
+          <span class="curr-chip-sym">{{ currencyStore.current.symbol }}</span>
+          <span class="curr-chip-code">{{ currencyStore.current.code }}</span>
+          <span class="material-symbols-outlined" style="font-size:14px;opacity:.6">tune</span>
+        </RouterLink>
+        <button class="btn-refresh icon-only" @click="loadWallet" :disabled="loading">
+          <span class="material-symbols-outlined" :class="{ spin: loading }">refresh</span>
+        </button>
+      </div>
     </div>
 
     <!-- Balance Card -->
@@ -17,14 +24,14 @@
       <div class="bc-glow"/>
       <div class="bc-left">
         <p class="bc-label">Total Balance</p>
-        <p class="bc-amount">₦{{ fmt(balance) }}</p>
-        <p class="bc-sub">Available for withdrawal</p>
+        <p class="bc-amount">{{ fmtWallet(balance) }}</p>
+        <p class="bc-sub">Available for withdrawal · <span class="bc-curr">{{ currencyStore.current.code }}</span></p>
       </div>
       <div class="bc-stats">
         <div class="bc-stat">
           <span class="material-symbols-outlined" style="font-size:18px;opacity:.7">trending_up</span>
           <div>
-            <p class="bc-sv">₦{{ fmt(monthlyEarnings) }}</p>
+            <p class="bc-sv">{{ fmtWallet(monthlyEarnings) }}</p>
             <p class="bc-sl">This month</p>
           </div>
         </div>
@@ -32,7 +39,7 @@
         <div class="bc-stat">
           <span class="material-symbols-outlined" style="font-size:18px;opacity:.7">account_balance</span>
           <div>
-            <p class="bc-sv">₦{{ fmt(totalEarned) }}</p>
+            <p class="bc-sv">{{ fmtWallet(totalEarned) }}</p>
             <p class="bc-sl">All time</p>
           </div>
         </div>
@@ -101,7 +108,7 @@
           </div>
           <div class="tx-right">
             <span class="tx-amt" :class="tx.type === 'withdrawal' ? 'neg' : 'pos'">
-              {{ tx.type === 'withdrawal' ? '-' : '+' }}₦{{ fmt(tx.amount) }}
+              {{ tx.type === 'withdrawal' ? '-' : '+' }}{{ fmtWallet(tx.amount) }}
             </span>
             <span class="tx-badge" :class="tx.status">{{ tx.status }}</span>
           </div>
@@ -181,6 +188,9 @@
           <div class="modal-body">
             <div class="avail-balance">
               Available: <strong>₦{{ fmt(balance) }}</strong>
+              <span v-if="currencyStore.code !== 'NGN'" class="avail-converted">
+                ≈ {{ fmtWallet(balance) }}
+              </span>
             </div>
 
             <div class="field-group">
@@ -249,10 +259,21 @@ import { useRoute } from 'vue-router'
 import { walletService } from '@/services/wallet.service'
 import { useAuthStore } from '@/store/auth'
 import { useUiStore } from '@/store/ui'
+import { useCurrencyStore } from '@/store/currency'
 
-const authStore = useAuthStore()
-const uiStore   = useUiStore()
-const route     = useRoute()
+const authStore     = useAuthStore()
+const uiStore       = useUiStore()
+const route         = useRoute()
+const currencyStore = useCurrencyStore()
+
+// Wallet balances are stored in NGN on the backend
+// We convert to user's chosen currency for display
+const NGN_TO_USD = 1 / 1650  // 1 NGN → USD
+function fmtWallet(ngnAmount) {
+  // Convert NGN → USD → user currency
+  const usd = Number(ngnAmount || 0) * NGN_TO_USD
+  return currencyStore.format(usd)
+}
 
 // ── State ──
 const loading  = ref(false)
@@ -411,10 +432,26 @@ onMounted(async () => {
 .page-hdr { display: flex; align-items: flex-start; justify-content: space-between; }
 .pg-title { font-family: var(--font-headline); font-size: 1.5rem; font-weight: 800; color: var(--on-surface); }
 .pg-sub   { font-size: .85rem; color: var(--on-surface-variant); margin-top: .25rem; }
+.hdr-actions { display: flex; align-items: center; gap: .5rem; }
+.curr-chip {
+  display: flex; align-items: center; gap: .3rem;
+  padding: .4rem .75rem;
+  border: 1.5px solid var(--outline-variant);
+  border-radius: 999px;
+  background: var(--surface-container);
+  text-decoration: none; cursor: pointer;
+  transition: border-color .15s;
+  color: var(--on-surface);
+}
+.curr-chip:hover { border-color: var(--primary); color: var(--primary); }
+.curr-chip-sym { font-size: 1rem; font-weight: 800; font-family: var(--font-headline); }
+.curr-chip-code { font-size: .78rem; font-weight: 700; font-family: var(--font-headline); }
 .icon-only { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--outline-variant); background: var(--surface-container); color: var(--on-surface-variant); display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .icon-only:hover { border-color: var(--primary); color: var(--primary); }
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+.bc-curr { font-size: .7rem; font-weight: 700; opacity: .8; background: rgba(255,255,255,.15); padding: .1rem .4rem; border-radius: 4px; }
+.avail-converted { font-size: .8rem; color: var(--primary); margin-left: .35rem; }
 
 /* Balance Card */
 .balance-card {
