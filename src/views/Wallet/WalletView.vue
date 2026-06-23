@@ -46,87 +46,48 @@
       </div>
     </div>
 
-    <!-- ── Dedicated Virtual Account card ── -->
-    <div class="dva-card">
-      <div class="dva-hdr">
-        <div class="dva-hdr-left">
-          <span class="material-symbols-outlined dva-ico">account_balance</span>
+    <!-- ── How to Fund card ── -->
+    <div class="fund-methods-card">
+      <div class="fm-title">
+        <span class="material-symbols-outlined" style="font-size:20px;color:var(--primary)">payments</span>
+        How to Fund Your Wallet
+      </div>
+      <div class="fm-grid">
+        <!-- Bank Transfer -->
+        <div class="fm-item">
+          <div class="fm-ico" style="background:rgba(99,14,212,.1)">
+            <span class="material-symbols-outlined" style="color:var(--primary)">account_balance</span>
+          </div>
           <div>
-            <p class="dva-title">Your Personal Bank Account (NGN)</p>
-            <p class="dva-sub">Transfer Naira to this account from any Nigerian bank to fund your wallet instantly</p>
+            <p class="fm-name">Bank Transfer</p>
+            <p class="fm-desc">Get a one-time account number on the next screen. Transfer from any Nigerian bank.</p>
           </div>
         </div>
-        <span class="dva-badge">Free · Instant</span>
-      </div>
-
-      <!-- Has a virtual account -->
-      <template v-if="virtualAccount">
-        <div class="dva-details">
-          <div class="dva-row">
-            <span class="dva-lbl">Bank</span>
-            <span class="dva-val">{{ virtualAccount.bank_name }}</span>
+        <!-- Card -->
+        <div class="fm-item">
+          <div class="fm-ico" style="background:rgba(22,163,74,.1)">
+            <span class="material-symbols-outlined" style="color:#16a34a">credit_card</span>
           </div>
-          <div class="dva-row">
-            <span class="dva-lbl">Account Name</span>
-            <span class="dva-val">{{ virtualAccount.account_name }}</span>
-          </div>
-          <div class="dva-row">
-            <span class="dva-lbl">Account Number</span>
-            <div class="dva-acct-row">
-              <span class="dva-acct-num">{{ virtualAccount.account_number }}</span>
-              <button class="dva-copy-btn" @click="copyAcctNum" :class="{ copied: acctCopied }">
-                <span class="material-symbols-outlined" style="font-size:16px">
-                  {{ acctCopied ? 'check' : 'content_copy' }}
-                </span>
-                {{ acctCopied ? 'Copied!' : 'Copy' }}
-              </button>
-            </div>
-          </div>
-        </div>
-        <p class="dva-note">
-          <span class="material-symbols-outlined" style="font-size:14px;color:#22c55e">check_circle</span>
-          Any bank transfer to this account credits your wallet automatically within seconds.
-        </p>
-      </template>
-
-      <!-- DVA not available on this Paystack plan -->
-      <template v-else-if="dvaNotAvailable">
-        <p class="dva-empty">
-          Dedicated account numbers require Paystack business verification.
-          Use <strong>Fund Wallet</strong> below to pay by card or bank transfer instead.
-        </p>
-      </template>
-
-      <!-- No virtual account yet -->
-      <template v-else>
-        <p class="dva-empty">Create a free personal Wema/Sterling Bank account number. Any transfer to it funds your wallet automatically.</p>
-        <button class="btn-primary dva-create-btn" :disabled="creatingDVA" @click="createVirtualAccount">
-          <span v-if="creatingDVA" class="btn-spinner"/>
-          <span class="material-symbols-outlined" v-else style="font-size:18px">add_card</span>
-          {{ creatingDVA ? 'Creating…' : 'Get My Account Number' }}
-        </button>
-      </template>
-    </div>
-
-    <!-- ── USD Account card ── -->
-    <div class="dva-card usd-card">
-      <div class="dva-hdr">
-        <div class="dva-hdr-left">
-          <span class="dva-ico usd-ico">$</span>
           <div>
-            <p class="dva-title">USD Account (Coming Soon)</p>
-            <p class="dva-sub">Receive payments in US Dollars from international clients</p>
+            <p class="fm-name">Debit / Credit Card</p>
+            <p class="fm-desc">Pay instantly with Visa, Mastercard or Verve.</p>
           </div>
         </div>
-        <span class="dva-badge usd-badge">USD · Global</span>
-      </div>
-      <div class="usd-coming">
-        <span class="material-symbols-outlined" style="font-size:2rem;color:var(--primary);opacity:.4">account_balance_wallet</span>
-        <div>
-          <p class="usd-soon-title">USD virtual accounts are coming soon</p>
-          <p class="usd-soon-sub">We're integrating with Grey/Geegpay to give every GFD developer a USD account number for receiving international payments. You'll be notified when it's ready.</p>
+        <!-- USSD -->
+        <div class="fm-item">
+          <div class="fm-ico" style="background:rgba(245,158,11,.1)">
+            <span class="material-symbols-outlined" style="color:#f59e0b">dialpad</span>
+          </div>
+          <div>
+            <p class="fm-name">USSD</p>
+            <p class="fm-desc">Dial a code on your phone — no internet needed.</p>
+          </div>
         </div>
       </div>
+      <button class="btn-primary fm-fund-btn" @click="showFundModal = true">
+        <span class="material-symbols-outlined" style="font-size:18px">add_circle</span>
+        Fund Wallet Now
+      </button>
     </div>
 
     <!-- Quick Actions -->
@@ -686,63 +647,42 @@ onMounted(async () => {
 .bc-sl { font-size: .68rem; color: rgba(255,255,255,.45); margin-top: .1rem; }
 .bc-div { width: 1px; height: 38px; background: rgba(255,255,255,.15); }
 
-/* ── Dedicated Virtual Account card ── */
-.dva-card {
+/* ── How to Fund card ── */
+.fund-methods-card {
   background: var(--surface-container-lowest);
   border: 1.5px solid var(--outline-variant);
   border-radius: 16px;
   padding: 1.25rem;
   display: flex; flex-direction: column; gap: 1rem;
 }
-.dva-hdr { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
-.dva-hdr-left { display: flex; align-items: flex-start; gap: .75rem; }
-.dva-ico { font-size: 24px; color: var(--primary); margin-top: .1rem; flex-shrink: 0; }
-.dva-title { font-family: var(--font-headline); font-size: 1rem; font-weight: 700; color: var(--on-surface); }
-.dva-sub   { font-size: .8rem; color: var(--on-surface-variant); margin-top: .2rem; }
-.dva-badge {
-  padding: .25rem .75rem; border-radius: 999px;
-  background: rgba(34,197,94,.1); color: #16a34a;
-  font-size: .72rem; font-weight: 700; text-transform: uppercase;
-  letter-spacing: .04em; white-space: nowrap; flex-shrink: 0;
-}
-.dva-details { display: flex; flex-direction: column; gap: .625rem; }
-.dva-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
-.dva-lbl { font-size: .8rem; color: var(--on-surface-variant); flex-shrink: 0; }
-.dva-val { font-size: .875rem; font-weight: 600; color: var(--on-surface); }
-.dva-acct-row { display: flex; align-items: center; gap: .625rem; }
-.dva-acct-num {
-  font-family: var(--font-headline); font-size: 1.25rem; font-weight: 800;
-  color: var(--primary); letter-spacing: .08em;
-}
-.dva-copy-btn {
-  display: flex; align-items: center; gap: .25rem;
-  padding: .35rem .75rem; border-radius: 8px;
-  border: 1.5px solid var(--outline-variant);
-  background: var(--surface-container);
-  font-size: .78rem; font-weight: 600; color: var(--on-surface);
-  cursor: pointer; transition: all .15s;
-}
-.dva-copy-btn:hover { border-color: var(--primary); color: var(--primary); }
-.dva-copy-btn.copied { border-color: #22c55e; color: #22c55e; background: rgba(34,197,94,.08); }
-.dva-note {
-  display: flex; align-items: center; gap: .4rem;
-  font-size: .8rem; color: var(--on-surface-variant);
-  background: rgba(34,197,94,.06); padding: .625rem .875rem;
-  border-radius: 8px; border: 1px solid rgba(34,197,94,.2);
-}
-.dva-empty { font-size: .875rem; color: var(--on-surface-variant); }
-.dva-create-btn {
+.fm-title {
   display: flex; align-items: center; gap: .5rem;
-  padding: .75rem 1.5rem; align-self: flex-start;
+  font-family: var(--font-headline); font-size: 1rem; font-weight: 700;
+  color: var(--on-surface);
 }
-
-/* USD card */
-.usd-card { border-color: rgba(99,14,212,.2); background: color-mix(in srgb,var(--primary) 3%,var(--surface-container-lowest)); }
-.usd-ico { font-size: 1.4rem; font-weight: 900; color: var(--primary); font-family: var(--font-headline); min-width: 28px; text-align: center; }
-.usd-badge { background: rgba(99,14,212,.1); color: var(--primary); }
-.usd-coming { display: flex; align-items: flex-start; gap: 1rem; }
-.usd-soon-title { font-family: var(--font-headline); font-size: .9rem; font-weight: 700; color: var(--on-surface); }
-.usd-soon-sub { font-size: .8rem; color: var(--on-surface-variant); margin-top: .3rem; line-height: 1.5; }
+.fm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: .75rem;
+}
+.fm-item {
+  display: flex; align-items: flex-start; gap: .75rem;
+  padding: .875rem; border-radius: 12px;
+  background: var(--surface-container-low);
+  border: 1px solid var(--outline-variant);
+}
+.fm-ico {
+  width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.fm-ico .material-symbols-outlined { font-size: 20px; }
+.fm-name { font-family: var(--font-headline); font-size: .875rem; font-weight: 700; color: var(--on-surface); }
+.fm-desc { font-size: .78rem; color: var(--on-surface-variant); margin-top: .2rem; line-height: 1.4; }
+.fm-fund-btn {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .75rem 1.75rem; align-self: flex-start;
+  font-size: .95rem;
+}
 
 /* Quick actions */
 .quick-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: .75rem; }.quick-btn {
