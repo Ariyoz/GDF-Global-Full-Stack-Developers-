@@ -576,9 +576,23 @@ function onScroll() {
 // ── Input ──
 function onInput() {
   autoResize()
-  messagingStore.sendTyping()
+  if (msg.value.trim().length === 0) {
+    // Cleared — stop typing immediately
+    clearTimeout(typingTimer)
+    typingTimer = null
+    messagingStore.sendStopTyping()
+    return
+  }
+  // Only send typing_start once per session, not on every keystroke
+  if (!typingTimer) {
+    messagingStore.sendTyping()
+  }
+  // Auto-stop after 2.5s of inactivity
   clearTimeout(typingTimer)
-  typingTimer = setTimeout(() => messagingStore.sendStopTyping(), 2500)
+  typingTimer = setTimeout(() => {
+    messagingStore.sendStopTyping()
+    typingTimer = null
+  }, 2500)
 }
 function autoResize() {
   if (!txtEl.value) return
@@ -589,7 +603,9 @@ function autoResize() {
 // ── Send ──
 async function send() {
   if (!activeConv.value) return
-  clearTimeout(typingTimer); messagingStore.sendStopTyping()
+  clearTimeout(typingTimer)
+  typingTimer = null
+  messagingStore.sendStopTyping()
   if (pendImg.value) { await sendAttachment(); return }
   const content = msg.value.trim()
   if (!content) return

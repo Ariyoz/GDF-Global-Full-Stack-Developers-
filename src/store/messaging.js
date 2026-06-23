@@ -142,6 +142,10 @@ export const useMessagingStore = defineStore('messaging', () => {
         if (userId) {
           onlineUserIds.value.delete(userId)
           _updateOnlineStatus(userId, false)
+          // Clear any typing indicators for this user
+          for (const convId in typingUsers.value) {
+            typingUsers.value[convId] = typingUsers.value[convId].filter(id => id !== userId)
+          }
         }
         break
       }
