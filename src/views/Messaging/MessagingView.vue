@@ -423,21 +423,23 @@ onUnmounted(() => {
     window.visualViewport.removeEventListener('resize', onViewport)
     window.visualViewport.removeEventListener('scroll', onViewport)
   }
+  // Reset root height
+  const root = document.querySelector('.msg-root')
+  if (root) root.style.height = ''
   cancelRec()
 })
 
 function onViewport() {
-  // On mobile: shrink the msg-root to fit above the keyboard
+  // WhatsApp-style keyboard handling:
+  // When keyboard opens, visualViewport.height shrinks.
+  // We set the root height to match, pushing the input bar up naturally.
   const root = document.querySelector('.msg-root')
   if (!root) return
   const vv = window.visualViewport
-  const newH = vv.height
-  root.style.height = newH + 'px'
-  // Also shift input bar up if needed (handles edge cases)
-  if (!inpBarEl.value) return
-  const offset = window.innerHeight - vv.height - vv.offsetTop
-  inpBarEl.value.style.transform = offset > 50 ? `translateY(-${offset}px)` : ''
-  if (offset > 50) scrollToBottom()
+  // vv.height already accounts for keyboard height
+  root.style.height = vv.height + 'px'
+  // Always scroll to bottom so latest messages stay visible above keyboard
+  scrollToBottom()
 }
 
 // ── Helpers
@@ -637,12 +639,22 @@ watch(()=>messagingStore.messages.length,()=>scrollToBottom())
 </script>
 
 <style scoped>
-/* ═══ Root ═══ */
-.msg-root{display:flex;height:calc(100vh - 72px);overflow:hidden;background:var(--background);}
-
-/* On mobile: messaging is fullscreen, topnav is hidden, so use full 100vh */
+/* ═══════════════════════════════════════════
+   ROOT — fills exactly the visible screen,
+   keyboard shrinks it from the bottom (dvh)
+════════════════════════════════════════════ */
+.msg-root{
+  display:flex;
+  overflow:hidden;
+  background:var(--background);
+  height:calc(100vh - 72px); /* desktop: minus topnav */
+}
 @media(max-width:767px){
-  .msg-root{height:100dvh;height:100vh;}
+  .msg-root{
+    /* dvh = dynamic viewport height — shrinks when keyboard opens */
+    height:100dvh;
+    height:-webkit-fill-available; /* iOS Safari fallback */
+  }
 }
 
 /* ═══ Conversation sidebar ═══ */
@@ -691,11 +703,20 @@ watch(()=>messagingStore.messages.length,()=>scrollToBottom())
 .conv-empty{display:flex;flex-direction:column;align-items:center;gap:.5rem;padding:3rem 1rem;color:var(--on-surface-variant);font-size:.85rem;}
 
 /* ═══ Chat window ═══ */
-.chat-win{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative;background:var(--background);}
-/* Background pattern */
-.chat-win::before{content:'';position:absolute;inset:0;background-image:radial-gradient(circle,color-mix(in srgb,var(--primary) 4%,transparent) 1px,transparent 0);background-size:24px 24px;pointer-events:none;z-index:0;}
+.chat-win{
+  flex:1;display:flex;flex-direction:column;overflow:hidden;
+  position:relative;background:var(--background);
+  /* Critical: chat-win itself is a flex column that fills remaining space */
+  min-height:0;
+}
+/* Subtle dot-grid background */
+.chat-win::before{
+  content:'';position:absolute;inset:0;
+  background-image:radial-gradient(circle,color-mix(in srgb,var(--primary) 4%,transparent) 1px,transparent 0);
+  background-size:24px 24px;pointer-events:none;z-index:0;
+}
 
-/* Mobile */
+/* Mobile show/hide */
 @media(max-width:767px){
   .conv-side{width:100%;}
   .conv-hidden{display:none !important;}
@@ -704,8 +725,17 @@ watch(()=>messagingStore.messages.length,()=>scrollToBottom())
   .ch-back{display:flex !important;}
 }
 
-/* Header */
-.chat-hdr{display:flex;align-items:center;gap:.6rem;padding:.7rem 1rem;background:var(--surface-container-lowest);border-bottom:1px solid var(--outline-variant);flex-shrink:0;position:relative;z-index:5;}
+/* ── Chat header — ALWAYS STATIC, never moves ── */
+.chat-hdr{
+  display:flex;align-items:center;gap:.6rem;
+  padding:.75rem 1rem;
+  background:var(--surface-container-lowest);
+  border-bottom:1px solid var(--outline-variant);
+  flex-shrink:0; /* NEVER shrink */
+  position:relative;z-index:10;
+  /* Prevent any transform/scroll from affecting it */
+  will-change:auto;
+}
 .ch-back{display:none;}
 .ch-av{position:relative;width:38px;height:38px;border-radius:50%;background:var(--primary-fixed);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;}
 .ch-info{flex:1;min-width:0;display:flex;flex-direction:column;}
@@ -738,17 +768,68 @@ watch(()=>messagingStore.messages.length,()=>scrollToBottom())
 .srch-time{font-size:.7rem;color:var(--on-surface-variant);flex-shrink:0;margin-left:.5rem;}
 .e2e-bar{display:flex;align-items:center;justify-content:center;gap:.3rem;padding:.25rem;background:color-mix(in srgb,#22c55e 8%,transparent);color:var(--on-surface-variant);font-size:.67rem;flex-shrink:0;position:relative;z-index:5;}
 
-/* ═══ Messages area ═══ */
-.msgs-area{flex:1;overflow-y:auto;padding:.75rem 1rem 1rem;display:flex;flex-direction:column;gap:.4rem;position:relative;z-index:1;}
+/* ═══ Messages area — scrollable middle, fills all available space ═══ */
+.msgs-area{
+  flex:1;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding:.75rem .875rem 1rem;
+  display:flex;
+  flex-direction:column;
+  gap:.25rem;
+  position:relative;
+  z-index:1;
+  /* Smooth momentum scroll on iOS */
+  -webkit-overflow-scrolling:touch;
+  scroll-behavior:smooth;
+  /* Ensure it fills but doesn't overflow */
+  min-height:0;
+}
 .sk-row{display:flex;}
 .sk-r{justify-content:flex-end;}
 .sk-bubble{width:160px;height:42px;border-radius:18px;}
-.date-sep{display:flex;justify-content:center;margin:.35rem 0;}
-.date-sep span{background:color-mix(in srgb,var(--on-surface) 8%,transparent);color:var(--on-surface-variant);font-size:.7rem;font-weight:600;padding:.2rem .75rem;border-radius:var(--radius-full);}
-.msg-row{display:flex;align-items:flex-end;gap:.4rem;max-width:74%;position:relative;}
-.msg-row.mine{align-self:flex-end;flex-direction:row-reverse;}
-.msg-av{width:28px;height:28px;flex-shrink:0;border-radius:50%;overflow:hidden;background:var(--primary-fixed);display:flex;align-items:center;justify-content:center;}
-.msg-col{display:flex;flex-direction:column;gap:.2rem;}
+
+/* Date separator */
+.date-sep{
+  display:flex;justify-content:center;
+  margin:.5rem 0 .25rem;
+  flex-shrink:0;
+}
+.date-sep span{
+  background:color-mix(in srgb,var(--on-surface) 10%,transparent);
+  color:var(--on-surface-variant);
+  font-size:.7rem;font-weight:600;
+  padding:.25rem .875rem;border-radius:var(--radius-full);
+  backdrop-filter:blur(4px);
+}
+
+/* ── Message row ── */
+.msg-row{
+  display:flex;
+  align-items:flex-end;
+  gap:.375rem;
+  max-width:78%;
+  position:relative;
+  /* Default: other person's messages align left */
+  align-self:flex-start;
+}
+.msg-row.mine{
+  align-self:flex-end;
+  flex-direction:row-reverse;
+}
+@media(max-width:767px){
+  .msg-row{max-width:88%;}
+}
+.msg-av{
+  width:28px;height:28px;flex-shrink:0;
+  border-radius:50%;overflow:hidden;
+  background:var(--primary-fixed);
+  display:flex;align-items:center;justify-content:center;
+  /* Stick to bottom of message group */
+  align-self:flex-end;
+  margin-bottom:2px;
+}
+.msg-col{display:flex;flex-direction:column;gap:.15rem;min-width:0;}
 .msg-row:hover .ha{display:flex;}
 
 /* Reply preview */
@@ -760,25 +841,65 @@ watch(()=>messagingStore.messages.length,()=>scrollToBottom())
 .rp-who{font-size:.72rem;font-weight:700;color:var(--primary);}
 .rp-txt{font-size:.78rem;color:var(--on-surface-variant);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
-/* Bubble */
-.bubble{padding:.55rem .85rem;border-radius:18px;word-break:break-word;position:relative;max-width:320px;min-width:60px;box-shadow:0 1px 2px rgba(0,0,0,.1);}
-.b-mine{background:var(--primary);color:#fff;border-bottom-right-radius:4px;}
-.b-theirs{background:var(--surface-container-high);color:var(--on-surface);border-bottom-left-radius:4px;}
-[data-theme="dark"] .b-theirs{background:#252536;}
-.b-del{opacity:.65;}
-.b-img{padding:.3rem .3rem .55rem;}
-.del-txt{font-size:.8rem;font-style:italic;opacity:.75;display:flex;align-items:center;gap:.3rem;}
-.b-img-wrap{border-radius:10px;overflow:hidden;max-width:200px;cursor:pointer;}
-.b-img-wrap img{width:100%;display:block;max-height:200px;object-fit:cover;border-radius:10px;}
-.b-txt{font-size:.875rem;line-height:1.5;margin:0;white-space:pre-wrap;}
-.b-mine :deep(.msg-lnk){color:#ddd6fe;}
-.b-theirs :deep(.msg-lnk){color:var(--primary);}
-.edited{font-size:.6rem;opacity:.65;font-style:italic;display:block;text-align:right;margin-top:.1rem;}
-.b-foot{display:flex;align-items:center;gap:.2rem;justify-content:flex-end;margin-top:.2rem;}
-.bt{font-size:.6rem;opacity:.7;}
-.ti{font-size:13px;}
+/* ── Bubble — clean WhatsApp-style ── */
+.bubble{
+  padding:.5rem .875rem .35rem;
+  border-radius:18px;
+  word-break:break-word;
+  position:relative;
+  max-width:100%;
+  min-width:56px;
+  box-shadow:0 1px 3px rgba(0,0,0,.12);
+}
+/* Mine: purple, rounded all corners except bottom-right nub */
+.b-mine{
+  background:var(--primary);
+  color:#fff;
+  border-bottom-right-radius:4px;
+}
+/* Theirs: light grey, bottom-left nub */
+.b-theirs{
+  background:#f0f0f5;
+  color:#1a1a2e;
+  border-bottom-left-radius:4px;
+}
+:global([data-theme="dark"]) .b-theirs{
+  background:#252539;
+  color:rgba(255,255,255,.92);
+}
+.b-del{opacity:.6;}
+.b-img{padding:.3rem .3rem .4rem;}
+.del-txt{font-size:.8rem;font-style:italic;opacity:.7;display:flex;align-items:center;gap:.3rem;}
+
+/* Image inside bubble */
+.b-img-wrap{
+  border-radius:12px;overflow:hidden;
+  max-width:220px;cursor:pointer;
+  margin:-.1rem -.1rem .1rem;
+}
+.b-img-wrap img{
+  width:100%;display:block;
+  max-height:240px;object-fit:cover;
+  border-radius:12px;
+}
+
+/* Text */
+.b-txt{font-size:.9rem;line-height:1.45;margin:0;white-space:pre-wrap;}
+.b-mine :deep(.msg-lnk){color:#ddd6fe;text-decoration:underline;}
+.b-theirs :deep(.msg-lnk){color:var(--primary);text-decoration:underline;}
+.edited{font-size:.6rem;opacity:.55;font-style:italic;margin-top:.1rem;}
+
+/* Time + tick row */
+.b-foot{
+  display:flex;align-items:center;gap:.2rem;
+  justify-content:flex-end;
+  margin-top:.2rem;
+  opacity:.85;
+}
+.bt{font-size:.65rem;line-height:1;}
+.ti{font-size:14px;line-height:1;}
 .btick.seen .ti{color:#ddd6fe;}
-.b-theirs .btick.seen .ti{color:var(--primary);}
+.b-theirs .btick{display:none;} /* ticks only on own messages */
 
 /* Voice player */
 .voice-row{display:flex;align-items:center;gap:.5rem;min-width:180px;max-width:240px;padding:.25rem 0;}
@@ -839,17 +960,57 @@ watch(()=>messagingStore.messages.length,()=>scrollToBottom())
 .rec-time{font-family:var(--font-headline);font-size:.9rem;font-weight:700;color:#ef4444;min-width:2.5rem;}
 .rec-hint{flex:1;font-size:.75rem;color:var(--on-surface-variant);}
 
-/* Input bar — keyboard-aware via JS transform */
-.inp-bar{display:flex;align-items:flex-end;gap:.4rem;padding:.6rem .75rem;background:var(--surface-container-lowest);border-top:1px solid var(--outline-variant);flex-shrink:0;position:relative;z-index:10;transition:transform .15s ease;}
-.inp-wrap{flex:1;background:var(--surface-container-low);border:1px solid var(--outline-variant);border-radius:22px;padding:.5rem .875rem;transition:border-color .15s;}
+/* ═══ Input bar — STATIC at bottom, keyboard pushes it up via dvh ═══ */
+.inp-bar{
+  display:flex;align-items:flex-end;gap:.5rem;
+  padding:.6rem .75rem calc(.6rem + env(safe-area-inset-bottom, 0px));
+  background:var(--surface-container-lowest);
+  border-top:1px solid var(--outline-variant);
+  flex-shrink:0; /* NEVER shrinks */
+  position:relative;z-index:10;
+  /* No transform — keyboard handled by dvh on root */
+}
+.inp-wrap{
+  flex:1;
+  background:var(--surface-container-low);
+  border:1.5px solid var(--outline-variant);
+  border-radius:24px;
+  padding:.55rem 1rem;
+  transition:border-color .15s;
+  min-height:42px;
+  display:flex;align-items:center;
+}
 .inp-wrap.inp-focus{border-color:var(--primary);}
-.inp-ta{width:100%;background:transparent;border:none;outline:none;resize:none;font-family:var(--font-body);font-size:.9rem;color:var(--on-surface);line-height:1.5;max-height:110px;overflow-y:auto;}
+.inp-ta{
+  width:100%;background:transparent;border:none;outline:none;
+  resize:none;
+  font-family:var(--font-body);font-size:.925rem;
+  color:var(--on-surface);
+  line-height:1.45;
+  max-height:110px;overflow-y:auto;
+  /* Prevent zoom on iOS */
+  font-size:max(.9rem, 16px);
+}
 .inp-ta::placeholder{color:var(--outline);}
 .hidden-f{display:none;}
-.send-btn{width:42px;height:42px;border-radius:50%;background:var(--primary);color:#fff;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;box-shadow:0 2px 8px rgba(99,14,212,.35);}
+.send-btn{
+  width:44px;height:44px;border-radius:50%;
+  background:var(--primary);color:#fff;border:none;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;
+  box-shadow:0 2px 10px rgba(99,14,212,.4);
+  transition:transform .1s, box-shadow .1s;
+}
+.send-btn:active{transform:scale(.92);}
 .send-btn .material-symbols-outlined{font-size:20px;}
-.mic-btn{width:42px;height:42px;border-radius:50%;background:var(--surface-container);border:none;color:var(--on-surface-variant);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:.15s;}
-.mic-btn:hover{background:var(--primary);color:#fff;}
+.mic-btn{
+  width:44px;height:44px;border-radius:50%;
+  background:var(--surface-container);border:none;
+  color:var(--on-surface-variant);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;transition:.15s;
+}
+.mic-btn:hover,.mic-btn:active{background:var(--primary);color:#fff;}
 .mic-btn.recording{background:#ef4444;color:#fff;animation:tdot .8s ease-in-out infinite;}
 .mic-btn .material-symbols-outlined{font-size:22px;}
 

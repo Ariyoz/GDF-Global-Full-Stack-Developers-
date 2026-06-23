@@ -5,6 +5,17 @@
       <p class="auth-sub">Sign in to your GFD account</p>
     </div>
 
+    <!-- Inline error banner -->
+    <Transition name="err-slide">
+      <div v-if="loginError" class="login-error-banner">
+        <span class="material-symbols-outlined" style="font-size:18px;flex-shrink:0">error</span>
+        <span>{{ loginError }}</span>
+        <button class="err-close" @click="loginError = ''">
+          <span class="material-symbols-outlined" style="font-size:16px">close</span>
+        </button>
+      </div>
+    </Transition>
+
     <form class="auth-form" @submit.prevent="handleLogin" novalidate>
       <GfdInput
         v-model="form.email"
@@ -66,11 +77,12 @@ const route     = useRoute()
 const authStore = useAuthStore()
 const uiStore   = useUiStore()
 
-const loading  = ref(false)
-const form   = reactive({ email: '', password: '' })
-const errors = reactive({ email: '', password: '' })
+const loading    = ref(false)
+const loginError = ref('')                        // inline error shown in banner
+const form       = reactive({ email: '', password: '' })
+const errors     = reactive({ email: '', password: '' })
 
-// Silently pre-warm server when login page loads — no UI shown
+// Silently pre-warm server when login page loads
 onMounted(() => {
   const base = (import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1').replace('/api/v1', '')
   fetch(`${base}/health`, { method: 'GET', cache: 'no-cache' }).catch(() => {})
@@ -78,50 +90,71 @@ onMounted(() => {
 
 function validate() {
   errors.email = errors.password = ''
+  loginError.value = ''
   let ok = true
-  if (!form.email)    { errors.email    = 'Email is required';    ok = false }
-  if (!form.password) { errors.password = 'Password is required'; ok = false }
+  if (!form.email.trim()) {
+    errors.email = 'Email is required'
+    ok = false
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+    errors.email = 'Please enter a valid email address'
+    ok = false
+  }
+  if (!form.password) {
+    errors.password = 'Password is required'
+    ok = false
+  }
   return ok
 }
 
 async function handleLogin() {
+  // Always prevent default — no page refresh
   if (!validate()) return
+
   loading.value = true
+  loginError.value = ''
+
   try {
     const result = await authStore.login(form)
+
     if (!result) {
-      // login returned undefined — something went wrong silently
-      uiStore.showError('Login failed. Please check your credentials.')
+      loginError.value = 'Login failed. Please check your credentials.'
       return
     }
-    await new Promise(r => setTimeout(r, 80))
-    uiStore.showSuccess('Welcome back!')
+
+    // Success — navigate without adding auth page to history
     const redirect = route.query.redirect
-    const dest = (redirect && !redirect.toString().startsWith('/auth')) ? redirect.toString() : '/dashboard'
-    // Use replace to avoid adding auth page to history stack
+    const dest = (redirect && !redirect.toString().startsWith('/auth'))
+      ? redirect.toString()
+      : '/dashboard'
     router.replace(dest)
+
   } catch (err) {
-    const msg = authStore.error || err?.response?.data?.detail || err?.message || 'Login failed. Please try again.'
-    uiStore.showError(msg)
+    // Map common error messages to user-friendly text
+    const raw = err?.response?.data?.detail || err?.message || ''
+    if (err?.response?.status === 401 || raw.toLowerCase().includes('invalid') || raw.toLowerCase().includes('incorrect')) {
+      loginError.value = 'Incorrect email or password. Please try again.'
+    } else if (err?.response?.status === 403) {
+      loginError.value = 'Your account has been suspended. Contact support.'
+    } else if (!err?.response) {
+      loginError.value = 'Cannot connect to server. Check your internet connection.'
+    } else {
+      loginError.value = raw || 'Login failed. Please try again.'
+    }
+    // Clear password field on error
+    form.password = ''
   } finally {
     loading.value = false
   }
 }
 
 async function loginWithGitHub() {
-  try {
-    await authStore.loginWithProvider('github')
-  } catch {
-    uiStore.showError('GitHub login failed')
-  }
+  try { await authStore.loginWithProvider('github') }
+  catch { loginError.value = 'GitHub login failed. Please try again.' }
 }
 
 async function loginWithGoogle() {
-  try {
-    await authStore.loginWithProvider('google')
-  } catch {
-    uiStore.showError('Google login failed')
-  }
+  try { await authStore.loginWithProvider('google') }
+  catch { loginError.value = 'Google login failed. Please try again.' }
 }
 </script>
 
@@ -131,7 +164,47 @@ async function loginWithGoogle() {
   width: 100%;
 }
 
-.auth-head { text-align: center; margin-bottom: 2rem; }
+.auth-head { text-align: center; margin-bottom: 1.5rem; }
+
+/* ── Inline error banner ── */
+.login-error-banner {
+  display: flex;
+  align-items: center;
+  gap: .625rem;
+  padding: .75rem 1rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius-lg);
+  color: #dc2626;
+  font-size: .875rem;
+  font-weight: 500;
+  margin-bottom: 1.25rem;
+  line-height: 1.4;
+}
+:global([data-theme="dark"]) .login-error-banner {
+  background: rgba(220, 38, 38, 0.12);
+  border-color: rgba(220, 38, 38, 0.3);
+  color: #f87171;
+}
+.err-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  opacity: .7;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.err-close:hover { opacity: 1; }
+
+/* Error slide animation */
+.err-slide-enter-active,
+.err-slide-leave-active { transition: all .2s ease; }
+.err-slide-enter-from,
+.err-slide-leave-to { opacity: 0; transform: translateY(-8px); }
 
 .auth-title {
   font-family: var(--font-headline);
