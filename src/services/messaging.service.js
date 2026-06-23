@@ -43,6 +43,10 @@ export const messagingService = {
     return data
   },
 
+  async markRead(conversationId) {
+    return http.post(messages.markRead(conversationId), {}).catch(() => {})
+  },
+
   async uploadAttachment(file) {
     const formData = new FormData()
     formData.append('file', file)

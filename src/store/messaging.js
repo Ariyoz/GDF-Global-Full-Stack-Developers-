@@ -394,9 +394,10 @@ export const useMessagingStore = defineStore('messaging', () => {
     searchQuery.value = ''
     if (conv) {
       fetchMessages(conv.id)
-      // Reset unread count locally
+      // Reset unread count locally + tell backend
       const c = conversations.value.find(c => c.id === conv.id)
       if (c) c.unread_count = 0
+      messagingService.markRead(conv.id)
     }
   }
 

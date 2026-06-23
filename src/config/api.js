@@ -91,6 +91,7 @@ export const API_ENDPOINTS = {
     messages:         (convId) => `/messages/conversations/${convId}/messages`,
     send:             (convId) => `/messages/conversations/${convId}/messages`,
     react:            (convId, msgId) => `/messages/conversations/${convId}/messages/${msgId}/react`,
+    markRead:         (convId) => `/messages/conversations/${convId}/read`,
     deleteMsg:        (msgId) => `/messages/messages/${msgId}`,
     editMsg:          (msgId) => `/messages/messages/${msgId}`,
     deleteConv:       (convId) => `/messages/conversations/${convId}`,
