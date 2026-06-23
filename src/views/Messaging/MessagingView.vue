@@ -278,7 +278,7 @@
               placeholder="Message"
               rows="1"
               @input="onInput"
-              @focus="inputFocused=true; scrollToBottom()"
+            @focus="inputFocused=true; scrollToBottom()"
               @blur="inputFocused=false"
               @keydown.enter.exact.prevent="send"
               @keydown.enter.shift.exact="() => {}" />
@@ -397,17 +397,12 @@ const filteredConvs = computed(() => {
   return messagingStore.conversations.filter(c => !q || c.name?.toLowerCase().includes(q))
 })
 
-// ── Keyboard-aware: proper iOS/Android fix
-// We DON'T resize the root. Instead:
-// - inp-bar is position:fixed at the bottom
-// - when keyboard opens, visualViewport offset tells us how high the keyboard is
-// - we update a CSS variable --kb-offset that shifts the fixed inp-bar up
+// ── No JS keyboard hacks needed.
+// interactive-widget=resizes-content in <meta viewport> tells the browser
+// to shrink the viewport when the keyboard opens, so the flex layout
+// naturally pushes the input bar to the visible bottom.
 onMounted(async () => {
   await messagingStore.fetchConversations()
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', onViewport)
-    window.visualViewport.addEventListener('scroll', onViewport)
-  }
   // Auto-open conversation from query param
   const convId = route.query.conv
   if (convId) {
@@ -422,23 +417,11 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  if (window.visualViewport) {
-    window.visualViewport.removeEventListener('resize', onViewport)
-    window.visualViewport.removeEventListener('scroll', onViewport)
-  }
-  // Clean up CSS variable
-  document.documentElement.style.removeProperty('--kb-offset')
   cancelRec()
 })
 
 function onViewport() {
-  // keyboard offset = how many px the keyboard is pushing up from the bottom
-  const vv = window.visualViewport
-  const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
-  // Store as CSS variable so the fixed inp-bar can shift up
-  document.documentElement.style.setProperty('--kb-offset', offset + 'px')
-  // Scroll messages to bottom so they're visible above the keyboard
-  if (offset > 50) scrollToBottom()
+  // no-op — browser handles keyboard resize natively via interactive-widget
 }
 
 // ── Helpers
@@ -639,7 +622,10 @@ watch(()=>messagingStore.messages.length,()=>scrollToBottom())
 
 <style scoped>
 /* ═══════════════════════════════════════════
-   ROOT — fills exactly the visible screen
+   ROOT — fills exactly the visible screen.
+   interactive-widget=resizes-content in <meta viewport>
+   makes the browser shrink 100svh when keyboard opens,
+   so the flex column naturally pushes inp-bar to bottom.
 ════════════════════════════════════════════ */
 .msg-root{
   display:flex;
@@ -650,8 +636,10 @@ watch(()=>messagingStore.messages.length,()=>scrollToBottom())
 }
 @media(max-width:767px){
   .msg-root{
+    /* svh = small viewport height (excludes browser chrome bars) */
+    height:100svh;
+    /* fallback for older browsers */
     height:100vh;
-    height:100svh; /* small viewport height — excludes browser chrome */
   }
 }
 
@@ -768,8 +756,7 @@ watch(()=>messagingStore.messages.length,()=>scrollToBottom())
   flex:1;
   overflow-y:auto;
   overflow-x:hidden;
-  /* bottom padding = input bar height so last msg isn't hidden behind it */
-  padding:.75rem .875rem 72px;
+  padding:.75rem .875rem 1rem;
   display:flex;
   flex-direction:column;
   gap:.25rem;
@@ -954,49 +941,23 @@ watch(()=>messagingStore.messages.length,()=>scrollToBottom())
 .rec-hint{flex:1;font-size:.75rem;color:var(--on-surface-variant);}
 
 /* ─────────────────────────────────────────────────────────
-   INPUT BAR
-   Desktop: normal flow at bottom of flex column.
-   Mobile:  position:fixed anchored to bottom of viewport.
-            JS sets --kb-offset (keyboard height in px),
-            translateY lifts the bar above the keyboard.
+   INPUT BAR — pure flex flow, always at the bottom.
+   The browser handles keyboard resize via:
+     interactive-widget=resizes-content  (in <meta viewport>)
+   This shrinks the viewport when keyboard opens, so the
+   flex column naturally keeps inp-bar at the visible bottom.
+   NO position:fixed, NO JS transforms.
 ───────────────────────────────────────────────────────── */
-:root{ --kb-offset: 0px; }
-
 .inp-bar{
-  display:flex;align-items:flex-end;gap:.5rem;
-  padding:.6rem .75rem;
+  display:flex;
+  align-items:flex-end;
+  gap:.5rem;
+  padding:.6rem .75rem calc(.6rem + env(safe-area-inset-bottom, 0px));
   background:var(--surface-container-lowest);
   border-top:1px solid var(--outline-variant);
   flex-shrink:0;
-  position:relative;z-index:10;
-}
-
-@media(max-width:767px){
-  .inp-bar{
-    position:fixed;
-    left:0;right:0;bottom:0;
-    /* lift exactly the keyboard height */
-    transform:translateY(calc(-1 * var(--kb-offset)));
-    transition:transform 0.08s ease-out;
-    /* safe area for iPhone home bar */
-    padding-bottom:calc(.6rem + env(safe-area-inset-bottom, 0px));
-    z-index:100;
-    box-shadow:0 -2px 12px rgba(0,0,0,.08);
-  }
-  /* Extra bottom padding on msgs so last message is never
-     hidden under the fixed input bar (~68px tall) */
-  .msgs-area{
-    padding-bottom:calc(80px + env(safe-area-inset-bottom, 0px));
-  }
-  /* Slide reply/preview/recording bars above the fixed inp-bar */
-  .prev-bar,.reply-bar,.rec-bar{
-    position:fixed;
-    left:0;right:0;
-    bottom:calc(68px + env(safe-area-inset-bottom, 0px));
-    transform:translateY(calc(-1 * var(--kb-offset)));
-    transition:transform 0.08s ease-out;
-    z-index:99;
-  }
+  position:relative;
+  z-index:10;
 }
 
 .inp-wrap{
