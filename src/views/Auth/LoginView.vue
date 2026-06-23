@@ -88,11 +88,21 @@ async function handleLogin() {
   if (!validate()) return
   loading.value = true
   try {
-    await authStore.login(form)
+    const result = await authStore.login(form)
+    if (!result) {
+      // login returned undefined — something went wrong silently
+      uiStore.showError('Login failed. Please check your credentials.')
+      return
+    }
+    await new Promise(r => setTimeout(r, 80))
     uiStore.showSuccess('Welcome back!')
-    router.push(route.query.redirect || '/dashboard')
+    const redirect = route.query.redirect
+    const dest = (redirect && !redirect.toString().startsWith('/auth')) ? redirect.toString() : '/dashboard'
+    // Use replace to avoid adding auth page to history stack
+    router.replace(dest)
   } catch (err) {
-    uiStore.showError(authStore.error || 'Login failed. Please try again.')
+    const msg = authStore.error || err?.response?.data?.detail || err?.message || 'Login failed. Please try again.'
+    uiStore.showError(msg)
   } finally {
     loading.value = false
   }

@@ -239,6 +239,7 @@ router.beforeEach(async (to, _from, next) => {
     return next({ name: 'login', query: { redirect: to.fullPath } })
   }
 
+  // Only redirect away from guest-only pages if truly authenticated AND not mid-login
   if (to.meta.guestOnly && authStore.isAuthenticated) {
     return next({ name: 'dashboard' })
   }
