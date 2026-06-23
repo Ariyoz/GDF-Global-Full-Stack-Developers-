@@ -507,13 +507,22 @@ onUnmounted(() => {
 })
 
 function _onVV() {
-  // vv.height = visible area above keyboard
-  // We set the bottom of the fixed inp-bar to (window.innerHeight - vv.height - vv.offsetTop)
-  // which equals exactly the keyboard height
   const vv = window.visualViewport
   const kbHeight = Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
   document.documentElement.style.setProperty('--vvh', kbHeight + 'px')
-  if (kbHeight > 50) scrollToBottom()
+
+  // Also update inp-bar height variable for aux bar positioning
+  if (inpBarEl.value) {
+    document.documentElement.style.setProperty(
+      '--inp-bar-h',
+      inpBarEl.value.offsetHeight + 'px'
+    )
+  }
+
+  // Scroll to bottom when keyboard opens so latest messages are visible
+  if (kbHeight > 50) {
+    scrollToBottom()
+  }
 }
 
 // ── Helpers ──
@@ -548,7 +557,9 @@ function hasRxn(m)    { return m.reactions && Object.values(m.reactions).some(u=
 function closeAll()   { ctx.value.show=false; emojiP.value.show=false }
 function scrollToBottom() {
   nextTick(() => {
-    if (bottomAnchor.value) bottomAnchor.value.scrollIntoView({ behavior: 'instant' })
+    if (msgsEl.value) {
+      msgsEl.value.scrollTop = msgsEl.value.scrollHeight
+    }
   })
 }
 function scrollToMsg(id) {
@@ -1350,44 +1361,65 @@ watch(() => messagingStore.messages.length, () => scrollToBottom())
 ══════════════════════════════════════════ */
 :root { --vvh: 0px; }
 
-/* Mobile: fixed at bottom, slides up by keyboard height */
+/* ═══════════════════════════════════════════════
+   MOBILE KEYBOARD-AWARE LAYOUT
+   
+   Fixed layout: header top, input bottom.
+   When keyboard opens (--vvh increases):
+   - inp-bar slides UP above keyboard
+   - msgs-area bottom-padding grows so last message
+     stays visible above the input bar
+═══════════════════════════════════════════════ */
+:root { --vvh: 0px; --inp-bar-h: 68px; }
+
 @media (max-width: 767px) {
+
+  /* Input bar: fixed at bottom, lifts above keyboard */
   .inp-bar {
     position: fixed !important;
     left: 0; right: 0; bottom: 0;
     transform: translateY(calc(-1 * var(--vvh)));
-    transition: transform 0.06s linear;
+    transition: transform 0.05s linear;
     z-index: 200;
     padding-bottom: calc(.625rem + env(safe-area-inset-bottom, 0px));
   }
-  /* Aux bars stack above inp-bar */
+
+  /* Aux bars (reply/preview/rec): stack directly above inp-bar */
   .aux-bar {
     position: fixed !important;
     left: 0; right: 0;
-    bottom: calc(68px + env(safe-area-inset-bottom, 0px));
+    bottom: var(--inp-bar-h);
     transform: translateY(calc(-1 * var(--vvh)));
-    transition: transform 0.06s linear;
+    transition: transform 0.05s linear;
     z-index: 199;
   }
-  /* Extra bottom padding so messages don't hide under fixed inp-bar */
+
+  /* Messages area: fills space between fixed header and fixed input bar.
+     Bottom padding = inp-bar height + keyboard height so last message
+     is always visible above the input bar when keyboard is open. */
   .msgs-area {
-    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
-    /* Top padding to clear the fixed header + e2e bar (~110px total) */
     padding-top: 110px !important;
+    /* base 80px for inp-bar + extra for keyboard */
+    padding-bottom: calc(80px + var(--vvh) + env(safe-area-inset-bottom, 0px)) !important;
+    /* Smooth scroll when keyboard opens/closes */
+    scroll-behavior: auto !important;
   }
-  /* Header FIXED at top — never moves even when keyboard opens */
+
+  /* Header: fixed at top, never moves */
   .chat-hdr {
     position: fixed !important;
     top: 0; left: 0; right: 0;
     z-index: 150;
   }
-  /* E2E bar also fixed, just below the header */
+
+  /* E2E bar: fixed just below header */
   .e2e-bar {
     position: fixed !important;
     top: 65px; left: 0; right: 0;
     z-index: 149;
   }
-  /* Search bar also fixed, below header */
+
+  /* Search bar: fixed just below header */
   .srch-bar {
     position: fixed !important;
     top: 65px; left: 0; right: 0;
