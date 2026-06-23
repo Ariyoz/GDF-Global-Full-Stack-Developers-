@@ -475,6 +475,15 @@ const filteredConvs = computed(() => {
 // ── Lifecycle ──
 onMounted(async () => {
   await messagingStore.fetchConversations()
+
+  // ── Keyboard fix: visualViewport API (works on ALL mobile browsers) ──
+  // When keyboard opens, vv.height shrinks. We set --vvh CSS var
+  // which the fixed inp-bar uses as its `bottom` offset.
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', _onVV)
+    window.visualViewport.addEventListener('scroll', _onVV)
+  }
+
   const convId = route.query.conv
   if (convId) {
     const found = messagingStore.conversations.find(c => c.id === convId)
@@ -486,7 +495,26 @@ onMounted(async () => {
     }
   }
 })
-onUnmounted(() => cancelRec())
+
+onUnmounted(() => {
+  if (window.visualViewport) {
+    window.visualViewport.removeEventListener('resize', _onVV)
+    window.visualViewport.removeEventListener('scroll', _onVV)
+  }
+  // Reset CSS var
+  document.documentElement.style.removeProperty('--vvh')
+  cancelRec()
+})
+
+function _onVV() {
+  // vv.height = visible area above keyboard
+  // We set the bottom of the fixed inp-bar to (window.innerHeight - vv.height - vv.offsetTop)
+  // which equals exactly the keyboard height
+  const vv = window.visualViewport
+  const kbHeight = Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
+  document.documentElement.style.setProperty('--vvh', kbHeight + 'px')
+  if (kbHeight > 50) scrollToBottom()
+}
 
 // ── Helpers ──
 function showDate(idx) {
@@ -1299,10 +1327,44 @@ watch(() => messagingStore.messages.length, () => scrollToBottom())
 .rec-hint { flex: 1; font-size: .75rem; color: var(--on-surface-variant); }
 
 /* ══════════════════════════════════════════
-   INPUT BAR
-   Pure flex flow — keyboard handled by
-   interactive-widget=resizes-content
+   INPUT BAR + AUX BARS
+   position: fixed — always anchored to bottom of viewport.
+   --vvh CSS var (set by JS visualViewport listener) = keyboard height.
+   translateY lifts the bar above the keyboard on ALL mobile browsers.
 ══════════════════════════════════════════ */
+:root { --vvh: 0px; }
+
+/* Mobile: fixed at bottom, slides up by keyboard height */
+@media (max-width: 767px) {
+  .inp-bar {
+    position: fixed !important;
+    left: 0; right: 0; bottom: 0;
+    transform: translateY(calc(-1 * var(--vvh)));
+    transition: transform 0.06s linear;
+    z-index: 200;
+    padding-bottom: calc(.625rem + env(safe-area-inset-bottom, 0px));
+  }
+  /* Aux bars stack above inp-bar */
+  .aux-bar {
+    position: fixed !important;
+    left: 0; right: 0;
+    bottom: calc(68px + env(safe-area-inset-bottom, 0px));
+    transform: translateY(calc(-1 * var(--vvh)));
+    transition: transform 0.06s linear;
+    z-index: 199;
+  }
+  /* Extra bottom padding so messages don't hide under fixed inp-bar */
+  .msgs-area {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  /* Header stays locked at top — prevent any transform leaking */
+  .chat-hdr {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+}
+
 .inp-bar {
   display: flex; align-items: flex-end; gap: .5rem;
   padding: .625rem .875rem calc(.625rem + env(safe-area-inset-bottom,0px));
