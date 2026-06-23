@@ -52,8 +52,8 @@
         <div class="dva-hdr-left">
           <span class="material-symbols-outlined dva-ico">account_balance</span>
           <div>
-            <p class="dva-title">Your Personal Bank Account</p>
-            <p class="dva-sub">Transfer money to this account to fund your wallet instantly</p>
+            <p class="dva-title">Your Personal Bank Account (NGN)</p>
+            <p class="dva-sub">Transfer Naira to this account from any Nigerian bank to fund your wallet instantly</p>
           </div>
         </div>
         <span class="dva-badge">Free · Instant</span>
@@ -85,19 +85,48 @@
         </div>
         <p class="dva-note">
           <span class="material-symbols-outlined" style="font-size:14px;color:#22c55e">check_circle</span>
-          Any bank transfer to this account will be credited to your GFD wallet within seconds.
+          Any bank transfer to this account credits your wallet automatically within seconds.
+        </p>
+      </template>
+
+      <!-- DVA not available on this Paystack plan -->
+      <template v-else-if="dvaNotAvailable">
+        <p class="dva-empty">
+          Dedicated account numbers require Paystack business verification.
+          Use <strong>Fund Wallet</strong> below to pay by card or bank transfer instead.
         </p>
       </template>
 
       <!-- No virtual account yet -->
       <template v-else>
-        <p class="dva-empty">You don't have a personal account yet. Create one for free — takes 10 seconds.</p>
+        <p class="dva-empty">Create a free personal Wema/Sterling Bank account number. Any transfer to it funds your wallet automatically.</p>
         <button class="btn-primary dva-create-btn" :disabled="creatingDVA" @click="createVirtualAccount">
           <span v-if="creatingDVA" class="btn-spinner"/>
           <span class="material-symbols-outlined" v-else style="font-size:18px">add_card</span>
-          {{ creatingDVA ? 'Creating account…' : 'Create My Account Number' }}
+          {{ creatingDVA ? 'Creating…' : 'Get My Account Number' }}
         </button>
       </template>
+    </div>
+
+    <!-- ── USD Account card ── -->
+    <div class="dva-card usd-card">
+      <div class="dva-hdr">
+        <div class="dva-hdr-left">
+          <span class="dva-ico usd-ico">$</span>
+          <div>
+            <p class="dva-title">USD Account (Coming Soon)</p>
+            <p class="dva-sub">Receive payments in US Dollars from international clients</p>
+          </div>
+        </div>
+        <span class="dva-badge usd-badge">USD · Global</span>
+      </div>
+      <div class="usd-coming">
+        <span class="material-symbols-outlined" style="font-size:2rem;color:var(--primary);opacity:.4">account_balance_wallet</span>
+        <div>
+          <p class="usd-soon-title">USD virtual accounts are coming soon</p>
+          <p class="usd-soon-sub">We're integrating with Grey/Geegpay to give every GFD developer a USD account number for receiving international payments. You'll be notified when it's ready.</p>
+        </div>
+      </div>
     </div>
 
     <!-- Quick Actions -->
@@ -362,6 +391,7 @@ const banksLoading   = ref(false)
 const virtualAccount = ref(null)
 const creatingDVA    = ref(false)
 const acctCopied     = ref(false)
+const dvaNotAvailable = ref(false)
 
 // Withdraw form
 const verifyingAccount = ref(false)
@@ -452,7 +482,13 @@ async function createVirtualAccount() {
     virtualAccount.value = data.virtual_account
     uiStore.showSuccess(data.message || 'Your personal account number is ready!')
   } catch (e) {
-    uiStore.showError(e?.response?.data?.detail || 'Could not create account. Please try again.')
+    const msg = e?.response?.data?.detail || ''
+    // If DVA not enabled, show the "coming soon" state instead of an error
+    if (e?.response?.status === 503 || msg.toLowerCase().includes('not enabled') || msg.toLowerCase().includes('not available')) {
+      dvaNotAvailable.value = true
+    } else {
+      uiStore.showError(msg || 'Could not create account. Please try again.')
+    }
   } finally {
     creatingDVA.value = false
   }
@@ -699,6 +735,14 @@ onMounted(async () => {
   display: flex; align-items: center; gap: .5rem;
   padding: .75rem 1.5rem; align-self: flex-start;
 }
+
+/* USD card */
+.usd-card { border-color: rgba(99,14,212,.2); background: color-mix(in srgb,var(--primary) 3%,var(--surface-container-lowest)); }
+.usd-ico { font-size: 1.4rem; font-weight: 900; color: var(--primary); font-family: var(--font-headline); min-width: 28px; text-align: center; }
+.usd-badge { background: rgba(99,14,212,.1); color: var(--primary); }
+.usd-coming { display: flex; align-items: flex-start; gap: 1rem; }
+.usd-soon-title { font-family: var(--font-headline); font-size: .9rem; font-weight: 700; color: var(--on-surface); }
+.usd-soon-sub { font-size: .8rem; color: var(--on-surface-variant); margin-top: .3rem; line-height: 1.5; }
 
 /* Quick actions */
 .quick-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: .75rem; }.quick-btn {
