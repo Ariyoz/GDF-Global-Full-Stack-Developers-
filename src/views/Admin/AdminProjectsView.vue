@@ -231,7 +231,14 @@ onMounted(loadProjects)
 
 /* Grid */
 .rev-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
-.rev-card { background: var(--surface-container-lowest); border: 1px solid var(--outline-variant); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; }
+.rev-card {
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant);
+  border-radius: 16px; overflow: hidden;
+  display: flex; flex-direction: column;
+  transition: border-color .15s, transform .15s;
+}
+.rev-card:hover { border-color: rgba(168,85,247,.3); transform: translateY(-2px); }
 
 /* Cover */
 .rev-cover { position: relative; height: 140px; background: linear-gradient(135deg,#1a0840,#2e1065); }
