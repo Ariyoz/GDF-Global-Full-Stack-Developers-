@@ -285,41 +285,51 @@ function handleFileChange(e) {
 }
 
 async function handlePublish() {
+  if (!form.title?.trim()) {
+    uiStore.showError('Please add a project title')
+    return
+  }
   loading.value = true
   try {
     let coverImageUrl = ''
 
-    // Upload cover image to Cloudinary if selected
+    // Upload cover image — non-blocking, project still posts if upload fails
     if (coverFile.value) {
       try {
         const formData = new FormData()
         formData.append('file', coverFile.value)
         const uploadResult = await http.post('/uploads/media', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
+          timeout: 30000,
         })
-        if (uploadResult.url) coverImageUrl = uploadResult.url
-      } catch (err) {
-        console.error('Image upload failed:', err)
+        if (uploadResult?.url) coverImageUrl = uploadResult.url
+      } catch (imgErr) {
+        console.warn('Cover image upload failed (continuing without image):', imgErr?.message)
       }
     }
 
-    await http.post('/projects/', {
-      title: form.title,
-      description: form.description,
-      skills_needed: form.tags,
-      requirements: form.description,
-      experience_level: 'mid',
-      cover_image: coverImageUrl || undefined,
-      repository_url: form.liveUrl || form.githubUrl || undefined,
-      github_url: form.githubUrl || undefined,
-      live_url: form.liveUrl || undefined,
-    })
-    uiStore.showSuccess('Project added successfully!')
+    const payload = {
+      title:            form.title.trim(),
+      description:      form.description?.trim() || '',
+      skills_needed:    form.tags || [],
+      requirements:     form.description?.trim() || '',
+      experience_level: form.experience_level || 'mid',
+      cover_image:      coverImageUrl || null,
+      repository_url:   form.liveUrl || form.githubUrl || null,
+      github_url:       form.githubUrl || null,
+      live_url:         form.liveUrl || null,
+    }
+
+    await http.post('/projects/', payload, { timeout: 30000 })
+    uiStore.showSuccess('Project published successfully!')
     currentStep.value = 3
   } catch (err) {
     console.error('Failed to publish project:', err)
-    const detail = err.response?.data?.detail || err.message || 'Please check your connection and try again.'
-    uiStore.showError(`Failed to publish project: ${detail}`)
+    const detail = err?.response?.data?.detail
+      || (err?.code === 'ECONNABORTED' ? 'Server is starting up — please wait 30 seconds and try again.' : null)
+      || err?.message
+      || 'Please check your connection and try again.'
+    uiStore.showError(`Failed to publish: ${detail}`)
   } finally {
     loading.value = false
   }
