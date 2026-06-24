@@ -197,6 +197,10 @@
                       class="bub-img-wrap" @click.stop="lightbox=m.media_url">
                       <img :src="m.media_url" class="bub-img" loading="lazy" />
                     </div>
+                    <!-- Video -->
+                    <div v-else-if="m.message_type==='video' && m.media_url" class="bub-vid-wrap">
+                      <video :src="m.media_url" class="bub-vid" controls preload="metadata" playsinline />
+                    </div>
                     <!-- Voice -->
                     <div v-else-if="m.message_type==='voice' && m.media_url"
                       class="voice-player" :class="m.mine?'vp-mine':'vp-theirs'">
@@ -318,7 +322,7 @@
             <span class="material-symbols-outlined">attach_file</span>
           </button>
           <input ref="fileEl" type="file" class="hidden-f"
-            accept="image/*,application/pdf,application/zip,audio/*"
+            accept="image/*,video/*,application/pdf,application/zip,audio/*"
             @change="onFile" />
           <div class="inp-wrap" :class="{ focused: inputFocused }">
             <textarea
@@ -621,8 +625,10 @@ async function sendAttachment() {
   try {
     const r = await messagingStore.uploadAttachment(f)
     const isAudio = f.type.startsWith('audio/')
+    const isVideo = f.type.startsWith('video/')
     await messagingStore.sendMessage({
-      content: '', message_type: isAudio ? 'voice' : r.is_image ? 'image' : 'file',
+      content: '',
+      message_type: isAudio ? 'voice' : isVideo ? 'video' : r.is_image ? 'image' : 'file',
       media_url: r.url, file_name: r.file_name, file_size: r.file_size,
       reply_to_id: replyTo.value?.id || null
     })
@@ -1170,6 +1176,9 @@ watch(() => messagingStore.messages.length, () => scrollToBottom())
   max-height: 260px; object-fit: cover;
   border-radius: 12px;
 }
+/* Video inside bubble */
+.bub-vid-wrap { border-radius: 12px; overflow: hidden; max-width: 260px; line-height: 0; }
+.bub-vid { width: 100%; display: block; max-height: 220px; border-radius: 12px; background: #000; outline: none; }
 
 /* Text */
 .bub-txt {

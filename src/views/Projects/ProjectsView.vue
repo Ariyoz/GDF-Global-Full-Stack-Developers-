@@ -134,7 +134,15 @@ const categoryGradients = [
 onMounted(async () => {
   try {
     const data = await http.get('/projects?limit=50')
-    projects.value = (data.projects || []).map((p, i) => ({
+    // Deduplicate by id in case of any DB duplicates
+    const seen = new Set()
+    projects.value = (data.projects || [])
+      .filter(p => {
+        if (seen.has(p.id)) return false
+        seen.add(p.id)
+        return true
+      })
+      .map((p, i) => ({
       id: p.id,
       title: p.title,
       desc: p.description || '',

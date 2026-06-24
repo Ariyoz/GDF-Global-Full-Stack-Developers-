@@ -157,12 +157,16 @@ const postedProjects = ref([])
 
 onMounted(async () => {
   try {
-    // Fetch user profile stats
-    const me = await http.get('/users/me')
+    // Fetch real stats from analytics + profile
+    const [me, analytics] = await Promise.all([
+      http.get('/users/me'),
+      http.get('/users/me/analytics?period=30').catch(() => null),
+    ])
     engagementStats.value = [
-      { value: String(me.follower_count || 0), label: 'Followers' },
-      { value: String(me.post_count || 0), label: 'Posts' },
-      { value: String(me.following_count || 0), label: 'Following' },
+      { value: String(me.follower_count || 0),                            label: 'Followers' },
+      { value: String(me.post_count || 0),                                label: 'Posts' },
+      { value: String(analytics?.job_requests || 0),                      label: 'Job Requests' },
+      { value: String(analytics?.applications_submitted || 0),            label: 'Applications' },
     ]
   } catch { /* ignore */ }
 })
