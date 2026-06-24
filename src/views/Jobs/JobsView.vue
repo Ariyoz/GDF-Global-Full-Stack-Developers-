@@ -540,13 +540,19 @@ async function updateApplicationStatus(app, newStatus) {
 async function openHiringChat(job, app) {
   const jobToUse = job || currentReviewJob.value
   if (!jobToUse) { uiStore.showError('Job not found'); return }
+  if (!app?.applicant_id) { uiStore.showError('Applicant not found'); return }
   try {
-    const data = await http.post(`/jobs/${jobToUse.id}/applications/${app.id}/open-chat`, {})
+    // Start or open a direct conversation with the applicant
+    const { default: http2 } = await import('@/services/http')
+    const data = await http2.post('/messages/conversations', {
+      participant_ids: [app.applicant_id],
+      type: 'direct',
+    })
     uiStore.showSuccess('Opening chat with ' + (app.applicant_name || 'applicant'))
     showApplicants.value = false
-    router.push({ path: '/messaging', query: { conv: data.conversation_id } })
-  } catch {
-    uiStore.showError('Failed to open chat')
+    router.push({ path: '/messaging', query: { conv: data.id } })
+  } catch (err) {
+    uiStore.showError(err?.response?.data?.detail || 'Could not open chat')
   }
 }
 
