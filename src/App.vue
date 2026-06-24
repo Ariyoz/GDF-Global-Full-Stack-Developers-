@@ -39,7 +39,8 @@ const alertQueue = ref([])
 let alertTimeout = null
 let keepAliveTimer = null
 
-// ── Keep-alive ping: hits /health every 10 min so Render never cold-starts ──
+// ── Keep-alive ping: hits /health every 13 min to prevent Render cold starts ──
+// Render free tier sleeps after 15 min of inactivity — we ping every 13 to stay awake
 function startKeepAlive() {
   const baseUrl = (import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1')
     .replace('/api/v1', '')
@@ -48,8 +49,11 @@ function startKeepAlive() {
     fetch(`${baseUrl}/health`, { method: 'GET', cache: 'no-cache' }).catch(() => {})
   }
 
-  ping() // ping immediately on load
-  keepAliveTimer = setInterval(ping, 10 * 60 * 1000) // then every 10 minutes
+  // Ping immediately, then again at 5s (double-hit to ensure server starts fast)
+  ping()
+  setTimeout(ping, 5000)
+  // Then every 13 minutes to prevent sleep
+  keepAliveTimer = setInterval(ping, 13 * 60 * 1000)
 }
 
 function stopKeepAlive() {
