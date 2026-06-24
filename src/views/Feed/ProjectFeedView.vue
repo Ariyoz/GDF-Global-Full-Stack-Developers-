@@ -458,8 +458,8 @@
               </div>
               <p class="tp-content">{{ tp.content?.slice(0, 80) }}{{ tp.content?.length > 80 ? '…' : '' }}</p>
               <div class="tp-stats">
-                <span>❤️ {{ tp.like_count }}</span>
-                <span>💬 {{ tp.comment_count }}</span>
+                <span><span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">favorite</span> {{ tp.like_count }}</span>
+                <span><span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle">chat_bubble</span> {{ tp.comment_count }}</span>
               </div>
             </div>
           </div>

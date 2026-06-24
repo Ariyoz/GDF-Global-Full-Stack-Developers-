@@ -118,8 +118,8 @@
               </div>
             </div>
             <div class="detail-stats">
-              <span>👁 {{ selectedJob.view_count }} views</span>
-              <span>📝 {{ selectedJob.application_count }} applications</span>
+              <span><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">visibility</span> {{ selectedJob.view_count }} views</span>
+              <span><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">description</span> {{ selectedJob.application_count }} applications</span>
             </div>
           </div>
           <div class="modal-footer">

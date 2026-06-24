@@ -62,7 +62,8 @@ export const useMessagingStore = defineStore('messaging', () => {
           // Replace object to trigger Vue reactivity
           conversations.value[idx] = {
             ...conv,
-            last_message_content: content || (event.file_name ? '📎 ' + event.file_name : ''),
+            last_message_content: content || (event.file_name || ''),
+            last_message_type: event.message_type || 'text',
             last_message_at: new Date().toISOString(),
             // Only increment unread if not currently viewing this conversation
             unread_count: isActive ? 0 : (conv.unread_count || 0) + 1,
@@ -309,7 +310,8 @@ export const useMessagingStore = defineStore('messaging', () => {
       // Update conversation preview
       const conv = conversations.value.find(c => c.id === activeConversation.value?.id)
       if (conv) {
-        conv.last_message_content = payload.content || (payload.file_name ? '📎 ' + payload.file_name : '')
+        conv.last_message_content = payload.content || (payload.file_name || '')
+        conv.last_message_type = payload.message_type || 'text'
         conv.time = _formatTime(new Date())
         _moveToTop(activeConversation.value.id)
       }

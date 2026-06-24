@@ -59,26 +59,26 @@
               <span class="material-symbols-outlined" style="font-size:14px;">visibility</span>
               {{ project.views }} views
             </span>
-            <span class="meta-item">
-              <span class="material-symbols-outlined" style="font-size:14px;">favorite</span>
-              {{ project.likes }} likes
-            </span>
+            <button class="meta-like-btn" :class="{ liked: project.liked }" @click.stop="toggleLike(project)">
+              <span class="material-symbols-outlined" style="font-size:14px;">{{ project.liked ? 'favorite' : 'favorite_border' }}</span>
+              {{ project.likes }}
+            </button>
           </div>
 
           <div class="project-actions">
             <a v-if="project.live_url" :href="project.live_url" target="_blank" rel="noopener"
               class="btn-outline project-btn">
               <span class="material-symbols-outlined" style="font-size:16px;">rocket_launch</span>
-              Demo
+              Live Demo
             </a>
-            <a v-else-if="project.repo_url" :href="project.repo_url" target="_blank" rel="noopener"
+            <a v-if="project.repo_url" :href="project.repo_url" target="_blank" rel="noopener"
               class="btn-outline project-btn">
               <span class="material-symbols-outlined" style="font-size:16px;">code</span>
               Repo
             </a>
-            <button v-else class="btn-outline project-btn" @click="router.push('/projects')">
-              <span class="material-symbols-outlined" style="font-size:16px;">open_in_new</span>
-              View
+            <button v-if="!project.live_url && !project.repo_url" class="btn-outline project-btn" disabled>
+              <span class="material-symbols-outlined" style="font-size:16px;">link_off</span>
+              No Link
             </button>
             <button class="btn-ghost project-btn" @click="deleteProject(project)">
               <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
@@ -159,11 +159,22 @@ function mapProject(j, i) {
     statusKey:    s.key,
     views:        j.view_count || 0,
     likes:        j.like_count || 0,
+    liked:        false,
     cover_image:  j.cover_image || '',
     live_url:     j.live_url || '',
     repo_url:     j.repository_url || j.github_url || '',
     icon:         'work',
     gradient:     'linear-gradient(135deg,#630ed4,#7c3aed)',
+  }
+}
+
+async function toggleLike(project) {
+  try {
+    const res = await http.post(`/projects/${project.id}/like`)
+    project.liked = res.liked
+    project.likes = project.liked ? project.likes + 1 : Math.max(0, project.likes - 1)
+  } catch (e) {
+    uiStore.showError('Could not update like')
   }
 }
 
@@ -309,7 +320,7 @@ onMounted(loadProjects)
   overflow: hidden;
 }
 
-.project-meta { display: flex; gap: 1rem; flex-wrap: wrap; }
+.project-meta { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
 
 .meta-item {
   display: flex;
@@ -319,6 +330,24 @@ onMounted(loadProjects)
   color: var(--on-surface-variant);
   font-family: var(--font-headline);
 }
+
+.meta-like-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-family: var(--font-headline);
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--radius-full);
+  transition: color 0.15s, background 0.15s;
+}
+.meta-like-btn:hover { color: #ef4444; background: rgba(239,68,68,0.08); }
+.meta-like-btn.liked { color: #ef4444; }
 
 .progress-section { display: flex; flex-direction: column; gap: 0.35rem; }
 
