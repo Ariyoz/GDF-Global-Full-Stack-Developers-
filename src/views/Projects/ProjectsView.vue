@@ -66,9 +66,15 @@
                   </div>
                 </div>
                 <div class="project-stats">
+                  <!-- Demo / live URL -->
+                  <a v-if="project.live_url" :href="project.live_url" target="_blank" rel="noopener"
+                    class="pstat link-btn" title="View live demo" @click.stop>
+                    <span class="material-symbols-outlined" style="font-size:15px;">rocket_launch</span>
+                  </a>
+                  <!-- GitHub repo URL -->
                   <a v-if="project.repo_url" :href="project.repo_url" target="_blank" rel="noopener"
-                    class="pstat link-btn" title="View project" @click.stop>
-                    <span class="material-symbols-outlined" style="font-size:15px;">open_in_new</span>
+                    class="pstat link-btn" title="View source code" @click.stop>
+                    <span class="material-symbols-outlined" style="font-size:15px;">code</span>
                   </a>
                   <span class="pstat">
                     <span class="material-symbols-outlined" style="font-size:14px;">visibility</span>
@@ -161,7 +167,8 @@ onMounted(async () => {
       author_username: p.author_username || '',
       author_avatar: p.author_avatar || null,
       author_id: p.author_id || null,
-      repo_url: p.repository_url || p.repo_url || null,
+      repo_url: p.repository_url || p.repo_url || p.github_url || null,
+      live_url: p.live_url || null,
       year: p.created_at ? new Date(p.created_at).getFullYear() : new Date().getFullYear(),
       icon: categoryIcons[p.project_type] || 'code',
       gradient: categoryGradients[i % categoryGradients.length],
@@ -191,10 +198,9 @@ function goToAuthorProfile(project, e) {
 }
 
 async function viewProject(project) {
-  try {
-    await http.post(`/projects/${project.id}/view`)
-    project.views = (project.views || 0) + 1
-  } catch { /* ignore */ }
+  // Count view for everyone — no auth needed
+  http.post(`/projects/${project.id}/view`).catch(() => {})
+  project.views = (project.views || 0) + 1
 }
 
 const filteredProjects = computed(() => {

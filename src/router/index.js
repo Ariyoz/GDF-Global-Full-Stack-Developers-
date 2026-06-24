@@ -62,6 +62,7 @@ const AdminReportsView      = () => import('@/views/Admin/AdminReportsView.vue')
 const AdminVerificationView = () => import('@/views/Admin/AdminVerificationView.vue')
 const AdminAnalyticsView    = () => import('@/views/Admin/AdminAnalyticsView.vue')
 const AdminSubscriptionsView = () => import('@/views/Admin/AdminSubscriptionsView.vue')
+const AdminProjectsView      = () => import('@/views/Admin/AdminProjectsView.vue')
 
 // ── Error ──
 const NotFoundView = () => import('@/views/NotFound.vue')
@@ -194,6 +195,7 @@ const routes = [
       { path: 'verification', name: 'admin-verification', component: AdminVerificationView },
       { path: 'analytics',    name: 'admin-analytics',    component: AdminAnalyticsView },
       { path: 'subscriptions', name: 'admin-subscriptions', component: AdminSubscriptionsView },
+      { path: 'projects',     name: 'admin-projects',     component: AdminProjectsView },
       { path: 'settings',     name: 'admin-settings',     component: AdminSettingsView },
     ],
   },

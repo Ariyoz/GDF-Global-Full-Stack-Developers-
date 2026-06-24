@@ -49,6 +49,18 @@
                 <template v-if="messagingStore.isUserTyping(conv.id)">
                   <span class="cv-typing-dots"><i/><i/><i/></span> typing…
                 </template>
+                <template v-else-if="conv.last_message_type === 'image'">
+                  <span class="material-symbols-outlined" style="font-size:13px">image</span> Photo
+                </template>
+                <template v-else-if="conv.last_message_type === 'video'">
+                  <span class="material-symbols-outlined" style="font-size:13px">videocam</span> Video
+                </template>
+                <template v-else-if="conv.last_message_type === 'voice'">
+                  <span class="material-symbols-outlined" style="font-size:13px">mic</span> Voice message
+                </template>
+                <template v-else-if="conv.last_message_type === 'file'">
+                  <span class="material-symbols-outlined" style="font-size:13px">attach_file</span> {{ conv.last_message_content || 'File' }}
+                </template>
                 <template v-else>{{ conv.last_message_content || 'Tap to chat' }}</template>
               </span>
               <span v-if="conv.unread_count > 0" class="cv-badge-sm">{{ conv.unread_count }}</span>

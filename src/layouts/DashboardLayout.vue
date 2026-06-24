@@ -398,8 +398,9 @@ const navItems = [
   { to: '/wallet',             icon: 'account_balance_wallet',  label: 'Wallet' },
   { to: '/settings',           icon: 'settings',                label: 'Settings' },
   ...(isAdmin.value ? [
-    { to: '/admin',       icon: 'shield',  label: 'Admin Panel' },
-    { to: '/admin/users', icon: 'group',   label: 'User Management' },
+    { to: '/admin',          icon: 'shield',  label: 'Admin Panel' },
+    { to: '/admin/users',    icon: 'group',   label: 'User Management' },
+    { to: '/admin/projects', icon: 'folder_open', label: 'Project Review' },
   ] : []),
 ]
 
@@ -420,8 +421,9 @@ const moreNavItems = [
   { to: '/settings',            icon: 'settings',               label: 'Settings'    },
   { to: '/plans',               icon: 'workspace_premium',      label: 'Plans'       },
   ...(isAdmin.value ? [
-    { to: '/admin',       icon: 'shield', label: 'Admin'        },
-    { to: '/admin/users', icon: 'group',  label: 'Users'        },
+    { to: '/admin',          icon: 'shield',       label: 'Admin'          },
+    { to: '/admin/users',    icon: 'group',        label: 'Users'          },
+    { to: '/admin/projects', icon: 'folder_open',  label: 'Project Review' },
   ] : []),
 ]
 

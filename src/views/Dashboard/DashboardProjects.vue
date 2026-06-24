@@ -34,7 +34,8 @@
         :class="`delay-${i * 100}`"
       >
         <div class="project-thumb" :style="{ background: project.gradient }">
-          <span class="material-symbols-outlined thumb-icon">{{ project.icon }}</span>
+          <img v-if="project.cover_image" :src="project.cover_image" class="thumb-cover-img" />
+          <span v-else class="material-symbols-outlined thumb-icon">{{ project.icon }}</span>
           <div class="thumb-badge">
             <GfdBadge :variant="project.statusVariant">{{ project.status }}</GfdBadge>
           </div>
@@ -47,35 +48,41 @@
           </div>
           <p class="project-desc">{{ project.desc }}</p>
 
-          <div class="project-meta">
-            <span class="meta-item">
-              <span class="material-symbols-outlined" style="font-size:14px;">calendar_today</span>
-              {{ project.deadline }}
-            </span>
-            <span class="meta-item">
-              <span class="material-symbols-outlined" style="font-size:14px;">group</span>
-              {{ project.team }} members
-            </span>
+          <!-- Pending review notice -->
+          <div v-if="project.statusKey === 'pending_review'" class="review-notice">
+            <span class="material-symbols-outlined" style="font-size:14px;color:#f59e0b">schedule</span>
+            Awaiting admin review — will go live once approved
           </div>
 
-          <div class="progress-section">
-            <div class="progress-header">
-              <span class="progress-label">Progress</span>
-              <span class="progress-pct">{{ project.progress }}%</span>
-            </div>
-            <div class="progress-bar">
-              <div class="progress-bar-fill" :style="{ width: project.progress + '%' }" />
-            </div>
+          <div class="project-meta">
+            <span class="meta-item">
+              <span class="material-symbols-outlined" style="font-size:14px;">visibility</span>
+              {{ project.views }} views
+            </span>
+            <span class="meta-item">
+              <span class="material-symbols-outlined" style="font-size:14px;">favorite</span>
+              {{ project.likes }} likes
+            </span>
           </div>
 
           <div class="project-actions">
-            <button class="btn-outline project-btn">
+            <a v-if="project.live_url" :href="project.live_url" target="_blank" rel="noopener"
+              class="btn-outline project-btn">
+              <span class="material-symbols-outlined" style="font-size:16px;">rocket_launch</span>
+              Demo
+            </a>
+            <a v-else-if="project.repo_url" :href="project.repo_url" target="_blank" rel="noopener"
+              class="btn-outline project-btn">
+              <span class="material-symbols-outlined" style="font-size:16px;">code</span>
+              Repo
+            </a>
+            <button v-else class="btn-outline project-btn" @click="router.push('/projects')">
               <span class="material-symbols-outlined" style="font-size:16px;">open_in_new</span>
               View
             </button>
-            <button class="btn-ghost project-btn">
-              <span class="material-symbols-outlined" style="font-size:16px;">edit</span>
-              Edit
+            <button class="btn-ghost project-btn" @click="deleteProject(project)">
+              <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
+              Delete
             </button>
           </div>
         </div>
@@ -105,23 +112,22 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
+import { useUiStore } from '@/store/ui'
 import http from '@/services/http'
 import GfdBadge from '@/components/ui/GfdBadge.vue'
 
-const router = useRouter()
+const router    = useRouter()
 const authStore = useAuthStore()
+const uiStore   = useUiStore()
 const activeStatus = ref('all')
 
-function goToNewProject() {
-  router.push({ name: 'project-upload' })
-}
+function goToNewProject() { router.push({ name: 'project-upload' }) }
 
 const statusTabs = ref([
-  { value: 'all',       label: 'All',        count: 0 },
-  { value: 'active',    label: 'Active',     count: 0 },
-  { value: 'review',    label: 'In Review',  count: 0 },
-  { value: 'pending',   label: 'Pending',    count: 0 },
-  { value: 'completed', label: 'Completed',  count: 0 },
+  { value: 'all',            label: 'All',          count: 0 },
+  { value: 'active',         label: 'Active',       count: 0 },
+  { value: 'pending_review', label: 'In Review',    count: 0 },
+  { value: 'completed',      label: 'Completed',    count: 0 },
 ])
 
 const projects = ref([])
@@ -131,40 +137,61 @@ const filteredProjects = computed(() => {
   return projects.value.filter(p => p.statusKey === activeStatus.value)
 })
 
-onMounted(async () => {
-  const userId = authStore.user?.id
-  if (!userId) return
+function mapProject(j, i) {
+  const st = j.status || 'pending_review'
+  const statusMap = {
+    open:           { label: 'Active',     variant: 'success', key: 'active' },
+    in_progress:    { label: 'In Progress',variant: 'warning', key: 'active' },
+    pending_review: { label: 'In Review',  variant: 'warning', key: 'pending_review' },
+    draft:          { label: 'In Review',  variant: 'warning', key: 'pending_review' },
+    completed:      { label: 'Completed',  variant: 'success', key: 'completed' },
+    closed:         { label: 'Closed',     variant: 'default', key: 'completed' },
+    cancelled:      { label: 'Rejected',   variant: 'error',   key: 'completed' },
+  }
+  const s = statusMap[st] || { label: st, variant: 'default', key: st }
+  return {
+    id:           j.id,
+    name:         j.title || '',
+    desc:         (j.description || '').slice(0, 120),
+    type:         j.project_type || 'contract',
+    status:       s.label,
+    statusVariant:s.variant,
+    statusKey:    s.key,
+    views:        j.view_count || 0,
+    likes:        j.like_count || 0,
+    cover_image:  j.cover_image || '',
+    live_url:     j.live_url || '',
+    repo_url:     j.repository_url || j.github_url || '',
+    icon:         'work',
+    gradient:     'linear-gradient(135deg,#630ed4,#7c3aed)',
+  }
+}
 
+async function loadProjects() {
   try {
     const data = await http.get('/projects/mine?limit=50')
-
-    projects.value = (data.projects || []).map(j => ({
-      id: j.id,
-      name: j.title,
-      desc: j.description?.slice(0, 100) || '',
-      type: j.project_type || 'Web App',
-      status: j.status === 'open' ? 'Active' : j.status === 'in_progress' ? 'In Review' : j.status === 'completed' ? 'Completed' : 'Pending',
-      statusVariant: j.status === 'open' ? 'success' : j.status === 'in_progress' ? 'warning' : j.status === 'completed' ? 'success' : 'default',
-      statusKey: j.status === 'open' ? 'active' : j.status === 'in_progress' ? 'review' : j.status === 'completed' ? 'completed' : 'pending',
-      progress: j.status === 'completed' ? 100 : j.status === 'in_progress' ? 50 : j.status === 'open' ? 25 : 10,
-      deadline: j.deadline ? new Date(j.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—',
-      views: j.view_count || 0,
-      likes: j.like_count || 0,
-      team: 0,
-      icon: 'work',
-      gradient: 'linear-gradient(135deg,#630ed4,#7c3aed)',
-    }))
-
-    // Update tab counts
+    projects.value = (data.projects || []).map(mapProject)
     statusTabs.value[0].count = projects.value.length
     statusTabs.value[1].count = projects.value.filter(p => p.statusKey === 'active').length
-    statusTabs.value[2].count = projects.value.filter(p => p.statusKey === 'review').length
-    statusTabs.value[3].count = projects.value.filter(p => p.statusKey === 'pending').length
-    statusTabs.value[4].count = projects.value.filter(p => p.statusKey === 'completed').length
+    statusTabs.value[2].count = projects.value.filter(p => p.statusKey === 'pending_review').length
+    statusTabs.value[3].count = projects.value.filter(p => p.statusKey === 'completed').length
   } catch (err) {
     console.error('Failed to load projects:', err)
   }
-})
+}
+
+async function deleteProject(project) {
+  if (!confirm(`Delete "${project.name}"? This cannot be undone.`)) return
+  try {
+    await http.request({ method: 'DELETE', url: `/projects/${project.id}` })
+    uiStore.showSuccess('Project deleted')
+    projects.value = projects.value.filter(p => p.id !== project.id)
+  } catch (e) {
+    uiStore.showError(e?.response?.data?.detail || 'Failed to delete project')
+  }
+}
+
+onMounted(loadProjects)
 </script>
 
 <style scoped>
@@ -235,9 +262,24 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   position: relative;
+  overflow: hidden;
+}
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
 .thumb-icon { font-size: 3rem; color: rgba(255,255,255,0.85); }
+.thumb-cover-img { position:absolute;inset:0;width:100%;height:100%;object-fit:cover; }
+
+.review-notice {
+  display: flex; align-items: center; gap: .4rem;
+  font-size: .78rem; color: #f59e0b;
+  background: rgba(245,158,11,.08);
+  border: 1px solid rgba(245,158,11,.2);
+  border-radius: 8px; padding: .4rem .75rem;
+  margin-bottom: .5rem;
+}
 
 .thumb-badge {
   position: absolute;
