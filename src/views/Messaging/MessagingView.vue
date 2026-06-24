@@ -411,29 +411,8 @@
       </Transition>
     </Teleport>
 
-    <!-- ── Incoming call ── -->
-    <Teleport to="body">
-      <Transition name="fade">
-        <div v-if="incCall" class="call-overlay">
-          <div class="call-card">
-            <div class="call-av">
-              <img v-if="incCall.caller_avatar" :src="incCall.caller_avatar" class="cv-av-img"/>
-              <span v-else class="cv-av-ini lg">{{ (incCall.caller_name||'?')[0] }}</span>
-            </div>
-            <p class="call-name">{{ incCall.caller_name }}</p>
-            <p class="call-type">Incoming {{ incCall.call_type==='video'?'video':'voice' }} call</p>
-            <div class="call-btns">
-              <button class="call-rej" @click="rejectCall">
-                <span class="material-symbols-outlined">call_end</span>
-              </button>
-              <button class="call-acc" @click="acceptCall">
-                <span class="material-symbols-outlined">{{ incCall.call_type==='video'?'videocam':'call' }}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </Transition>
-    </Teleport>
+    <!-- ── Incoming call (handled by CallView) ── -->
+    <CallView ref="callViewRef" />
 
   </div>
 </template>
@@ -443,10 +422,14 @@ import { ref, computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { useMessagingStore } from '@/store/messaging'
 import { useAuthStore } from '@/store/auth'
 import { useRoute } from 'vue-router'
+import CallView from './CallView.vue'
 
 const messagingStore = useMessagingStore()
 const authStore = useAuthStore()
 const route = useRoute()
+
+// ── Call ref ──
+const callViewRef = ref(null)
 
 const EMOJIS = ['👍','❤️','😂','😮','😢','🔥','🚀']
 
@@ -743,13 +726,10 @@ function debounceSearch() {
   searchTimer = setTimeout(() => messagingStore.searchMessages(msgQ.value), 300)
 }
 
-// ── Calls ──
+// ── Calls — now handled by CallView component ──
 function startCall(type) {
-  messagingStore.sendCallSignal('call_initiate', {
-    to: activeConv.value?.other_user_id, call_type: type,
-    caller_name: authStore.profile?.full_name||'User',
-    caller_avatar: authStore.profile?.avatar||''
-  })
+  if (!activeConv.value) return
+  callViewRef.value?.startCall(type, activeConv.value)
 }
 function rejectCall() { if (incCall.value) { messagingStore.sendCallSignal('call_reject',{to:incCall.value.from}); incCall.value=null } }
 function acceptCall() { if (incCall.value) { messagingStore.sendCallSignal('call_accept',{to:incCall.value.from}); incCall.value=null } }
@@ -1524,35 +1504,6 @@ watch(() => messagingStore.messages.length, () => scrollToBottom())
   display: flex; align-items: center; justify-content: center; cursor: pointer;
 }
 .lb-img { max-width: 92vw; max-height: 92vh; object-fit: contain; border-radius: 12px; }
-
-/* Incoming call */
-.call-overlay {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,.72); z-index: 3000;
-  display: flex; align-items: center; justify-content: center;
-}
-.call-card {
-  background: var(--surface-container-highest);
-  border-radius: 24px; padding: 2.5rem 2rem;
-  display: flex; flex-direction: column; align-items: center;
-  gap: 1rem; min-width: 280px;
-}
-.call-av {
-  width: 76px; height: 76px; border-radius: 50%;
-  overflow: hidden; background: var(--primary-fixed);
-  display: flex; align-items: center; justify-content: center;
-}
-.call-name { font-family: var(--font-headline); font-size: 1.2rem; font-weight: 700; color: var(--on-surface); margin: 0; }
-.call-type { font-size: .85rem; color: var(--on-surface-variant); margin: 0; }
-.call-btns { display: flex; gap: 2rem; margin-top: .5rem; }
-.call-rej, .call-acc {
-  width: 62px; height: 62px; border-radius: 50%; border: none;
-  display: flex; align-items: center; justify-content: center; cursor: pointer;
-}
-.call-rej { background: #ef4444; color: #fff; }
-.call-acc { background: #22c55e; color: #fff; }
-.call-rej .material-symbols-outlined,
-.call-acc .material-symbols-outlined { font-size: 26px; }
 
 /* ══════════════════════════════════════════
    TRANSITIONS
