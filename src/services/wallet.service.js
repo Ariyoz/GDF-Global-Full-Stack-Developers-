@@ -32,10 +32,20 @@ export const walletService = {
     return http.get(`/wallet/flw/verify?${params.toString()}`, { timeout: 30000 })
   },
 
-  // Live Nigerian bank list
+  // Fetch live Nigerian bank list
   async getBanks() {
     const data = await http.get('/wallet/banks')
     return data.banks || []
+  },
+
+  // Get user's dedicated virtual account
+  async getVirtualAccount() {
+    return http.get('/wallet/virtual-account')
+  },
+
+  // Create dedicated virtual account (Flutterwave DVA)
+  async createVirtualAccount() {
+    return http.post('/wallet/virtual-account/create', {}, { timeout: 30000 })
   },
 
   // Resolve account number → account name

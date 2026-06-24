@@ -95,9 +95,61 @@
       </button>
     </div>
 
+    <!-- ── Your Virtual Account (permanent account number per user) ── -->
+    <div class="dva-card">
+      <div class="dva-hdr">
+        <div class="dva-hdr-left">
+          <span class="material-symbols-outlined dva-ico">account_balance</span>
+          <div>
+            <p class="dva-title">Your Personal Account Number</p>
+            <p class="dva-sub">Transfer money here from any Nigerian bank — wallet credited instantly, always</p>
+          </div>
+        </div>
+        <span class="dva-badge">Free · Instant</span>
+      </div>
+
+      <!-- Has account -->
+      <template v-if="virtualAccount">
+        <div class="dva-details">
+          <div class="dva-row">
+            <span class="dva-lbl">Bank</span>
+            <span class="dva-val">{{ virtualAccount.bank_name }}</span>
+          </div>
+          <div class="dva-row">
+            <span class="dva-lbl">Account Name</span>
+            <span class="dva-val">{{ virtualAccount.account_name }}</span>
+          </div>
+          <div class="dva-row">
+            <span class="dva-lbl">Account Number</span>
+            <div class="dva-acct-row">
+              <span class="dva-acct-num">{{ virtualAccount.account_number }}</span>
+              <button class="dva-copy-btn" @click="copyAcctNum" :class="{ copied: acctCopied }">
+                <span class="material-symbols-outlined" style="font-size:16px">{{ acctCopied ? 'check' : 'content_copy' }}</span>
+                {{ acctCopied ? 'Copied!' : 'Copy' }}
+              </button>
+            </div>
+          </div>
+        </div>
+        <p class="dva-note">
+          <span class="material-symbols-outlined" style="font-size:14px;color:#22c55e">check_circle</span>
+          Send money to this account from GTBank, Access, Opay, Kuda — anything. Wallet credits in seconds.
+        </p>
+      </template>
+
+      <!-- No account yet -->
+      <template v-else>
+        <p class="dva-empty">Get a permanent Wema/Sterling Bank account number assigned just to you. Any transfer to it tops up your wallet automatically.</p>
+        <button class="btn-primary dva-create-btn" :disabled="creatingDVA" @click="createVirtualAccount">
+          <span v-if="creatingDVA" class="btn-spinner"/>
+          <span class="material-symbols-outlined" v-else style="font-size:18px">add_card</span>
+          {{ creatingDVA ? 'Creating…' : 'Get My Account Number' }}
+        </button>
+      </template>
+    </div>
+
     <!-- Quick Actions -->
     <div class="quick-grid">
-      <button class="quick-btn" @click="showFundModal = true">
+      <button class="quick-btn" @click="fundAmount = 500; showFundModal = true">
         <div class="qb-ico" style="background:rgba(99,14,212,.12)">
           <span class="material-symbols-outlined" style="color:var(--primary)">add_circle</span>
         </div>
@@ -109,11 +161,11 @@
         </div>
         <span class="qb-lbl">Withdraw</span>
       </button>
-      <button class="quick-btn" @click="loadWallet">
+      <button class="quick-btn" @click="showWithdrawModal = true">
         <div class="qb-ico" style="background:rgba(245,158,11,.1)">
-          <span class="material-symbols-outlined" style="color:#f59e0b">history</span>
+          <span class="material-symbols-outlined" style="color:#f59e0b">send</span>
         </div>
-        <span class="qb-lbl">Refresh</span>
+        <span class="qb-lbl">Transfer</span>
       </button>
     </div>
 
@@ -283,7 +335,7 @@
 
             <p class="ps-note">
               <span class="material-symbols-outlined" style="font-size:14px">schedule</span>
-              Withdrawals are processed instantly via Paystack
+              Withdrawals are processed instantly via Flutterwave
             </p>
           </div>
 
@@ -301,7 +353,7 @@
       </div>
     </Transition>
 
-    <!-- ── VERIFY SUCCESS TOAST (shown after Paystack redirect) ── -->
+    <!-- ── SUCCESS BANNER (shown after payment is verified) ── -->
     <Transition name="slide-up">
       <div v-if="verifyBanner" class="verify-banner">
         <span class="material-symbols-outlined" style="color:#22c55e;font-size:20px">check_circle</span>
@@ -764,6 +816,27 @@ onMounted(async () => {
   padding: .75rem 1.75rem; align-self: flex-start;
   font-size: .95rem;
 }
+
+/* ── Virtual Account Card ── */
+.dva-card { background: var(--surface-container-lowest); border: 1.5px solid var(--outline-variant); border-radius: 16px; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+.dva-hdr { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.dva-hdr-left { display: flex; align-items: flex-start; gap: .75rem; }
+.dva-ico { font-size: 24px; color: var(--primary); margin-top: .1rem; flex-shrink: 0; }
+.dva-title { font-family: var(--font-headline); font-size: 1rem; font-weight: 700; color: var(--on-surface); }
+.dva-sub { font-size: .8rem; color: var(--on-surface-variant); margin-top: .2rem; }
+.dva-badge { padding: .25rem .75rem; border-radius: 999px; background: rgba(34,197,94,.1); color: #16a34a; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; flex-shrink: 0; }
+.dva-details { display: flex; flex-direction: column; gap: .625rem; }
+.dva-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.dva-lbl { font-size: .8rem; color: var(--on-surface-variant); flex-shrink: 0; }
+.dva-val { font-size: .875rem; font-weight: 600; color: var(--on-surface); }
+.dva-acct-row { display: flex; align-items: center; gap: .625rem; }
+.dva-acct-num { font-family: var(--font-headline); font-size: 1.3rem; font-weight: 800; color: var(--primary); letter-spacing: .08em; }
+.dva-copy-btn { display: flex; align-items: center; gap: .25rem; padding: .35rem .75rem; border-radius: 8px; border: 1.5px solid var(--outline-variant); background: var(--surface-container); font-size: .78rem; font-weight: 600; color: var(--on-surface); cursor: pointer; transition: all .15s; }
+.dva-copy-btn:hover { border-color: var(--primary); color: var(--primary); }
+.dva-copy-btn.copied { border-color: #22c55e; color: #22c55e; background: rgba(34,197,94,.08); }
+.dva-note { display: flex; align-items: center; gap: .4rem; font-size: .8rem; color: var(--on-surface-variant); background: rgba(34,197,94,.06); padding: .625rem .875rem; border-radius: 8px; border: 1px solid rgba(34,197,94,.2); }
+.dva-empty { font-size: .875rem; color: var(--on-surface-variant); }
+.dva-create-btn { display: flex; align-items: center; gap: .5rem; padding: .75rem 1.5rem; align-self: flex-start; }
 
 /* Quick actions */
 .quick-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: .75rem; }.quick-btn {
