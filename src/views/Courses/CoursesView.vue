@@ -39,7 +39,8 @@
         class="course-card glass-card"
       >
         <div class="course-thumb">
-          <img v-if="course.thumbnail" :src="course.thumbnail" :alt="course.title" class="thumb-img" loading="lazy" />
+          <img v-if="course.thumbnail" :src="course.thumbnail" :alt="course.title" class="thumb-img" loading="lazy"
+               @error="course.thumbnail = null" />
           <div v-else class="thumb-placeholder" :style="{ background: course.color }">
             <span class="material-symbols-outlined" style="font-size:2rem;color:#fff;">{{ course.icon }}</span>
           </div>
@@ -114,7 +115,7 @@ const courses = [
     desc: 'Complete free full-stack curriculum covering HTML, CSS, JavaScript, React, Node.js and more.',
     source: 'The Odin Project', duration: 'Self-paced',
     url: 'https://www.theodinproject.com',
-    thumbnail: 'https://www.theodinproject.com/assets/og-logo-022832d4cefeec1d5a4f9a6a4a4a4a4a.png',
+    thumbnail: 'https://img.youtube.com/vi/nu_pCVPKzTk/mqdefault.jpg',
     color: '#e34c26', icon: 'code',
   },
   {
@@ -141,8 +142,158 @@ const courses = [
     desc: 'University of Helsinki free course on React, Node, TypeScript, GraphQL and testing.',
     source: 'University of Helsinki', duration: '9 parts',
     url: 'https://fullstackopen.com/en',
-    thumbnail: 'https://fullstackopen.com/static/og-image-a0e012a3c34b3e4c9f4c36e2c1a1a1a1.png',
+    thumbnail: 'https://img.youtube.com/vi/a_7Z7C_JCyo/mqdefault.jpg',
     color: '#3776ab', icon: 'school',
+  },
+  {
+    id: 5, category: 'web', level: 'Beginner',
+    title: 'Vue.js 3 — Complete Tutorial',
+    desc: 'Full Vue 3 course with Composition API, Pinia, Vue Router, and real projects.',
+    source: 'YouTube', duration: '11 hours',
+    url: 'https://www.youtube.com/watch?v=VeNfHj6MhgA',
+    thumbnail: 'https://img.youtube.com/vi/VeNfHj6MhgA/mqdefault.jpg',
+    color: '#42b883', icon: 'play_circle',
+  },
+  {
+    id: 6, category: 'web', level: 'Intermediate',
+    title: 'React — The Complete Course',
+    desc: 'Free React tutorial covering hooks, context, Redux and building real projects.',
+    source: 'YouTube', duration: '12 hours',
+    url: 'https://www.youtube.com/watch?v=bMknfKXIFA8',
+    thumbnail: 'https://img.youtube.com/vi/bMknfKXIFA8/mqdefault.jpg',
+    color: '#61dafb', icon: 'play_circle',
+  },
+  // Backend
+  {
+    id: 7, category: 'backend', level: 'Beginner',
+    title: 'FastAPI — Full Course',
+    desc: 'Build fast REST APIs with Python FastAPI, SQLAlchemy, auth and deployment.',
+    source: 'YouTube', duration: '6 hours',
+    url: 'https://www.youtube.com/watch?v=7t2alSnE2-I',
+    thumbnail: 'https://img.youtube.com/vi/7t2alSnE2-I/mqdefault.jpg',
+    color: '#009688', icon: 'play_circle',
+  },
+  {
+    id: 8, category: 'backend', level: 'Beginner',
+    title: 'Node.js and Express — Full Course',
+    desc: 'Complete backend with Node.js, Express, REST APIs, authentication and MongoDB.',
+    source: 'freeCodeCamp', duration: '8 hours',
+    url: 'https://www.youtube.com/watch?v=Oe421EPjeBE',
+    thumbnail: 'https://img.youtube.com/vi/Oe421EPjeBE/mqdefault.jpg',
+    color: '#68a063', icon: 'play_circle',
+  },
+  {
+    id: 9, category: 'backend', level: 'Intermediate',
+    title: "CS50's Web Programming with Python",
+    desc: "Harvard's free course covering Django, databases, APIs, security and scalability.",
+    source: 'Harvard CS50', duration: 'Self-paced',
+    url: 'https://cs50.harvard.edu/web',
+    thumbnail: 'https://img.youtube.com/vi/3jSfxHYPiMs/mqdefault.jpg',
+    color: '#a51c30', icon: 'school',
+  },
+  // Database
+  {
+    id: 10, category: 'database', level: 'Beginner',
+    title: 'SQL for Beginners — Complete Course',
+    desc: 'Learn SQL from scratch — SELECT, JOIN, subqueries, indexes and performance.',
+    source: 'freeCodeCamp', duration: '4 hours',
+    url: 'https://www.youtube.com/watch?v=HXV3zeQKqGY',
+    thumbnail: 'https://img.youtube.com/vi/HXV3zeQKqGY/mqdefault.jpg',
+    color: '#f29111', icon: 'storage',
+  },
+  {
+    id: 11, category: 'database', level: 'Beginner',
+    title: 'PostgreSQL Tutorial',
+    desc: 'Full PostgreSQL course covering queries, tables, functions, triggers and more.',
+    source: 'YouTube', duration: '4 hours',
+    url: 'https://www.youtube.com/watch?v=SpfIwlAYaKk',
+    thumbnail: 'https://img.youtube.com/vi/SpfIwlAYaKk/mqdefault.jpg',
+    color: '#336791', icon: 'storage',
+  },
+  // Mobile
+  {
+    id: 12, category: 'mobile', level: 'Beginner',
+    title: 'React Native — The Full Guide',
+    desc: 'Build iOS and Android apps with React Native from scratch with real projects.',
+    source: 'YouTube', duration: '10 hours',
+    url: 'https://www.youtube.com/watch?v=0-S5a0eXPoc',
+    thumbnail: 'https://img.youtube.com/vi/0-S5a0eXPoc/mqdefault.jpg',
+    color: '#61dafb', icon: 'smartphone',
+  },
+  {
+    id: 13, category: 'mobile', level: 'Intermediate',
+    title: 'Flutter & Dart — The Complete Guide',
+    desc: 'Build beautiful cross-platform apps with Flutter. Free full course with projects.',
+    source: 'YouTube', duration: '10 hours',
+    url: 'https://www.youtube.com/watch?v=VPvVD8t02U8',
+    thumbnail: 'https://img.youtube.com/vi/VPvVD8t02U8/mqdefault.jpg',
+    color: '#54c5f8', icon: 'smartphone',
+  },
+  // AI / ML
+  {
+    id: 14, category: 'ai', level: 'Beginner',
+    title: 'Machine Learning for Everybody',
+    desc: 'Free ML course with Python — regression, classification, neural networks explained simply.',
+    source: 'freeCodeCamp', duration: '4 hours',
+    url: 'https://www.youtube.com/watch?v=i_LwzRVP7bg',
+    thumbnail: 'https://img.youtube.com/vi/i_LwzRVP7bg/mqdefault.jpg',
+    color: '#ff6f00', icon: 'psychology',
+  },
+  {
+    id: 15, category: 'ai', level: 'Intermediate',
+    title: 'fast.ai — Practical Deep Learning',
+    desc: 'Top-down approach to deep learning. Free course used by industry practitioners.',
+    source: 'fast.ai', duration: 'Self-paced',
+    url: 'https://course.fast.ai',
+    thumbnail: 'https://img.youtube.com/vi/8SF_h3xF3cE/mqdefault.jpg',
+    color: '#009bd5', icon: 'school',
+  },
+  {
+    id: 16, category: 'ai', level: 'Beginner',
+    title: 'ChatGPT Prompt Engineering for Developers',
+    desc: 'Free DeepLearning.AI course on how to build with LLMs using prompt engineering.',
+    source: 'DeepLearning.AI', duration: '1 hour',
+    url: 'https://www.deeplearning.ai/short-courses/chatgpt-prompt-engineering-for-developers',
+    thumbnail: 'https://img.youtube.com/vi/eTieetk2dSw/mqdefault.jpg',
+    color: '#10a37f', icon: 'psychology',
+  },
+  // DevOps
+  {
+    id: 17, category: 'devops', level: 'Beginner',
+    title: "Git and GitHub — Complete Beginner's Guide",
+    desc: 'Everything you need to know about Git version control and GitHub workflows.',
+    source: 'freeCodeCamp', duration: '5 hours',
+    url: 'https://www.youtube.com/watch?v=RGOj5yH7evk',
+    thumbnail: 'https://img.youtube.com/vi/RGOj5yH7evk/mqdefault.jpg',
+    color: '#f05032', icon: 'rocket_launch',
+  },
+  {
+    id: 18, category: 'devops', level: 'Intermediate',
+    title: 'Docker Full Course',
+    desc: 'Learn Docker from scratch — containers, images, Compose and deployment.',
+    source: 'YouTube', duration: '5 hours',
+    url: 'https://www.youtube.com/watch?v=fqMOX6JJhGo',
+    thumbnail: 'https://img.youtube.com/vi/fqMOX6JJhGo/mqdefault.jpg',
+    color: '#2496ed', icon: 'rocket_launch',
+  },
+  // Design
+  {
+    id: 19, category: 'design', level: 'Beginner',
+    title: 'UI Design Fundamentals',
+    desc: 'Learn the core principles of good UI design — spacing, typography, colour and layout.',
+    source: 'YouTube', duration: '3 hours',
+    url: 'https://www.youtube.com/watch?v=tRpoI6vkqLs',
+    thumbnail: 'https://img.youtube.com/vi/tRpoI6vkqLs/mqdefault.jpg',
+    color: '#f24e1e', icon: 'palette',
+  },
+  {
+    id: 20, category: 'design', level: 'Beginner',
+    title: 'Figma Complete Course',
+    desc: 'Design beautiful apps and websites in Figma — free course from scratch.',
+    source: 'YouTube', duration: '6 hours',
+    url: 'https://www.youtube.com/watch?v=FTFaQWZBqQ8',
+    thumbnail: 'https://img.youtube.com/vi/FTFaQWZBqQ8/mqdefault.jpg',
+    color: '#a259ff', icon: 'palette',
   },
   {
     id: 5, category: 'web', level: 'Beginner',
