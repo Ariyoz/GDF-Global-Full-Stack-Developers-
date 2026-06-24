@@ -53,30 +53,37 @@
         How to Fund Your Wallet
       </div>
       <div class="fm-grid">
-        <!-- Card — works now -->
         <div class="fm-item fm-active">
           <div class="fm-ico" style="background:rgba(22,163,74,.1)">
             <span class="material-symbols-outlined" style="color:#16a34a">credit_card</span>
           </div>
           <div>
-            <p class="fm-name">Debit / Credit Card <span class="fm-avail">Available now</span></p>
-            <p class="fm-desc">Pay instantly with Visa, Mastercard or Verve. Works immediately.</p>
+            <p class="fm-name">Card <span class="fm-avail">✓ Available</span></p>
+            <p class="fm-desc">Visa, Mastercard or Verve — instant.</p>
           </div>
         </div>
-        <!-- Bank Transfer — needs verified account -->
-        <div class="fm-item fm-soon">
-          <div class="fm-ico" style="background:rgba(168,85,247,.08)">
+        <div class="fm-item fm-active">
+          <div class="fm-ico" style="background:rgba(99,14,212,.08)">
             <span class="material-symbols-outlined" style="color:var(--primary)">account_balance</span>
           </div>
           <div>
-            <p class="fm-name">Bank Transfer <span class="fm-pending">Requires verification</span></p>
-            <p class="fm-desc">Complete Paystack KYC in Settings → Compliance to unlock bank transfers & USSD.</p>
+            <p class="fm-name">Bank Transfer <span class="fm-avail">✓ Available</span></p>
+            <p class="fm-desc">Transfer from any Nigerian bank — credited in seconds.</p>
+          </div>
+        </div>
+        <div class="fm-item fm-active">
+          <div class="fm-ico" style="background:rgba(245,158,11,.1)">
+            <span class="material-symbols-outlined" style="color:#f59e0b">dialpad</span>
+          </div>
+          <div>
+            <p class="fm-name">USSD <span class="fm-avail">✓ Available</span></p>
+            <p class="fm-desc">Dial a shortcode from any phone. No internet needed.</p>
           </div>
         </div>
       </div>
       <button class="btn-primary fm-fund-btn" @click="fundAmount = 500; showFundModal = true">
-        <span class="material-symbols-outlined" style="font-size:18px">credit_card</span>
-        Fund with Card
+        <span class="material-symbols-outlined" style="font-size:18px">add_circle</span>
+        Fund Wallet
       </button>
     </div>
 
@@ -162,7 +169,7 @@
           </div>
 
           <div class="modal-body">
-            <p class="modal-sub">Enter amount in Nigerian Naira (₦)</p>
+            <p class="modal-sub">Enter amount in Nigerian Naira (₦) — pay by card, bank transfer or USSD</p>
 
             <!-- Amount presets -->
             <div class="preset-grid">
@@ -190,7 +197,7 @@
 
             <p class="ps-note">
               <span class="material-symbols-outlined" style="font-size:14px">lock</span>
-              Secured by Paystack — your card details are never stored on GFD
+              Secured by Flutterwave — card, bank transfer & USSD all accepted
             </p>
           </div>
 
@@ -484,7 +491,7 @@ async function verifyAccount() {
   }
 }
 
-// ── Fund wallet via Paystack ──
+// ── Fund wallet via Flutterwave ──
 async function initiateFund() {
   if (!fundAmount.value || fundAmount.value < 100) return
   paying.value = true
@@ -493,16 +500,17 @@ async function initiateFund() {
       fundAmount.value,
       window.location.origin + '/wallet',
     )
-    if (data.authorization_url) {
-      // Open in same tab — Paystack handles the redirect back
-      window.location.href = data.authorization_url
+    if (data.payment_link) {
+      // Redirect to Flutterwave checkout
+      // Supports: card, bank transfer, USSD, mobile money — all at once
+      window.location.href = data.payment_link
     } else {
-      uiStore.showError('No payment URL returned. Please try again.')
+      uiStore.showError('No payment link returned. Please try again.')
       paying.value = false
     }
   } catch (e) {
     const msg = e?.response?.data?.detail
-      || (e?.code === 'ECONNABORTED' ? 'Server is starting up — please wait 30 seconds and try again.' : null)
+      || (e?.code === 'ECONNABORTED' ? 'Server is starting up — wait 30s and retry.' : null)
       || e?.message
       || 'Payment initialization failed'
     uiStore.showError(msg)
@@ -510,12 +518,23 @@ async function initiateFund() {
   }
 }
 
-// ── Verify after Paystack redirect ──
+// ── Verify after Flutterwave redirect ──
+// Flutterwave appends: ?tx_ref=xxx&transaction_id=xxx&status=successful
 async function verifyFromUrl() {
-  const ref = route.query.reference || route.query.trxref
-  if (!ref) return
+  const txRef         = route.query.tx_ref
+  const transactionId = route.query.transaction_id
+  const status        = route.query.status
+
+  if (!txRef && !transactionId) return
+
+  if (status === 'cancelled') {
+    uiStore.showError('Payment was cancelled.')
+    cleanUrl()
+    return
+  }
+
   try {
-    const result = await walletService.verifyPayment(ref)
+    const result = await walletService.verifyPayment({ txRef, transactionId, status })
     if (result.credited) {
       verifyBanner.value = `₦${Number(result.amount).toLocaleString()} successfully added to your wallet!`
       await loadWallet()
@@ -523,13 +542,16 @@ async function verifyFromUrl() {
       verifyBanner.value = 'Payment already processed.'
     }
   } catch (e) {
-    uiStore.showError('Verification failed. Contact support if money was deducted.')
+    uiStore.showError(e?.response?.data?.detail || 'Verification failed. Contact support if money was deducted.')
   }
-  // Clean URL params
+  cleanUrl()
+}
+
+function cleanUrl() {
   const url = new URL(window.location.href)
-  url.searchParams.delete('reference')
-  url.searchParams.delete('trxref')
-  url.searchParams.delete('verify')
+  url.searchParams.delete('tx_ref')
+  url.searchParams.delete('transaction_id')
+  url.searchParams.delete('status')
   window.history.replaceState({}, '', url.toString())
 }
 
@@ -563,7 +585,8 @@ onMounted(async () => {
   await loadWallet()
   loadBanks()
   loadVirtualAccount()
-  if (route.query.reference || route.query.trxref) {
+  // Flutterwave redirects back with ?tx_ref=xxx&transaction_id=xxx&status=successful
+  if (route.query.tx_ref || route.query.transaction_id) {
     await verifyFromUrl()
   }
 })
