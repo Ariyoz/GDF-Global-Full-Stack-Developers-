@@ -114,6 +114,7 @@ const courses = [
     desc: 'Complete free full-stack curriculum covering HTML, CSS, JavaScript, React, Node.js and more.',
     source: 'The Odin Project', duration: 'Self-paced',
     url: 'https://www.theodinproject.com',
+    thumbnail: 'https://www.theodinproject.com/assets/og-logo-022832d4cefeec1d5a4f9a6a4a4a4a4a.png',
     color: '#e34c26', icon: 'code',
   },
   {
@@ -122,6 +123,7 @@ const courses = [
     desc: 'Learn HTML, CSS, Flexbox, Grid and build 5 certification projects for free.',
     source: 'freeCodeCamp', duration: '300 hours',
     url: 'https://www.freecodecamp.org/learn/2022/responsive-web-design',
+    thumbnail: 'https://img.youtube.com/vi/zJSY8tbf_ys/mqdefault.jpg',
     color: '#0a0a23', icon: 'web',
   },
   {
@@ -130,6 +132,7 @@ const courses = [
     desc: 'Deep dive into JavaScript — ES6+, OOP, functional programming, regex and algorithms.',
     source: 'freeCodeCamp', duration: '300 hours',
     url: 'https://www.freecodecamp.org/learn/javascript-algorithms-and-data-structures',
+    thumbnail: 'https://img.youtube.com/vi/PkZNo7MFNFg/mqdefault.jpg',
     color: '#f7df1e', icon: 'javascript',
   },
   {
@@ -138,6 +141,7 @@ const courses = [
     desc: 'University of Helsinki free course on React, Node, TypeScript, GraphQL and testing.',
     source: 'University of Helsinki', duration: '9 parts',
     url: 'https://fullstackopen.com/en',
+    thumbnail: 'https://fullstackopen.com/static/og-image-a0e012a3c34b3e4c9f4c36e2c1a1a1a1.png',
     color: '#3776ab', icon: 'school',
   },
   {
@@ -146,6 +150,7 @@ const courses = [
     desc: 'Full Vue 3 course with Composition API, Pinia, Vue Router, and real projects.',
     source: 'YouTube', duration: '11 hours',
     url: 'https://www.youtube.com/watch?v=VeNfHj6MhgA',
+    thumbnail: 'https://img.youtube.com/vi/VeNfHj6MhgA/mqdefault.jpg',
     color: '#42b883', icon: 'play_circle',
   },
   {
@@ -154,6 +159,7 @@ const courses = [
     desc: 'Free React tutorial covering hooks, context, Redux and building real projects.',
     source: 'YouTube', duration: '12 hours',
     url: 'https://www.youtube.com/watch?v=bMknfKXIFA8',
+    thumbnail: 'https://img.youtube.com/vi/bMknfKXIFA8/mqdefault.jpg',
     color: '#61dafb', icon: 'play_circle',
   },
   // Backend
@@ -163,6 +169,7 @@ const courses = [
     desc: 'Build fast REST APIs with Python FastAPI, SQLAlchemy, auth and deployment.',
     source: 'YouTube', duration: '6 hours',
     url: 'https://www.youtube.com/watch?v=7t2alSnE2-I',
+    thumbnail: 'https://img.youtube.com/vi/7t2alSnE2-I/mqdefault.jpg',
     color: '#009688', icon: 'play_circle',
   },
   {
@@ -171,6 +178,7 @@ const courses = [
     desc: 'Complete backend with Node.js, Express, REST APIs, authentication and MongoDB.',
     source: 'freeCodeCamp', duration: '8 hours',
     url: 'https://www.youtube.com/watch?v=Oe421EPjeBE',
+    thumbnail: 'https://img.youtube.com/vi/Oe421EPjeBE/mqdefault.jpg',
     color: '#68a063', icon: 'play_circle',
   },
   {
@@ -179,6 +187,7 @@ const courses = [
     desc: 'Harvard\'s free course covering Django, databases, APIs, security and scalability.',
     source: 'Harvard CS50', duration: 'Self-paced',
     url: 'https://cs50.harvard.edu/web',
+    thumbnail: 'https://img.youtube.com/vi/3jSfxHYPiMs/mqdefault.jpg',
     color: '#a51c30', icon: 'school',
   },
   // Database
@@ -188,6 +197,7 @@ const courses = [
     desc: 'Learn SQL from scratch — SELECT, JOIN, subqueries, indexes and performance.',
     source: 'freeCodeCamp', duration: '4 hours',
     url: 'https://www.youtube.com/watch?v=HXV3zeQKqGY',
+    thumbnail: 'https://img.youtube.com/vi/HXV3zeQKqGY/mqdefault.jpg',
     color: '#f29111', icon: 'storage',
   },
   {
@@ -196,6 +206,7 @@ const courses = [
     desc: 'Full PostgreSQL course covering queries, tables, functions, triggers and more.',
     source: 'YouTube', duration: '4 hours',
     url: 'https://www.youtube.com/watch?v=SpfIwlAYaKk',
+    thumbnail: 'https://img.youtube.com/vi/SpfIwlAYaKk/mqdefault.jpg',
     color: '#336791', icon: 'storage',
   },
   // Mobile
@@ -205,6 +216,7 @@ const courses = [
     desc: 'Build iOS and Android apps with React Native from scratch with real projects.',
     source: 'YouTube', duration: '10 hours',
     url: 'https://www.youtube.com/watch?v=0-S5a0eXPoc',
+    thumbnail: 'https://img.youtube.com/vi/0-S5a0eXPoc/mqdefault.jpg',
     color: '#61dafb', icon: 'smartphone',
   },
   {
@@ -213,6 +225,7 @@ const courses = [
     desc: 'Build beautiful cross-platform apps with Flutter. Free full course with projects.',
     source: 'YouTube', duration: '10 hours',
     url: 'https://www.youtube.com/watch?v=VPvVD8t02U8',
+    thumbnail: 'https://img.youtube.com/vi/VPvVD8t02U8/mqdefault.jpg',
     color: '#54c5f8', icon: 'smartphone',
   },
   // AI / ML
@@ -222,6 +235,7 @@ const courses = [
     desc: 'Free ML course with Python — regression, classification, neural networks explained simply.',
     source: 'freeCodeCamp', duration: '4 hours',
     url: 'https://www.youtube.com/watch?v=i_LwzRVP7bg',
+    thumbnail: 'https://img.youtube.com/vi/i_LwzRVP7bg/mqdefault.jpg',
     color: '#ff6f00', icon: 'psychology',
   },
   {
@@ -230,6 +244,7 @@ const courses = [
     desc: 'Top-down approach to deep learning. Free course used by industry practitioners.',
     source: 'fast.ai', duration: 'Self-paced',
     url: 'https://course.fast.ai',
+    thumbnail: 'https://img.youtube.com/vi/8SF_h3xF3cE/mqdefault.jpg',
     color: '#009bd5', icon: 'school',
   },
   {
@@ -238,6 +253,7 @@ const courses = [
     desc: 'Free DeepLearning.AI course on how to build with LLMs using prompt engineering.',
     source: 'DeepLearning.AI', duration: '1 hour',
     url: 'https://www.deeplearning.ai/short-courses/chatgpt-prompt-engineering-for-developers',
+    thumbnail: 'https://img.youtube.com/vi/eTieetk2dSw/mqdefault.jpg',
     color: '#10a37f', icon: 'psychology',
   },
   // DevOps
@@ -247,6 +263,7 @@ const courses = [
     desc: 'Everything you need to know about Git version control and GitHub workflows.',
     source: 'freeCodeCamp', duration: '5 hours',
     url: 'https://www.youtube.com/watch?v=RGOj5yH7evk',
+    thumbnail: 'https://img.youtube.com/vi/RGOj5yH7evk/mqdefault.jpg',
     color: '#f05032', icon: 'rocket_launch',
   },
   {
@@ -255,6 +272,7 @@ const courses = [
     desc: 'Learn Docker from scratch — containers, images, Compose and deployment.',
     source: 'YouTube', duration: '5 hours',
     url: 'https://www.youtube.com/watch?v=fqMOX6JJhGo',
+    thumbnail: 'https://img.youtube.com/vi/fqMOX6JJhGo/mqdefault.jpg',
     color: '#2496ed', icon: 'rocket_launch',
   },
   // Design
@@ -264,6 +282,7 @@ const courses = [
     desc: 'Learn the core principles of good UI design — spacing, typography, colour and layout.',
     source: 'YouTube', duration: '3 hours',
     url: 'https://www.youtube.com/watch?v=tRpoI6vkqLs',
+    thumbnail: 'https://img.youtube.com/vi/tRpoI6vkqLs/mqdefault.jpg',
     color: '#f24e1e', icon: 'palette',
   },
   {
@@ -272,6 +291,7 @@ const courses = [
     desc: 'Design beautiful apps and websites in Figma — free course from scratch.',
     source: 'YouTube', duration: '6 hours',
     url: 'https://www.youtube.com/watch?v=FTFaQWZBqQ8',
+    thumbnail: 'https://img.youtube.com/vi/FTFaQWZBqQ8/mqdefault.jpg',
     color: '#a259ff', icon: 'palette',
   },
 ]

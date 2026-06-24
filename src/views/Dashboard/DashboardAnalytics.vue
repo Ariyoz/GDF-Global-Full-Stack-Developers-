@@ -83,55 +83,67 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useAuthStore } from '@/store/auth'
 import { analyticsService } from '@/services/analytics.service'
 import { walletService } from '@/services/wallet.service'
+import { useCurrencyStore } from '@/store/currency'
 
-const authStore = useAuthStore()
-const period = ref('7')
+const authStore     = useAuthStore()
+const currencyStore = useCurrencyStore()
+const period        = ref('7')
+const loading       = ref(false)
 
 const kpis = ref([
-  { icon: 'visibility',   color: 'var(--primary)',  bg: 'rgba(99,14,212,0.08)',  label: 'Profile Views',  value: '0', change: '—', positive: false },
-  { icon: 'ads_click',    color: '#16a34a',          bg: 'rgba(22,163,74,0.08)', label: 'Click Rate',     value: '0%',   change: '—', positive: false },
-  { icon: 'work',         color: 'var(--tertiary)',  bg: 'rgba(161,81,0,0.08)',  label: 'Job Requests',   value: '0',     change: '—',    positive: false },
-  { icon: 'payments',     color: '#f59e0b',          bg: 'rgba(245,158,11,0.08)',label: 'Earnings',       value: '$0', change: '—',  positive: false },
+  { icon: 'edit_note',   color: 'var(--primary)', bg: 'rgba(99,14,212,0.08)',  label: 'Posts Published',      value: '0', change: '—', positive: true },
+  { icon: 'group',       color: '#16a34a',         bg: 'rgba(22,163,74,0.08)', label: 'Followers',            value: '0', change: '—', positive: true },
+  { icon: 'work',        color: 'var(--tertiary)', bg: 'rgba(161,81,0,0.08)',  label: 'Job Requests Received',value: '0', change: '—', positive: true },
+  { icon: 'send',        color: '#f59e0b',          bg: 'rgba(245,158,11,0.08)',label: 'Applications Sent',    value: '0', change: '—', positive: true },
 ])
 
-const chartData = ref([
-  { label: 'Mon', views: 0, clicks: 0 },
-  { label: 'Tue', views: 0, clicks: 0 },
-  { label: 'Wed', views: 0, clicks: 0 },
-  { label: 'Thu', views: 0, clicks: 0 },
-  { label: 'Fri', views: 0, clicks: 0 },
-  { label: 'Sat', views: 0, clicks: 0 },
-  { label: 'Sun', views: 0, clicks: 0 },
-])
-
+const chartData   = ref([])
 const activityRows = ref([])
 
-onMounted(async () => {
-  const userId = authStore.user?.id
-  if (!userId) return
-
+async function loadAnalytics() {
+  loading.value = true
   try {
-    const [views, jobRequests, weeklyViews, wallet] = await Promise.all([
-      analyticsService.getProfileViews(userId),
-      analyticsService.getJobRequestCount(userId),
-      analyticsService.getWeeklyViews(userId),
-      walletService.getWallet(userId),
+    const [data, wallet] = await Promise.all([
+      analyticsService.getMyAnalytics(Number(period.value)),
+      walletService.getWallet().catch(() => ({ balance: 0, total_earned: 0 })),
     ])
 
-    kpis.value[0].value = String(views)
-    kpis.value[2].value = String(jobRequests)
-    kpis.value[3].value = `$${Number(wallet.total_earned || 0).toLocaleString()}`
+    kpis.value[0].value = String(data.post_count       || 0)
+    kpis.value[1].value = String(data.follower_count   || 0)
+    kpis.value[2].value = String(data.job_requests     || 0)
+    kpis.value[3].value = String(data.applications_submitted || 0)
 
-    // Update chart with real weekly data
-    chartData.value = weeklyViews.map(d => ({ label: d.label, views: d.views, clicks: 0 }))
+    // Normalise chart so tallest bar = 100%
+    const maxPosts = Math.max(...(data.chart || []).map(d => d.posts), 1)
+    chartData.value = (data.chart || []).map(d => ({
+      label:  d.label,
+      posts:  Math.round((d.posts / maxPosts) * 100),
+      views:  0,
+      clicks: 0,
+      raw:    d.posts,
+    }))
+
+    // Build activity rows from real numbers
+    activityRows.value = [
+      { id: 1, icon: 'edit_note',   color: 'var(--primary)', bg: 'rgba(99,14,212,0.08)',  event: 'Posts published',          source: 'Your posts',     date: 'All time',   value: data.post_count,             positive: true },
+      { id: 2, icon: 'group',       color: '#16a34a',         bg: 'rgba(22,163,74,0.08)', event: 'Total followers',           source: 'Your profile',   date: 'All time',   value: data.follower_count,         positive: true },
+      { id: 3, icon: 'work',        color: 'var(--tertiary)', bg: 'rgba(161,81,0,0.08)',  event: 'Job applications received', source: 'Your jobs',      date: 'All time',   value: data.job_requests,           positive: true },
+      { id: 4, icon: 'send',        color: '#f59e0b',          bg: 'rgba(245,158,11,0.08)',event: 'Applications submitted',    source: 'Jobs applied',   date: 'All time',   value: data.applications_submitted, positive: true },
+      { id: 5, icon: 'account_balance_wallet', color: '#22c55e', bg: 'rgba(34,197,94,0.08)', event: 'Wallet balance',        source: 'Wallet',         date: 'Current',    value: `₦${Number(wallet.balance||0).toLocaleString()}`, positive: true },
+    ]
   } catch (err) {
     console.error('Analytics load error:', err)
+  } finally {
+    loading.value = false
   }
-})
+}
+
+watch(period, loadAnalytics)
+onMounted(loadAnalytics)
 </script>
 
 <style scoped>

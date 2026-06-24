@@ -517,7 +517,9 @@ async function viewApplicants(job) {
     showApplicants.value = true
     selectedJob.value = null
   } catch (err) {
-    uiStore.showError('Failed to load applicants')
+    const msg = err?.response?.data?.detail || err?.message || 'Failed to load applicants'
+    uiStore.showError(msg)
+    console.error('[job-applications]', err?.response?.status, err?.response?.data)
   }
 }
 
@@ -571,8 +573,10 @@ async function fetchMyApplications() {
     const data = await http.get('/jobs/my-applications')
     myApplications.value = data.applications || []
     showMyApplications.value = true
-  } catch {
-    uiStore.showError('Failed to load your applications')
+  } catch (err) {
+    const msg = err?.response?.data?.detail || err?.message || 'Failed to load your applications'
+    uiStore.showError(msg)
+    console.error('[my-applications]', err?.response?.status, err?.response?.data)
   }
 }
 
