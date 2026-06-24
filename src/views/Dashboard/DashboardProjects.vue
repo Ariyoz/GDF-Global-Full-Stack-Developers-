@@ -264,10 +264,6 @@ onMounted(loadProjects)
   position: relative;
   overflow: hidden;
 }
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
 
 .thumb-icon { font-size: 3rem; color: rgba(255,255,255,0.85); }
 .thumb-cover-img { position:absolute;inset:0;width:100%;height:100%;object-fit:cover; }
