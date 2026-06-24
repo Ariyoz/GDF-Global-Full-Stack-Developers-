@@ -1,6 +1,14 @@
 <template>
   <div class="wallet-view">
 
+    <!-- Server wake-up banner -->
+    <Transition name="slide-down">
+      <div v-if="serverWaking" class="waking-banner">
+        <span class="waking-spinner"></span>
+        <span>Server is starting up — this takes about 30 seconds on the first visit…</span>
+      </div>
+    </Transition>
+
     <!-- Header -->
     <div class="page-hdr">
       <div>
@@ -329,6 +337,7 @@ function fmtWallet(ngnAmount) {
 
 // ── State ──
 const loading         = ref(false)
+const serverWaking    = ref(false)
 const balance         = ref(0)
 const monthlyEarnings = ref(0)
 const totalEarned     = ref(0)
@@ -393,6 +402,32 @@ function txStyle(tx) {
   return { bg: 'background:rgba(99,14,212,.08)', color: 'color:var(--primary)' }
 }
 
+// ── Wake up server then load wallet ──
+async function wakeAndLoad() {
+  const base = (import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1').replace('/api/v1', '')
+
+  // Try to load wallet — if it fails (server sleeping), show banner and retry
+  for (let attempt = 1; attempt <= 6; attempt++) {
+    try {
+      await loadWallet()
+      serverWaking.value = false
+      return // success
+    } catch (e) {
+      if (attempt === 1) {
+        // First failure — server is sleeping, show banner and wake it
+        serverWaking.value = true
+        fetch(`${base}/health`, { cache: 'no-cache' }).catch(() => {})
+      }
+      if (attempt < 6) {
+        // Wait 5s before retrying
+        await new Promise(r => setTimeout(r, 5000))
+      }
+    }
+  }
+  serverWaking.value = false
+  uiStore.showError('Server took too long to start. Please refresh the page.')
+}
+
 // ── Load wallet data ──
 async function loadWallet() {
   loading.value = true
@@ -405,12 +440,6 @@ async function loadWallet() {
     totalEarned.value     = Number(wallet.total_earned || 0)
     monthlyEarnings.value = Number(wallet.monthly_earnings || 0)
     transactions.value    = txns
-  } catch (e) {
-    if (!e?.response) {
-      // No response = server down / cold start
-      uiStore.showError('Server is starting up. Please wait 30 seconds and refresh.')
-    }
-    console.error('Wallet load:', e)
   } finally {
     loading.value = false
   }
@@ -501,20 +530,34 @@ async function initiateFund() {
       window.location.origin + '/wallet',
     )
     if (data.payment_link) {
-      // Redirect to Flutterwave checkout
-      // Supports: card, bank transfer, USSD, mobile money — all at once
       window.location.href = data.payment_link
     } else {
       uiStore.showError('No payment link returned. Please try again.')
       paying.value = false
     }
   } catch (e) {
-    const msg = e?.response?.data?.detail
-      || (e?.code === 'ECONNABORTED' ? 'Server is starting up — wait 30s and retry.' : null)
-      || e?.message
-      || 'Payment initialization failed'
-    uiStore.showError(msg)
-    paying.value = false
+    if (!e?.response) {
+      // Server still waking — retry once after 5s
+      uiStore.showError('Server is starting up — retrying in 5 seconds…')
+      setTimeout(async () => {
+        try {
+          const data = await walletService.initializePayment(
+            fundAmount.value,
+            window.location.origin + '/wallet',
+          )
+          if (data.payment_link) window.location.href = data.payment_link
+          else uiStore.showError('Payment link not returned. Please try again.')
+        } catch (e2) {
+          uiStore.showError(e2?.response?.data?.detail || 'Payment failed. Please refresh and try again.')
+        } finally {
+          paying.value = false
+        }
+      }, 5000)
+    } else {
+      const msg = e?.response?.data?.detail || e?.message || 'Payment initialization failed'
+      uiStore.showError(msg)
+      paying.value = false
+    }
   }
 }
 
@@ -578,14 +621,9 @@ async function submitWithdraw() {
 }
 
 onMounted(async () => {
-  // Wake up the backend immediately (Render free tier cold start)
-  const base = (import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1').replace('/api/v1', '')
-  fetch(`${base}/health`, { cache: 'no-cache' }).catch(() => {})
-
-  await loadWallet()
+  await wakeAndLoad()
   loadBanks()
   loadVirtualAccount()
-  // Flutterwave redirects back with ?tx_ref=xxx&transaction_id=xxx&status=successful
   if (route.query.tx_ref || route.query.transaction_id) {
     await verifyFromUrl()
   }
@@ -594,6 +632,24 @@ onMounted(async () => {
 
 <style scoped>
 .wallet-view { display: flex; flex-direction: column; gap: 1.25rem; padding-bottom: 2rem; }
+
+/* Server waking banner */
+.waking-banner {
+  display: flex; align-items: center; gap: .75rem;
+  padding: .875rem 1.25rem;
+  background: color-mix(in srgb,var(--primary) 8%,transparent);
+  border: 1px solid color-mix(in srgb,var(--primary) 25%,transparent);
+  border-radius: 12px;
+  font-size: .875rem; color: var(--on-surface);
+}
+.waking-spinner {
+  width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
+  border: 2.5px solid color-mix(in srgb,var(--primary) 30%,transparent);
+  border-top-color: var(--primary);
+  animation: spin 0.8s linear infinite;
+}
+.slide-down-enter-active, .slide-down-leave-active { transition: all .3s ease; }
+.slide-down-enter-from, .slide-down-leave-to { opacity: 0; transform: translateY(-10px); }
 
 /* Header */
 .page-hdr { display: flex; align-items: flex-start; justify-content: space-between; }
