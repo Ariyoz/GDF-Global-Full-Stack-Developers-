@@ -13,6 +13,8 @@
 
         <!-- Voice call background -->
         <div v-else class="voice-bg">
+          <!-- Hidden audio element plays remote voice -->
+          <audio ref="remoteAudioEl" autoplay playsinline style="display:none" />
           <div class="voice-ripple"/>
           <div class="voice-avatar">
             <img v-if="otherAvatar" :src="otherAvatar" class="voice-av-img" />
@@ -112,6 +114,7 @@ const isCaller      = ref(false)
 // DOM refs for video
 const localVideoEl  = ref(null)
 const remoteVideoEl = ref(null)
+const remoteAudioEl = ref(null)
 
 // WebRTC
 let pc           = null
@@ -164,7 +167,17 @@ async function createPC() {
   // Receive remote stream
   pc.ontrack = (e) => {
     remoteStream = e.streams[0]
-    if (remoteVideoEl.value) remoteVideoEl.value.srcObject = remoteStream
+    if (isVideo.value) {
+      // Video call — video element handles both audio + video
+      if (remoteVideoEl.value) remoteVideoEl.value.srcObject = remoteStream
+    } else {
+      // Voice call — must use audio element; video element doesn't exist
+      if (remoteAudioEl.value) {
+        remoteAudioEl.value.srcObject = remoteStream
+        // Ensure it plays (some browsers need explicit play call)
+        remoteAudioEl.value.play().catch(() => {})
+      }
+    }
   }
 
   // Send ICE candidates via WebSocket
@@ -191,7 +204,7 @@ async function createPC() {
 
 async function getMedia() {
   const constraints = {
-    audio: true,
+    audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 48000 },
     video: isVideo.value ? { facingMode, width: 1280, height: 720 } : false,
   }
   try {
@@ -293,9 +306,10 @@ function cleanupCall() {
   }
   // Close peer connection
   if (pc) { pc.close(); pc = null }
-  // Clear video elements
-  if (localVideoEl.value)  localVideoEl.value.srcObject = null
+  // Clear video/audio elements
+  if (localVideoEl.value)  localVideoEl.value.srcObject  = null
   if (remoteVideoEl.value) remoteVideoEl.value.srcObject = null
+  if (remoteAudioEl.value) remoteAudioEl.value.srcObject = null
   visible.value      = false
   callStatus.value   = 'ended'
   micMuted.value     = false
@@ -321,6 +335,7 @@ function toggleCam() {
 function toggleSpeaker() {
   speakerOff.value = !speakerOff.value
   if (remoteVideoEl.value) remoteVideoEl.value.muted = speakerOff.value
+  if (remoteAudioEl.value) remoteAudioEl.value.muted = speakerOff.value
 }
 
 async function flipCam() {
