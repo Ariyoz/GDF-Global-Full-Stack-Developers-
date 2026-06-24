@@ -55,12 +55,17 @@ export const useMessagingStore = defineStore('messaging', () => {
           // Auto-scroll handled by view via watch on messages
         }
 
-        const conv = conversations.value.find(c => c.id === convId)
-        if (conv) {
-          conv.last_message_content = content || (event.file_name ? '📎 ' + event.file_name : '')
-          conv.last_message_at = new Date().toISOString()
-          if (activeConversation.value?.id !== convId) {
-            conv.unread_count = (conv.unread_count || 0) + 1
+        const idx = conversations.value.findIndex(c => c.id === convId)
+        if (idx !== -1) {
+          const conv = conversations.value[idx]
+          const isActive = activeConversation.value?.id === convId
+          // Replace object to trigger Vue reactivity
+          conversations.value[idx] = {
+            ...conv,
+            last_message_content: content || (event.file_name ? '📎 ' + event.file_name : ''),
+            last_message_at: new Date().toISOString(),
+            // Only increment unread if not currently viewing this conversation
+            unread_count: isActive ? 0 : (conv.unread_count || 0) + 1,
           }
           _moveToTop(convId)
         } else {
@@ -398,9 +403,12 @@ export const useMessagingStore = defineStore('messaging', () => {
     searchQuery.value = ''
     if (conv) {
       fetchMessages(conv.id)
-      // Reset unread count locally + tell backend
-      const c = conversations.value.find(c => c.id === conv.id)
-      if (c) c.unread_count = 0
+      // Reset unread count — must replace the object to trigger Vue reactivity
+      const idx = conversations.value.findIndex(c => c.id === conv.id)
+      if (idx !== -1) {
+        conversations.value[idx] = { ...conversations.value[idx], unread_count: 0 }
+      }
+      // Tell backend to mark messages as read
       messagingService.markRead(conv.id)
     }
   }
