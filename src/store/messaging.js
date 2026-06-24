@@ -227,10 +227,16 @@ export const useMessagingStore = defineStore('messaging', () => {
     loading.value = true
     try {
       const data = await messagingService.getConversations()
+      // Build a map of conversations we've already zeroed locally
+      const localZeroed = new Set(
+        conversations.value.filter(c => c.unread_count === 0).map(c => c.id)
+      )
       conversations.value = data.map(c => ({
         ...c,
         online: c.online || onlineUserIds.value.has(c.other_user_id) || false,
         time: c.last_message_at ? _formatTime(new Date(c.last_message_at)) : '',
+        // Keep local zero if we already marked it read (avoids flash of stale count)
+        unread_count: localZeroed.has(c.id) ? 0 : (c.unread_count || 0),
       }))
     } catch (err) {
       console.error('Failed to fetch conversations:', err)
@@ -403,13 +409,17 @@ export const useMessagingStore = defineStore('messaging', () => {
     searchQuery.value = ''
     if (conv) {
       fetchMessages(conv.id)
-      // Reset unread count — must replace the object to trigger Vue reactivity
+      // Reset unread count immediately — object replacement triggers Vue reactivity
       const idx = conversations.value.findIndex(c => c.id === conv.id)
       if (idx !== -1) {
         conversations.value[idx] = { ...conversations.value[idx], unread_count: 0 }
       }
       // Tell backend to mark messages as read
       messagingService.markRead(conv.id)
+    } else {
+      // User pressed back — re-fetch to get fresh counts from backend
+      // but keep local zeros already set (don't flash old counts back)
+      fetchConversations()
     }
   }
 
