@@ -10,7 +10,7 @@
       <p class="hero-sub">Curated free courses from the best platforms — YouTube, freeCodeCamp, The Odin Project, and more.</p>
       <div class="hero-search">
         <span class="material-symbols-outlined search-icon">search</span>
-        <input v-model="searchQuery" class="search-input" placeholder="Search courses, topics, languages..." />
+        <input v-model="searchQuery" name="search" autocomplete="off" class="search-input" placeholder="Search courses, topics, languages..." />
       </div>
     </div>
 

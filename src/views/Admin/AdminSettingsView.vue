@@ -30,28 +30,28 @@
               <p class="setting-label">Platform Name</p>
               <p class="setting-desc">Displayed in the navbar, emails, and browser tab</p>
             </div>
-            <input v-model="settings.platformName" class="setting-input" />
+            <input v-model="settings.platformName" name="platformName" class="setting-input" />
           </div>
           <div class="setting-row">
             <div class="setting-info">
               <p class="setting-label">Tagline</p>
               <p class="setting-desc">Short description shown on the landing page</p>
             </div>
-            <input v-model="settings.tagline" class="setting-input" />
+            <input v-model="settings.tagline" name="tagline" class="setting-input" />
           </div>
           <div class="setting-row">
             <div class="setting-info">
               <p class="setting-label">Support Email</p>
               <p class="setting-desc">Where user support inquiries are sent</p>
             </div>
-            <input v-model="settings.supportEmail" class="setting-input" type="email" />
+            <input v-model="settings.supportEmail" name="supportEmail" autocomplete="email" class="setting-input" type="email" />
           </div>
           <div class="setting-row">
             <div class="setting-info">
               <p class="setting-label">Contact Phone</p>
               <p class="setting-desc">Displayed on the contact page</p>
             </div>
-            <input v-model="settings.contactPhone" class="setting-input" />
+            <input v-model="settings.contactPhone" name="contactPhone" autocomplete="tel" class="setting-input" />
           </div>
         </div>
       </div>
@@ -74,7 +74,7 @@
               <p class="setting-label">Maintenance Message</p>
               <p class="setting-desc">Shown to users when maintenance mode is active</p>
             </div>
-            <input v-model="settings.maintenanceMessage" class="setting-input" />
+            <input v-model="settings.maintenanceMessage" name="maintenanceMessage" class="setting-input" />
           </div>
           <div class="setting-row">
             <div class="setting-info">
@@ -91,7 +91,7 @@
               <p class="setting-label">Banner Text</p>
               <p class="setting-desc">Announcement message for all users</p>
             </div>
-            <input v-model="settings.bannerText" class="setting-input" />
+            <input v-model="settings.bannerText" name="bannerText" class="setting-input" />
           </div>
         </div>
       </div>
@@ -153,28 +153,28 @@
               <p class="setting-label">Max Skill Tags</p>
               <p class="setting-desc">Maximum number of skill tags per user profile</p>
             </div>
-            <input v-model="settings.maxSkillTags" type="number" class="setting-input setting-input-sm" />
+            <input v-model="settings.maxSkillTags" name="maxSkillTags" type="number" class="setting-input setting-input-sm" />
           </div>
           <div class="setting-row">
             <div class="setting-info">
               <p class="setting-label">Max Bio Length</p>
               <p class="setting-desc">Character limit for user bio</p>
             </div>
-            <input v-model="settings.maxBioLength" type="number" class="setting-input setting-input-sm" />
+            <input v-model="settings.maxBioLength" name="maxBioLength" type="number" class="setting-input setting-input-sm" />
           </div>
           <div class="setting-row">
             <div class="setting-info">
               <p class="setting-label">Max Avatar Size (MB)</p>
               <p class="setting-desc">Maximum file size for profile pictures</p>
             </div>
-            <input v-model="settings.maxAvatarSize" type="number" class="setting-input setting-input-sm" />
+            <input v-model="settings.maxAvatarSize" name="maxAvatarSize" type="number" class="setting-input setting-input-sm" />
           </div>
           <div class="setting-row">
             <div class="setting-info">
               <p class="setting-label">Max Projects per User</p>
               <p class="setting-desc">How many projects a user can create</p>
             </div>
-            <input v-model="settings.maxProjectsPerUser" type="number" class="setting-input setting-input-sm" />
+            <input v-model="settings.maxProjectsPerUser" name="maxProjectsPerUser" type="number" class="setting-input setting-input-sm" />
           </div>
         </div>
       </div>
@@ -190,14 +190,14 @@
               <p class="setting-label">Max Post Length</p>
               <p class="setting-desc">Maximum characters per post</p>
             </div>
-            <input v-model="settings.maxPostLength" type="number" class="setting-input setting-input-sm" />
+            <input v-model="settings.maxPostLength" name="maxPostLength" type="number" class="setting-input setting-input-sm" />
           </div>
           <div class="setting-row">
             <div class="setting-info">
               <p class="setting-label">Max Images per Post</p>
               <p class="setting-desc">Number of image attachments allowed</p>
             </div>
-            <input v-model="settings.maxImagesPerPost" type="number" class="setting-input setting-input-sm" />
+            <input v-model="settings.maxImagesPerPost" name="maxImagesPerPost" type="number" class="setting-input setting-input-sm" />
           </div>
           <div class="setting-row">
             <div class="setting-info">
@@ -214,7 +214,7 @@
               <p class="setting-label">Posts per Page</p>
               <p class="setting-desc">Number of posts loaded per scroll</p>
             </div>
-            <input v-model="settings.postsPerPage" type="number" class="setting-input setting-input-sm" />
+            <input v-model="settings.postsPerPage" name="postsPerPage" type="number" class="setting-input setting-input-sm" />
           </div>
         </div>
       </div>
@@ -227,14 +227,14 @@
               <p class="setting-label">Auto-flag Threshold</p>
               <p class="setting-desc">Number of reports before content is auto-flagged for review</p>
             </div>
-            <input v-model="settings.autoFlagThreshold" type="number" class="setting-input setting-input-sm" />
+            <input v-model="settings.autoFlagThreshold" name="autoFlagThreshold" type="number" class="setting-input setting-input-sm" />
           </div>
           <div class="setting-row">
             <div class="setting-info">
               <p class="setting-label">Auto-suspend Threshold</p>
               <p class="setting-desc">Number of confirmed violations before auto-suspending a user</p>
             </div>
-            <input v-model="settings.autoSuspendThreshold" type="number" class="setting-input setting-input-sm" />
+            <input v-model="settings.autoSuspendThreshold" name="autoSuspendThreshold" type="number" class="setting-input setting-input-sm" />
           </div>
           <div class="setting-row">
             <div class="setting-info">
@@ -280,21 +280,21 @@
               <p class="setting-label">Session Timeout (minutes)</p>
               <p class="setting-desc">Auto-logout after inactivity</p>
             </div>
-            <input v-model="settings.sessionTimeout" type="number" class="setting-input setting-input-sm" />
+            <input v-model="settings.sessionTimeout" name="sessionTimeout" type="number" class="setting-input setting-input-sm" />
           </div>
           <div class="setting-row">
             <div class="setting-info">
               <p class="setting-label">Max Login Attempts</p>
               <p class="setting-desc">Lock account after failed attempts</p>
             </div>
-            <input v-model="settings.maxLoginAttempts" type="number" class="setting-input setting-input-sm" />
+            <input v-model="settings.maxLoginAttempts" name="maxLoginAttempts" type="number" class="setting-input setting-input-sm" />
           </div>
           <div class="setting-row">
             <div class="setting-info">
               <p class="setting-label">Password Minimum Length</p>
               <p class="setting-desc">Minimum characters required for passwords</p>
             </div>
-            <input v-model="settings.minPasswordLength" type="number" class="setting-input setting-input-sm" />
+            <input v-model="settings.minPasswordLength" name="minPasswordLength" type="number" class="setting-input setting-input-sm" />
           </div>
         </div>
       </div>
@@ -307,21 +307,21 @@
               <p class="setting-label">API Rate Limit (req/min)</p>
               <p class="setting-desc">Maximum API requests per user per minute</p>
             </div>
-            <input v-model="settings.apiRateLimit" type="number" class="setting-input setting-input-sm" />
+            <input v-model="settings.apiRateLimit" name="apiRateLimit" type="number" class="setting-input setting-input-sm" />
           </div>
           <div class="setting-row">
             <div class="setting-info">
               <p class="setting-label">Post Rate Limit (posts/hour)</p>
               <p class="setting-desc">Maximum posts a user can publish per hour</p>
             </div>
-            <input v-model="settings.postRateLimit" type="number" class="setting-input setting-input-sm" />
+            <input v-model="settings.postRateLimit" name="postRateLimit" type="number" class="setting-input setting-input-sm" />
           </div>
           <div class="setting-row">
             <div class="setting-info">
               <p class="setting-label">Message Rate Limit (msg/min)</p>
               <p class="setting-desc">Maximum messages per minute in DMs</p>
             </div>
-            <input v-model="settings.messageRateLimit" type="number" class="setting-input setting-input-sm" />
+            <input v-model="settings.messageRateLimit" name="messageRateLimit" type="number" class="setting-input setting-input-sm" />
           </div>
         </div>
       </div>

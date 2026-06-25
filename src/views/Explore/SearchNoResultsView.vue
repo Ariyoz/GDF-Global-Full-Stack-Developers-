@@ -5,7 +5,7 @@
       <div class="search-section">
         <div class="search-wrap">
           <span class="material-symbols-outlined search-icon">search</span>
-          <input v-model="query" class="search-input" :placeholder="'Search for ' + lastQuery + '...'" @keyup.enter="handleSearch" />
+          <input v-model="query" name="search" autocomplete="off" class="search-input" :placeholder="'Search for ' + lastQuery + '...'" @keyup.enter="handleSearch" />
           <button v-if="query" class="btn-ghost clear-btn" @click="query = ''">
             <span class="material-symbols-outlined" style="font-size:18px">close</span>
           </button>

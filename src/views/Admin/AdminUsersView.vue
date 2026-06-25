@@ -63,7 +63,7 @@
       </div>
       <div class="search-wrap">
         <span class="material-symbols-outlined search-icon">search</span>
-        <input v-model="searchQuery" class="search-input" placeholder="Search by name, email, or ID..." />
+        <input v-model="searchQuery" name="search" autocomplete="off" class="search-input" placeholder="Search by name, email, or ID..." />
       </div>
     </div>
 
