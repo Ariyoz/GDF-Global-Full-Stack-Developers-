@@ -1,5 +1,5 @@
-<template>
-  <div class="dash-layout" :class="{ 'messaging-fullscreen': $route.path.startsWith('/messaging') }">
+﻿<template>
+  <div class="dash-layout" :class="{ 'messaging-fullscreen': $route.path.startsWith('/messaging'), 'feed-page': $route.path === '/feed' }">
     <!-- Top Nav -->
     <header class="dash-topnav glass-nav">
       <div class="dash-topnav-inner">
@@ -1332,5 +1332,10 @@ function handleSignOut() {
   .messaging-fullscreen .dash-sidebar { display: none !important; }
   .messaging-fullscreen .dash-main { margin-left: 0 !important; padding: 0 !important; padding-bottom: 90px !important; }
   .messaging-fullscreen .dash-body { padding-top: 0 !important; }
+}
+
+/* Feed page on mobile: hide user pill, keep back + GFD logo + theme toggle */
+@media (max-width: 767px) {
+  .feed-page .topnav-user-pill { display: none !important; }
 }
 </style>

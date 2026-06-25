@@ -1016,6 +1016,15 @@ function submitComment(post, e) {
   z-index: 19;
 }
 
+/* On mobile: create-post sits in normal flow, full width */
+@media (max-width: 1023px) {
+  .create-post {
+    position: static;
+    top: auto; left: auto; right: auto;
+    border-radius: 0;
+  }
+}
+
 .create-post-top {
   display: flex; align-items: center; gap: 0.75rem;
   margin-bottom: 0.875rem;
