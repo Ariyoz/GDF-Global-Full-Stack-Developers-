@@ -120,7 +120,6 @@ const router    = useRouter()
 const route     = useRoute()
 const authStore = useAuthStore()
 const uiStore   = useUiStore()
-const route     = useRoute()
 const activeStatus = ref(route.query.tab || 'all')
 
 function goToNewProject() { router.push({ name: 'project-upload' }) }
