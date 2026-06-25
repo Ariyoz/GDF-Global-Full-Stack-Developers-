@@ -20,23 +20,52 @@
           :key="project.id"
           class="trending-card"
           :class="{ 'trending-card-large': i === 0 }"
-          @click="viewProject(project)"
         >
           <div class="trending-card-inner">
             <span v-if="i === 0" class="trending-badge">TRENDING</span>
+
             <div class="trending-card-content">
               <h3 class="trending-card-title">{{ project.title }}</h3>
-              <p class="trending-card-desc">{{ project.description?.slice(0, 80) }}{{ project.description?.length > 80 ? '...' : '' }}</p>
-              <div class="trending-card-skills" v-if="project.skills_needed?.length">
+              <p class="trending-card-desc">
+                {{ project.description?.slice(0, 100) }}{{ (project.description?.length || 0) > 100 ? '…' : '' }}
+              </p>
+
+              <!-- Tech skills -->
+              <div v-if="project.skills_needed?.length" class="trending-card-skills">
                 <span v-for="skill in project.skills_needed.slice(0, 3)" :key="skill" class="trending-skill">{{ skill }}</span>
               </div>
+            </div>
+
+            <!-- Footer: links + stats -->
+            <div class="trending-card-footer">
+              <!-- URL Links -->
+              <div class="trending-links">
+                <a v-if="project.live_url" :href="project.live_url" target="_blank" rel="noopener"
+                  class="trend-link-btn" title="Live Demo" @click.stop>
+                  <span class="material-symbols-outlined" style="font-size:15px">rocket_launch</span>
+                  Demo
+                </a>
+                <a v-if="project.repo_url" :href="project.repo_url" target="_blank" rel="noopener"
+                  class="trend-link-btn" title="Source Code" @click.stop>
+                  <span class="material-symbols-outlined" style="font-size:15px">code</span>
+                  Code
+                </a>
+              </div>
+
+              <!-- Stats -->
               <div class="trending-card-stats">
                 <span class="trending-stat">
                   <span class="material-symbols-outlined">visibility</span>
                   {{ formatCount(project.view_count) }}
                 </span>
-                <button class="trending-stat like-stat" :class="{ liked: project.is_liked }" @click.stop="likeProject(project)">
-                  <span class="material-symbols-outlined" :style="project.is_liked ? 'font-variation-settings:\'FILL\' 1' : ''">favorite</span>
+                <button
+                  class="trending-stat like-stat"
+                  :class="{ liked: project.is_liked }"
+                  @click.stop="likeProject(project)"
+                  :title="project.is_liked ? 'Unlike' : 'Like'"
+                >
+                  <span class="material-symbols-outlined"
+                    :style="project.is_liked ? 'font-variation-settings:\'FILL\' 1' : ''">favorite</span>
                   {{ formatCount(project.like_count) }}
                 </button>
               </div>
@@ -45,7 +74,7 @@
         </div>
 
         <!-- CTA Card -->
-        <div class="trending-card trending-cta" @click="$router.push('/dashboard/projects')">
+        <div class="trending-card trending-cta" @click="$router.push('/projects/upload')">
           <div class="trending-cta-inner">
             <span class="material-symbols-outlined" style="font-size:2.5rem;color:var(--primary)">add_circle</span>
             <h4 class="trending-cta-title">Submit Yours</h4>
@@ -56,7 +85,7 @@
 
       <!-- Empty state -->
       <div v-else-if="!loading" class="trending-empty">
-        <p>No projects yet. Be the first to <RouterLink to="/dashboard/projects" style="color:var(--primary)">submit one</RouterLink>!</p>
+        <p>No projects yet. Be the first to <RouterLink to="/projects/upload" style="color:var(--primary)">submit one</RouterLink>!</p>
       </div>
     </div>
   </section>
@@ -65,6 +94,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import http from '@/services/http'
 
 const router = useRouter()
 const projects = ref([])
@@ -72,12 +102,13 @@ const loading = ref(true)
 
 onMounted(async () => {
   try {
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1'
-    const res = await fetch(`${baseUrl}/projects?limit=4&sort=trending`)
-    if (res.ok) {
-      const data = await res.json()
-      projects.value = data.projects || []
-    }
+    const data = await http.get('/projects?limit=4&sort=trending')
+    projects.value = (data.projects || []).map(p => ({
+      ...p,
+      is_liked:  false,
+      repo_url:  p.repository_url || p.github_url || p.repo_url || null,
+      live_url:  p.live_url || null,
+    }))
   } catch (err) {
     console.error('Failed to fetch trending projects:', err)
   } finally {
@@ -85,35 +116,26 @@ onMounted(async () => {
   }
 })
 
-async function viewProject(project) {
-  // Record view
-  try {
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1'
-    fetch(`${baseUrl}/projects/${project.id}/view`, { method: 'POST' })
-  } catch { /* ignore */ }
-  router.push(`/projects`)
-}
-
 async function likeProject(project) {
   try {
-    const token = localStorage.getItem('gfd_token')
-    if (!token) return
-    const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1'
-    const res = await fetch(`${baseUrl}/projects/${project.id}/like`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    if (res.ok) {
-      project.like_count = (project.like_count || 0) + 1
-      project.is_liked = true
+    const res = await http.post(`/projects/${project.id}/like`)
+    // Backend returns { liked: true/false }
+    project.is_liked   = res.liked
+    project.like_count = res.liked
+      ? (project.like_count || 0) + 1
+      : Math.max((project.like_count || 1) - 1, 0)
+  } catch (err) {
+    // If not logged in, redirect to auth
+    if (err?.response?.status === 401) {
+      router.push('/auth/login')
     }
-  } catch { /* ignore */ }
+  }
 }
 
 function formatCount(count) {
   if (!count) return '0'
   if (count >= 1000) return (count / 1000).toFixed(1) + 'k'
-  return count.toString()
+  return String(count)
 }
 </script>
 
@@ -241,9 +263,47 @@ function formatCount(count) {
   display: flex;
   align-items: center;
   gap: 1rem;
+  padding-top: 0.75rem;
+}
+
+/* Footer row: links on left, stats on right */
+.trending-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
   margin-top: 0.5rem;
   padding-top: 0.75rem;
   border-top: 1px solid var(--outline-variant);
+  flex-wrap: wrap;
+}
+
+.trending-links {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.trend-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.625rem;
+  background: var(--surface-container);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-full);
+  font-family: var(--font-headline);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.trend-link-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(168,85,247,0.06);
 }
 
 .trending-stat {
