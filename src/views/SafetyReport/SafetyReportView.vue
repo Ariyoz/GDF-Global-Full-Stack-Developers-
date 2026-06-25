@@ -35,7 +35,7 @@
               class="reason-item"
               :class="{ active: selectedReason === reason.value }"
             >
-              <input type="radio" :value="reason.value" v-model="selectedReason" style="display:none" />
+              <input type="radio" name="report_reason" :value="reason.value" v-model="selectedReason" style="display:none" />
               <div class="reason-icon-wrap">
                 <span class="material-symbols-outlined reason-icon" :style="{ color: reason.color }">{{ reason.icon }}</span>
               </div>

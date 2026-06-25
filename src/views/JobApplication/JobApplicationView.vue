@@ -72,7 +72,7 @@
                   <label class="form-label">Proposed Rate (USD)</label>
                   <div class="input-prefix-wrap">
                     <span class="input-prefix">$</span>
-                    <input v-model="form.rate" type="number" class="form-input with-prefix" placeholder="0.00" />
+                    <input v-model="form.rate" name="rate" type="number" class="form-input with-prefix" placeholder="0.00" />
                   </div>
                 </div>
 
@@ -91,7 +91,7 @@
               <!-- Portfolio Link -->
               <div class="form-field">
                 <label class="form-label">Project-Specific Links <span class="optional">(Optional)</span></label>
-                <input v-model="form.portfolio" type="url" class="form-input" placeholder="https://github.com/yourhandle/similar-project" />
+                <input v-model="form.portfolio" name="portfolio" autocomplete="url" type="url" class="form-input" placeholder="https://github.com/yourhandle/similar-project" />
               </div>
 
               <!-- Submit -->

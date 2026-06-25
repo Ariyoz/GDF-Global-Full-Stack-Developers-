@@ -58,14 +58,14 @@
             <label class="field-label-sm">GitHub</label>
             <div class="pfx-wrap">
               <span class="pfx">github.com/</span>
-              <input v-model="profile.github" class="pfx-input" placeholder="username" @input="cleanGithub" />
+              <input v-model="profile.github" name="github" autocomplete="url" class="pfx-input" placeholder="username" @input="cleanGithub" />
             </div>
           </div>
           <div class="form-field-wrap">
             <label class="field-label-sm">LinkedIn</label>
             <div class="pfx-wrap">
               <span class="pfx">linkedin.com/in/</span>
-              <input v-model="profile.linkedin" class="pfx-input" placeholder="username" @input="cleanLinkedin" />
+              <input v-model="profile.linkedin" name="linkedin" autocomplete="url" class="pfx-input" placeholder="username" @input="cleanLinkedin" />
             </div>
           </div>
           <GfdInput v-model="profile.twitter"  label="Twitter"  placeholder="@username" />
@@ -177,7 +177,7 @@
         <!-- Search -->
         <div class="curr-search-wrap">
           <span class="material-symbols-outlined curr-search-ico">search</span>
-          <input v-model="currSearch" class="curr-search" placeholder="Search currency or country…" />
+          <input v-model="currSearch" name="currency_search" autocomplete="off" class="curr-search" placeholder="Search currency or country…" />
         </div>
 
         <!-- Currency grid -->
@@ -205,7 +205,7 @@
         <h3 class="settings-section-title">Profile Visibility</h3>
         <div class="radio-list">
           <label v-for="opt in visibilityOpts" :key="opt.value" class="radio-item">
-            <input type="radio" :value="opt.value" v-model="privacy.visibility" />
+            <input type="radio" name="profile_visibility" :value="opt.value" v-model="privacy.visibility" />
             <div>
               <p class="radio-label">{{ opt.label }}</p>
               <p class="radio-desc">{{ opt.desc }}</p>

@@ -139,7 +139,7 @@
                   class="visibility-opt"
                   :class="{ active: form.visibility === opt.value }"
                 >
-                  <input type="radio" :value="opt.value" v-model="form.visibility" style="display:none" />
+                  <input type="radio" name="visibility" :value="opt.value" v-model="form.visibility" style="display:none" />
                   <span class="material-symbols-outlined vis-icon">{{ opt.icon }}</span>
                   <div>
                     <p class="vis-label">{{ opt.label }}</p>

@@ -43,7 +43,7 @@
           <div class="filter-group">
             <p class="filter-group-label">Availability</p>
             <label v-for="opt in availabilityOpts" :key="opt.value" class="filter-checkbox">
-              <input type="checkbox" :value="opt.value" v-model="filters.availability" />
+              <input type="checkbox" name="availability" :value="opt.value" v-model="filters.availability" />
               <span>{{ opt.label }}</span>
             </label>
           </div>
@@ -51,7 +51,7 @@
           <div class="filter-group">
             <p class="filter-group-label">Experience Level</p>
             <label v-for="opt in experienceOpts" :key="opt.value" class="filter-checkbox">
-              <input type="checkbox" :value="opt.value" v-model="filters.experience" />
+              <input type="checkbox" name="experience" :value="opt.value" v-model="filters.experience" />
               <span>{{ opt.label }}</span>
             </label>
           </div>

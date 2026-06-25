@@ -298,7 +298,7 @@
               <label class="field-label">Amount (₦)</label>
               <div class="input-group">
                 <span class="inp-prefix">₦</span>
-                <input v-model.number="wd.amount" type="number" class="modal-inp"
+                <input v-model.number="wd.amount" name="withdrawal_amount" type="number" class="modal-inp"
                   placeholder="Min ₦500" min="500" :max="balance" />
               </div>
             </div>
@@ -314,7 +314,7 @@
             <div class="field-group">
               <label class="field-label">Account Number</label>
               <div class="input-group">
-                <input v-model="wd.account_number" type="text" class="modal-inp"
+                <input v-model="wd.account_number" name="account_number" autocomplete="off" type="text" class="modal-inp"
                   placeholder="10-digit NUBAN" maxlength="10"
                   @input="wd.account_name = ''; wd.verified = false; autoVerifyAccount()" />
                 <button v-if="wd.account_number.length === 10 && wd.bank_code && !wd.verified"

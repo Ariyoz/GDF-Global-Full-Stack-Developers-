@@ -16,7 +16,7 @@
       <!-- Search -->
       <div class="conv-search-wrap">
         <span class="material-symbols-outlined conv-search-ico">search</span>
-        <input v-model="search" class="conv-search" placeholder="Search conversations…" />
+        <input v-model="search" name="conv_search" autocomplete="off" class="conv-search" placeholder="Search conversations…" />
       </div>
       <!-- List -->
       <div class="conv-list">
