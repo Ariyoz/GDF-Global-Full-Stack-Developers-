@@ -105,7 +105,7 @@ function handleSearch() {
 <style scoped>
 /* ── Hero Section ── */
 .hero-section {
-  min-height: auto;
+  min-height: 0;
   display: flex;
   align-items: center;
   position: relative;

@@ -162,8 +162,8 @@ onUnmounted(() => window.removeEventListener('scroll', handleScroll))
   overflow: hidden;
   padding-top: env(safe-area-inset-top, 0px);
   background: rgba(249, 249, 255, 0.92);
-  backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   border-bottom: 1px solid transparent;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.3s ease;
 }

@@ -452,8 +452,8 @@ function handleSignOut() {
   height: calc(72px + env(safe-area-inset-top, 0px));
   padding-top: env(safe-area-inset-top, 0px);
   background: var(--surface-container-lowest);
-  backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--outline-variant);
   transition: background-color 0.3s ease;
 }
