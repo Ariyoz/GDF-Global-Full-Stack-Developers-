@@ -110,16 +110,18 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
 import { useUiStore } from '@/store/ui'
 import http from '@/services/http'
 import GfdBadge from '@/components/ui/GfdBadge.vue'
 
 const router    = useRouter()
+const route     = useRoute()
 const authStore = useAuthStore()
 const uiStore   = useUiStore()
-const activeStatus = ref('all')
+const route     = useRoute()
+const activeStatus = ref(route.query.tab || 'all')
 
 function goToNewProject() { router.push({ name: 'project-upload' }) }
 

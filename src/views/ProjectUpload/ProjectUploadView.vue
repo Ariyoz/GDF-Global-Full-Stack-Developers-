@@ -189,15 +189,15 @@
         <!-- Success -->
         <div v-else class="publish-success">
           <div class="success-icon-wrap">
-            <span class="material-symbols-outlined" style="font-size:3rem;color:#16a34a;font-variation-settings:'FILL' 1">task_alt</span>
+            <span class="material-symbols-outlined" style="font-size:3rem;color:#f59e0b;font-variation-settings:'FILL' 1">pending_actions</span>
           </div>
-          <h2 class="success-title">Project Published!</h2>
+          <h2 class="success-title">Submitted for Review!</h2>
           <p class="success-desc">
-            <strong>{{ form.title }}</strong> is now live on GFD and visible to thousands of developers and companies.
+            <strong>{{ form.title }}</strong> has been submitted and is awaiting admin approval. You'll be notified once it goes live.
           </p>
           <div class="success-actions">
-            <RouterLink to="/projects" class="btn-primary">View on GFD →</RouterLink>
-            <RouterLink to="/dashboard/projects" class="btn-outline">My Projects</RouterLink>
+            <RouterLink to="/dashboard/projects?tab=pending_review" class="btn-primary">View My Projects →</RouterLink>
+            <RouterLink to="/dashboard" class="btn-outline">Back to Dashboard</RouterLink>
           </div>
         </div>
       </div>
