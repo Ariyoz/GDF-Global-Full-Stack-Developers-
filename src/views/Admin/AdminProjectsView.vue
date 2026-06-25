@@ -142,17 +142,13 @@ function fmtDate(d) {
 async function loadProjects() {
   loading.value = true
   try {
-    // Fetch all projects for admin (including pending_review)
-    const [pending, all] = await Promise.all([
-      http.get('/projects/admin/pending').catch(() => ({ projects: [] })),
-      http.get('/projects?limit=100').catch(() => ({ projects: [] })),
-    ])
-    const pendingIds = new Set((pending.projects || []).map(p => p.id))
-    const combined = [...(pending.projects || []),
-      ...(all.projects || []).filter(p => !pendingIds.has(p.id))]
-    projects.value = combined
+    // Use /admin/projects/all — clean endpoint with no routing conflicts
+    const data = await http.get('/admin/projects/all')
+    projects.value = data.projects || []
+    console.log('[Admin] Loaded', projects.value.length, 'projects')
   } catch (e) {
     console.error('Failed to load projects:', e)
+    uiStore.showError('Failed to load projects: ' + (e?.response?.data?.detail || e?.message || 'Unknown error'))
   } finally {
     loading.value = false
   }
@@ -161,7 +157,7 @@ async function loadProjects() {
 async function approve(p) {
   acting.value = p.id
   try {
-    await http.post(`/projects/admin/${p.id}/approve`, {})
+    await http.post(`/admin/projects/${p.id}/approve`, {})
     p.status = 'open'
     uiStore.showSuccess(`"${p.title}" approved and now live!`)
   } catch (e) {
@@ -180,7 +176,7 @@ async function confirmReject() {
   if (!p) return
   acting.value = p.id
   try {
-    await http.post(`/projects/admin/${p.id}/reject`, { reason: rejectModal.value.reason })
+    await http.post(`/admin/projects/${p.id}/reject`, { reason: rejectModal.value.reason })
     p.status = 'cancelled'
     uiStore.showSuccess(`"${p.title}" rejected`)
     rejectModal.value.show = false
@@ -194,7 +190,7 @@ async function confirmReject() {
 async function deleteProject(p) {
   if (!confirm(`Permanently delete "${p.title}"?`)) return
   try {
-    await http.request({ method: 'DELETE', url: `/projects/admin/${p.id}` })
+    await http.request({ method: 'DELETE', url: `/admin/projects/${p.id}` })
     projects.value = projects.value.filter(x => x.id !== p.id)
     uiStore.showSuccess('Project deleted')
   } catch (e) {
