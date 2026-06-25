@@ -139,7 +139,8 @@ const filteredProjects = computed(() => {
 })
 
 function mapProject(j, i) {
-  const st = j.status || 'pending_review'
+  // Normalize status — backend may return DRAFT or draft
+  const st = (j.status || 'draft').toLowerCase()
   const statusMap = {
     open:           { label: 'Active',     variant: 'success', key: 'active' },
     in_progress:    { label: 'In Progress',variant: 'warning', key: 'active' },
@@ -147,7 +148,7 @@ function mapProject(j, i) {
     draft:          { label: 'In Review',  variant: 'warning', key: 'pending_review' },
     completed:      { label: 'Completed',  variant: 'success', key: 'completed' },
     closed:         { label: 'Closed',     variant: 'default', key: 'completed' },
-    cancelled:      { label: 'Rejected',   variant: 'error',   key: 'completed' },
+    cancelled:      { label: 'Declined',   variant: 'error',   key: 'completed' },
   }
   const s = statusMap[st] || { label: st, variant: 'default', key: st }
   return {
