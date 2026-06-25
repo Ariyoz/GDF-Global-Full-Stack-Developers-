@@ -24,6 +24,11 @@
           <div class="trending-card-inner">
             <span v-if="i === 0" class="trending-badge">TRENDING</span>
 
+            <!-- Cover image if available -->
+            <div v-if="project.cover_image" class="trending-cover">
+              <img :src="project.cover_image" :alt="project.title" class="trending-cover-img" />
+            </div>
+
             <div class="trending-card-content">
               <h3 class="trending-card-title">{{ project.title }}</h3>
               <p class="trending-card-desc">
@@ -202,6 +207,19 @@ function formatCount(count) {
   flex-direction: column;
   gap: 0.75rem;
   min-height: 180px;
+}
+
+/* Cover image */
+.trending-cover {
+  margin: -1.5rem -1.5rem 0;
+  height: 140px;
+  overflow: hidden;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+.trending-cover-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .trending-badge {
