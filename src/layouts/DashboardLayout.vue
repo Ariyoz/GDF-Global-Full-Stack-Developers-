@@ -814,11 +814,11 @@ function handleSignOut() {
 }
 .nav-pill {
   display: flex; align-items: center; justify-content: space-around;
-  background: #ffffff;
-  border: 1px solid rgba(0,0,0,0.12);
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant);
   border-radius: 999px;
   padding: 0.5rem 0.75rem;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.10), 0 0 0 0.5px rgba(0,0,0,0.06);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.15), 0 1px 4px rgba(0,0,0,0.08);
   width: 100%; max-width: 400px;
   position: relative; pointer-events: all;
 }
@@ -829,7 +829,7 @@ function handleSignOut() {
 }
 .pill-item {
   display: flex; flex-direction: column; align-items: center; gap: 2px;
-  text-decoration: none; color: #4b5563;
+  text-decoration: none; color: var(--on-surface-variant);
   font-family: var(--font-headline); font-size: 0.6rem; font-weight: 600;
   padding: 0.3rem 0.75rem; border-radius: 999px;
   transition: all 0.15s; background: none; border: none; cursor: pointer;

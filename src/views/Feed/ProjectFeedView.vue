@@ -121,7 +121,7 @@
                     <span class="material-symbols-outlined">photo_camera</span>
                     Camera
                   </button>
-                  <button type="button" class="btn-ghost image-option" @click="$refs.videoInput.click()">
+                  <button type="button" class="btn-ghost image-option" @click="videoInput.click()">
                     <span class="material-symbols-outlined">videocam</span>
                     Video
                   </button>
@@ -253,8 +253,14 @@
               </div>
               <!-- Original post media for reposts -->
               <div v-if="post.parent_post_id && post.parent_post?.media_urls?.length" class="post-media">
-                <img v-for="(url, idx) in post.parent_post.media_urls.filter(u => u)" :key="idx"
-                  :src="url" alt="Post media" class="post-image" loading="lazy" />
+                <template v-for="(url, idx) in post.parent_post.media_urls.filter(u => u)" :key="idx">
+                  <video
+                    v-if="post.parent_post.post_type === 'video' || post.parent_post.post_type === 'VIDEO' || /\.(mp4|webm|mov|avi|mkv)/i.test(url)"
+                    :src="url" controls class="post-video" preload="metadata" playsinline
+                    style="width:100%;border-radius:12px;background:#000;max-height:500px;margin-top:0.5rem"
+                  />
+                  <img v-else :src="url" alt="Post media" class="post-image" loading="lazy" />
+                </template>
               </div>
 
               <!-- "Read More" collapsible text for normal posts -->
@@ -269,14 +275,26 @@
 
               <!-- Media (images/videos) for normal posts — shown BELOW text -->
               <div v-if="!post.parent_post_id && post.media_urls && post.media_urls.length && post.media_urls[0]" class="post-media">
-                <img
-                  v-for="(url, idx) in post.media_urls.filter(u => u)"
-                  :key="idx"
-                  :src="url"
-                  alt="Post media"
-                  class="post-image"
-                  loading="lazy"
-                />
+                <template v-for="(url, idx) in post.media_urls.filter(u => u)" :key="idx">
+                  <!-- Video: render as <video> if post_type is video OR url contains video extension -->
+                  <video
+                    v-if="post.post_type === 'video' || post.post_type === 'VIDEO' || /\.(mp4|webm|mov|avi|mkv)/i.test(url)"
+                    :src="url"
+                    controls
+                    class="post-video"
+                    preload="metadata"
+                    playsinline
+                    style="width:100%;border-radius:12px;background:#000;max-height:500px;margin-top:0.5rem"
+                  />
+                  <!-- Image -->
+                  <img
+                    v-else
+                    :src="url"
+                    alt="Post media"
+                    class="post-image"
+                    loading="lazy"
+                  />
+                </template>
               </div>
 
               <!-- Code snippet -->
@@ -614,6 +632,7 @@ const composeMode    = ref('text')
 const quotePost      = ref(null)
 const imageInput     = ref(null)
 const cameraInput    = ref(null)
+const videoInput     = ref(null)
 const selectedImage  = ref(null)
 const selectedImageFile = ref(null)
 const selectedVideo  = ref(null)
