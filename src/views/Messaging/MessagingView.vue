@@ -502,18 +502,34 @@ onUnmounted(() => {
     window.visualViewport.removeEventListener('resize', _onVV)
     window.visualViewport.removeEventListener('scroll', _onVV)
   }
-  // Reset root height
+  // Reset root positioning
   const root = document.querySelector('.msg-root')
-  if (root) root.style.height = ''
+  if (root) {
+    root.style.position = ''
+    root.style.top = ''
+    root.style.left = ''
+    root.style.width = ''
+    root.style.height = ''
+  }
   cancelRec()
 })
 
 function _onVV() {
   const vv = window.visualViewport
-  // Resize the entire root to the visible viewport — same as WhatsApp
   const root = document.querySelector('.msg-root')
-  if (root) root.style.height = vv.height + 'px'
-  // Scroll to bottom so latest messages are above the input bar
+  if (!root) return
+
+  // Pin the root to exactly the visible viewport area
+  // This is the correct WhatsApp/iOS technique:
+  // - offsetTop = how far the viewport has been pushed down (by keyboard)
+  // - height = visible height (shrinks when keyboard opens)
+  root.style.position = 'fixed'
+  root.style.top = vv.offsetTop + 'px'
+  root.style.left = vv.offsetLeft + 'px'
+  root.style.width = vv.width + 'px'
+  root.style.height = vv.height + 'px'
+
+  // Always scroll messages to bottom when viewport changes
   scrollToBottom()
 }
 
@@ -548,6 +564,11 @@ function isImgOnly(m) { return m.message_type==='image' && m.media_url && !m.is_
 function hasRxn(m)    { return m.reactions && Object.values(m.reactions).some(u=>u.length>0) }
 function closeAll()   { ctx.value.show=false; emojiP.value.show=false }
 function scrollToBottom() {
+  // Immediate scroll first
+  if (msgsEl.value) {
+    msgsEl.value.scrollTop = msgsEl.value.scrollHeight
+  }
+  // Then again after DOM update
   nextTick(() => {
     if (msgsEl.value) {
       msgsEl.value.scrollTop = msgsEl.value.scrollHeight
@@ -772,8 +793,14 @@ watch(() => messagingStore.messages.length, () => scrollToBottom())
   height: calc(100vh - 72px);
 }
 @media (max-width: 767px) {
-  /* JS overrides this with visualViewport.height when keyboard opens */
-  .msg-root { height: 100svh; }
+  /* JS overrides position/size with visualViewport values when keyboard opens */
+  .msg-root {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100svh;
+    height: 100vh; /* fallback */
+  }
 }
 
 /* ══════════════════════════════════════════
