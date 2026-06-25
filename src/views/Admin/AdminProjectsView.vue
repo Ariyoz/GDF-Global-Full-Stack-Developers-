@@ -39,7 +39,7 @@
           <div v-else class="rev-cover-placeholder">
             <span class="material-symbols-outlined" style="font-size:2rem;color:rgba(255,255,255,.5)">work</span>
           </div>
-          <span class="rev-status-chip" :class="p.status">{{ p.status }}</span>
+          <span class="rev-status-chip" :class="(p.status||'').toLowerCase()">{{ p.status }}</span>
         </div>
 
         <!-- Body -->
@@ -56,15 +56,25 @@
           <p class="rev-desc">{{ p.description }}</p>
           <p class="rev-meta">{{ p.project_type }} · Submitted {{ fmtDate(p.created_at) }}</p>
 
+          <!-- Project links preview -->
+          <div v-if="p.live_url || p.github_url || p.repository_url" class="rev-links">
+            <a v-if="p.live_url" :href="p.live_url" target="_blank" rel="noopener" class="rev-link-btn" @click.stop>
+              <span class="material-symbols-outlined" style="font-size:14px">rocket_launch</span> Demo
+            </a>
+            <a v-if="p.github_url || p.repository_url" :href="p.github_url || p.repository_url" target="_blank" rel="noopener" class="rev-link-btn" @click.stop>
+              <span class="material-symbols-outlined" style="font-size:14px">code</span> Repo
+            </a>
+          </div>
+
           <!-- Actions -->
-          <div class="rev-actions" v-if="p.status === 'pending_review' || p.status === 'draft'">
+          <div class="rev-actions" v-if="['draft','pending_review'].includes((p.status||'').toLowerCase())">
             <button class="rev-approve-btn" :disabled="acting === p.id" @click="approve(p)">
               <span class="material-symbols-outlined" style="font-size:16px">check_circle</span>
               Approve
             </button>
             <button class="rev-reject-btn" :disabled="acting === p.id" @click="openReject(p)">
               <span class="material-symbols-outlined" style="font-size:16px">cancel</span>
-              Reject
+              Decline
             </button>
           </div>
           <div class="rev-actions" v-else>
@@ -121,16 +131,17 @@ const activeTab = ref('pending')
 const rejectModal = ref({ show: false, project: null, reason: '' })
 
 const tabs = computed(() => [
-  { v: 'pending',  label: 'Pending Review', count: projects.value.filter(p => p.status === 'pending_review' || p.status === 'draft').length },
-  { v: 'approved', label: 'Approved',       count: projects.value.filter(p => p.status === 'open').length },
-  { v: 'rejected', label: 'Rejected',       count: projects.value.filter(p => p.status === 'cancelled').length },
+  { v: 'pending',  label: 'Pending Review', count: projects.value.filter(p => ['pending_review','draft','DRAFT','PENDING_REVIEW'].includes(p.status)).length },
+  { v: 'approved', label: 'Approved',       count: projects.value.filter(p => ['open','OPEN'].includes(p.status)).length },
+  { v: 'rejected', label: 'Rejected',       count: projects.value.filter(p => ['cancelled','CANCELLED'].includes(p.status)).length },
   { v: 'all',      label: 'All',            count: projects.value.length },
 ])
 
 const filteredProjects = computed(() => {
-  if (activeTab.value === 'pending')  return projects.value.filter(p => p.status === 'pending_review' || p.status === 'draft')
-  if (activeTab.value === 'approved') return projects.value.filter(p => p.status === 'open')
-  if (activeTab.value === 'rejected') return projects.value.filter(p => p.status === 'cancelled')
+  const s = (v) => v?.toLowerCase()
+  if (activeTab.value === 'pending')  return projects.value.filter(p => ['pending_review','draft'].includes(s(p.status)))
+  if (activeTab.value === 'approved') return projects.value.filter(p => s(p.status) === 'open')
+  if (activeTab.value === 'rejected') return projects.value.filter(p => s(p.status) === 'cancelled')
   return projects.value
 })
 
@@ -255,6 +266,19 @@ onMounted(loadProjects)
 .rev-title { font-family: var(--font-headline); font-size: 1rem; font-weight: 800; color: var(--on-surface); margin: 0; }
 .rev-desc { font-size: .8rem; color: var(--on-surface-variant); line-height: 1.5; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
 .rev-meta { font-size: .75rem; color: var(--on-surface-variant); }
+
+/* Link preview buttons */
+.rev-links { display: flex; gap: .4rem; flex-wrap: wrap; }
+.rev-link-btn {
+  display: inline-flex; align-items: center; gap: .25rem;
+  padding: .2rem .6rem; border-radius: 999px;
+  background: var(--surface-container);
+  border: 1px solid var(--outline-variant);
+  font-family: var(--font-headline); font-size: .72rem; font-weight: 600;
+  color: var(--primary); text-decoration: none;
+  transition: background .15s, border-color .15s;
+}
+.rev-link-btn:hover { background: rgba(168,85,247,.08); border-color: var(--primary); }
 
 /* Actions */
 .rev-actions { display: flex; gap: .5rem; margin-top: auto; }
