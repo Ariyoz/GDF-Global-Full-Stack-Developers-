@@ -41,6 +41,19 @@
               </div>
             </div>
 
+            <!-- Author row — clickable to profile -->
+            <div v-if="project.author_name || project.author_id" class="trending-author"
+              @click.stop="goToAuthor(project)" style="cursor:pointer">
+              <div class="t-av">
+                <img v-if="project.author_avatar" :src="project.author_avatar" class="t-av-img" :alt="project.author_name" />
+                <span v-else class="t-av-ini">{{ (project.author_name || 'U')[0].toUpperCase() }}</span>
+              </div>
+              <div class="t-av-info">
+                <span class="t-av-name">{{ project.author_name || 'Member' }}</span>
+                <span v-if="project.author_username" class="t-av-handle">@{{ project.author_username }}</span>
+              </div>
+            </div>
+
             <!-- Footer: links + stats -->
             <div class="trending-card-footer">
               <!-- URL Links -->
@@ -120,6 +133,12 @@ onMounted(async () => {
     loading.value = false
   }
 })
+
+function goToAuthor(project) {
+  if (project.author_id) {
+    router.push(`/developer/${project.author_id}`)
+  }
+}
 
 async function likeProject(project) {
   try {
@@ -353,6 +372,26 @@ function formatCount(count) {
 .like-stat.liked {
   color: #e91e63;
 }
+
+/* Author row */
+.trending-author {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .5rem 0;
+  border-top: 1px solid var(--outline-variant);
+  transition: opacity .15s;
+}
+.trending-author:hover { opacity: .75; }
+.t-av {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--primary-fixed);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; flex-shrink: 0;
+}
+.t-av-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.t-av-ini { font-family: var(--font-headline); font-size: .75rem; font-weight: 700; color: var(--primary); }
+.t-av-info { display: flex; flex-direction: column; gap: 0; min-width: 0; }
+.t-av-name { font-family: var(--font-headline); font-size: .78rem; font-weight: 600; color: var(--on-surface); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.t-av-handle { font-size: .68rem; color: var(--on-surface-variant); }
 
 /* CTA Card */
 .trending-cta {

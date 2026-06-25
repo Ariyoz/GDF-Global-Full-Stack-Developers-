@@ -48,6 +48,14 @@
               <span class="material-symbols-outlined" style="color:var(--primary)">image</span>
               Photo
             </button>
+            <button class="post-action-type" @click="showCompose = true; composeMode = 'video'">
+              <span class="material-symbols-outlined" style="color:#22c55e">videocam</span>
+              Video
+            </button>
+            <button class="post-action-type" @click="showCompose = true; composeMode = 'text'">
+              <span class="material-symbols-outlined" style="color:#f59e0b">edit_note</span>
+              Post
+            </button>
           </div>
         </div>
 
@@ -84,6 +92,14 @@
                   Remove image
                 </button>
               </div>
+              <!-- Video preview -->
+              <div v-if="selectedVideo" class="compose-image-preview">
+                <video :src="selectedVideo" controls style="width:100%;border-radius:8px;max-height:240px"></video>
+                <button type="button" class="btn-ghost remove-image-btn" @click="clearSelectedVideo">
+                  <span class="material-symbols-outlined">close</span>
+                  Remove video
+                </button>
+              </div>
               <!-- Quote Preview -->
               <div v-if="quotePost" class="compose-quote-preview">
                 <div class="quote-card">
@@ -105,10 +121,15 @@
                     <span class="material-symbols-outlined">photo_camera</span>
                     Camera
                   </button>
+                  <button type="button" class="btn-ghost image-option" @click="$refs.videoInput.click()">
+                    <span class="material-symbols-outlined">videocam</span>
+                    Video
+                  </button>
                   <input ref="imageInput" type="file" accept="image/*" class="hidden-file-input" @change="handleImageChange" />
                   <input ref="cameraInput" type="file" accept="image/*" capture="environment" class="hidden-file-input" @change="handleImageChange" />
+                  <input ref="videoInput" type="file" accept="video/*" class="hidden-file-input" @change="handleVideoChange" />
                 </div>
-                <button class="btn-primary" :disabled="!newPost.trim() && !selectedImage" @click="submitPost">Post</button>
+                <button class="btn-primary" :disabled="!newPost.trim() && !selectedImage && !selectedVideo" @click="submitPost">Post</button>
               </div>
             </div>
           </div>
@@ -595,6 +616,8 @@ const imageInput     = ref(null)
 const cameraInput    = ref(null)
 const selectedImage  = ref(null)
 const selectedImageFile = ref(null)
+const selectedVideo  = ref(null)
+const selectedVideoFile = ref(null)
 
 const reactionEmojis = [] // Removed — using Twitter-style actions now
 
@@ -678,28 +701,44 @@ function handleImageChange(event) {
 }
 
 function clearSelectedImage() {
-  if (selectedImage.value) {
-    URL.revokeObjectURL(selectedImage.value)
-  }
+  if (selectedImage.value) URL.revokeObjectURL(selectedImage.value)
   selectedImage.value = null
   selectedImageFile.value = null
   if (imageInput.value) imageInput.value.value = ''
 }
 
+function handleVideoChange(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+  if (selectedVideo.value) URL.revokeObjectURL(selectedVideo.value)
+  selectedVideoFile.value = file
+  selectedVideo.value = URL.createObjectURL(file)
+  // Clear image if video selected
+  clearSelectedImage()
+}
+
+function clearSelectedVideo() {
+  if (selectedVideo.value) URL.revokeObjectURL(selectedVideo.value)
+  selectedVideo.value = null
+  selectedVideoFile.value = null
+}
+
 function closeCompose() {
   showCompose.value = false
   clearSelectedImage()
+  clearSelectedVideo()
   composeMode.value = 'text'
   quotePost.value = null
 }
 
 async function submitPost() {
-  if (!newPost.value.trim() && !selectedImage.value && !quotePost.value) return
+  if (!newPost.value.trim() && !selectedImage.value && !selectedVideo.value && !quotePost.value) return
 
   try {
     let mediaUrls = []
+    let postType = 'text'
 
-    // Upload image to Cloudinary if selected
+    // Upload image if selected
     if (selectedImageFile.value) {
       try {
         const formData = new FormData()
@@ -709,9 +748,27 @@ async function submitPost() {
         })
         if (uploadResult.url) {
           mediaUrls.push(uploadResult.url)
+          postType = 'image'
         }
       } catch (uploadErr) {
         console.error('Image upload failed:', uploadErr)
+      }
+    }
+
+    // Upload video if selected
+    if (selectedVideoFile.value) {
+      try {
+        const formData = new FormData()
+        formData.append('file', selectedVideoFile.value)
+        const uploadResult = await http.post('/uploads/media', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
+        if (uploadResult.url) {
+          mediaUrls.push(uploadResult.url)
+          postType = 'video'
+        }
+      } catch (uploadErr) {
+        console.error('Video upload failed:', uploadErr)
       }
     }
 
@@ -719,7 +776,7 @@ async function submitPost() {
       content: newPost.value,
       text: newPost.value,
       media_urls: mediaUrls,
-      post_type: mediaUrls.length > 0 ? 'image' : 'text',
+      post_type: postType,
     })
   } catch {
     // Fallback — add locally
@@ -730,7 +787,7 @@ async function submitPost() {
       like_count: 0,
       comment_count: 0,
       repost_count: 0,
-      media_urls: selectedImage.value ? [selectedImage.value] : [],
+      media_urls: selectedImage.value ? [selectedImage.value] : (selectedVideo.value ? [selectedVideo.value] : []),
       created_at: new Date().toISOString(),
     }
     feedStore.posts.unshift(post)
@@ -738,6 +795,7 @@ async function submitPost() {
 
   newPost.value = ''
   clearSelectedImage()
+  clearSelectedVideo()
   composeMode.value = 'text'
   quotePost.value = null
   showCompose.value = false
