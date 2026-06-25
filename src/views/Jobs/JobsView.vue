@@ -18,7 +18,7 @@
     <!-- Search -->
     <div class="jobs-search">
       <span class="material-symbols-outlined search-icon">search</span>
-      <input v-model="searchQuery" class="search-input" placeholder="Search jobs, skills, companies..." @input="debouncedSearch" />
+      <input v-model="searchQuery" name="search" autocomplete="off" class="search-input" placeholder="Search jobs, skills, companies..." @input="debouncedSearch" />
     </div>
 
     <!-- Filters -->
@@ -161,19 +161,19 @@
               </div>
               <div class="form-field">
                 <label>Resume URL</label>
-                <input v-model="applyForm.resume_url" type="url" placeholder="https://drive.google.com/your-resume" />
+                <input v-model="applyForm.resume_url" name="resume_url" autocomplete="url" type="url" placeholder="https://drive.google.com/your-resume" />
               </div>
               <div class="form-field">
                 <label>Portfolio URL</label>
-                <input v-model="applyForm.portfolio_url" type="url" placeholder="https://yourportfolio.com" />
+                <input v-model="applyForm.portfolio_url" name="portfolio_url" autocomplete="url" type="url" placeholder="https://yourportfolio.com" />
               </div>
               <div class="form-field">
                 <label>GitHub URL</label>
-                <input v-model="applyForm.github_url" type="url" placeholder="https://github.com/username" />
+                <input v-model="applyForm.github_url" name="github_url" autocomplete="url" type="url" placeholder="https://github.com/username" />
               </div>
               <div class="form-field">
                 <label>Years of Experience</label>
-                <input v-model.number="applyForm.years_experience" type="number" placeholder="3" />
+                <input v-model.number="applyForm.years_experience" name="years_experience" type="number" placeholder="3" />
               </div>
               <div class="form-field">
                 <label>Availability</label>
@@ -209,11 +209,11 @@
             <div class="form-fields">
               <div class="form-field">
                 <label>Job Title *</label>
-                <input v-model="jobForm.title" type="text" placeholder="Senior Frontend Developer" />
+                <input v-model="jobForm.title" name="title" type="text" placeholder="Senior Frontend Developer" />
               </div>
               <div class="form-field">
                 <label>Company Name</label>
-                <input v-model="jobForm.company" type="text" placeholder="Your company name" />
+                <input v-model="jobForm.company" name="company" autocomplete="organization" type="text" placeholder="Your company name" />
               </div>
               <div class="form-field">
                 <label>Description *</label>
@@ -225,7 +225,7 @@
               </div>
               <div class="form-field">
                 <label>Skills (comma separated)</label>
-                <input v-model="jobForm.skillsText" type="text" placeholder="React, Node.js, TypeScript" />
+                <input v-model="jobForm.skillsText" name="skills" type="text" placeholder="React, Node.js, TypeScript" />
               </div>
               <div class="form-field">
                 <label>Job Type</label>
@@ -239,16 +239,16 @@
               </div>
               <div class="form-field">
                 <label>Location</label>
-                <input v-model="jobForm.location" type="text" placeholder="Remote / City, Country" />
+                <input v-model="jobForm.location" name="location" autocomplete="address-level2" type="text" placeholder="Remote / City, Country" />
               </div>
               <div class="form-row">
                 <div class="form-field">
                   <label>Min Salary ($)</label>
-                  <input v-model.number="jobForm.salary_min" type="number" placeholder="50000" />
+                  <input v-model.number="jobForm.salary_min" name="salary_min" type="number" placeholder="50000" />
                 </div>
                 <div class="form-field">
                   <label>Max Salary ($)</label>
-                  <input v-model.number="jobForm.salary_max" type="number" placeholder="80000" />
+                  <input v-model.number="jobForm.salary_max" name="salary_max" type="number" placeholder="80000" />
                 </div>
               </div>
             </div>

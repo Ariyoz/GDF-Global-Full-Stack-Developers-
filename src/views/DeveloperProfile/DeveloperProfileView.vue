@@ -292,12 +292,12 @@
           <div class="edit-form">
             <div class="edit-field">
               <label>Name</label>
-              <input v-model="editForm.full_name" type="text" maxlength="50" />
+              <input v-model="editForm.full_name" name="full_name" autocomplete="name" type="text" maxlength="50" />
               <span class="char-count">{{ editForm.full_name?.length || 0 }}/50</span>
             </div>
             <div class="edit-field">
               <label>Username</label>
-              <input v-model="editForm.username" type="text" maxlength="30" @input="checkUsername" placeholder="username" />
+              <input v-model="editForm.username" name="username" autocomplete="username" type="text" maxlength="30" @input="checkUsername" placeholder="username" />
               <span v-if="usernameStatus === 'checking'" class="username-status checking">Checking...</span>
               <span v-else-if="usernameStatus === 'available'" class="username-status available">✓ Available</span>
               <span v-else-if="usernameStatus === 'taken'" class="username-status taken">✗ Taken</span>
@@ -309,19 +309,19 @@
             </div>
             <div class="edit-field">
               <label>Location</label>
-              <input v-model="editForm.location" type="text" placeholder="City, Country" />
+              <input v-model="editForm.location" name="location" autocomplete="address-level2" type="text" placeholder="City, Country" />
             </div>
             <div class="edit-field">
               <label>Website</label>
-              <input v-model="editForm.portfolio_url" type="url" placeholder="https://yoursite.com" />
+              <input v-model="editForm.portfolio_url" name="portfolio_url" autocomplete="url" type="url" placeholder="https://yoursite.com" />
             </div>
             <div class="edit-field">
               <label>GitHub URL</label>
-              <input v-model="editForm.github_url" type="url" placeholder="https://github.com/username" />
+              <input v-model="editForm.github_url" name="github_url" autocomplete="url" type="url" placeholder="https://github.com/username" />
             </div>
             <div class="edit-field">
               <label>Skills (comma separated)</label>
-              <input v-model="editForm.skillsText" type="text" placeholder="Vue.js, React, Node.js" />
+              <input v-model="editForm.skillsText" name="skills" type="text" placeholder="Vue.js, React, Node.js" />
             </div>
           </div>
         </div>
