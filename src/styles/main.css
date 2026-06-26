@@ -1,5 +1,4 @@
-@import "tailwindcss";
-@import "bootstrap/dist/css/bootstrap.min.css";
+﻿@import "tailwindcss";
 @import "./variables.css";
 @import "./glassmorphism.css";
 @import "./animations.css";

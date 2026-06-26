@@ -6,8 +6,7 @@ import router from './router'
 // ── Global Styles ──
 import './styles/main.css'
 
-// ── Bootstrap JS ──
-import 'bootstrap/dist/js/bootstrap.bundle.min.js'
+// NOTE: Bootstrap removed — using Tailwind + custom CSS only (saves ~230KB)
 
 // ── Apply saved theme BEFORE mount to prevent flash ──
 ;(function () {

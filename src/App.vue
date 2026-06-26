@@ -40,19 +40,15 @@ let alertTimeout = null
 let keepAliveTimer = null
 
 // ── Keep-alive ping: hits /health every 13 min to prevent Render cold starts ──
-// Render free tier sleeps after 15 min of inactivity — we ping every 13 to stay awake
 function startKeepAlive() {
   const baseUrl = (import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1')
     .replace('/api/v1', '')
 
-  const ping = () => {
-    fetch(`${baseUrl}/health`, { method: 'GET', cache: 'no-cache' }).catch(() => {})
-  }
+  const ping = () => fetch(`${baseUrl}/health`, { method: 'GET', cache: 'no-cache' }).catch(() => {})
 
-  // Ping immediately, then again at 5s (double-hit to ensure server starts fast)
+  // Single ping on load
   ping()
-  setTimeout(ping, 5000)
-  // Then every 13 minutes to prevent sleep
+  // Then every 13 minutes
   keepAliveTimer = setInterval(ping, 13 * 60 * 1000)
 }
 

@@ -1,37 +1,52 @@
 import { fileURLToPath, URL } from 'node:url'
-import { createRequire } from 'node:module'
-import { defineConfig } from 'vite'
+import { defineConfig, splitVendorChunkPlugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import vueDevTools from 'vite-plugin-vue-devtools'
 import tailwindcss from '@tailwindcss/vite'
 
-const require = createRequire(import.meta.url)
-const path = require('path')
-
-// Prerender only works locally — Vercel/CI doesn't have the required
-// system libraries (libnss3) for Puppeteer to launch Chrome.
-const isCI = process.env.CI || process.env.VERCEL
-const prerenderPlugin = isCI
-  ? null
-  : (() => {
-      const vitePrerender = require('vite-plugin-prerender')
-      return vitePrerender({
-        staticDir: path.join(path.dirname(fileURLToPath(import.meta.url)), 'dist'),
-        routes: ['/', '/about', '/services', '/contact', '/explore', '/community', '/projects', '/careers', '/hire', '/jobs', '/courses', '/report', '/privacy-policy'],
-      })
-    })()
-
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [
     vue(),
-    vueDevTools(),
     tailwindcss(),
-    prerenderPlugin,
-  ].filter(Boolean),
+    splitVendorChunkPlugin(), // splits node_modules into separate cacheable chunk
+  ],
+
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
+  },
+
+  build: {
+    // Larger inline limit = fewer round trips for small assets
+    assetsInlineLimit: 4096,
+    // CSS code splitting: each async chunk gets its own CSS
+    cssCodeSplit: true,
+    // Source maps off in prod (saves ~40% bundle size)
+    sourcemap: false,
+    // Target modern browsers — smaller output
+    target: 'es2020',
+    rollupOptions: {
+      output: {
+        // Manual chunk splitting for big deps
+        manualChunks: {
+          'vue-core':   ['vue', 'vue-router', 'pinia'],
+          'axios':      ['axios'],
+          'capacitor':  [
+            '@capacitor/core',
+            '@capacitor/android',
+            '@capacitor/ios',
+          ],
+        },
+        // Predictable filenames for long-term caching
+        chunkFileNames:  'assets/js/[name]-[hash].js',
+        entryFileNames:  'assets/js/[name]-[hash].js',
+        assetFileNames:  'assets/[ext]/[name]-[hash].[ext]',
+      },
+    },
+  },
+
+  // Pre-bundle deps for faster dev startup
+  optimizeDeps: {
+    include: ['vue', 'vue-router', 'pinia', 'axios'],
   },
 })
