@@ -15,6 +15,8 @@ export const useMessagingStore = defineStore('messaging', () => {
   const typingUsers = ref({}) // { conversationId: [userId, ...] }
   const callEvent = ref(null)
   const onlineUserIds = ref(new Set())
+  // Vue can't track Set mutations reactively — use a plain object as a map instead
+  const onlineMap = ref({}) // { userId: true }
   const searchResults = ref([])
   const searchQuery = ref('')
   const isSearching = ref(false)
@@ -138,6 +140,7 @@ export const useMessagingStore = defineStore('messaging', () => {
         const userId = event.data?.user_id || event.user_id
         if (userId) {
           onlineUserIds.value.add(userId)
+          onlineMap.value = { ...onlineMap.value, [userId]: true }
           _updateOnlineStatus(userId, true)
         }
         break
@@ -147,8 +150,8 @@ export const useMessagingStore = defineStore('messaging', () => {
         const userId = event.data?.user_id || event.user_id
         if (userId) {
           onlineUserIds.value.delete(userId)
+          const m = { ...onlineMap.value }; delete m[userId]; onlineMap.value = m
           _updateOnlineStatus(userId, false)
-          // Clear any typing indicators for this user
           for (const convId in typingUsers.value) {
             typingUsers.value[convId] = typingUsers.value[convId].filter(id => id !== userId)
           }
@@ -158,7 +161,8 @@ export const useMessagingStore = defineStore('messaging', () => {
 
       case 'online_users': {
         const onlineIds = event.data?.user_ids || []
-        onlineIds.forEach(id => onlineUserIds.value.add(id))
+        onlineIds.forEach(id => { onlineUserIds.value.add(id); onlineMap.value[id] = true })
+        onlineMap.value = { ...onlineMap.value }
         conversations.value.forEach(c => {
           if (onlineIds.includes(c.other_user_id)) c.online = true
         })
@@ -318,8 +322,11 @@ export const useMessagingStore = defineStore('messaging', () => {
 
       return result
     } catch (err) {
-      // Remove optimistic on error
-      messages.value = messages.value.filter(m => m.id !== tempId)
+      // Mark optimistic message as failed — show error state in UI
+      const failIdx = messages.value.findIndex(m => m.id === tempId)
+      if (failIdx !== -1) {
+        messages.value[failIdx] = { ...messages.value[failIdx], status: 'failed' }
+      }
       console.error('Failed to send message:', err)
       throw err
     } finally {
@@ -450,7 +457,7 @@ export const useMessagingStore = defineStore('messaging', () => {
   }
 
   function isUserOnline(userId) {
-    return onlineUserIds.value.has(userId)
+    return !!onlineMap.value[userId] || onlineUserIds.value.has(userId)
   }
 
   function pinChat(convId) {

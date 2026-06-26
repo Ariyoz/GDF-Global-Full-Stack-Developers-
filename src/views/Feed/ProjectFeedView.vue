@@ -539,7 +539,7 @@ const { posts } = storeToRefs(feedStore)
 // Use profile for display
 const user = computed(() => authStore.profile || { full_name: authStore.user?.email || 'User', role: 'member' })
 
-const router = typeof useRouter !== 'undefined' ? useRouter() : null
+const router = useRouter()
 
 // Fetch feed on mount
 onMounted(() => {
@@ -570,7 +570,7 @@ function handleScroll() {
 }
 
 function goToProfile(userId) {
-  if (userId) window.location.href = `/developer/${userId}`
+  if (userId && router) router.push(`/developer/${userId}`)
 }
 
 function toggleLike(post) {
@@ -588,11 +588,11 @@ function toggleBookmark(post) {
 }
 
 function sharePost(post) {
-  const url = window.location.origin + '/feed'
+  const url = `${window.location.origin}/feed`
   if (navigator.share) {
-    navigator.share({ title: 'GFD Post', text: post.content, url })
+    navigator.share({ title: post.content?.slice(0, 60) || 'GFD Post', text: post.content, url })
   } else {
-    navigator.clipboard.writeText(url)
+    navigator.clipboard.writeText(url).then(() => uiStore.showSuccess('Link copied!'))
   }
 }
 
@@ -620,8 +620,7 @@ function searchByHashtag(tag) {
 }
 
 function openTrendingPost(post) {
-  // Navigate to post detail or open inline
-  window.location.href = `/feed/${post.id}`
+  if (router) router.push(`/feed`)
 }
 
 const showCompose = ref(false)

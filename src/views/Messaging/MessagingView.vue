@@ -244,7 +244,10 @@
                   <!-- Footer: time + ticks -->
                   <div class="bub-foot">
                     <span class="bub-ts">{{ m.time }}</span>
-                    <span v-if="m.mine" class="bub-ticks" :class="m.status">
+                    <span v-if="m.mine && m.status === 'failed'" class="bub-failed" title="Tap to retry" @click.stop="retrySend(m)">
+                      <span class="material-symbols-outlined" style="font-size:13px;color:#ef4444">error</span>
+                    </span>
+                    <span v-else-if="m.mine" class="bub-ticks" :class="m.status">
                       <span class="material-symbols-outlined tick-ico">
                         {{ m.status==='seen'||m.status==='delivered' ? 'done_all' : 'done' }}
                       </span>
@@ -460,9 +463,11 @@ const editId = ref(null), inputFocused = ref(false)
 const ctx = ref({ show:false, x:0, y:0, msg:null })
 const emojiP = ref({ show:false, x:0, y:0, msg:null })
 const isRec = ref(false), recSecs = ref(0), playingId = ref(null)
-const voiceProg = ref({}), voiceAudios = {}
+const voiceProg = ref({})
+const voiceAudios = {} // { messageId: Audio } — cleaned up on unmount
 let mediaRec=null, recChunks=[], recTimer=null
 let touchTimer=null, searchTimer=null, typingTimer=null, activeAudio=null
+const MAX_VOICE_CACHE = 10 // max cached audio elements to prevent memory leak
 
 const activeConv  = computed(() => messagingStore.activeConversation)
 const canSend     = computed(() => msg.value.trim().length > 0 || !!pendImg.value)
@@ -512,6 +517,10 @@ onUnmounted(() => {
     root.style.height = ''
   }
   cancelRec()
+  // Cleanup all cached audio elements
+  if (activeAudio) { activeAudio.pause(); activeAudio = null }
+  Object.values(voiceAudios).forEach(a => { a.pause(); a.src = '' })
+  Object.keys(voiceAudios).forEach(k => delete voiceAudios[k])
 })
 
 function _onVV() {
@@ -703,7 +712,16 @@ function toggleVoice(m) {
   playingId.value = m.id
   let a = voiceAudios[m.id]
   if (!a) {
-    a = new Audio(m.media_url); voiceAudios[m.id] = a
+    // Evict oldest cached audio if over limit
+    const keys = Object.keys(voiceAudios)
+    if (keys.length >= MAX_VOICE_CACHE) {
+      const oldKey = keys[0]
+      voiceAudios[oldKey]?.pause()
+      voiceAudios[oldKey].src = ''
+      delete voiceAudios[oldKey]
+    }
+    a = new Audio(m.media_url)
+    voiceAudios[m.id] = a
     a.ontimeupdate = () => voiceProg.value = { ...voiceProg.value, [m.id]: a.currentTime / (a.duration||1) }
     a.onended = () => { playingId.value = null; voiceProg.value = { ...voiceProg.value, [m.id]: 0 } }
   }
@@ -726,6 +744,21 @@ async function doReact(m, emoji) {
 
 // ── Reply ──
 function setReply(m) { replyTo.value = m; nextTick(() => txtEl.value?.focus()) }
+
+// ── Retry failed message ──
+async function retrySend(m) {
+  // Remove the failed message and re-send
+  messagingStore.messages = messagingStore.messages.filter(x => x.id !== m.id)
+  try {
+    await messagingStore.sendMessage({
+      content: m.content,
+      message_type: m.message_type || 'text',
+      media_url: m.media_url || null,
+      file_name: m.file_name || null,
+      file_size: m.file_size || null,
+    })
+  } catch { /* show failed again */ }
+}
 
 // ── Context menu ──
 function openCtx(m, e) {
@@ -1237,6 +1270,7 @@ watch(() => messagingStore.messages.length, () => scrollToBottom())
 .tick-ico { font-size: 14px; line-height: 1; }
 .bub-ticks.seen  .tick-ico { color: #c4b5fd; }
 .bub-ticks.delivered .tick-ico { color: rgba(255,255,255,.7); }
+.bub-failed { cursor: pointer; display: flex; align-items: center; }
 
 /* Voice player */
 .voice-player {
