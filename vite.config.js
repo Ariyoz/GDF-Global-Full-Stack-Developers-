@@ -1,5 +1,5 @@
 import { fileURLToPath, URL } from 'node:url'
-import { defineConfig, splitVendorChunkPlugin } from 'vite'
+import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 
@@ -7,7 +7,6 @@ export default defineConfig({
   plugins: [
     vue(),
     tailwindcss(),
-    splitVendorChunkPlugin(), // splits node_modules into separate cacheable chunk
   ],
 
   resolve: {
