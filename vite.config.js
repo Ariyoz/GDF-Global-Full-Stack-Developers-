@@ -27,14 +27,11 @@ export default defineConfig({
     rollupOptions: {
       output: {
         // Manual chunk splitting for big deps
-        manualChunks: {
-          'vue-core':   ['vue', 'vue-router', 'pinia'],
-          'axios':      ['axios'],
-          'capacitor':  [
-            '@capacitor/core',
-            '@capacitor/android',
-            '@capacitor/ios',
-          ],
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('vue') || id.includes('vue-router') || id.includes('pinia')) return 'vue-core'
+            if (id.includes('axios')) return 'axios'
+          }
         },
         // Predictable filenames for long-term caching
         chunkFileNames:  'assets/js/[name]-[hash].js',
