@@ -823,18 +823,21 @@ watch(() => messagingStore.messages.length, () => scrollToBottom())
   display: flex;
   overflow: hidden;
   background: var(--background);
-  height: 100vh;
-  width: 100%;
+  /* Sit precisely in the space after the fixed sidebar and below the fixed topnav */
+  position: fixed;
+  top: calc(72px + env(safe-area-inset-top, 0px));
+  left: 256px;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
 }
 
 @media (max-width: 767px) {
-  /* JS overrides position/size with visualViewport values when keyboard opens */
+  /* Mobile: fullscreen, JS handles keyboard resize via visualViewport */
   .msg-root {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%;
-    height: 100svh;
-    height: 100vh; /* fallback */
+    top: 0;
+    left: 0;
+    z-index: 200;
   }
 }
 
