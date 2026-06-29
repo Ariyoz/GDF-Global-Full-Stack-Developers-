@@ -36,3 +36,17 @@
 .btn-ghost {
   transition-property: opacity, transform, background-color, border-color, color, box-shadow;
 }
+
+/* ── Messaging desktop layout — global override ── */
+@media (min-width: 768px) {
+  .msg-root {
+    position: fixed !important;
+    top: 72px !important;
+    left: 256px !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: auto !important;
+    height: auto !important;
+    z-index: 50 !important;
+  }
+}

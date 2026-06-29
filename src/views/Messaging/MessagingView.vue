@@ -824,12 +824,14 @@ watch(() => messagingStore.messages.length, () => scrollToBottom())
   overflow: hidden;
   background: var(--background);
   /* Sit precisely in the space after the fixed sidebar and below the fixed topnav */
-  position: fixed;
-  top: calc(72px + env(safe-area-inset-top, 0px));
-  left: 256px;
-  right: 0;
-  bottom: 0;
-  z-index: 50;
+  position: fixed !important;
+  top: 72px !important;
+  left: 256px !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 50 !important;
+  width: auto !important;
+  height: auto !important;
 }
 
 @media (max-width: 767px) {
