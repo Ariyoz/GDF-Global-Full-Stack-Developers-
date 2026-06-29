@@ -790,13 +790,6 @@ function handleSignOut() {
     padding: var(--space-lg);
     margin-left: 256px;
   }
-  /* Messaging: remove padding and max-width so msg-root fills the full available space */
-  .messaging-fullscreen .dash-main {
-    padding: 0 !important;
-    max-width: none !important;
-    display: flex !important;
-    flex-direction: column !important;
-  }
 }
 
 /* Mobile Bottom Nav — WhatsApp floating pill style */
@@ -814,10 +807,7 @@ function handleSignOut() {
 @media (max-width: 767px) {
   .mobile-bottom-nav { display: flex; }
   .dash-main { padding-bottom: 96px; }
-  /* Hide pill nav + topnav when messaging is fullscreen */
-  .messaging-fullscreen .mobile-bottom-nav { display: none !important; }
-  .messaging-fullscreen .dash-topnav { display: none !important; }
-  .messaging-fullscreen .dash-body { padding-top: 0 !important; }
+  /* Hide pill nav + topnav when messaging is fullscreen — mobile handled globally below */
 }
 .nav-pill {
   display: flex; align-items: center; justify-content: space-around;
@@ -1336,8 +1326,8 @@ function handleSignOut() {
 /* Messaging full-screen — all screen sizes */
 .messaging-fullscreen .dash-topnav { display: none !important; }
 .messaging-fullscreen .dash-sidebar { display: none !important; }
-.messaging-fullscreen .dash-main { margin-left: 0 !important; padding: 0 !important; }
 .messaging-fullscreen .dash-body { padding-top: 0 !important; }
+.messaging-fullscreen .dash-main { margin-left: 0 !important; padding: 0 !important; max-width: none !important; }
 .messaging-fullscreen .mobile-bottom-nav { display: none !important; }
 
 /* Feed page on mobile: hide user pill, keep back + GFD logo + theme toggle */
