@@ -823,6 +823,7 @@ watch(() => messagingStore.messages.length, () => scrollToBottom())
   display: flex;
   overflow: hidden;
   background: var(--background);
+  width: 100%;
   height: calc(100vh - 72px);
 }
 @media (max-width: 767px) {

@@ -794,6 +794,8 @@ function handleSignOut() {
   .messaging-fullscreen .dash-main {
     padding: 0 !important;
     max-width: none !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
 }
 
