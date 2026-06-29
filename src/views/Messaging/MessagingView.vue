@@ -837,9 +837,9 @@ watch(() => messagingStore.messages.length, () => scrollToBottom())
 @media (max-width: 767px) {
   /* Mobile: fullscreen, JS handles keyboard resize via visualViewport */
   .msg-root {
-    top: 0;
-    left: 0;
-    z-index: 200;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 200 !important;
   }
 }
 
