@@ -232,16 +232,12 @@ export const useMessagingStore = defineStore('messaging', () => {
     loading.value = true
     try {
       const data = await messagingService.getConversations()
-      // Build a map of conversations we've already zeroed locally
-      const localZeroed = new Set(
-        conversations.value.filter(c => c.unread_count === 0).map(c => c.id)
-      )
       conversations.value = data.map(c => ({
         ...c,
         online: c.online || onlineUserIds.value.has(c.other_user_id) || false,
         time: c.last_message_at ? _formatTime(new Date(c.last_message_at)) : '',
-        // Keep local zero if we already marked it read (avoids flash of stale count)
-        unread_count: localZeroed.has(c.id) ? 0 : (c.unread_count || 0),
+        // Zero out unread if this conversation is currently active (already being viewed)
+        unread_count: activeConversation.value?.id === c.id ? 0 : (c.unread_count || 0),
       }))
     } catch (err) {
       console.error('Failed to fetch conversations:', err)
