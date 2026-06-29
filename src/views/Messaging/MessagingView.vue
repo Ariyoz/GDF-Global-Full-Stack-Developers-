@@ -823,17 +823,20 @@ watch(() => messagingStore.messages.length, () => scrollToBottom())
   display: flex;
   overflow: hidden;
   background: var(--background);
-  width: 100%;
-  height: calc(100vh - 72px);
+  /* Desktop: escape the layout chain entirely */
+  position: fixed;
+  top: 72px;
+  left: 256px;
+  right: 0;
+  bottom: 0;
+  z-index: 99;
 }
+
 @media (max-width: 767px) {
-  /* JS overrides position/size with visualViewport values when keyboard opens */
   .msg-root {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%;
-    height: 100svh;
-    height: 100vh; /* fallback */
+    top: 0;
+    left: 0;
+    z-index: 200;
   }
 }
 
