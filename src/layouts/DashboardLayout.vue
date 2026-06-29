@@ -790,6 +790,11 @@ function handleSignOut() {
     padding: var(--space-lg);
     margin-left: 256px;
   }
+  /* Messaging: remove padding and max-width so msg-root fills the full available space */
+  .messaging-fullscreen .dash-main {
+    padding: 0 !important;
+    max-width: none !important;
+  }
 }
 
 /* Mobile Bottom Nav — WhatsApp floating pill style */
