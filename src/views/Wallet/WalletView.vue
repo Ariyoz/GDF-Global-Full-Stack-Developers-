@@ -1,9 +1,17 @@
 <template>
   <div class="wallet-view">
 
-    <!-- Server wake-up banner -->
-    <Transition name="slide-down">
-      <div v-if="serverWaking" class="waking-banner">
+    <!-- ── PHASE 2 OVERLAY ── -->
+    <div class="phase2-overlay">
+      <div class="phase2-box">
+        <span class="material-symbols-outlined phase2-ico">rocket_launch</span>
+        <h2 class="phase2-title">Come Back in Phase 2</h2>
+        <p class="phase2-sub">The wallet is being built. Full payment, withdrawal and earnings features are coming very soon.</p>
+      </div>
+    </div>
+
+    <!-- Blurred content below -->
+    <div class="wallet-blur-wrap">
         <span class="waking-spinner"></span>
         <span>Server is starting up — this takes about 30 seconds on the first visit…</span>
       </div>
@@ -364,6 +372,8 @@
       </div>
     </Transition>
 
+  </div><!-- end wallet-blur-wrap -->
+
   </div>
 </template>
 
@@ -683,7 +693,58 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.wallet-view { display: flex; flex-direction: column; gap: 1.25rem; padding-bottom: 2rem; }
+.wallet-view { display: flex; flex-direction: column; gap: 1.25rem; padding-bottom: 2rem; position: relative; }
+
+/* ── Phase 2 overlay ── */
+.phase2-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(0,0,0,0.35);
+  border-radius: 16px;
+  min-height: 100%;
+}
+.phase2-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2.5rem 2rem;
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  text-align: center;
+  max-width: 380px;
+}
+.phase2-ico {
+  font-size: 3rem;
+  color: var(--primary);
+}
+.phase2-title {
+  font-family: var(--font-headline);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--on-surface);
+}
+.phase2-sub {
+  font-size: .9rem;
+  color: var(--on-surface-variant);
+  line-height: 1.6;
+}
+.wallet-blur-wrap {
+  filter: blur(4px);
+  pointer-events: none;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
 
 /* Server waking banner */
 .waking-banner {

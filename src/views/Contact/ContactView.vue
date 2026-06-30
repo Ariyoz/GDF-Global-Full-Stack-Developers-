@@ -104,18 +104,18 @@ const sent      = ref(false)
 const form      = reactive({ name: '', email: '', subject: '', message: '' })
 
 const contactItems = [
-  { icon: 'mail',     label: 'Email',    value: 'support@globalfd.xyz' },
+  { icon: 'mail',     label: 'Email',    value: 'support@globalfd.com' },
   { icon: 'language', label: 'Website',  value: 'www.globalfd.xyz' },
   { icon: 'public',   label: 'Location', value: 'Global · Remote-First' },
   { icon: 'schedule', label: 'Response', value: 'Within 24 hours' },
 ]
 
 const socialLinks = {
-  Twitter:  'https://twitter.com/globalfd_xyz',
-  LinkedIn: 'https://linkedin.com/company/globalfd',
-  GitHub:   'https://github.com/Ariyoz',
-  Discord:  'https://discord.gg/globalfd',
-  Instagram:'https://instagram.com/globalfd.xyz',
+  Twitter:   'https://x.com/globalfd_xyz',
+  LinkedIn:  'https://www.linkedin.com/company/global-full-stack-developers',
+  GitHub:    'https://github.com/Ariyoz',
+  Discord:   'https://discord.gg/globalfd',
+  Instagram: 'https://www.instagram.com/globalfd.xyz',
 }
 
 // GFD admin account ID — messages go directly to admin DM
@@ -126,7 +126,6 @@ async function handleSubmit() {
     uiStore.showError('Please fill in your name, email and message.')
     return
   }
-  // Basic email validation
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
     uiStore.showError('Please enter a valid email address.')
     return
@@ -136,19 +135,21 @@ async function handleSubmit() {
   try {
     const messageText = `📩 Contact Form\n\nFrom: ${form.name} (${form.email})${form.subject ? '\nSubject: ' + form.subject : ''}\n\n${form.message}`
 
-    // Try to find admin user and send DM
+    // Find admin user and send DM
     let adminSent = false
     try {
-      // Search for the GFD admin user
-      const searchRes = await http.get('/explore/search?q=gfdadmin&limit=5').catch(() => null)
-      const adminUser = searchRes?.results?.find(u =>
+      // Search for admin users
+      const searchRes = await http.get('/users/search?q=gfdadmin&limit=10').catch(() =>
+        http.get('/explore/search?q=gfdadmin&limit=10').catch(() => null)
+      )
+      const results = searchRes?.results || searchRes?.users || []
+      const adminUser = results.find(u =>
         u.username?.toLowerCase() === 'gfdadmin' ||
-        u.email?.toLowerCase()?.includes('gfd') ||
-        u.role === 'admin'
+        u.email?.toLowerCase()?.includes('gfdadmin') ||
+        u.role === 'admin' || u.role === 'ADMIN'
       )
 
       if (adminUser?.id) {
-        // Start or get existing conversation with admin
         const conv = await messagingService.startConversation(adminUser.id, 'direct')
         if (conv?.id) {
           await messagingService.sendMessage(conv.id, {
@@ -159,10 +160,10 @@ async function handleSubmit() {
         }
       }
     } catch (dmErr) {
-      console.warn('DM to admin failed, falling back:', dmErr)
+      console.warn('DM to admin failed:', dmErr)
     }
 
-    // Also try the contact API endpoint as backup
+    // Fallback to contact API
     if (!adminSent) {
       await http.post('/contact', {
         name: form.name,
@@ -173,9 +174,14 @@ async function handleSubmit() {
     }
 
     sent.value = true
-    uiStore.showSuccess('Message sent! We\'ll get back to you soon.')
+    uiStore.showSuccess("Message sent! We'll get back to you soon.")
+
+    // If logged in, navigate to messaging so they can see the conversation
+    if (authStore.isAuthenticated && adminSent) {
+      setTimeout(() => router.push('/messaging'), 1500)
+    }
   } catch (err) {
-    uiStore.showError('Failed to send message. Please try emailing support@globalfd.xyz directly.')
+    uiStore.showError('Failed to send message. Please email support@globalfd.com directly.')
   } finally {
     loading.value = false
   }
