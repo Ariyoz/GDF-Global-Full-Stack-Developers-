@@ -653,7 +653,7 @@ async function openJobDetail(job) {
   } catch { /* keep stale data */ }
 }
 
-
+async function fetchJobs() {
   loading.value = true
   try {
     let url = '/jobs?limit=30'
