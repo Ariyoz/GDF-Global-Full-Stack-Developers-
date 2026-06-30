@@ -955,12 +955,13 @@ onUnmounted(() => {
 .header-btns { display:flex; align-items:center; gap:0.5rem; }
 .btn-my-apps { display:flex; align-items:center; gap:0.3rem; padding:0.5rem 0.875rem; background:var(--surface-container); border:1px solid var(--outline-variant); border-radius:var(--radius-full); font-family:var(--font-headline); font-size:0.8rem; font-weight:600; color:var(--on-surface); cursor:pointer; }
 .btn-my-apps .material-symbols-outlined { font-size:16px; }
-.modal-footer-row { display:flex; gap:0.5rem; align-items:center; }
-.btn-close-job { display:flex; align-items:center; gap:0.3rem; padding:0.65rem 1rem; background:var(--surface-container); border:1px solid var(--outline-variant); border-radius:var(--radius-lg); font-size:0.85rem; font-weight:600; color:var(--on-surface-variant); cursor:pointer; }
+.modal-footer-row { display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; }
+.btn-close-job { display:flex; align-items:center; gap:0.3rem; padding:0.5rem 0.75rem; background:var(--surface-container); border:1px solid var(--outline-variant); border-radius:var(--radius-lg); font-size:0.8rem; font-weight:600; color:var(--on-surface-variant); cursor:pointer; white-space:nowrap; }
 .btn-close-job:hover { background:rgba(239,68,68,0.08); color:#ef4444; border-color:rgba(239,68,68,0.3); }
-.btn-edit-job { display:flex; align-items:center; gap:0.3rem; padding:0.65rem 1rem; background:var(--surface-container); border:1px solid var(--outline-variant); border-radius:var(--radius-lg); font-size:0.85rem; font-weight:600; color:var(--on-surface-variant); cursor:pointer; }
+.btn-edit-job { display:flex; align-items:center; gap:0.3rem; padding:0.5rem 0.75rem; background:var(--surface-container); border:1px solid var(--outline-variant); border-radius:var(--radius-lg); font-size:0.8rem; font-weight:600; color:var(--on-surface-variant); cursor:pointer; white-space:nowrap; }
 .btn-edit-job:hover { background:rgba(99,14,212,0.08); color:var(--primary); border-color:rgba(99,14,212,0.3); }
-.btn-edit-job .material-symbols-outlined { font-size:16px; }
+.btn-edit-job .material-symbols-outlined { font-size:15px; }
+.apply-btn { flex:1; min-width:0; }
 .btn-spinner { width:16px; height:16px; border-radius:50%; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; animation:spin 0.7s linear infinite; flex-shrink:0; }
 .closed-badge { padding:0.35rem 0.75rem; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius:var(--radius-full); font-size:0.78rem; font-weight:600; color:#ef4444; }
 .btn-chat { flex:1; display:flex; align-items:center; justify-content:center; gap:0.3rem; padding:0.5rem; background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.2); border-radius:var(--radius-lg); color:var(--primary); font-size:0.8rem; font-weight:600; cursor:pointer; }
