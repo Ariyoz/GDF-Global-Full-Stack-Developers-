@@ -30,7 +30,7 @@
 
     <!-- Jobs List -->
     <div class="jobs-list">
-      <div v-for="job in jobs" :key="job.id" class="job-card" @click="selectedJob = job">
+      <div v-for="job in jobs" :key="job.id" class="job-card" @click="openJobDetail(job)">
         <div class="job-card-header">
           <div class="job-company-logo">
             <img v-if="job.company_logo" :src="job.company_logo" :alt="job.company" class="company-logo-img" />
@@ -637,7 +637,17 @@ function debouncedSearch() {
   searchTimeout = setTimeout(fetchJobs, 500)
 }
 
-async function fetchJobs() {
+async function openJobDetail(job) {
+  // Set immediately for instant feel
+  selectedJob.value = job
+  // Then fetch fresh data (this also increments view_count on backend)
+  try {
+    const fresh = await http.get(`/jobs/${job.id}`)
+    selectedJob.value = { ...job, ...fresh }
+  } catch { /* keep stale data */ }
+}
+
+
   loading.value = true
   try {
     let url = '/jobs?limit=30'
