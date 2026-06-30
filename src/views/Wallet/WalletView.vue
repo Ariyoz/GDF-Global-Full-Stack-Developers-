@@ -12,6 +12,10 @@
 
     <!-- Blurred content below -->
     <div class="wallet-blur-wrap">
+
+    <!-- Server wake-up banner -->
+    <Transition name="slide-down">
+      <div v-if="serverWaking" class="waking-banner">
         <span class="waking-spinner"></span>
         <span>Server is starting up — this takes about 30 seconds on the first visit…</span>
       </div>
