@@ -140,9 +140,13 @@
                 <span class="material-symbols-outlined">group</span>
                 Applicants ({{ selectedJob?.application_count || 0 }})
               </button>
+              <button class="btn-edit-job" @click="openEditJob(selectedJob)">
+                <span class="material-symbols-outlined">edit</span>
+                Edit
+              </button>
               <button v-if="selectedJob?.status !== 'closed'" class="btn-close-job" @click="closeJob(selectedJob)">
                 <span class="material-symbols-outlined">lock</span>
-                Close Job
+                Close
               </button>
               <span v-else class="closed-badge">Closed</span>
             </div>
@@ -289,6 +293,97 @@
           <div class="modal-footer">
             <button class="btn-primary apply-btn" @click="postJob" :disabled="!jobForm.title || !jobForm.description">
               Post Job
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- Edit Job Modal -->
+    <Transition name="modal">
+      <div v-if="showEditJob" class="modal-overlay" @click.self="showEditJob = false">
+        <div class="job-detail-modal">
+          <div class="modal-header">
+            <h2 class="modal-title">Edit Job</h2>
+            <button class="btn-ghost icon-only" @click="showEditJob = false">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="form-fields">
+              <div class="form-field">
+                <label>Job Title *</label>
+                <input v-model="editForm.title" type="text" placeholder="Senior Frontend Developer" />
+              </div>
+              <div class="form-field">
+                <label>Company Name</label>
+                <input v-model="editForm.company" type="text" placeholder="Your company name" />
+              </div>
+              <div class="form-field">
+                <label>Company Logo</label>
+                <div class="logo-upload-box">
+                  <div class="logo-preview-circle" :class="{ 'has-logo': editForm.company_logo }">
+                    <img v-if="editForm.company_logo" :src="editForm.company_logo" @error="editForm.company_logo=''" alt="Logo" />
+                    <span v-else class="material-symbols-outlined" style="font-size:24px;color:var(--on-surface-variant)">add_photo_alternate</span>
+                  </div>
+                  <div class="logo-upload-options">
+                    <button type="button" class="logo-upload-btn" @click="$refs.editLogoInput.click()" :disabled="logoUploading">
+                      <span class="material-symbols-outlined" style="font-size:16px">upload</span>
+                      {{ logoUploading ? 'Uploading…' : 'Upload Image' }}
+                    </button>
+                    <input ref="editLogoInput" type="file" accept="image/*" class="hidden-f" @change="uploadEditLogoFile" />
+                    <span class="logo-or">or</span>
+                    <input v-model="editForm.company_logo" type="url" placeholder="Paste logo URL" class="logo-url-input" />
+                  </div>
+                </div>
+              </div>
+              <div class="form-field">
+                <label>Company Website</label>
+                <input v-model="editForm.company_url" type="url" placeholder="https://yourcompany.com" />
+              </div>
+              <div class="form-field">
+                <label>Description *</label>
+                <textarea v-model="editForm.description" rows="4" placeholder="Describe the role..."></textarea>
+              </div>
+              <div class="form-field">
+                <label>Requirements</label>
+                <textarea v-model="editForm.requirements" rows="3" placeholder="What skills/experience are needed?"></textarea>
+              </div>
+              <div class="form-field">
+                <label>Skills (comma separated)</label>
+                <input v-model="editForm.skillsText" type="text" placeholder="React, Node.js, TypeScript" />
+              </div>
+              <div class="form-field">
+                <label>Job Type</label>
+                <select v-model="editForm.job_type">
+                  <option value="full_time">Full Time</option>
+                  <option value="part_time">Part Time</option>
+                  <option value="contract">Contract</option>
+                  <option value="freelance">Freelance</option>
+                  <option value="remote">Remote</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label>Location</label>
+                <input v-model="editForm.location" type="text" placeholder="Remote / City, Country" />
+              </div>
+              <div class="form-row">
+                <div class="form-field">
+                  <label>Min Salary ($)</label>
+                  <input v-model.number="editForm.salary_min" type="number" placeholder="50000" />
+                </div>
+                <div class="form-field">
+                  <label>Max Salary ($)</label>
+                  <input v-model.number="editForm.salary_max" type="number" placeholder="80000" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-primary apply-btn" @click="saveEditJob" :disabled="!editForm.title || !editForm.description || editSaving">
+              <span v-if="editSaving" class="btn-spinner"></span>
+              <span v-else class="material-symbols-outlined">save</span>
+              {{ editSaving ? 'Saving…' : 'Save Changes' }}
             </button>
           </div>
         </div>
@@ -459,20 +554,84 @@ async function uploadLogoFile(e) {
   try {
     const formData = new FormData()
     formData.append('file', file)
-    const data = await http.post('/uploads/media', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    })
+    const data = await http.post('/uploads/media', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
     if (data.url) jobForm.value.company_logo = data.url
     else uiStore.showError('Upload failed — no URL returned')
-  } catch {
-    uiStore.showError('Failed to upload logo. Try pasting a URL instead.')
-  } finally {
-    logoUploading.value = false
-    e.target.value = ''
-  }
+  } catch { uiStore.showError('Failed to upload logo. Try pasting a URL instead.') }
+  finally { logoUploading.value = false; e.target.value = '' }
 }
 
-let searchTimeout = null
+// ── Edit Job ──
+const showEditJob = ref(false)
+const editSaving  = ref(false)
+const editForm    = ref({
+  id: '', title: '', company: '', company_logo: '', company_url: '',
+  description: '', requirements: '', skillsText: '',
+  job_type: 'full_time', location: '', salary_min: null, salary_max: null,
+})
+
+function openEditJob(job) {
+  editForm.value = {
+    id:           job.id,
+    title:        job.title || '',
+    company:      job.company || '',
+    company_logo: job.company_logo || '',
+    company_url:  job.company_url || '',
+    description:  job.description || '',
+    requirements: job.requirements || '',
+    skillsText:   (job.skills_required || []).join(', '),
+    job_type:     job.job_type || 'full_time',
+    location:     job.location || '',
+    salary_min:   job.salary_min || null,
+    salary_max:   job.salary_max || null,
+  }
+  selectedJob.value = null
+  showEditJob.value = true
+}
+
+async function uploadEditLogoFile(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  logoUploading.value = true
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+    const data = await http.post('/uploads/media', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+    if (data.url) editForm.value.company_logo = data.url
+    else uiStore.showError('Upload failed — no URL returned')
+  } catch { uiStore.showError('Failed to upload logo.') }
+  finally { logoUploading.value = false; e.target.value = '' }
+}
+
+async function saveEditJob() {
+  if (!editForm.value.title || !editForm.value.description) return
+  editSaving.value = true
+  try {
+    await http.patch(`/jobs/${editForm.value.id}`, {
+      title:          editForm.value.title,
+      company:        editForm.value.company || undefined,
+      company_logo:   editForm.value.company_logo || undefined,
+      company_url:    editForm.value.company_url || undefined,
+      description:    editForm.value.description,
+      requirements:   editForm.value.requirements || undefined,
+      skills_required: editForm.value.skillsText
+        ? editForm.value.skillsText.split(',').map(s => s.trim()).filter(Boolean)
+        : [],
+      job_type:   editForm.value.job_type,
+      location:   editForm.value.location || undefined,
+      salary_min: editForm.value.salary_min || undefined,
+      salary_max: editForm.value.salary_max || undefined,
+      is_remote:  !editForm.value.location || editForm.value.location.toLowerCase().includes('remote'),
+    })
+    uiStore.showSuccess('Job updated!')
+    showEditJob.value = false
+    fetchJobs()
+  } catch (err) {
+    uiStore.showError(err?.response?.data?.detail || 'Failed to update job')
+  } finally {
+    editSaving.value = false
+  }
+}let searchTimeout = null
 function debouncedSearch() {
   clearTimeout(searchTimeout)
   searchTimeout = setTimeout(fetchJobs, 500)
@@ -782,6 +941,10 @@ onUnmounted(() => {
 .modal-footer-row { display:flex; gap:0.5rem; align-items:center; }
 .btn-close-job { display:flex; align-items:center; gap:0.3rem; padding:0.65rem 1rem; background:var(--surface-container); border:1px solid var(--outline-variant); border-radius:var(--radius-lg); font-size:0.85rem; font-weight:600; color:var(--on-surface-variant); cursor:pointer; }
 .btn-close-job:hover { background:rgba(239,68,68,0.08); color:#ef4444; border-color:rgba(239,68,68,0.3); }
+.btn-edit-job { display:flex; align-items:center; gap:0.3rem; padding:0.65rem 1rem; background:var(--surface-container); border:1px solid var(--outline-variant); border-radius:var(--radius-lg); font-size:0.85rem; font-weight:600; color:var(--on-surface-variant); cursor:pointer; }
+.btn-edit-job:hover { background:rgba(99,14,212,0.08); color:var(--primary); border-color:rgba(99,14,212,0.3); }
+.btn-edit-job .material-symbols-outlined { font-size:16px; }
+.btn-spinner { width:16px; height:16px; border-radius:50%; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; animation:spin 0.7s linear infinite; flex-shrink:0; }
 .closed-badge { padding:0.35rem 0.75rem; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius:var(--radius-full); font-size:0.78rem; font-weight:600; color:#ef4444; }
 .btn-chat { flex:1; display:flex; align-items:center; justify-content:center; gap:0.3rem; padding:0.5rem; background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.2); border-radius:var(--radius-lg); color:var(--primary); font-size:0.8rem; font-weight:600; cursor:pointer; }
 .btn-chat:hover { background:rgba(99,102,241,0.15); }
