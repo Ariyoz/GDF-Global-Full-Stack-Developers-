@@ -558,7 +558,10 @@ async function uploadLogoFile(e) {
     if (data.url) jobForm.value.company_logo = data.url
     else uiStore.showError('Upload failed — no URL returned')
   } catch { uiStore.showError('Failed to upload logo. Try pasting a URL instead.') }
-  finally { logoUploading.value = false; e.target.value = '' }
+  finally {
+    logoUploading.value = false
+    e.target.value = ''
+  }
 }
 
 // ── Edit Job ──
@@ -600,7 +603,10 @@ async function uploadEditLogoFile(e) {
     if (data.url) editForm.value.company_logo = data.url
     else uiStore.showError('Upload failed — no URL returned')
   } catch { uiStore.showError('Failed to upload logo.') }
-  finally { logoUploading.value = false; e.target.value = '' }
+  finally {
+    logoUploading.value = false
+    e.target.value = ''
+  }
 }
 
 async function saveEditJob() {
@@ -670,8 +676,9 @@ async function openJobDetail(job) {
   } catch (err) {
     console.error('Fetch jobs error:', err)
     jobs.value = []
+  } finally {
+    loading.value = false
   }
-  finally { loading.value = false }
 }
 
 async function postJob() {
