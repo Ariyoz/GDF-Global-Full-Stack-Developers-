@@ -38,7 +38,11 @@
           </div>
           <div class="job-info">
             <h3 class="job-title">{{ job.title }}</h3>
-            <p class="job-company">{{ job.company }}</p>
+            <a v-if="job.company_url" :href="job.company_url" target="_blank" rel="noopener" class="job-company job-company-link" @click.stop>
+              {{ job.company }}
+              <span class="material-symbols-outlined" style="font-size:11px;vertical-align:middle;opacity:.7">open_in_new</span>
+            </a>
+            <p v-else class="job-company">{{ job.company }}</p>
           </div>
         </div>
         <div class="job-meta">
@@ -91,7 +95,11 @@
                 <span v-else class="company-initials">{{ (selectedJob.company || 'C')[0] }}</span>
               </div>
               <div>
-                <p class="detail-company-name">{{ selectedJob.company }}</p>
+                <a v-if="selectedJob.company_url" :href="selectedJob.company_url" target="_blank" rel="noopener" class="detail-company-name detail-company-link">
+                  {{ selectedJob.company }}
+                  <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle;opacity:.7">open_in_new</span>
+                </a>
+                <p v-else class="detail-company-name">{{ selectedJob.company }}</p>
                 <p class="detail-location">{{ selectedJob.location || 'Remote' }}</p>
               </div>
             </div>
@@ -214,6 +222,19 @@
               <div class="form-field">
                 <label>Company Name</label>
                 <input v-model="jobForm.company" name="company" autocomplete="organization" type="text" placeholder="Your company name" />
+              </div>
+              <div class="form-field">
+                <label>Company Logo URL</label>
+                <div class="logo-input-row">
+                  <input v-model="jobForm.company_logo" name="company_logo" type="url" placeholder="https://yourcompany.com/logo.png" class="logo-url-input" />
+                  <div v-if="jobForm.company_logo" class="logo-preview">
+                    <img :src="jobForm.company_logo" @error="jobForm.company_logo=''" alt="Logo preview" />
+                  </div>
+                </div>
+              </div>
+              <div class="form-field">
+                <label>Company Website</label>
+                <input v-model="jobForm.company_url" name="company_url" type="url" placeholder="https://yourcompany.com" autocomplete="url" />
               </div>
               <div class="form-field">
                 <label>Description *</label>
@@ -406,6 +427,8 @@ const applyForm = ref({
 const jobForm = ref({
   title: '',
   company: '',
+  company_logo: '',
+  company_url: '',
   description: '',
   requirements: '',
   skillsText: '',
@@ -453,6 +476,8 @@ async function postJob() {
     const payload = {
       title: jobForm.value.title,
       company: jobForm.value.company || undefined,
+      company_logo: jobForm.value.company_logo || undefined,
+      company_url: jobForm.value.company_url || undefined,
       description: jobForm.value.description,
       requirements: jobForm.value.requirements || undefined,
       skills_required: jobForm.value.skillsText ? jobForm.value.skillsText.split(',').map(s => s.trim()).filter(Boolean) : [],
@@ -465,7 +490,7 @@ async function postJob() {
     await http.post('/jobs/', payload)
     uiStore.showSuccess('Job posted successfully!')
     showPostJob.value = false
-    jobForm.value = { title: '', company: '', description: '', requirements: '', skillsText: '', job_type: 'full_time', location: '', salary_min: null, salary_max: null }
+    jobForm.value = { title: '', company: '', company_logo: '', company_url: '', description: '', requirements: '', skillsText: '', job_type: 'full_time', location: '', salary_min: null, salary_max: null }
     fetchJobs()
   } catch (err) {
     console.error('Post job error:', err.response?.data || err)
@@ -623,6 +648,8 @@ onUnmounted(() => {
 .job-info { flex: 1; min-width: 0; }
 .job-title { font-family: var(--font-headline); font-size: 0.9rem; font-weight: 700; color: var(--on-surface); }
 .job-company { font-size: 0.8rem; color: var(--on-surface-variant); }
+.job-company-link { text-decoration: none; color: var(--primary); font-weight: 500; display: inline-flex; align-items: center; gap: 2px; }
+.job-company-link:hover { text-decoration: underline; }
 .job-meta { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.5rem; }
 .job-tag { padding: 0.2rem 0.5rem; background: var(--surface-container); border-radius: var(--radius-full); font-size: 0.7rem; font-weight: 500; color: var(--on-surface-variant); text-transform: capitalize; }
 .job-tag.remote { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
@@ -653,6 +680,8 @@ onUnmounted(() => {
 
 .detail-company { display: flex; align-items: center; gap: 0.75rem; }
 .detail-company-name { font-family: var(--font-headline); font-size: 0.9rem; font-weight: 600; color: var(--on-surface); }
+.detail-company-link { text-decoration: none; color: var(--primary); display: inline-flex; align-items: center; gap: 3px; }
+.detail-company-link:hover { text-decoration: underline; }
 .detail-location { font-size: 0.8rem; color: var(--on-surface-variant); }
 .detail-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 .detail-salary { font-family: var(--font-headline); font-size: 1rem; font-weight: 700; color: var(--primary); }
@@ -696,6 +725,11 @@ onUnmounted(() => {
 .form-field input, .form-field textarea, .form-field select { padding: 0.6rem 0.75rem; background: var(--surface-container-low); border: 1px solid var(--outline-variant); border-radius: var(--radius-lg); font-size: 0.85rem; color: var(--on-surface); outline: none; resize: none; }
 .form-field input:focus, .form-field textarea:focus, .form-field select:focus { border-color: var(--primary); }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.logo-input-row { display: flex; align-items: center; gap: 0.75rem; }
+.logo-url-input { flex: 1; padding: 0.6rem 0.75rem; background: var(--surface-container-low); border: 1px solid var(--outline-variant); border-radius: var(--radius-lg); font-size: 0.85rem; color: var(--on-surface); outline: none; }
+.logo-url-input:focus { border-color: var(--primary); }
+.logo-preview { width: 44px; height: 44px; border-radius: var(--radius-lg); border: 1px solid var(--outline-variant); overflow: hidden; flex-shrink: 0; background: var(--surface-container); }
+.logo-preview img { width: 100%; height: 100%; object-fit: cover; }
 
 .modal-enter-active, .modal-leave-active { transition: opacity 0.2s, transform 0.25s; }
 .modal-enter-from, .modal-leave-to { opacity: 0; transform: translateY(20px); }
