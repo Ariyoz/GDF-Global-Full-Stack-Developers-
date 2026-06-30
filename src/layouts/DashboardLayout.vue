@@ -89,9 +89,9 @@
           <span class="material-symbols-outlined" :style="$route.path === '/dashboard' ? 'font-variation-settings:\'FILL\' 1' : ''">home</span>
           <span class="pill-label">Home</span>
         </RouterLink>
-        <RouterLink to="/feed" class="pill-item" :class="{ active: $route.path === '/feed' }">
-          <span class="material-symbols-outlined" :style="$route.path === '/feed' ? 'font-variation-settings:\'FILL\' 1' : ''">dynamic_feed</span>
-          <span class="pill-label">Feed</span>
+        <RouterLink to="/dashboard/jobs" class="pill-item" :class="{ active: $route.path === '/dashboard/jobs' }">
+          <span class="material-symbols-outlined" :style="$route.path === '/dashboard/jobs' ? 'font-variation-settings:\'FILL\' 1' : ''">work</span>
+          <span class="pill-label">My Jobs</span>
         </RouterLink>
         <button type="button" class="pill-center-btn" @click="openCompose">
           <span class="material-symbols-outlined">add</span>
@@ -408,7 +408,8 @@ const navItems = [
 const moreNavItems = [
   { to: '/dashboard',           icon: 'dashboard',              label: 'Dashboard'   },
   { to: '/feed',                icon: 'dynamic_feed',           label: 'Feed'        },
-  { to: '/jobs',                icon: 'work',                   label: 'Jobs'        },
+  { to: '/jobs',                icon: 'work_outline',           label: 'Job Board'   },
+  { to: '/dashboard/jobs',      icon: 'work',                   label: 'My Jobs'     },
   { to: '/dashboard/projects',  icon: 'folder',                 label: 'Projects'    },
   { to: '/dashboard/analytics', icon: 'analytics',              label: 'Analytics'   },
   { to: '/dashboard/requests',  icon: 'inbox',                  label: 'Requests'    },
