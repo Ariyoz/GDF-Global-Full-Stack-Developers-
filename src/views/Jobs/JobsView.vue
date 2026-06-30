@@ -224,11 +224,23 @@
                 <input v-model="jobForm.company" name="company" autocomplete="organization" type="text" placeholder="Your company name" />
               </div>
               <div class="form-field">
-                <label>Company Logo URL</label>
-                <div class="logo-input-row">
-                  <input v-model="jobForm.company_logo" name="company_logo" type="url" placeholder="https://yourcompany.com/logo.png" class="logo-url-input" />
-                  <div v-if="jobForm.company_logo" class="logo-preview">
-                    <img :src="jobForm.company_logo" @error="jobForm.company_logo=''" alt="Logo preview" />
+                <label>Company Logo</label>
+                <div class="logo-upload-box">
+                  <!-- Preview -->
+                  <div class="logo-preview-circle" :class="{ 'has-logo': jobForm.company_logo }">
+                    <img v-if="jobForm.company_logo" :src="jobForm.company_logo" @error="jobForm.company_logo=''" alt="Logo" />
+                    <span v-else class="material-symbols-outlined" style="font-size:28px;color:var(--on-surface-variant)">add_photo_alternate</span>
+                  </div>
+                  <div class="logo-upload-options">
+                    <!-- Upload from device -->
+                    <button type="button" class="logo-upload-btn" @click="$refs.logoFileInput.click()" :disabled="logoUploading">
+                      <span class="material-symbols-outlined" style="font-size:16px">upload</span>
+                      {{ logoUploading ? 'Uploading…' : 'Upload Image' }}
+                    </button>
+                    <input ref="logoFileInput" type="file" accept="image/*" class="hidden-f" @change="uploadLogoFile" />
+                    <span class="logo-or">or</span>
+                    <!-- Paste URL -->
+                    <input v-model="jobForm.company_logo" type="url" placeholder="Paste logo URL" class="logo-url-input" />
                   </div>
                 </div>
               </div>
@@ -437,6 +449,28 @@ const jobForm = ref({
   salary_min: null,
   salary_max: null,
 })
+
+const logoUploading = ref(false)
+
+async function uploadLogoFile(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  logoUploading.value = true
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+    const data = await http.post('/uploads/media', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    if (data.url) jobForm.value.company_logo = data.url
+    else uiStore.showError('Upload failed — no URL returned')
+  } catch {
+    uiStore.showError('Failed to upload logo. Try pasting a URL instead.')
+  } finally {
+    logoUploading.value = false
+    e.target.value = ''
+  }
+}
 
 let searchTimeout = null
 function debouncedSearch() {
@@ -725,11 +759,18 @@ onUnmounted(() => {
 .form-field input, .form-field textarea, .form-field select { padding: 0.6rem 0.75rem; background: var(--surface-container-low); border: 1px solid var(--outline-variant); border-radius: var(--radius-lg); font-size: 0.85rem; color: var(--on-surface); outline: none; resize: none; }
 .form-field input:focus, .form-field textarea:focus, .form-field select:focus { border-color: var(--primary); }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-.logo-input-row { display: flex; align-items: center; gap: 0.75rem; }
-.logo-url-input { flex: 1; padding: 0.6rem 0.75rem; background: var(--surface-container-low); border: 1px solid var(--outline-variant); border-radius: var(--radius-lg); font-size: 0.85rem; color: var(--on-surface); outline: none; }
+.logo-upload-box { display: flex; align-items: center; gap: 1rem; padding: 0.75rem; background: var(--surface-container-low); border: 1.5px dashed var(--outline-variant); border-radius: var(--radius-xl); }
+.logo-preview-circle { width: 60px; height: 60px; border-radius: var(--radius-lg); border: 1.5px solid var(--outline-variant); background: var(--surface-container); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
+.logo-preview-circle.has-logo { border-color: var(--primary); border-style: solid; }
+.logo-preview-circle img { width: 100%; height: 100%; object-fit: cover; }
+.logo-upload-options { flex: 1; display: flex; flex-direction: column; gap: 0.4rem; }
+.logo-upload-btn { display: flex; align-items: center; justify-content: center; gap: 0.35rem; padding: 0.45rem 0.875rem; background: var(--surface-container); border: 1px solid var(--outline-variant); border-radius: var(--radius-lg); font-size: 0.78rem; font-weight: 600; color: var(--on-surface); cursor: pointer; transition: border-color .15s; width: fit-content; }
+.logo-upload-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+.logo-upload-btn:disabled { opacity: .6; cursor: not-allowed; }
+.logo-or { font-size: 0.72rem; color: var(--on-surface-variant); text-align: center; }
+.logo-url-input { padding: 0.45rem 0.65rem; background: var(--surface-container-lowest); border: 1px solid var(--outline-variant); border-radius: var(--radius-lg); font-size: 0.8rem; color: var(--on-surface); outline: none; width: 100%; }
 .logo-url-input:focus { border-color: var(--primary); }
-.logo-preview { width: 44px; height: 44px; border-radius: var(--radius-lg); border: 1px solid var(--outline-variant); overflow: hidden; flex-shrink: 0; background: var(--surface-container); }
-.logo-preview img { width: 100%; height: 100%; object-fit: cover; }
+.hidden-f { display: none; }
 
 .modal-enter-active, .modal-leave-active { transition: opacity 0.2s, transform 0.25s; }
 .modal-enter-from, .modal-leave-to { opacity: 0; transform: translateY(20px); }
