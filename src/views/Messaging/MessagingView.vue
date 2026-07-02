@@ -1001,27 +1001,16 @@ async function submitContract() {
 
   contractSending.value = true
   try {
-    const { default: http } = await import('@/services/http')
-    const result = await http.post(
-      `/messages/conversations/${activeConv.value.id}/contract`,
-      { ...f }
-    )
-    // Add contract message locally
-    messagingStore.messages.push({
-      id: result.id,
-      content: JSON.stringify(result.contract),
+    // Use messaging store sendMessage with contract type — avoids dynamic import
+    const result = await messagingStore.sendMessage({
+      content: JSON.stringify({ ...f, status: 'pending', client_id: authStore.user?.id, client_name: authStore.user?.full_name || '' }),
       message_type: 'contract',
-      mine: true,
-      sender_id: authStore.user?.id,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      created_at: new Date().toISOString(),
-      reactions: {}, status: 'sent',
     })
     showContractModal.value = false
     contractForm.value = { title:'', description:'', billing_type:'fixed', amount:null, hourly_rate:null, weekly_limit:null, deadline:'' }
     scrollToBottom()
   } catch (e) {
-    contractError.value = e?.response?.data?.detail || 'Failed to send contract'
+    contractError.value = e?.response?.data?.detail || 'Failed to send contract. Please try again.'
   } finally {
     contractSending.value = false
   }
@@ -1029,16 +1018,17 @@ async function submitContract() {
 
 async function respondContract(m, action) {
   try {
-    const { default: http } = await import('@/services/http')
-    const result = await http.patch(`/messages/${m.id}/contract`, { action })
-    // Update message content locally
+    // Use the existing sendMessage to send a response — simpler than custom endpoint
+    const contract = parseContract(m)
+    const updatedContract = { ...contract, status: action === 'accept' ? 'active' : 'declined', developer_id: authStore.user?.id, developer_name: authStore.user?.full_name || '' }
+    // Optimistically update locally
     const idx = messagingStore.messages.findIndex(msg => msg.id === m.id)
     if (idx !== -1) {
-      messagingStore.messages[idx] = {
-        ...messagingStore.messages[idx],
-        content: JSON.stringify(result.contract),
-      }
+      messagingStore.messages[idx] = { ...messagingStore.messages[idx], content: JSON.stringify(updatedContract) }
     }
+    // Send response via regular message endpoint using PATCH
+    const { messagingService } = await import('@/services/messaging.service')
+    await messagingService.editMessage(m.id, JSON.stringify(updatedContract))
   } catch (e) {
     console.error('Contract response failed:', e)
   }
