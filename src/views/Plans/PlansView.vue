@@ -15,10 +15,22 @@
       <!-- Billing toggle removed — plans show both options as separate cards -->
     </div>
 
+    <!-- Audience Toggle -->
+    <div class="audience-toggle">
+      <button class="aud-btn" :class="{ active: audience === 'developer' }" @click="audience = 'developer'">
+        <span class="material-symbols-outlined" style="font-size:16px">code</span>
+        Developer Plans
+      </button>
+      <button class="aud-btn" :class="{ active: audience === 'client' }" @click="audience = 'client'">
+        <span class="material-symbols-outlined" style="font-size:16px">business</span>
+        Business Plans
+      </button>
+    </div>
+
     <!-- Plans Grid -->
     <div class="plans-grid">
       <div
-        v-for="plan in plans"
+        v-for="plan in filteredPlans"
         :key="plan.id"
         class="plan-card glass-card"
         :class="{ 'plan-card-featured': plan.featured }"
@@ -223,6 +235,8 @@ const currSym = computed(() => currencyStore.current.symbol)
 const openFaq    = ref(null)
 const currentPlan = ref('free')
 const subscribing = ref(false)
+const audience = ref('developer')
+const filteredPlans = computed(() => plans.filter(p => p.audience === audience.value))
 
 const plans = [
   {
@@ -236,6 +250,7 @@ const plans = [
     priceYearly: 0,
     cta: 'Current Plan',
     featured: false,
+    audience: 'developer',
     features: [
       { text: 'Public developer profile',        included: true  },
       { text: 'Up to 3 portfolio projects',       included: true  },
@@ -259,6 +274,7 @@ const plans = [
     priceYearly: 84,
     cta: 'Subscribe — $7/mo',
     featured: false,
+    audience: 'developer',
     features: [
       { text: 'Everything in Free',              included: true  },
       { text: 'Verified badge (purple tick)',    included: true, badge: '✓' },
@@ -281,6 +297,7 @@ const plans = [
     priceYearly: 60,
     cta: 'Subscribe — $5/mo',
     featured: true,
+    audience: 'developer',
     features: [
       { text: 'Everything in Free',              included: true  },
       { text: 'Verified badge (purple tick)',    included: true, badge: '✓' },
@@ -291,6 +308,55 @@ const plans = [
       { text: 'Direct client messaging',          included: true  },
       { text: 'Early access to new features',     included: true  },
       { text: 'Save $24 compared to monthly',    included: true, badge: 'Save' },
+    ],
+  },
+  // ── Business / Company Plans ──
+  {
+    id: 'business_monthly',
+    name: 'Business (Monthly)',
+    desc: 'For companies hiring talent on GFD.',
+    icon: 'business',
+    iconBg: 'rgba(34,197,94,0.1)',
+    iconColor: '#16a34a',
+    priceMonthly: 29,
+    priceYearly: 348,
+    cta: 'Subscribe — $29/mo',
+    featured: false,
+    audience: 'client',
+    features: [
+      { text: 'Verified company badge',           included: true, badge: '✓' },
+      { text: 'Post unlimited job listings',      included: true  },
+      { text: 'Company logo on job cards',        included: true  },
+      { text: 'Priority job listing placement',   included: true  },
+      { text: 'Direct message developers',        included: true  },
+      { text: 'Applicant management dashboard',   included: true  },
+      { text: 'Company profile page',             included: true  },
+      { text: 'Advanced hiring analytics',        included: true  },
+      { text: 'Dedicated support',                included: false },
+    ],
+  },
+  {
+    id: 'business_yearly',
+    name: 'Business (Yearly)',
+    desc: 'Best value for growing companies.',
+    icon: 'domain',
+    iconBg: 'rgba(34,197,94,0.15)',
+    iconColor: '#16a34a',
+    priceMonthly: 20,
+    priceYearly: 240,
+    cta: 'Subscribe — $20/mo',
+    featured: true,
+    audience: 'client',
+    features: [
+      { text: 'Everything in Business Monthly',   included: true  },
+      { text: 'Verified company badge',           included: true, badge: '✓' },
+      { text: 'Post unlimited job listings',      included: true  },
+      { text: 'Priority job listing placement',   included: true  },
+      { text: 'Featured company spotlight',       included: true, badge: 'New' },
+      { text: 'Dedicated account support',        included: true  },
+      { text: 'Custom company profile branding',  included: true  },
+      { text: 'Advanced hiring analytics',        included: true  },
+      { text: 'Save $108 vs monthly',             included: true, badge: 'Save' },
     ],
   },
 ]
@@ -399,6 +465,36 @@ onMounted(async () => {
   gap: 0.875rem;
 }
 
+/* ── Audience Toggle ── */
+.audience-toggle {
+  display: flex;
+  gap: 0.5rem;
+  background: var(--surface-container);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-full);
+  padding: 0.3rem;
+  margin: 0 auto;
+}
+.aud-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--radius-full);
+  border: none;
+  background: transparent;
+  font-family: var(--font-headline);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.aud-btn.active {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(99,14,212,0.3);
+}
 .plans-tag {
   display: inline-flex;
   align-items: center;

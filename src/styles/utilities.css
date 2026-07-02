@@ -650,3 +650,15 @@ button, input, textarea, select {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23a0a0bc' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   background-color: var(--surface-container);
 }
+
+/* ── Kill browser autofill background on prefix inputs ── */
+.pfx-input:-webkit-autofill,
+.pfx-input:-webkit-autofill:hover,
+.pfx-input:-webkit-autofill:focus,
+.prefix-input:-webkit-autofill,
+.prefix-input:-webkit-autofill:hover,
+.prefix-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--surface-container-low) inset !important;
+  -webkit-text-fill-color: var(--on-surface) !important;
+  transition: background-color 5000s ease-in-out 0s;
+}

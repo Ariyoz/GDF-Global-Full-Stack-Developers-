@@ -58,14 +58,14 @@
             <label class="field-label-sm">GitHub</label>
             <div class="pfx-wrap">
               <span class="pfx">github.com/</span>
-              <input v-model="profile.github" name="github" autocomplete="url" class="pfx-input" placeholder="username" @input="cleanGithub" />
+              <input v-model="profile.github" name="github" autocomplete="off" class="pfx-input" placeholder="username" @input="cleanGithub" />
             </div>
           </div>
           <div class="form-field-wrap">
             <label class="field-label-sm">LinkedIn</label>
             <div class="pfx-wrap">
               <span class="pfx">linkedin.com/in/</span>
-              <input v-model="profile.linkedin" name="linkedin" autocomplete="url" class="pfx-input" placeholder="username" @input="cleanLinkedin" />
+              <input v-model="profile.linkedin" name="linkedin" autocomplete="off" class="pfx-input" placeholder="username" @input="cleanLinkedin" />
             </div>
           </div>
           <GfdInput v-model="profile.twitter"  label="Twitter"  placeholder="@username" />

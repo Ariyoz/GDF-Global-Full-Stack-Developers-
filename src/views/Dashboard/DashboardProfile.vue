@@ -96,14 +96,14 @@
             <label class="input-label">GitHub</label>
             <div class="prefix-input-wrap">
               <span class="input-prefix">github.com/</span>
-              <input v-model="form.github_url" name="github_url" autocomplete="url" class="prefix-input" placeholder="username" @input="fixGithub" />
+              <input v-model="form.github_url" name="github_url" autocomplete="off" class="prefix-input" placeholder="username" @input="fixGithub" />
             </div>
           </div>
           <div class="form-field-wrap">
             <label class="input-label">LinkedIn</label>
             <div class="prefix-input-wrap">
               <span class="input-prefix">linkedin.com/in/</span>
-              <input v-model="form.linkedin_url" name="linkedin_url" autocomplete="url" class="prefix-input" placeholder="username" @input="fixLinkedin" />
+              <input v-model="form.linkedin_url" name="linkedin_url" autocomplete="off" class="prefix-input" placeholder="username" @input="fixLinkedin" />
             </div>
           </div>
         </div>
