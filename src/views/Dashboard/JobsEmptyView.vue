@@ -125,13 +125,46 @@
                 <span v-else>{{ (a.applicant_name||'U')[0] }}</span>
               </div>
               <div class="ap-info">
-                <p class="ap-name">{{ a.applicant_name }}</p>
-                <p class="ap-meta">{{ a.years_experience ? a.years_experience + ' yrs' : '' }} · {{ a.availability || 'Flexible' }}</p>
-                <p v-if="a.cover_letter" class="ap-cover">{{ a.cover_letter.slice(0,100) }}...</p>
-                <div class="ap-links">
-                  <a v-if="a.resume_url" :href="a.resume_url" target="_blank">📄 Resume</a>
-                  <a v-if="a.portfolio_url" :href="a.portfolio_url" target="_blank">🌐 Portfolio</a>
-                  <a v-if="a.github_url" :href="a.github_url" target="_blank">💻 GitHub</a>
+                <div class="ap-name-row">
+                  <p class="ap-name">{{ a.applicant_name }}</p>
+                  <RouterLink v-if="a.applicant_id" :to="`/developer/${a.applicant_id}`" target="_blank" class="ap-profile-link">
+                    <span class="material-symbols-outlined" style="font-size:14px">open_in_new</span>
+                    View Profile
+                  </RouterLink>
+                </div>
+                <p class="ap-meta">
+                  <span v-if="a.years_experience">{{ a.years_experience }} yrs exp</span>
+                  <span v-if="a.years_experience && a.availability"> · </span>
+                  <span v-if="a.availability">{{ a.availability.replace('_',' ') }}</span>
+                </p>
+                <!-- Cover Letter -->
+                <div v-if="a.cover_letter" class="ap-section">
+                  <p class="ap-section-label">Cover Letter</p>
+                  <p class="ap-cover-full">{{ a.cover_letter }}</p>
+                </div>
+                <!-- Expected Salary -->
+                <div v-if="a.expected_salary" class="ap-section">
+                  <p class="ap-section-label">Expected Salary</p>
+                  <p class="ap-detail">{{ fmtSalary(a.expected_salary) }}</p>
+                </div>
+                <!-- Links row -->
+                <div class="ap-links-row">
+                  <a v-if="a.resume_url" :href="a.resume_url" target="_blank" rel="noopener" class="ap-link-btn">
+                    <span class="material-symbols-outlined" style="font-size:14px">description</span>
+                    Resume
+                  </a>
+                  <a v-if="a.portfolio_url" :href="a.portfolio_url" target="_blank" rel="noopener" class="ap-link-btn">
+                    <span class="material-symbols-outlined" style="font-size:14px">language</span>
+                    Portfolio
+                  </a>
+                  <a v-if="a.github_url" :href="a.github_url" target="_blank" rel="noopener" class="ap-link-btn">
+                    <span class="material-symbols-outlined" style="font-size:14px">code</span>
+                    GitHub
+                  </a>
+                  <a v-if="a.linkedin_url" :href="a.linkedin_url" target="_blank" rel="noopener" class="ap-link-btn">
+                    <span class="material-symbols-outlined" style="font-size:14px">work</span>
+                    LinkedIn
+                  </a>
                 </div>
               </div>
               <div class="ap-status-col">
@@ -410,12 +443,18 @@ onMounted(load)
 .ap-av { width:40px; height:40px; border-radius:50%; background:var(--primary-fixed); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-family:var(--font-headline); font-weight:700; color:var(--primary); overflow:hidden; }
 .ap-av img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
 .ap-info { flex:1; min-width:0; }
+.ap-name-row { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; margin-bottom:.15rem; }
 .ap-name { font-family:var(--font-headline); font-size:.875rem; font-weight:700; color:var(--on-surface); }
+.ap-profile-link { display:flex; align-items:center; gap:2px; font-size:.72rem; color:var(--primary); text-decoration:none; font-weight:600; }
+.ap-profile-link:hover { text-decoration:underline; }
 .ap-meta { font-size:.75rem; color:var(--on-surface-variant); }
-.ap-cover { font-size:.78rem; color:var(--on-surface-variant); margin-top:.25rem; line-height:1.4; }
-.ap-links { display:flex; gap:.5rem; margin-top:.35rem; flex-wrap:wrap; }
-.ap-links a { font-size:.75rem; color:var(--primary); text-decoration:none; }
-.ap-links a:hover { text-decoration:underline; }
+.ap-section { margin-top:.5rem; }
+.ap-section-label { font-size:.68rem; font-weight:700; color:var(--on-surface-variant); text-transform:uppercase; letter-spacing:.04em; margin-bottom:.2rem; }
+.ap-cover-full { font-size:.82rem; color:var(--on-surface-variant); line-height:1.5; white-space:pre-line; }
+.ap-detail { font-size:.82rem; font-weight:600; color:var(--primary); }
+.ap-links-row { display:flex; flex-wrap:wrap; gap:.4rem; margin-top:.5rem; }
+.ap-link-btn { display:flex; align-items:center; gap:.25rem; padding:.25rem .625rem; border-radius:var(--radius-full); border:1px solid var(--outline-variant); background:var(--surface-container-low); font-size:.75rem; font-weight:600; color:var(--on-surface-variant); text-decoration:none; transition:.15s; }
+.ap-link-btn:hover { border-color:var(--primary); color:var(--primary); }
 .ap-status-col { display:flex; flex-direction:column; align-items:flex-end; gap:.4rem; flex-shrink:0; }
 .applicant-status { padding:.2rem .5rem; border-radius:var(--radius-full); font-size:.68rem; font-weight:700; text-transform:capitalize; }
 .applicant-status.pending { background:rgba(251,146,60,.1); color:#f59e0b; }

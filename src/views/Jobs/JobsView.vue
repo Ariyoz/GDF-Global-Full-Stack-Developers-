@@ -441,16 +441,42 @@
                   <span v-else>{{ (app.applicant_name || 'U')[0] }}</span>
                 </div>
                 <div class="applicant-info">
-                  <h4 class="applicant-name">{{ app.applicant_name }}</h4>
-                  <p class="applicant-meta">{{ app.years_experience ? app.years_experience + ' yrs exp' : '' }} · {{ app.availability || 'Flexible' }}</p>
+                  <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
+                    <h4 class="applicant-name">{{ app.applicant_name }}</h4>
+                    <RouterLink v-if="app.applicant_id" :to="`/developer/${app.applicant_id}`" target="_blank" style="font-size:.75rem;color:var(--primary);text-decoration:none;display:flex;align-items:center;gap:2px;">
+                      <span class="material-symbols-outlined" style="font-size:13px">open_in_new</span>Profile
+                    </RouterLink>
+                  </div>
+                  <p class="applicant-meta">
+                    {{ app.years_experience ? app.years_experience + ' yrs exp' : '' }}
+                    {{ app.years_experience && app.availability ? ' · ' : '' }}
+                    {{ app.availability ? app.availability.replace('_',' ') : '' }}
+                  </p>
+                  <p v-if="app.expected_salary" style="font-size:.78rem;color:var(--primary);font-weight:600;margin-top:.2rem;">
+                    Expected: {{ fmtSalary(app.expected_salary) }}
+                  </p>
                 </div>
                 <span class="applicant-status" :class="app.status">{{ app.status }}</span>
               </div>
-              <p v-if="app.cover_letter" class="applicant-cover">{{ app.cover_letter }}</p>
-              <div class="applicant-links">
-                <a v-if="app.resume_url" :href="app.resume_url" target="_blank" class="app-link">📄 Resume</a>
-                <a v-if="app.portfolio_url" :href="app.portfolio_url" target="_blank" class="app-link">🌐 Portfolio</a>
-                <a v-if="app.github_url" :href="app.github_url" target="_blank" class="app-link">💻 GitHub</a>
+              <!-- Full cover letter -->
+              <div v-if="app.cover_letter" style="margin-top:.5rem;">
+                <p style="font-size:.72rem;font-weight:700;color:var(--on-surface-variant);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.25rem;">Cover Letter</p>
+                <p class="applicant-cover">{{ app.cover_letter }}</p>
+              </div>
+              <!-- All links -->
+              <div class="applicant-links" style="margin-top:.5rem;flex-wrap:wrap;gap:.4rem;">
+                <a v-if="app.resume_url" :href="app.resume_url" target="_blank" class="app-link" style="display:flex;align-items:center;gap:3px;">
+                  <span class="material-symbols-outlined" style="font-size:13px">description</span> Resume
+                </a>
+                <a v-if="app.portfolio_url" :href="app.portfolio_url" target="_blank" class="app-link" style="display:flex;align-items:center;gap:3px;">
+                  <span class="material-symbols-outlined" style="font-size:13px">language</span> Portfolio
+                </a>
+                <a v-if="app.github_url" :href="app.github_url" target="_blank" class="app-link" style="display:flex;align-items:center;gap:3px;">
+                  <span class="material-symbols-outlined" style="font-size:13px">code</span> GitHub
+                </a>
+                <a v-if="app.linkedin_url" :href="app.linkedin_url" target="_blank" class="app-link" style="display:flex;align-items:center;gap:3px;">
+                  <span class="material-symbols-outlined" style="font-size:13px">work</span> LinkedIn
+                </a>
               </div>
               <div v-if="app.status === 'pending' || app.status === 'reviewed'" class="applicant-actions">
                 <button class="btn-approve" @click="updateApplicationStatus(app, 'shortlisted')">
