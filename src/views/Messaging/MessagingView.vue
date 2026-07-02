@@ -98,6 +98,12 @@
             </span>
           </div>
           <div class="ch-acts">
+            <!-- Contract button — clients only -->
+            <button v-if="authStore.isClient && activeConv" class="hdr-btn contract-btn"
+              :title="activeContract ? 'View Contract' : 'Start Contract'"
+              @click="activeContract ? showViewContract = true : showContractModal = true">
+              <span class="material-symbols-outlined">handshake</span>
+            </button>
             <button class="hdr-btn" @click="startCall('voice')">
               <span class="material-symbols-outlined">call</span>
             </button>
@@ -145,6 +151,15 @@
               <span class="srch-text">{{ m.content }}</span>
               <span class="srch-ts">{{ m.time }}</span>
             </div>
+          </div>
+        </Transition>
+
+        <!-- ── Active Contract Banner ── -->
+        <Transition name="slide-down">
+          <div v-if="activeContract" class="contract-banner">
+            <span class="material-symbols-outlined" style="font-size:16px;color:#16a34a">handshake</span>
+            <span class="contract-banner-text">Active Contract: <strong>{{ activeContract.title }}</strong></span>
+            <span class="contract-banner-badge">Active</span>
           </div>
         </Transition>
 
@@ -236,6 +251,45 @@
                       </div>
                       <span class="material-symbols-outlined fc-dl">download</span>
                     </a>
+                    <!-- Contract proposal -->
+                    <div v-else-if="m.message_type === 'contract'" class="contract-card" :class="m.mine ? 'cc-mine' : 'cc-theirs'">
+                      <div class="cc-header">
+                        <span class="material-symbols-outlined cc-icon">handshake</span>
+                        <div>
+                          <p class="cc-label">Contract Proposal</p>
+                          <p class="cc-title">{{ parseContract(m).title }}</p>
+                        </div>
+                        <span class="cc-status-badge" :class="parseContract(m).status">{{ parseContract(m).status }}</span>
+                      </div>
+                      <div class="cc-body">
+                        <p class="cc-desc">{{ parseContract(m).description }}</p>
+                        <div class="cc-details">
+                          <span v-if="parseContract(m).billing_type === 'fixed'">
+                            💰 Fixed: ${{ parseContract(m).amount }}
+                          </span>
+                          <span v-else>
+                            ⏱ ${{ parseContract(m).hourly_rate }}/hr · {{ parseContract(m).weekly_limit }}h/wk limit
+                          </span>
+                          <span v-if="parseContract(m).deadline">📅 Due: {{ parseContract(m).deadline }}</span>
+                        </div>
+                      </div>
+                      <!-- Developer sees Accept/Decline when pending -->
+                      <div v-if="!m.mine && parseContract(m).status === 'pending'" class="cc-actions">
+                        <button class="cc-btn cc-accept" @click.stop="respondContract(m, 'accept')">
+                          <span class="material-symbols-outlined" style="font-size:15px">check</span>
+                          Accept
+                        </button>
+                        <button class="cc-btn cc-decline" @click.stop="respondContract(m, 'decline')">
+                          <span class="material-symbols-outlined" style="font-size:15px">close</span>
+                          Decline
+                        </button>
+                      </div>
+                      <!-- Client sees status -->
+                      <div v-else-if="m.mine && parseContract(m).status === 'pending'" class="cc-pending">
+                        <span class="material-symbols-outlined" style="font-size:14px">hourglass_empty</span>
+                        Pending acceptance
+                      </div>
+                    </div>
                     <!-- Text -->
                     <p v-else class="bub-txt" v-html="renderTxt(m.content)"></p>
                     <span v-if="m.is_edited" class="bub-edited">edited</span>
@@ -414,6 +468,104 @@
           <button class="ctx-row" @click="ctx.show=false">
             <span class="material-symbols-outlined">close</span>Cancel
           </button>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- ── Contract Modal ── -->
+    <Teleport to="body">
+      <Transition name="modal">
+        <div v-if="showContractModal" class="modal-overlay-full" @click.self="showContractModal = false">
+          <div class="contract-modal">
+            <div class="cm-header">
+              <span class="material-symbols-outlined" style="color:var(--primary)">handshake</span>
+              <h3>Start a Contract</h3>
+              <button class="hdr-btn" @click="showContractModal = false">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div class="cm-body">
+              <div class="cm-field">
+                <label>Project Title *</label>
+                <input v-model="contractForm.title" type="text" placeholder="e.g. Build a React Dashboard" />
+              </div>
+              <div class="cm-field">
+                <label>Description *</label>
+                <textarea v-model="contractForm.description" rows="3" placeholder="Describe the scope of work…"></textarea>
+              </div>
+              <div class="cm-field">
+                <label>Billing Type</label>
+                <div class="billing-toggle">
+                  <button class="bt-btn" :class="{ active: contractForm.billing_type === 'fixed' }" @click="contractForm.billing_type = 'fixed'">
+                    Fixed Price
+                  </button>
+                  <button class="bt-btn" :class="{ active: contractForm.billing_type === 'hourly' }" @click="contractForm.billing_type = 'hourly'">
+                    Hourly
+                  </button>
+                </div>
+              </div>
+              <div v-if="contractForm.billing_type === 'fixed'" class="cm-field">
+                <label>Total Amount (USD) *</label>
+                <input v-model.number="contractForm.amount" type="number" placeholder="e.g. 500" min="1" />
+              </div>
+              <div v-else class="cm-row">
+                <div class="cm-field">
+                  <label>Hourly Rate (USD) *</label>
+                  <input v-model.number="contractForm.hourly_rate" type="number" placeholder="e.g. 25" min="1" />
+                </div>
+                <div class="cm-field">
+                  <label>Weekly Hour Limit</label>
+                  <input v-model.number="contractForm.weekly_limit" type="number" placeholder="e.g. 40" min="1" />
+                </div>
+              </div>
+              <div class="cm-field">
+                <label>Deadline (optional)</label>
+                <input v-model="contractForm.deadline" type="date" :min="today" />
+              </div>
+              <p v-if="contractError" class="cm-error">{{ contractError }}</p>
+            </div>
+            <div class="cm-footer">
+              <button class="btn-ghost" @click="showContractModal = false">Cancel</button>
+              <button class="btn-primary" :disabled="contractSending" @click="submitContract">
+                <span v-if="contractSending" class="btn-spinner"></span>
+                <span v-else class="material-symbols-outlined" style="font-size:16px">send</span>
+                {{ contractSending ? 'Sending…' : 'Send Contract' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- ── View Contract Modal ── -->
+    <Teleport to="body">
+      <Transition name="modal">
+        <div v-if="showViewContract && activeContract" class="modal-overlay-full" @click.self="showViewContract = false">
+          <div class="contract-modal">
+            <div class="cm-header">
+              <span class="material-symbols-outlined" style="color:#16a34a">handshake</span>
+              <h3>Active Contract</h3>
+              <button class="hdr-btn" @click="showViewContract = false">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div class="cm-body">
+              <div class="cm-view-row"><span>Title</span><strong>{{ activeContract.title }}</strong></div>
+              <div class="cm-view-row"><span>Status</span><span class="cc-status-badge active">Active</span></div>
+              <div class="cm-view-row"><span>Billing</span><strong>{{ activeContract.billing_type === 'fixed' ? 'Fixed Price' : 'Hourly' }}</strong></div>
+              <div v-if="activeContract.billing_type === 'fixed'" class="cm-view-row"><span>Amount</span><strong>${{ activeContract.amount }}</strong></div>
+              <div v-else>
+                <div class="cm-view-row"><span>Rate</span><strong>${{ activeContract.hourly_rate }}/hr</strong></div>
+                <div class="cm-view-row"><span>Weekly Limit</span><strong>{{ activeContract.weekly_limit }}h</strong></div>
+              </div>
+              <div v-if="activeContract.deadline" class="cm-view-row"><span>Deadline</span><strong>{{ activeContract.deadline }}</strong></div>
+              <div class="cm-view-row"><span>Developer</span><strong>{{ activeContract.developer_name }}</strong></div>
+              <p v-if="activeContract.description" class="cm-desc-view">{{ activeContract.description }}</p>
+            </div>
+            <div class="cm-footer">
+              <button class="btn-primary" @click="showViewContract = false">Close</button>
+            </div>
+          </div>
         </div>
       </Transition>
     </Teleport>
@@ -813,6 +965,87 @@ watch(() => messagingStore.callEvent, e => {
   messagingStore.clearCallEvent()
 })
 watch(() => messagingStore.messages.length, () => scrollToBottom())
+
+// ── Contract ──────────────────────────────────────────────────────────────
+const showContractModal = ref(false)
+const showViewContract  = ref(false)
+const contractSending   = ref(false)
+const contractError     = ref('')
+const today = new Date().toISOString().split('T')[0]
+
+const contractForm = ref({
+  title: '', description: '', billing_type: 'fixed',
+  amount: null, hourly_rate: null, weekly_limit: null, deadline: '',
+})
+
+const activeContract = computed(() => {
+  const contracts = messagingStore.messages.filter(m => m.message_type === 'contract')
+  for (const c of [...contracts].reverse()) {
+    const data = parseContract(c)
+    if (data.status === 'active') return data
+  }
+  return null
+})
+
+function parseContract(m) {
+  try { return JSON.parse(m.content || '{}') } catch { return {} }
+}
+
+async function submitContract() {
+  contractError.value = ''
+  const f = contractForm.value
+  if (!f.title.trim()) { contractError.value = 'Title is required'; return }
+  if (!f.description.trim()) { contractError.value = 'Description is required'; return }
+  if (f.billing_type === 'fixed' && !f.amount) { contractError.value = 'Amount is required'; return }
+  if (f.billing_type === 'hourly' && !f.hourly_rate) { contractError.value = 'Hourly rate is required'; return }
+
+  contractSending.value = true
+  try {
+    const { default: http } = await import('@/services/http')
+    const result = await http.post(
+      `/messages/conversations/${activeConv.value.id}/contract`,
+      { ...f }
+    )
+    // Add contract message locally
+    messagingStore.messages.push({
+      id: result.id,
+      content: JSON.stringify(result.contract),
+      message_type: 'contract',
+      mine: true,
+      sender_id: authStore.user?.id,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      created_at: new Date().toISOString(),
+      reactions: {}, status: 'sent',
+    })
+    showContractModal.value = false
+    contractForm.value = { title:'', description:'', billing_type:'fixed', amount:null, hourly_rate:null, weekly_limit:null, deadline:'' }
+    scrollToBottom()
+  } catch (e) {
+    contractError.value = e?.response?.data?.detail || 'Failed to send contract'
+  } finally {
+    contractSending.value = false
+  }
+}
+
+async function respondContract(m, action) {
+  try {
+    const { default: http } = await import('@/services/http')
+    const result = await http.patch(`/messages/${m.id}/contract`, { action })
+    // Update message content locally
+    const idx = messagingStore.messages.findIndex(msg => msg.id === m.id)
+    if (idx !== -1) {
+      messagingStore.messages[idx] = {
+        ...messagingStore.messages[idx],
+        content: JSON.stringify(result.contract),
+      }
+    }
+  } catch (e) {
+    console.error('Contract response failed:', e)
+  }
+}
+
+// Handle incoming contract_update WS event
+watch(() => messagingStore.messages, () => {}, { deep: true })
 </script>
 
 <style scoped>
@@ -1609,4 +1842,96 @@ watch(() => messagingStore.messages.length, () => scrollToBottom())
 .ctx-enter-from,   .ctx-leave-to     { transform: scale(.94); opacity: 0; }
 .btn-swap-enter-active, .btn-swap-leave-active { transition: all .15s ease; }
 .btn-swap-enter-from,   .btn-swap-leave-to     { opacity: 0; transform: scale(.65) rotate(15deg); }
+
+/* ── Contract Feature ── */
+.contract-btn { color: var(--primary) !important; }
+
+.contract-banner {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .5rem 1rem;
+  background: rgba(22,163,74,.08);
+  border-bottom: 1px solid rgba(22,163,74,.2);
+  flex-shrink: 0; position: relative; z-index: 10;
+  font-size: .78rem; color: var(--on-surface);
+}
+.contract-banner-text { flex: 1; }
+.contract-banner-badge {
+  padding: .15rem .5rem; border-radius: 999px;
+  background: rgba(22,163,74,.15); color: #16a34a;
+  font-size: .65rem; font-weight: 700; text-transform: uppercase;
+}
+
+/* Contract bubble card */
+.contract-card {
+  border-radius: 14px; overflow: hidden;
+  border: 1.5px solid rgba(168,85,247,.2);
+  background: var(--surface-container-lowest);
+  min-width: 240px; max-width: 280px;
+}
+.cc-mine  { border-color: rgba(168,85,247,.35); }
+.cc-theirs { border-color: rgba(168,85,247,.15); }
+.cc-header {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .75rem .875rem .5rem;
+  background: rgba(168,85,247,.06);
+  border-bottom: 1px solid rgba(168,85,247,.1);
+}
+.cc-icon { font-size: 20px; color: var(--primary); flex-shrink: 0; }
+.cc-label { font-size: .65rem; font-weight: 600; color: var(--on-surface-variant); text-transform: uppercase; letter-spacing: .04em; }
+.cc-title { font-size: .875rem; font-weight: 700; color: var(--on-surface); margin-top: 1px; }
+.cc-status-badge { padding: .15rem .5rem; border-radius: 999px; font-size: .65rem; font-weight: 700; text-transform: capitalize; margin-left: auto; flex-shrink: 0; }
+.cc-status-badge.pending  { background: rgba(245,158,11,.12); color: #f59e0b; }
+.cc-status-badge.active   { background: rgba(22,163,74,.12); color: #16a34a; }
+.cc-status-badge.declined { background: rgba(239,68,68,.12); color: #ef4444; }
+.cc-body { padding: .625rem .875rem; }
+.cc-desc { font-size: .8rem; color: var(--on-surface-variant); line-height: 1.5; margin-bottom: .4rem; }
+.cc-details { display: flex; flex-direction: column; gap: .2rem; font-size: .75rem; color: var(--on-surface-variant); }
+.cc-actions { display: flex; gap: .5rem; padding: .5rem .875rem .75rem; }
+.cc-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: .3rem; padding: .5rem; border-radius: 10px; border: 1px solid; font-size: .8rem; font-weight: 600; cursor: pointer; transition: .15s; }
+.cc-accept  { background: rgba(22,163,74,.08); border-color: rgba(22,163,74,.25); color: #16a34a; }
+.cc-accept:hover  { background: rgba(22,163,74,.16); }
+.cc-decline { background: rgba(239,68,68,.08); border-color: rgba(239,68,68,.25); color: #ef4444; }
+.cc-decline:hover { background: rgba(239,68,68,.16); }
+.cc-pending { display: flex; align-items: center; gap: .35rem; padding: .5rem .875rem .75rem; font-size: .75rem; color: var(--on-surface-variant); font-style: italic; }
+
+/* Contract Modal */
+.modal-overlay-full {
+  position: fixed; inset: 0; background: rgba(0,0,0,.55);
+  z-index: 2000; display: flex; align-items: flex-end; justify-content: center;
+}
+@media (min-width: 640px) { .modal-overlay-full { align-items: center; padding: 1rem; } }
+.contract-modal {
+  width: 100%; max-width: 480px;
+  background: var(--surface-container-lowest);
+  border-radius: 20px 20px 0 0;
+  overflow: hidden; display: flex; flex-direction: column;
+  max-height: 90vh;
+}
+@media (min-width: 640px) { .contract-modal { border-radius: 20px; } }
+.cm-header {
+  display: flex; align-items: center; gap: .625rem;
+  padding: 1.25rem 1.25rem .875rem;
+  border-bottom: 1px solid var(--outline-variant); flex-shrink: 0;
+}
+.cm-header h3 { font-family: var(--font-headline); font-size: 1rem; font-weight: 700; color: var(--on-surface); flex: 1; }
+.cm-body { flex: 1; overflow-y: auto; padding: 1.125rem; display: flex; flex-direction: column; gap: .875rem; }
+.cm-field { display: flex; flex-direction: column; gap: .3rem; }
+.cm-field label { font-family: var(--font-headline); font-size: .8rem; font-weight: 600; color: var(--on-surface); }
+.cm-field input, .cm-field textarea {
+  padding: .6rem .75rem; background: var(--surface-container-low);
+  border: 1.5px solid var(--outline-variant); border-radius: var(--radius-lg);
+  font-size: .875rem; color: var(--on-surface); outline: none; resize: none; width: 100%;
+}
+.cm-field input:focus, .cm-field textarea:focus { border-color: var(--primary); }
+.cm-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+.billing-toggle { display: flex; gap: .375rem; }
+.bt-btn { flex: 1; padding: .5rem; border-radius: var(--radius-lg); border: 1.5px solid var(--outline-variant); background: var(--surface-container); font-size: .82rem; font-weight: 600; color: var(--on-surface-variant); cursor: pointer; transition: .15s; }
+.bt-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+.cm-error { font-size: .8rem; color: #ef4444; padding: .4rem .625rem; background: rgba(239,68,68,.08); border-radius: var(--radius-lg); }
+.cm-footer { display: flex; gap: .625rem; justify-content: flex-end; padding: .875rem 1.25rem 1.25rem; border-top: 1px solid var(--outline-variant); flex-shrink: 0; }
+.cm-view-row { display: flex; justify-content: space-between; align-items: center; padding: .5rem 0; border-bottom: 1px solid var(--outline-variant); font-size: .875rem; }
+.cm-view-row span:first-child { color: var(--on-surface-variant); }
+.cm-desc-view { font-size: .875rem; color: var(--on-surface-variant); line-height: 1.6; margin-top: .5rem; padding: .75rem; background: var(--surface-container-low); border-radius: var(--radius-lg); }
+.btn-spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; animation: spin .7s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
