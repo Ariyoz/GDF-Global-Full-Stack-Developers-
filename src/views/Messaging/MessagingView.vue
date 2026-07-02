@@ -98,8 +98,8 @@
             </span>
           </div>
           <div class="ch-acts">
-            <!-- Contract button — clients only -->
-            <button v-if="authStore.isClient && activeConv" class="hdr-btn contract-btn"
+            <!-- Contract button — clients and admins only -->
+            <button v-if="(authStore.isClient || authStore.isAdmin) && activeConv" class="hdr-btn contract-btn"
               :title="activeContract ? 'View Contract' : 'Start Contract'"
               @click="activeContract ? showViewContract = true : showContractModal = true">
               <span class="material-symbols-outlined">handshake</span>
