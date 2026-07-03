@@ -25,7 +25,6 @@ export default defineConfig({
     cssCodeSplit: true,
     sourcemap: false,
     target: 'es2020',
-    minify: 'esbuild',          // esbuild is 20-40x faster than terser
     rollupOptions: {
       output: {
         manualChunks(id) {
