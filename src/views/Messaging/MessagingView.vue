@@ -1444,7 +1444,7 @@ watch(() => messagingStore.messages, () => {}, { deep: true })
 
 /* ── Bubble ── */
 .bubble {
-  padding: .5rem .875rem .4rem;
+  padding: .4rem .75rem .3rem;
   border-radius: 18px;
   word-break: break-word;
   min-width: 52px; max-width: 100%;
@@ -1468,7 +1468,7 @@ watch(() => messagingStore.messages, () => {}, { deep: true })
   color: rgba(255,255,255,.93);
 }
 .bub-del   { opacity: .6; }
-.bub-media { padding: .35rem .35rem .45rem; }
+.bub-media { padding: .25rem .25rem .35rem; }
 .del-msg {
   font-size: .82rem; font-style: italic; opacity: .7;
   display: flex; align-items: center; gap: .3rem;
@@ -1869,7 +1869,7 @@ watch(() => messagingStore.messages, () => {}, { deep: true })
 .cc-theirs { border-color: rgba(168,85,247,.15); }
 .cc-header {
   display: flex; align-items: center; gap: .5rem;
-  padding: .75rem .875rem .5rem;
+  padding: .5rem .75rem .4rem;
   background: rgba(168,85,247,.06);
   border-bottom: 1px solid rgba(168,85,247,.1);
 }
@@ -1880,16 +1880,16 @@ watch(() => messagingStore.messages, () => {}, { deep: true })
 .cc-status-badge.pending  { background: rgba(245,158,11,.12); color: #f59e0b; }
 .cc-status-badge.active   { background: rgba(22,163,74,.12); color: #16a34a; }
 .cc-status-badge.declined { background: rgba(239,68,68,.12); color: #ef4444; }
-.cc-body { padding: .625rem .875rem; }
+.cc-body { padding: .4rem .75rem; }
 .cc-desc { font-size: .8rem; color: var(--on-surface-variant); line-height: 1.5; margin-bottom: .4rem; }
 .cc-details { display: flex; flex-direction: column; gap: .2rem; font-size: .75rem; color: var(--on-surface-variant); }
-.cc-actions { display: flex; gap: .5rem; padding: .5rem .875rem .75rem; }
-.cc-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: .3rem; padding: .5rem; border-radius: 10px; border: 1px solid; font-size: .8rem; font-weight: 600; cursor: pointer; transition: .15s; }
+.cc-actions { display: flex; gap: .4rem; padding: .4rem .75rem .5rem; }
+.cc-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: .3rem; padding: .4rem; border-radius: 8px; border: 1px solid; font-size: .75rem; font-weight: 600; cursor: pointer; transition: .15s; }
 .cc-accept  { background: rgba(22,163,74,.08); border-color: rgba(22,163,74,.25); color: #16a34a; }
 .cc-accept:hover  { background: rgba(22,163,74,.16); }
 .cc-decline { background: rgba(239,68,68,.08); border-color: rgba(239,68,68,.25); color: #ef4444; }
 .cc-decline:hover { background: rgba(239,68,68,.16); }
-.cc-pending { display: flex; align-items: center; gap: .35rem; padding: .5rem .875rem .75rem; font-size: .75rem; color: var(--on-surface-variant); font-style: italic; }
+.cc-pending { display: flex; align-items: center; gap: .3rem; padding: .35rem .75rem .45rem; font-size: .72rem; color: var(--on-surface-variant); font-style: italic; }
 
 /* Contract Modal */
 .modal-overlay-full {
