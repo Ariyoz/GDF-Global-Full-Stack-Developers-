@@ -205,13 +205,15 @@
                   <div class="rs-bar"/>
                   <div class="rs-body">
                     <span class="rs-who">{{ m.reply_preview.sender_id===authStore.user?.id?'You':activeConv.name }}</span>
-                    <span class="rs-txt">{{ m.reply_preview.content }}</span>
+                    <span class="rs-txt">
+                      {{ m.reply_preview.content?.startsWith('{') ? '📋 Contract Proposal' : m.reply_preview.content }}
+                    </span>
                   </div>
                 </div>
 
                 <!-- Bubble -->
                 <div class="bubble"
-                  :class="[m.mine?'bub-mine':'bub-theirs', {'bub-del':m.is_deleted,'bub-media':isImgOnly(m)}]">
+                  :class="[m.mine?'bub-mine':'bub-theirs', {'bub-del':m.is_deleted,'bub-media':isImgOnly(m),'bub-contract':m.message_type==='contract'}]">
 
                   <span v-if="m.is_deleted" class="del-msg">
                     <span class="material-symbols-outlined" style="font-size:14px">block</span>
@@ -1469,6 +1471,14 @@ watch(() => messagingStore.messages, () => {}, { deep: true })
 }
 .bub-del   { opacity: .6; }
 .bub-media { padding: .25rem .25rem .35rem; }
+/* Contract — strip bubble wrapper completely */
+.bub-contract {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+}
 .del-msg {
   font-size: .82rem; font-style: italic; opacity: .7;
   display: flex; align-items: center; gap: .3rem;
