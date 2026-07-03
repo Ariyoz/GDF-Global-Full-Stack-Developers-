@@ -1017,19 +1017,26 @@ async function submitContract() {
 }
 
 async function respondContract(m, action) {
+  // Optimistically update the message locally first
+  const contract = parseContract(m)
+  const updatedContract = {
+    ...contract,
+    status: action === 'accept' ? 'active' : 'declined',
+    developer_id: authStore.user?.id,
+    developer_name: authStore.user?.full_name || '',
+  }
+  const idx = messagingStore.messages.findIndex(msg => msg.id === m.id)
+  if (idx !== -1) {
+    messagingStore.messages[idx] = { ...messagingStore.messages[idx], content: JSON.stringify(updatedContract) }
+  }
+  // Persist to backend via the contract endpoint
   try {
-    // Use the existing sendMessage to send a response — simpler than custom endpoint
-    const contract = parseContract(m)
-    const updatedContract = { ...contract, status: action === 'accept' ? 'active' : 'declined', developer_id: authStore.user?.id, developer_name: authStore.user?.full_name || '' }
-    // Optimistically update locally
-    const idx = messagingStore.messages.findIndex(msg => msg.id === m.id)
-    if (idx !== -1) {
-      messagingStore.messages[idx] = { ...messagingStore.messages[idx], content: JSON.stringify(updatedContract) }
-    }
-    // Send response via regular message endpoint using PATCH
-    const { messagingService } = await import('@/services/messaging.service')
-    await messagingService.editMessage(m.id, JSON.stringify(updatedContract))
+    await messagingService.respondContract(m.id, action)
   } catch (e) {
+    // Rollback on failure
+    if (idx !== -1) {
+      messagingStore.messages[idx] = { ...messagingStore.messages[idx], content: JSON.stringify(contract) }
+    }
     console.error('Contract response failed:', e)
   }
 }

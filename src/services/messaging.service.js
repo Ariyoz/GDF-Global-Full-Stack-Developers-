@@ -54,4 +54,8 @@ export const messagingService = {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
   },
+
+  async respondContract(messageId, action) {
+    return http.patch(`/messages/${messageId}/contract`, { action })
+  },
 }
