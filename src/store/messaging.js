@@ -173,6 +173,19 @@ export const useMessagingStore = defineStore('messaging', () => {
         if (['incoming_call', 'call_accepted', 'call_rejected', 'call_ended', 'webrtc_ice'].includes(event.type)) {
           callEvent.value = event
         }
+        // Handle contract accept/decline update pushed to the client
+        if (event.type === 'contract_update') {
+          const { message_id, contract } = event
+          if (message_id && contract) {
+            const idx = messages.value.findIndex(m => m.id === message_id)
+            if (idx !== -1) {
+              messages.value.splice(idx, 1, {
+                ...messages.value[idx],
+                content: JSON.stringify(contract),
+              })
+            }
+          }
+        }
     }
   })
 

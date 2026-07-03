@@ -1019,27 +1019,43 @@ async function submitContract() {
 }
 
 async function respondContract(m, action) {
-  // Optimistically update the message locally first
+  // Optimistically update the message locally first for instant UI feedback
   const contract = parseContract(m)
   const updatedContract = {
     ...contract,
     status: action === 'accept' ? 'active' : 'declined',
     developer_id: authStore.user?.id,
-    developer_name: authStore.user?.full_name || '',
+    developer_name: authStore.user?.full_name || authStore.profile?.full_name || '',
   }
+
   const idx = messagingStore.messages.findIndex(msg => msg.id === m.id)
   if (idx !== -1) {
-    messagingStore.messages[idx] = { ...messagingStore.messages[idx], content: JSON.stringify(updatedContract) }
+    // Use splice for Vue 3 reactivity
+    messagingStore.messages.splice(idx, 1, {
+      ...messagingStore.messages[idx],
+      content: JSON.stringify(updatedContract),
+    })
   }
-  // Persist to backend via the contract endpoint
+
+  // Persist to backend
   try {
-    await messagingService.respondContract(m.id, action)
+    const result = await messagingService.respondContract(m.id, action)
+    // Update with server response to make sure data is accurate
+    if (result?.contract && idx !== -1) {
+      messagingStore.messages.splice(idx, 1, {
+        ...messagingStore.messages[idx],
+        content: JSON.stringify(result.contract),
+      })
+    }
   } catch (e) {
     // Rollback on failure
     if (idx !== -1) {
-      messagingStore.messages[idx] = { ...messagingStore.messages[idx], content: JSON.stringify(contract) }
+      messagingStore.messages.splice(idx, 1, {
+        ...messagingStore.messages[idx],
+        content: JSON.stringify(contract),
+      })
     }
-    console.error('Contract response failed:', e)
+    console.error('Contract response failed:', e?.response?.data || e)
   }
 }
 
