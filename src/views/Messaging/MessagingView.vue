@@ -1055,7 +1055,11 @@ async function respondContract(m, action) {
         content: JSON.stringify(contract),
       })
     }
-    console.error('Contract response failed:', e?.response?.data || e)
+    const errMsg = e?.response?.data?.detail || e?.message || 'Failed'
+    console.error('Contract response failed:', e?.response?.status, errMsg)
+    // Show error to user
+    const { useUiStore } = await import('@/store/ui')
+    useUiStore().showError(`Contract ${action} failed: ${errMsg}`)
   }
 }
 

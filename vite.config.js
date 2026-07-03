@@ -5,7 +5,12 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
   plugins: [
-    vue(),
+    vue({
+      script: {
+        defineModel: true,
+        propsDestructure: true,
+      },
+    }),
     tailwindcss(),
   ],
 
@@ -16,33 +21,40 @@ export default defineConfig({
   },
 
   build: {
-    // Larger inline limit = fewer round trips for small assets
-    assetsInlineLimit: 4096,
-    // CSS code splitting: each async chunk gets its own CSS
+    assetsInlineLimit: 8192,    // inline small assets — fewer HTTP requests
     cssCodeSplit: true,
-    // Source maps off in prod (saves ~40% bundle size)
     sourcemap: false,
-    // Target modern browsers — smaller output
     target: 'es2020',
+    minify: 'esbuild',          // esbuild is 20-40x faster than terser
     rollupOptions: {
       output: {
-        // Manual chunk splitting for big deps
         manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('vue') || id.includes('vue-router') || id.includes('pinia')) return 'vue-core'
-            if (id.includes('axios')) return 'axios'
-          }
+          if (!id.includes('node_modules')) return
+          if (id.includes('vue') || id.includes('vue-router') || id.includes('pinia')) return 'vue-core'
+          if (id.includes('axios')) return 'axios'
+          if (id.includes('@capacitor')) return 'capacitor'
         },
-        // Predictable filenames for long-term caching
         chunkFileNames:  'assets/js/[name]-[hash].js',
         entryFileNames:  'assets/js/[name]-[hash].js',
         assetFileNames:  'assets/[ext]/[name]-[hash].[ext]',
       },
+      // Tree-shake unused exports
+      treeshake: {
+        moduleSideEffects: false,
+        propertyReadSideEffects: false,
+      },
     },
+    // Increase chunk warning threshold
+    chunkSizeWarningLimit: 1000,
   },
 
-  // Pre-bundle deps for faster dev startup
   optimizeDeps: {
     include: ['vue', 'vue-router', 'pinia', 'axios'],
+    exclude: ['@capacitor/core'],
+  },
+
+  // Faster HMR in dev
+  server: {
+    hmr: { overlay: false },
   },
 })
