@@ -1,5 +1,22 @@
 <template>
   <section class="hero-section">
+    <!-- Video Background -->
+    <div class="hero-video-bg">
+      <video
+        class="hero-bg-video"
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="auto"
+        crossorigin="anonymous"
+        @canplay="(e) => e.target.play()"
+      >
+        <source src="https://assets.mixkit.co/videos/preview/mixkit-developer-working-on-a-laptop-1587-large.mp4" type="video/mp4" />
+      </video>
+      <div class="hero-video-overlay" />
+    </div>
+
     <div class="hero-bg">
       <div class="glow-orb glow-orb-primary hero-orb-1" />
       <div class="glow-orb glow-orb-primary hero-orb-2" />
@@ -63,6 +80,12 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const searchQuery = ref('')
 
+onMounted(() => {
+  // Force autoplay on hero bg video
+  const bgVideo = document.querySelector('.hero-bg-video')
+  if (bgVideo) { bgVideo.muted = true; bgVideo.play().catch(() => {}) }
+})
+
 const STATS = ref([
   { value: '0', label: 'Developers' },
   { value: '0', label: 'Companies Hiring' },
@@ -114,6 +137,38 @@ function handleSearch() {
   padding: 3rem 1.25rem 3rem;
 }
 
+/* ── Video Background ── */
+.hero-video-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.hero-bg-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0.18;
+}
+
+[data-theme="dark"] .hero-bg-video {
+  opacity: 0.12;
+}
+
+.hero-video-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    var(--background) 0%,
+    rgba(0,0,0,0) 30%,
+    rgba(0,0,0,0) 70%,
+    var(--background) 100%
+  );
+}
+
 @media (min-width: 640px) {
   .hero-section { padding: 4rem 1.5rem 4rem; }
 }
@@ -123,7 +178,7 @@ function handleSearch() {
 }
 
 /* Background orbs */
-.hero-bg { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.hero-bg { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 1; }
 
 .hero-orb-1 {
   width: min(500px, 80vw);
