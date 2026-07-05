@@ -142,7 +142,7 @@
   z-index: 1;
   flex-shrink: 0;
   width: 100%;
-  max-width: 340px;
+  max-width: 480px;
   border-radius: 1rem;
   overflow: hidden;
   box-shadow: 0 16px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(168,85,247,0.2);
@@ -150,8 +150,8 @@
 
 @media (min-width: 768px) {
   .cta-video-wrap {
-    width: 42%;
-    max-width: 420px;
+    width: 52%;
+    max-width: 560px;
   }
 }
 
