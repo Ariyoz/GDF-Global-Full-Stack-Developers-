@@ -3,7 +3,6 @@
     <HeroSection />
     <FeaturedDevelopers />
     <TrendingProjects />
-    <TechVideos />
     <HowItWorks />
     <TestimonialsSection />
     <HomeCta />
@@ -15,7 +14,6 @@ import { useSeo, pageSeo } from '@/composables/useSeo'
 import HeroSection         from '@/components/common/HeroSection.vue'
 import FeaturedDevelopers  from '@/components/common/FeaturedDevelopers.vue'
 import TrendingProjects    from '@/components/common/TrendingProjects.vue'
-import TechVideos          from '@/components/common/TechVideos.vue'
 import HowItWorks          from '@/components/common/HowItWorks.vue'
 import TestimonialsSection from '@/components/common/TestimonialsSection.vue'
 import HomeCta             from '@/components/common/HomeCta.vue'
