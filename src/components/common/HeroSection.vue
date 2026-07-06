@@ -63,7 +63,14 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const searchQuery = ref('')
 
-onMounted(() => {
+const STATS = ref([
+  { value: '0', label: 'Developers' },
+  { value: '0', label: 'Companies Hiring' },
+  { value: '0', label: 'Projects Delivered' },
+  { value: '5+', label: 'Countries' },
+])
+
+onMounted(async () => {
   const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1'
 
   async function loadStats() {
