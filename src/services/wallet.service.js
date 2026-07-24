@@ -1,54 +1,49 @@
-// ── Wallet Service — Flutterwave integration ──
+// ── Wallet Service — Paystack integration ──
 import http from './http'
 
 export const walletService = {
-  // Balance + monthly stats
+
+  // ── Balance + stats ──────────────────────────────────────────────────────
   async getWallet() {
     return http.get('/wallet')
   },
 
-  // Last 100 transactions
-  async getTransactions() {
-    const data = await http.get('/wallet/transactions')
-    return data.transactions || []
+  // ── Transaction history (paginated) ─────────────────────────────────────
+  async getTransactions({ page = 1, pageSize = 30, type = null } = {}) {
+    const params = new URLSearchParams({ page, page_size: pageSize })
+    if (type) params.append('tx_type', type)
+    const data = await http.get(`/wallet/transactions?${params.toString()}`)
+    return data
   },
 
-  // Initialize Flutterwave payment → returns { payment_link, tx_ref }
-  // Frontend redirects to payment_link
-  // Flutterwave redirects back to /wallet?tx_ref=xxx&transaction_id=xxx&status=successful
-  async initializePayment(amountNaira, redirectUrl) {
-    return http.post('/wallet/flw/initialize', {
-      amount:       amountNaira,
-      redirect_url: redirectUrl || window.location.origin + '/wallet',
+  // ── Fund wallet via Paystack ─────────────────────────────────────────────
+  // Returns { payment_url, reference, amount, provider }
+  // Frontend redirects to payment_url.
+  // Paystack redirects back to /wallet?ref=<reference>
+  async initializePayment(amountNaira) {
+    return http.post('/wallet/fund', {
+      amount:   amountNaira,
+      provider: 'paystack',
     }, { timeout: 30000 })
   },
 
-  // Verify after Flutterwave redirect
-  async verifyPayment({ txRef, transactionId, status }) {
-    const params = new URLSearchParams()
-    if (txRef)         params.append('tx_ref', txRef)
-    if (transactionId) params.append('transaction_id', transactionId)
-    if (status)        params.append('status', status)
-    return http.get(`/wallet/flw/verify?${params.toString()}`, { timeout: 30000 })
+  // ── Verify after Paystack redirect ───────────────────────────────────────
+  // Call this when ?ref=<reference> appears in the URL after redirect
+  async verifyPayment(reference) {
+    return http.post('/wallet/verify', {
+      reference,
+      provider: 'paystack',
+    }, { timeout: 30000 })
   },
 
-  // Fetch live Nigerian bank list
+  // ── List Nigerian banks (from Paystack) ──────────────────────────────────
   async getBanks() {
-    const data = await http.get('/wallet/banks')
+    const data = await http.get('/wallet/banks?provider=paystack')
     return data.banks || []
   },
 
-  // Get user's dedicated virtual account
-  async getVirtualAccount() {
-    return http.get('/wallet/virtual-account')
-  },
-
-  // Create dedicated virtual account (Flutterwave DVA)
-  async createVirtualAccount() {
-    return http.post('/wallet/virtual-account/create', {}, { timeout: 30000 })
-  },
-
-  // Resolve account number → account name
+  // ── Resolve account number → account name (Paystack) ────────────────────
+  // Proxied through our backend to keep secret key server-side
   async verifyBankAccount(accountNumber, bankCode) {
     return http.post('/wallet/verify-account', {
       account_number: accountNumber,
@@ -56,20 +51,28 @@ export const walletService = {
     })
   },
 
-  // Instant withdrawal via Flutterwave Transfer
-  async requestWithdrawal({ amount, bankCode, accountNumber, accountName }) {
+  // ── Request withdrawal ───────────────────────────────────────────────────
+  async requestWithdrawal({ amount, bankName, bankCode, accountNumber, accountName }) {
     return http.post('/wallet/withdraw', {
       amount,
-      bank_code:      bankCode,
-      account_number: accountNumber,
+      bank_name:      bankName,
       account_name:   accountName,
+      account_number: accountNumber,
+      bank_code:      bankCode,
     }, { timeout: 30000 })
   },
 
-  // Admin endpoints
-  async adminOverview()           { return http.get('/wallet/admin/overview') },
-  async adminPendingWithdrawals() { return http.get('/wallet/admin/pending-withdrawals') },
-  async adminCreditUser(userId, amount, description) {
-    return http.post('/wallet/admin/credit-user', { user_id: userId, amount, description })
+  // ── Withdrawal history ───────────────────────────────────────────────────
+  async getWithdrawals() {
+    return http.get('/wallet/withdrawals')
+  },
+
+  // ── Dedicated Virtual Account (Paystack DVA) ─────────────────────────────
+  async getVirtualAccount() {
+    return http.get('/wallet/virtual-account')
+  },
+
+  async createVirtualAccount() {
+    return http.post('/wallet/virtual-account?provider=paystack', {}, { timeout: 30000 })
   },
 }
