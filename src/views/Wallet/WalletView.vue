@@ -524,28 +524,55 @@ async function initiateFund() {
   if (!fundAmount.value || fundAmount.value < 100) return
   paying.value = true
 
-  // Retry up to 3 times silently (handles cold start)
-  for (let attempt = 1; attempt <= 3; attempt++) {
+  // Retry up to 4 times — handles cold start (no response) silently
+  for (let attempt = 1; attempt <= 4; attempt++) {
     try {
       const data = await walletService.initializePayment(fundAmount.value)
       if (data.payment_url) {
         window.location.href = data.payment_url
-        return // redirect happening, don't reset paying
+        return // redirect happening — don't reset paying
       }
-      break
+      // Got a response but no URL — real error
+      uiStore.showError('Payment could not be initialized. Please try again.')
+      paying.value = false
+      return
     } catch (e) {
-      if (attempt < 3 && !e?.response) {
-        // No response = server waking, wait and retry silently
-        await new Promise(r => setTimeout(r, 4000))
+      const hasResponse = !!e?.response
+      const status = e?.response?.status
+      const detail = e?.response?.data?.detail
+
+      // 401 = not logged in
+      if (status === 401) {
+        uiStore.showError('Session expired. Please log in again.')
+        paying.value = false
+        return
+      }
+
+      // 403 = wallet frozen
+      if (status === 403) {
+        uiStore.showError(detail || 'Wallet is frozen. Contact support.')
+        paying.value = false
+        return
+      }
+
+      // Real server error — show it
+      if (hasResponse) {
+        uiStore.showError(detail || 'Payment failed. Please try again.')
+        paying.value = false
+        return
+      }
+
+      // No response = network/cold start — retry silently
+      if (attempt < 4) {
+        await new Promise(r => setTimeout(r, 5000))
         continue
       }
-      // Real error from server
-      const msg = e?.response?.data?.detail || null
-      uiStore.showError(msg || 'Could not connect. Please try again.')
-      break
+
+      // All retries exhausted
+      uiStore.showError('Connection timed out. Please try again.')
+      paying.value = false
     }
   }
-  paying.value = false
 }
 
 // ── Verify after Paystack redirect ────────────────────────────────────────────

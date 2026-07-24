@@ -24,7 +24,7 @@ export const walletService = {
     return http.post('/wallet/fund', {
       amount:   amountNaira,
       provider: 'paystack',
-    }, { timeout: 30000 })
+    }, { timeout: 60000 })
   },
 
   // ── Verify after Paystack redirect ───────────────────────────────────────
