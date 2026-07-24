@@ -24,20 +24,6 @@
           </div>
         </div>
 
-        <!-- Right: video -->
-        <div class="cta-video-wrap">
-          <video
-            class="cta-video"
-            autoplay
-            muted
-            loop
-            playsinline
-            preload="metadata"
-          >
-            <source src="@/assets/images/IMG_1469.MP4" type="video/mp4" />
-          </video>
-        </div>
-
       </div>
     </div>
   </section>
@@ -61,10 +47,7 @@
 
 @media (min-width: 768px) {
   .cta-card {
-    flex-direction: row;
-    align-items: center;
     padding: 3.5rem 3rem;
-    gap: 3rem;
     border-radius: 2rem;
   }
 }
@@ -85,21 +68,22 @@
 .cta-glow-right { top: -100px; right: -100px; }
 .cta-glow-left  { bottom: -100px; left: -100px; }
 
-/* Left column */
+/* Content column */
 .cta-content {
   position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  flex: 1;
+  width: 100%;
+  max-width: 700px;
   text-align: center;
+  align-items: center;
 }
 
 @media (min-width: 768px) {
   .cta-content {
-    text-align: left;
-    align-items: flex-start;
+    max-width: 760px;
   }
 }
 
@@ -117,7 +101,7 @@
 .cta-desc {
   font-size: clamp(0.875rem, 1.5vw, 1rem);
   color: rgba(255,255,255,0.65);
-  max-width: 440px;
+  max-width: 520px;
   line-height: 1.6;
 }
 
@@ -128,39 +112,8 @@
   justify-content: center;
 }
 
-@media (min-width: 768px) {
-  .cta-actions { justify-content: flex-start; }
-}
-
 @media (max-width: 400px) {
   .cta-actions { flex-direction: column; align-items: stretch; }
-}
-
-/* Right column — video */
-.cta-video-wrap {
-  position: relative;
-  z-index: 1;
-  flex-shrink: 0;
-  width: 100%;
-  max-width: 480px;
-  border-radius: 1rem;
-  overflow: hidden;
-  box-shadow: 0 16px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(168,85,247,0.2);
-}
-
-@media (min-width: 768px) {
-  .cta-video-wrap {
-    width: 52%;
-    max-width: 560px;
-  }
-}
-
-.cta-video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  border-radius: 1rem;
 }
 
 /* Buttons */
