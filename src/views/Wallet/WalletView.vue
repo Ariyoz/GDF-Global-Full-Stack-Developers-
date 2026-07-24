@@ -1,14 +1,6 @@
 <template>
   <div class="wallet-view">
 
-    <!-- Server wake-up banner -->
-    <Transition name="slide-down">
-      <div v-if="serverWaking" class="waking-banner">
-        <span class="waking-spinner"></span>
-        <span>Server is starting up — this takes about 30 seconds on first visit…</span>
-      </div>
-    </Transition>
-
     <!-- Header -->
     <div class="page-hdr">
       <div>
@@ -429,21 +421,21 @@ function getBankName(code) {
 // ── Server wake + load ────────────────────────────────────────────────────────
 async function wakeAndLoad() {
   const base = (import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1').replace('/api/v1', '')
-  for (let attempt = 1; attempt <= 6; attempt++) {
+  // Silently ping health to wake server while we retry
+  fetch(`${base}/health`, { cache: 'no-cache' }).catch(() => {})
+  for (let attempt = 1; attempt <= 8; attempt++) {
     try {
       await loadWallet()
       serverWaking.value = false
       return
     } catch {
-      if (attempt === 1) {
-        serverWaking.value = true
-        fetch(`${base}/health`, { cache: 'no-cache' }).catch(() => {})
-      }
-      if (attempt < 6) await new Promise(r => setTimeout(r, 5000))
+      if (attempt === 1) serverWaking.value = true
+      if (attempt < 8) await new Promise(r => setTimeout(r, 4000))
     }
   }
+  // After all retries just stop the spinner — don't show any error
   serverWaking.value = false
-  uiStore.showError('Server took too long to start. Please refresh the page.')
+  loading.value = false
 }
 
 // ── Load wallet ───────────────────────────────────────────────────────────────
@@ -531,31 +523,29 @@ async function verifyAccount() {
 async function initiateFund() {
   if (!fundAmount.value || fundAmount.value < 100) return
   paying.value = true
-  try {
-    const data = await walletService.initializePayment(fundAmount.value)
-    if (data.payment_url) {
-      window.location.href = data.payment_url
-    } else {
-      uiStore.showError('No payment URL returned. Please try again.')
-      paying.value = false
-    }
-  } catch (e) {
-    if (!e?.response) {
-      uiStore.showError('Server is starting up — retrying in 5 seconds…')
-      setTimeout(async () => {
-        try {
-          const data = await walletService.initializePayment(fundAmount.value)
-          if (data.payment_url) window.location.href = data.payment_url
-          else uiStore.showError('Payment URL not returned. Please try again.')
-        } catch (e2) {
-          uiStore.showError(e2?.response?.data?.detail || 'Payment failed. Please refresh and try again.')
-        } finally { paying.value = false }
-      }, 5000)
-    } else {
-      uiStore.showError(e?.response?.data?.detail || 'Payment initialization failed')
-      paying.value = false
+
+  // Retry up to 3 times silently (handles cold start)
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const data = await walletService.initializePayment(fundAmount.value)
+      if (data.payment_url) {
+        window.location.href = data.payment_url
+        return // redirect happening, don't reset paying
+      }
+      break
+    } catch (e) {
+      if (attempt < 3 && !e?.response) {
+        // No response = server waking, wait and retry silently
+        await new Promise(r => setTimeout(r, 4000))
+        continue
+      }
+      // Real error from server
+      const msg = e?.response?.data?.detail || null
+      uiStore.showError(msg || 'Could not connect. Please try again.')
+      break
     }
   }
+  paying.value = false
 }
 
 // ── Verify after Paystack redirect ────────────────────────────────────────────
