@@ -360,6 +360,7 @@ const txTotal        = ref(0)
 
 const showFundModal     = ref(false)
 const showWithdrawModal = ref(false)
+const showTxModal       = ref(false)
 const fundAmount        = ref(500)
 const paying            = ref(false)
 const withdrawing       = ref(false)

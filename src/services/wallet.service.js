@@ -75,4 +75,26 @@ export const walletService = {
   async createVirtualAccount() {
     return http.post('/wallet/virtual-account?provider=paystack', {}, { timeout: 30000 })
   },
+
+  // ── Send money to another GFD user ───────────────────────────────────────
+  async sendMoney({ recipient, amount, note }) {
+    return http.post('/wallet/send', { recipient, amount, note }, { timeout: 30000 })
+  },
+
+  // ── Request money from another GFD user ──────────────────────────────────
+  async requestMoney({ recipient, amount, note }) {
+    return http.post('/wallet/request', { recipient, amount, note }, { timeout: 30000 })
+  },
+
+  async getMoneyRequests() {
+    return http.get('/wallet/requests')
+  },
+
+  async acceptRequest(requestId) {
+    return http.post(`/wallet/requests/${requestId}/accept`, {})
+  },
+
+  async rejectRequest(requestId) {
+    return http.post(`/wallet/requests/${requestId}/reject`, {})
+  },
 }
