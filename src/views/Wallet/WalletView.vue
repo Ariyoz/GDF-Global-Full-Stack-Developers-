@@ -460,35 +460,29 @@
               </div>
             </div>
             <div class="field-group">
-              <label class="field-label">Bank</label>
-              <select v-model="wd.bank_code" class="modal-sel"
-                @change="wd.account_name = ''; wd.bank_name = getBankName(wd.bank_code); wd.verified = false">
-                <option value="">{{ banksLoading ? 'Loading banks…' : 'Select your bank…' }}</option>
-                <option v-for="b in liveBanks" :key="b.code" :value="b.code">{{ b.name }}</option>
-              </select>
+              <label class="field-label">Bank Name</label>
+              <input v-model="wd.bank_name" type="text" class="modal-inp"
+                style="border:1.5px solid var(--outline-variant);border-radius:12px;padding:.75rem .875rem;"
+                placeholder="e.g. GTBank, Access, Opay" />
             </div>
             <div class="field-group">
               <label class="field-label">Account Number</label>
-              <div class="input-group">
-                <input v-model="wd.account_number" type="text" class="modal-inp"
-                  autocomplete="off" placeholder="10-digit NUBAN" maxlength="10"
-                  @input="wd.account_name = ''; wd.verified = false; autoVerifyAccount()" />
-                <button v-if="wd.account_number.length === 10 && wd.bank_code && !wd.verified"
-                  class="verify-btn" :disabled="verifyingAccount" @click="verifyAccount">
-                  <span v-if="verifyingAccount" class="btn-spinner"></span>
-                  <span v-else>Verify</span>
-                </button>
-              </div>
+              <input v-model="wd.account_number" type="text" class="modal-inp"
+                style="border:1.5px solid var(--outline-variant);border-radius:12px;padding:.75rem .875rem;"
+                autocomplete="off" placeholder="10-digit NUBAN" maxlength="10" />
             </div>
-            <Transition name="slide-down">
-              <div v-if="wd.account_name" class="account-verified">
-                <span class="material-symbols-outlined" style="color:#22c55e;font-size:18px">check_circle</span>
-                <span>{{ wd.account_name }}</span>
-              </div>
-            </Transition>
+            <div class="field-group">
+              <label class="field-label">Account Name</label>
+              <input v-model="wd.account_name" type="text" class="modal-inp"
+                style="border:1.5px solid var(--outline-variant);border-radius:12px;padding:.75rem .875rem;"
+                placeholder="Name on the account" />
+            </div>
+            <div class="amount-display" v-if="wd.amount >= 1000 && wd.bank_name && wd.account_number && wd.account_name">
+              Withdrawing <strong>₦{{ (wd.amount||0).toLocaleString() }}</strong> to <strong>{{ wd.bank_name }}</strong> · {{ wd.account_number }}
+            </div>
             <p class="ps-note">
               <span class="material-symbols-outlined" style="font-size:14px">schedule</span>
-              Withdrawals are reviewed and processed within 24 hours
+              Reviewed and sent to your bank within 24 hours
             </p>
           </div>
           <div class="modal-footer">
@@ -583,9 +577,8 @@ const presets = [500, 1000, 2000, 5000, 10000, 20000]
 const canWithdraw = computed(() =>
   wd.value.amount >= 1000 &&
   wd.value.amount <= balance.value &&
-  wd.value.bank_code &&
-  wd.value.account_number.length === 10 &&
-  wd.value.verified &&
+  wd.value.bank_name.trim() &&
+  wd.value.account_number.length >= 10 &&
   wd.value.account_name.trim()
 )
 
@@ -918,12 +911,12 @@ async function submitWithdraw() {
   try {
     const result = await walletService.requestWithdrawal({
       amount:        wd.value.amount,
-      bankName:      wd.value.bank_name || getBankName(wd.value.bank_code),
-      bankCode:      wd.value.bank_code,
+      bankName:      wd.value.bank_name,
+      bankCode:      wd.value.bank_code || '',
       accountNumber: wd.value.account_number,
       accountName:   wd.value.account_name,
     })
-    uiStore.showSuccess(result.message || 'Withdrawal request submitted!')
+    uiStore.showSuccess(result.message || 'Withdrawal request submitted! You will receive your funds within 24 hours.')
     showWithdrawModal.value = false
     wd.value = { amount: 0, bank_code: '', bank_name: '', account_number: '', account_name: '', verified: false }
     await loadWallet()
