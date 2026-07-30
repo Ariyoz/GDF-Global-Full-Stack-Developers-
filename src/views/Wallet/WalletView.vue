@@ -145,13 +145,19 @@
         </div>
         <span class="qb-lbl">Fund Wallet</span>
       </button>
+      <button class="quick-btn" @click="showTransferModal = true">
+        <div class="qb-ico" style="background:rgba(59,130,246,.1)">
+          <span class="material-symbols-outlined" style="color:#3b82f6">send</span>
+        </div>
+        <span class="qb-lbl">Transfer</span>
+      </button>
       <button class="quick-btn" @click="showWithdrawModal = true">
         <div class="qb-ico" style="background:rgba(22,163,74,.1)">
           <span class="material-symbols-outlined" style="color:#16a34a">arrow_upward</span>
         </div>
         <span class="qb-lbl">Withdraw</span>
       </button>
-      <button class="quick-btn" @click="txFilter = null; showTxModal = true">
+      <button class="quick-btn" @click="showTxModal = true">
         <div class="qb-ico" style="background:rgba(245,158,11,.1)">
           <span class="material-symbols-outlined" style="color:#f59e0b">receipt_long</span>
         </div>
@@ -200,7 +206,187 @@
     </div>
 
 
-    <!-- ── FUND WALLET MODAL ── -->
+    <!-- ── TRANSFER MODAL ── -->
+    <Transition name="modal">
+      <div v-if="showTransferModal" class="modal-overlay" @click.self="showTransferModal = false">
+        <div class="modal-box">
+          <div class="modal-hdr">
+            <h3 class="modal-title">Send Money</h3>
+            <button class="modal-close" @click="showTransferModal = false">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="avail-balance">
+              Available: <strong>₦{{ fmtNgn(balance) }}</strong>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Recipient (username or email)</label>
+              <div class="input-group">
+                <span class="inp-prefix">@</span>
+                <input v-model="tr.recipient" type="text" class="modal-inp"
+                  placeholder="username or email" autocomplete="off" />
+              </div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Amount (₦)</label>
+              <div class="input-group">
+                <span class="inp-prefix">₦</span>
+                <input v-model.number="tr.amount" type="number" class="modal-inp"
+                  placeholder="Min ₦100" min="100" :max="balance" />
+              </div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Note (optional)</label>
+              <input v-model="tr.note" type="text" class="modal-inp" style="border:1.5px solid var(--outline-variant);border-radius:12px;padding:.75rem .875rem;"
+                placeholder="What's this for?" maxlength="100" />
+            </div>
+            <div class="amount-display" v-if="tr.amount > 0 && tr.recipient">
+              Sending <strong>₦{{ (tr.amount||0).toLocaleString() }}</strong> to <strong>@{{ tr.recipient }}</strong>
+            </div>
+            <p class="ps-note">
+              <span class="material-symbols-outlined" style="font-size:14px">bolt</span>
+              Transfers between GFD users are instant and free
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-ghost" @click="showTransferModal = false">Cancel</button>
+            <button class="btn-primary modal-pay-btn"
+              :disabled="!canTransfer || transferring"
+              @click="submitTransfer">
+              <span v-if="transferring" class="btn-spinner"></span>
+              <span class="material-symbols-outlined" v-else style="font-size:18px">send</span>
+              {{ transferring ? 'Sending…' : `Send ₦${(tr.amount||0).toLocaleString()}` }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- ── HISTORY MODAL ── -->
+    <Transition name="modal">
+      <div v-if="showTxModal" class="modal-overlay" @click.self="showTxModal = false">
+        <div class="modal-box" style="max-width:560px">
+          <div class="modal-hdr">
+            <h3 class="modal-title">Transaction History</h3>
+            <button class="modal-close" @click="showTxModal = false">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+
+          <!-- Receipt view -->
+          <template v-if="selectedTx">
+            <div class="receipt-wrap" ref="receiptRef">
+              <div class="receipt-header">
+                <div class="receipt-ico-wrap" :style="txStyle(selectedTx).bg">
+                  <span class="material-symbols-outlined receipt-ico" :style="txStyle(selectedTx).color">{{ txIcon(selectedTx) }}</span>
+                </div>
+                <p class="receipt-amt" :class="isDebit(selectedTx) ? 'neg' : 'pos'">
+                  {{ isDebit(selectedTx) ? '-' : '+' }}{{ fmtNgn(selectedTx.amount) }}
+                </p>
+                <span class="tx-badge" :class="selectedTx.status" style="font-size:.8rem;padding:.3rem .75rem">{{ selectedTx.status }}</span>
+              </div>
+              <div class="receipt-rows">
+                <div class="receipt-row">
+                  <span class="receipt-lbl">Transaction ID</span>
+                  <span class="receipt-val mono">{{ selectedTx.id }}</span>
+                </div>
+                <div class="receipt-row">
+                  <span class="receipt-lbl">Type</span>
+                  <span class="receipt-val" style="text-transform:capitalize">{{ selectedTx.type.replace('_',' ') }}</span>
+                </div>
+                <div class="receipt-row" v-if="selectedTx.reference">
+                  <span class="receipt-lbl">Reference</span>
+                  <span class="receipt-val mono">{{ selectedTx.reference }}</span>
+                </div>
+                <div class="receipt-row" v-if="selectedTx.description">
+                  <span class="receipt-lbl">Description</span>
+                  <span class="receipt-val">{{ selectedTx.description }}</span>
+                </div>
+                <div class="receipt-row" v-if="selectedTx.fee > 0">
+                  <span class="receipt-lbl">Fee</span>
+                  <span class="receipt-val">{{ fmtNgn(selectedTx.fee) }}</span>
+                </div>
+                <div class="receipt-row" v-if="selectedTx.balance_before != null">
+                  <span class="receipt-lbl">Balance Before</span>
+                  <span class="receipt-val">{{ fmtNgn(selectedTx.balance_before) }}</span>
+                </div>
+                <div class="receipt-row" v-if="selectedTx.balance_after != null">
+                  <span class="receipt-lbl">Balance After</span>
+                  <span class="receipt-val">{{ fmtNgn(selectedTx.balance_after) }}</span>
+                </div>
+                <div class="receipt-row" v-if="selectedTx.provider">
+                  <span class="receipt-lbl">Provider</span>
+                  <span class="receipt-val" style="text-transform:capitalize">{{ selectedTx.provider }}</span>
+                </div>
+                <div class="receipt-row">
+                  <span class="receipt-lbl">Date & Time</span>
+                  <span class="receipt-val">{{ fmtDateFull(selectedTx.created_at) }}</span>
+                </div>
+              </div>
+              <div class="receipt-brand">GFD Wallet · globalfd.xyz</div>
+            </div>
+            <div class="receipt-actions">
+              <button class="btn-ghost" @click="selectedTx = null">
+                <span class="material-symbols-outlined" style="font-size:16px">arrow_back</span>
+                Back
+              </button>
+              <button class="btn-ghost" @click="shareReceipt">
+                <span class="material-symbols-outlined" style="font-size:16px">share</span>
+                Share
+              </button>
+              <button class="btn-primary" @click="downloadReceipt" style="gap:.4rem">
+                <span class="material-symbols-outlined" style="font-size:16px">download</span>
+                Download
+              </button>
+            </div>
+          </template>
+
+          <!-- Transaction list -->
+          <template v-else>
+            <!-- Filter tabs -->
+            <div class="hist-tabs">
+              <button v-for="tab in histTabs" :key="tab.value"
+                class="hist-tab" :class="{ active: txFilter === tab.value }"
+                @click="setTxFilter(tab.value)">
+                {{ tab.label }}
+              </button>
+            </div>
+            <div class="modal-body" style="padding-top:.5rem;max-height:55vh;overflow-y:auto">
+              <div v-if="histLoading" class="tx-empty" style="padding:2rem 0">
+                <div class="btn-spinner" style="border-color:rgba(99,14,212,.2);border-top-color:var(--primary);width:24px;height:24px"></div>
+              </div>
+              <div v-else-if="!histTxs.length" class="tx-empty" style="padding:2rem 0">
+                <span class="material-symbols-outlined" style="font-size:2rem;opacity:.25">receipt_long</span>
+                <p>No transactions</p>
+              </div>
+              <template v-else>
+                <div v-for="tx in histTxs" :key="tx.id" class="tx-row"
+                  style="cursor:pointer;border-radius:10px" @click="selectedTx = tx">
+                  <div class="tx-ico-wrap" :style="txStyle(tx).bg">
+                    <span class="material-symbols-outlined tx-ico" :style="txStyle(tx).color">{{ txIcon(tx) }}</span>
+                  </div>
+                  <div class="tx-info">
+                    <p class="tx-name">{{ tx.description || tx.type }}</p>
+                    <p class="tx-date">{{ fmtDate(tx.created_at) }}{{ tx.reference ? ' · ' + tx.reference : '' }}</p>
+                  </div>
+                  <div class="tx-right">
+                    <span class="tx-amt" :class="isDebit(tx) ? 'neg' : 'pos'">
+                      {{ isDebit(tx) ? '-' : '+' }}{{ fmtNgn(tx.amount) }}
+                    </span>
+                    <span class="tx-badge" :class="tx.status">{{ tx.status }}</span>
+                  </div>
+                </div>
+              </template>
+              <!-- Load more -->
+              <button v-if="histHasMore && !histLoading"
+                class="btn-ghost" style="width:100%;margin-top:.5rem;justify-content:center"
+                @click="loadMoreHist">Load more</button>
+            </div>
+          </template>
+        </div>
+      </div>
+    </Transition>
     <Transition name="modal">
       <div v-if="showFundModal" class="modal-overlay" @click.self="showFundModal = false">
         <div class="modal-box">
@@ -339,17 +525,15 @@ const uiStore       = useUiStore()
 const route         = useRoute()
 const currencyStore = useCurrencyStore()
 
-// NGN → user's chosen display currency
 const NGN_TO_USD = 1 / 1650
 function fmtWallet(ngnAmount) {
-  const usd = Number(ngnAmount || 0) * NGN_TO_USD
-  return currencyStore.format(usd)
+  return currencyStore.format(Number(ngnAmount || 0) * NGN_TO_USD)
 }
 function fmtNgn(n) {
   return '₦' + Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-// ── State ────────────────────────────────────────────────────────────────────
+// ── State ─────────────────────────────────────────────────────────────────
 const loading        = ref(false)
 const serverWaking   = ref(false)
 const balance        = ref(0)
@@ -360,10 +544,12 @@ const txTotal        = ref(0)
 
 const showFundModal     = ref(false)
 const showWithdrawModal = ref(false)
+const showTransferModal = ref(false)
 const showTxModal       = ref(false)
 const fundAmount        = ref(500)
 const paying            = ref(false)
 const withdrawing       = ref(false)
+const transferring      = ref(false)
 const verifyBanner      = ref('')
 
 const liveBanks        = ref([])
@@ -374,17 +560,17 @@ const acctCopied       = ref(false)
 const verifyingAccount = ref(false)
 let   verifyTimer      = null
 
-const wd = ref({
-  amount:         0,
-  bank_code:      '',
-  bank_name:      '',
-  account_number: '',
-  account_name:   '',
-  verified:       false,
-})
+// Transfer form
+const tr = ref({ recipient: '', amount: 0, note: '' })
+const canTransfer = computed(() =>
+  tr.value.recipient.trim().length >= 3 &&
+  tr.value.amount >= 100 &&
+  tr.value.amount <= balance.value
+)
 
+// Withdraw form
+const wd = ref({ amount: 0, bank_code: '', bank_name: '', account_number: '', account_name: '', verified: false })
 const presets = [500, 1000, 2000, 5000, 10000, 20000]
-
 const canWithdraw = computed(() =>
   wd.value.amount >= 1000 &&
   wd.value.amount <= balance.value &&
@@ -394,35 +580,54 @@ const canWithdraw = computed(() =>
   wd.value.account_name.trim()
 )
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// History state
+const histTxs    = ref([])
+const histPage   = ref(1)
+const histHasMore = ref(false)
+const histLoading = ref(false)
+const txFilter   = ref(null)
+const selectedTx = ref(null)
+const receiptRef = ref(null)
+const histTabs   = [
+  { label: 'All',       value: null },
+  { label: 'Deposits',  value: 'credit' },
+  { label: 'Transfers', value: 'debit' },
+  { label: 'Withdrawals', value: 'withdrawal' },
+]
+
+// ── Helpers ───────────────────────────────────────────────────────────────
 function fmtDate(d) {
   if (!d) return ''
   return new Date(d).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+function fmtDateFull(d) {
+  if (!d) return ''
+  return new Date(d).toLocaleString('en-NG', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })
 }
 function isDebit(tx) {
   return ['withdrawal', 'debit', 'escrow_hold'].includes(tx.type)
 }
 function txIcon(tx) {
-  if (tx.type === 'withdrawal')    return 'arrow_upward'
-  if (tx.type === 'refund')        return 'undo'
-  if (tx.type === 'escrow_hold')   return 'lock'
-  if (tx.type === 'escrow_release')return 'lock_open'
+  if (tx.type === 'withdrawal')     return 'arrow_upward'
+  if (tx.type === 'debit')          return 'send'
+  if (tx.type === 'refund')         return 'undo'
+  if (tx.type === 'escrow_hold')    return 'lock'
+  if (tx.type === 'escrow_release') return 'lock_open'
   return 'add_circle'
 }
 function txStyle(tx) {
-  if (isDebit(tx)) return { bg: 'background:rgba(186,26,26,.08)', color: 'color:#ef4444' }
-  if (tx.type === 'refund') return { bg: 'background:rgba(245,158,11,.1)', color: 'color:#f59e0b' }
+  if (tx.type === 'debit')    return { bg: 'background:rgba(59,130,246,.08)',  color: 'color:#3b82f6' }
+  if (isDebit(tx))            return { bg: 'background:rgba(186,26,26,.08)',   color: 'color:#ef4444' }
+  if (tx.type === 'refund')   return { bg: 'background:rgba(245,158,11,.1)',   color: 'color:#f59e0b' }
   return { bg: 'background:rgba(99,14,212,.08)', color: 'color:var(--primary)' }
 }
 function getBankName(code) {
   return liveBanks.value.find(b => b.code === code)?.name || ''
 }
 
-
-// ── Server wake + load ────────────────────────────────────────────────────────
+// ── Load wallet ───────────────────────────────────────────────────────────
 async function wakeAndLoad() {
   const base = (import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1').replace('/api/v1', '')
-  // Silently ping health to wake server while we retry
   fetch(`${base}/health`, { cache: 'no-cache' }).catch(() => {})
   for (let attempt = 1; attempt <= 8; attempt++) {
     try {
@@ -434,12 +639,10 @@ async function wakeAndLoad() {
       if (attempt < 8) await new Promise(r => setTimeout(r, 4000))
     }
   }
-  // After all retries just stop the spinner — don't show any error
   serverWaking.value = false
   loading.value = false
 }
 
-// ── Load wallet ───────────────────────────────────────────────────────────────
 async function loadWallet() {
   loading.value = true
   try {
@@ -457,7 +660,116 @@ async function loadWallet() {
   }
 }
 
-// ── Banks ─────────────────────────────────────────────────────────────────────
+// ── History modal ─────────────────────────────────────────────────────────
+async function setTxFilter(val) {
+  txFilter.value = val
+  selectedTx.value = null
+  histPage.value = 1
+  histTxs.value = []
+  await loadHist()
+}
+
+async function loadHist() {
+  histLoading.value = true
+  try {
+    const data = await walletService.getTransactions({
+      page: histPage.value, pageSize: 20, type: txFilter.value,
+    })
+    histTxs.value = histPage.value === 1
+      ? (data.transactions || [])
+      : [...histTxs.value, ...(data.transactions || [])]
+    histHasMore.value = data.has_more || false
+  } catch { /* silent */ }
+  finally { histLoading.value = false }
+}
+
+async function loadMoreHist() {
+  histPage.value++
+  await loadHist()
+}
+
+// Open history modal — load on first open
+const histLoaded = ref(false)
+async function openHistory() {
+  showTxModal.value = true
+  if (!histLoaded.value) {
+    histLoaded.value = true
+    histTxs.value = []
+    histPage.value = 1
+    await loadHist()
+  }
+}
+
+// ── Receipt share / download ──────────────────────────────────────────────
+async function shareReceipt() {
+  const tx = selectedTx.value
+  if (!tx) return
+  const text = [
+    `GFD Wallet Receipt`,
+    `Type: ${tx.type}`,
+    `Amount: ${isDebit(tx) ? '-' : '+'}${fmtNgn(tx.amount)}`,
+    `Reference: ${tx.reference || 'N/A'}`,
+    `Description: ${tx.description || ''}`,
+    `Status: ${tx.status}`,
+    `Date: ${fmtDateFull(tx.created_at)}`,
+    `\nglobalfd.xyz`,
+  ].join('\n')
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'GFD Payment Receipt', text })
+      return
+    } catch { /* fallback to copy */ }
+  }
+  // Fallback: copy to clipboard
+  await navigator.clipboard.writeText(text).catch(() => {})
+  uiStore.showSuccess('Receipt copied to clipboard!')
+}
+
+async function downloadReceipt() {
+  const tx = selectedTx.value
+  if (!tx) return
+
+  // Build a simple HTML receipt and download as HTML file (works without extra libs)
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>GFD Receipt</title>
+<style>
+  body{font-family:sans-serif;max-width:420px;margin:40px auto;padding:24px;border:1px solid #e5e7eb;border-radius:16px}
+  h2{text-align:center;margin:0 0 4px}
+  .amt{text-align:center;font-size:2rem;font-weight:800;margin:8px 0;color:${isDebit(tx)?'#ef4444':'#16a34a'}}
+  .badge{display:inline-block;padding:3px 12px;border-radius:999px;font-size:.75rem;font-weight:700;background:${tx.status==='success'?'#dcfce7':tx.status==='pending'?'#fef9c3':'#fee2e2'};color:${tx.status==='success'?'#16a34a':tx.status==='pending'?'#ca8a04':'#ef4444'}}
+  .center{text-align:center}
+  table{width:100%;border-collapse:collapse;margin-top:16px}
+  td{padding:8px 4px;border-bottom:1px solid #f3f4f6;font-size:.875rem}
+  td:first-child{color:#6b7280}td:last-child{text-align:right;font-weight:600;word-break:break-all}
+  .brand{text-align:center;color:#9ca3af;font-size:.75rem;margin-top:16px}
+</style></head><body>
+<h2>GFD Wallet Receipt</h2>
+<div class="amt">${isDebit(tx)?'-':'+'}${fmtNgn(tx.amount)}</div>
+<div class="center"><span class="badge">${tx.status}</span></div>
+<table>
+  <tr><td>Transaction ID</td><td>${tx.id}</td></tr>
+  <tr><td>Type</td><td>${tx.type}</td></tr>
+  ${tx.reference ? `<tr><td>Reference</td><td>${tx.reference}</td></tr>` : ''}
+  ${tx.description ? `<tr><td>Description</td><td>${tx.description}</td></tr>` : ''}
+  ${tx.fee > 0 ? `<tr><td>Fee</td><td>${fmtNgn(tx.fee)}</td></tr>` : ''}
+  ${tx.balance_before != null ? `<tr><td>Balance Before</td><td>${fmtNgn(tx.balance_before)}</td></tr>` : ''}
+  ${tx.balance_after != null ? `<tr><td>Balance After</td><td>${fmtNgn(tx.balance_after)}</td></tr>` : ''}
+  <tr><td>Date</td><td>${fmtDateFull(tx.created_at)}</td></tr>
+</table>
+<div class="brand">GFD Wallet · globalfd.xyz</div>
+</body></html>`
+
+  const blob = new Blob([html], { type: 'text/html' })
+  const url  = URL.createObjectURL(blob)
+  const a    = document.createElement('a')
+  a.href     = url
+  a.download = `GFD-Receipt-${tx.reference || tx.id.slice(0,8)}.html`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+// ── Banks ──────────────────────────────────────────────────────────────────
 async function loadBanks() {
   banksLoading.value = true
   try { liveBanks.value = await walletService.getBanks() }
@@ -465,13 +777,12 @@ async function loadBanks() {
   finally { banksLoading.value = false }
 }
 
-// ── Virtual account ───────────────────────────────────────────────────────────
+// ── Virtual account ────────────────────────────────────────────────────────
 async function loadVirtualAccount() {
   try {
     const data = await walletService.getVirtualAccount()
-    // backend returns the object directly (not nested under virtual_account)
     virtualAccount.value = data?.account_number ? data : null
-  } catch { /* 404 is expected if not created yet */ }
+  } catch { /* 404 expected */ }
 }
 
 async function createVirtualAccount() {
@@ -481,8 +792,7 @@ async function createVirtualAccount() {
     virtualAccount.value = data?.account_number ? data : data
     uiStore.showSuccess('Your personal account number is ready!')
   } catch (e) {
-    const msg = e?.response?.data?.detail || ''
-    uiStore.showError(msg || 'Could not create account. Please try again.')
+    uiStore.showError(e?.response?.data?.detail || 'Could not create account. Please try again.')
   } finally {
     creatingDVA.value = false
   }
@@ -495,12 +805,11 @@ async function copyAcctNum() {
   setTimeout(() => acctCopied.value = false, 2000)
 }
 
-// ── Account verification ──────────────────────────────────────────────────────
+// ── Account verification ───────────────────────────────────────────────────
 function autoVerifyAccount() {
   clearTimeout(verifyTimer)
-  if (wd.value.account_number.length === 10 && wd.value.bank_code) {
+  if (wd.value.account_number.length === 10 && wd.value.bank_code)
     verifyTimer = setTimeout(verifyAccount, 800)
-  }
 }
 
 async function verifyAccount() {
@@ -519,74 +828,33 @@ async function verifyAccount() {
   }
 }
 
-
-// ── Fund via Paystack ─────────────────────────────────────────────────────────
+// ── Fund via Paystack ──────────────────────────────────────────────────────
 async function initiateFund() {
   if (!fundAmount.value || fundAmount.value < 100) return
   paying.value = true
-
-  // Retry up to 4 times — handles cold start (no response) silently
   for (let attempt = 1; attempt <= 4; attempt++) {
     try {
       const data = await walletService.initializePayment(fundAmount.value)
-      if (data.payment_url) {
-        window.location.href = data.payment_url
-        return // redirect happening — don't reset paying
-      }
-      // Got a response but no URL — real error
+      if (data.payment_url) { window.location.href = data.payment_url; return }
       uiStore.showError('Payment could not be initialized. Please try again.')
-      paying.value = false
-      return
+      paying.value = false; return
     } catch (e) {
-      const hasResponse = !!e?.response
-      const status = e?.response?.status
-      const detail = e?.response?.data?.detail
-
-      // 401 = not logged in
-      if (status === 401) {
-        uiStore.showError('Session expired. Please log in again.')
-        paying.value = false
-        return
-      }
-
-      // 403 = wallet frozen
-      if (status === 403) {
-        uiStore.showError(detail || 'Wallet is frozen. Contact support.')
-        paying.value = false
-        return
-      }
-
-      // Real server error — show it
-      if (hasResponse) {
-        uiStore.showError(detail || 'Payment failed. Please try again.')
-        paying.value = false
-        return
-      }
-
-      // No response = network/cold start — retry silently
-      if (attempt < 4) {
-        await new Promise(r => setTimeout(r, 5000))
-        continue
-      }
-
-      // All retries exhausted
+      const s = e?.response?.status
+      const d = e?.response?.data?.detail
+      if (s === 401) { uiStore.showError('Session expired. Please log in again.'); paying.value = false; return }
+      if (s === 403) { uiStore.showError(d || 'Wallet is frozen.'); paying.value = false; return }
+      if (e?.response) { uiStore.showError(d || 'Payment failed. Please try again.'); paying.value = false; return }
+      if (attempt < 4) { await new Promise(r => setTimeout(r, 5000)); continue }
       uiStore.showError('Connection timed out. Please try again.')
       paying.value = false
     }
   }
 }
 
-// ── Verify after Paystack redirect ────────────────────────────────────────────
-// Paystack redirects back with ?ref=<reference> (our custom callback URL)
-// or ?trxref=<reference>&reference=<reference> (Paystack default)
+// ── Verify after Paystack redirect ─────────────────────────────────────────
 async function verifyFromUrl() {
-  const ref      = route.query.ref || route.query.reference || route.query.trxref
-  const trxref   = route.query.trxref
-
-  if (!ref && !trxref) return
-
-  const reference = ref || trxref
-
+  const reference = route.query.ref || route.query.reference || route.query.trxref
+  if (!reference) return
   try {
     const result = await walletService.verifyPayment(reference)
     if (result.status === 'success') {
@@ -598,14 +866,35 @@ async function verifyFromUrl() {
   } catch (e) {
     uiStore.showError(e?.response?.data?.detail || 'Verification failed. Contact support if money was deducted.')
   }
-
-  // Clean URL
   const url = new URL(window.location.href)
   ;['ref', 'reference', 'trxref'].forEach(k => url.searchParams.delete(k))
   window.history.replaceState({}, '', url.toString())
 }
 
-// ── Withdraw ──────────────────────────────────────────────────────────────────
+// ── Transfer ───────────────────────────────────────────────────────────────
+async function submitTransfer() {
+  if (!canTransfer.value) return
+  transferring.value = true
+  try {
+    const result = await walletService.sendMoney({
+      recipient: tr.value.recipient.trim(),
+      amount:    tr.value.amount,
+      note:      tr.value.note.trim(),
+    })
+    uiStore.showSuccess(result.message || `₦${tr.value.amount.toLocaleString()} sent!`)
+    showTransferModal.value = false
+    tr.value = { recipient: '', amount: 0, note: '' }
+    await loadWallet()
+    // Refresh history if open
+    if (showTxModal.value) { histPage.value = 1; histTxs.value = []; await loadHist() }
+  } catch (e) {
+    uiStore.showError(e?.response?.data?.detail || 'Transfer failed. Please try again.')
+  } finally {
+    transferring.value = false
+  }
+}
+
+// ── Withdraw ───────────────────────────────────────────────────────────────
 async function submitWithdraw() {
   if (!canWithdraw.value) return
   withdrawing.value = true
@@ -628,26 +917,19 @@ async function submitWithdraw() {
   }
 }
 
-// ── Mount ─────────────────────────────────────────────────────────────────────
+// ── Mount ──────────────────────────────────────────────────────────────────
 onMounted(async () => {
   await wakeAndLoad()
   loadBanks()
   loadVirtualAccount()
-  if (route.query.ref || route.query.reference || route.query.trxref) {
+  if (route.query.ref || route.query.reference || route.query.trxref)
     await verifyFromUrl()
-  }
 })
 </script>
 
 
 <style scoped>
 .wallet-view { display: flex; flex-direction: column; gap: 1.25rem; padding-bottom: 2rem; }
-
-/* Waking banner */
-.waking-banner { display: flex; align-items: center; gap: .75rem; padding: .875rem 1.25rem; background: color-mix(in srgb,var(--primary) 8%,transparent); border: 1px solid color-mix(in srgb,var(--primary) 25%,transparent); border-radius: 12px; font-size: .875rem; color: var(--on-surface); }
-.waking-spinner { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; border: 2.5px solid color-mix(in srgb,var(--primary) 30%,transparent); border-top-color: var(--primary); animation: spin 0.8s linear infinite; }
-.slide-down-enter-active, .slide-down-leave-active { transition: all .3s ease; }
-.slide-down-enter-from, .slide-down-leave-to { opacity: 0; transform: translateY(-10px); }
 
 /* Header */
 .page-hdr { display: flex; align-items: flex-start; justify-content: space-between; }
@@ -711,8 +993,9 @@ onMounted(async () => {
 .dva-empty { font-size: .875rem; color: var(--on-surface-variant); }
 .dva-create-btn { display: flex; align-items: center; gap: .5rem; padding: .75rem 1.5rem; align-self: flex-start; }
 
-/* Quick actions */
-.quick-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: .75rem; }
+/* Quick actions — 4 columns */
+.quick-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: .75rem; }
+@media (max-width: 380px) { .quick-grid { grid-template-columns: repeat(2,1fr); } }
 .quick-btn { display: flex; flex-direction: column; align-items: center; gap: .625rem; padding: 1rem .5rem; background: var(--surface-container-lowest); border: 1px solid var(--outline-variant); border-radius: 16px; cursor: pointer; transition: border-color .15s, transform .15s; }
 .quick-btn:hover { border-color: var(--primary); transform: translateY(-2px); }
 .qb-ico { width: 46px; height: 46px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
@@ -757,7 +1040,7 @@ onMounted(async () => {
 @media (min-width: 600px) { .modal-overlay { align-items: center; padding: 1rem; } }
 .modal-box { width: 100%; max-width: 480px; background: var(--surface-container-lowest); border-radius: 20px 20px 0 0; display: flex; flex-direction: column; max-height: 92vh; overflow-y: auto; }
 @media (min-width: 600px) { .modal-box { border-radius: 20px; } }
-.modal-hdr   { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem 0; }
+.modal-hdr   { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem 0; position: sticky; top: 0; background: var(--surface-container-lowest); z-index: 1; }
 .modal-title { font-family: var(--font-headline); font-size: 1.1rem; font-weight: 800; color: var(--on-surface); }
 .modal-close { width: 34px; height: 34px; border-radius: 50%; border: none; background: var(--surface-container); color: var(--on-surface-variant); display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .modal-close:hover { background: var(--surface-container-high); }
@@ -785,7 +1068,7 @@ onMounted(async () => {
 .verify-btn:disabled { opacity: .6; cursor: not-allowed; }
 .account-verified { display: flex; align-items: center; gap: .5rem; padding: .625rem .875rem; background: rgba(34,197,94,.08); border: 1px solid rgba(34,197,94,.25); border-radius: 10px; font-size: .875rem; font-weight: 600; color: var(--on-surface); }
 .modal-footer { display: flex; gap: .75rem; justify-content: flex-end; padding: 1rem 1.5rem 1.5rem; border-top: 1px solid var(--outline-variant); }
-.btn-ghost   { padding: .625rem 1.25rem; border-radius: 10px; border: 1px solid var(--outline-variant); background: none; color: var(--on-surface-variant); font-size: .875rem; font-weight: 600; cursor: pointer; }
+.btn-ghost   { padding: .625rem 1.25rem; border-radius: 10px; border: 1px solid var(--outline-variant); background: none; color: var(--on-surface-variant); font-size: .875rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: .3rem; }
 .btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
 .btn-primary { display: flex; align-items: center; gap: .4rem; padding: .7rem 1.5rem; border-radius: 10px; background: var(--primary); color: #fff; border: none; font-family: var(--font-headline); font-size: .9rem; font-weight: 700; cursor: pointer; transition: opacity .15s; }
 .btn-primary:disabled { opacity: .5; cursor: not-allowed; }
@@ -793,9 +1076,38 @@ onMounted(async () => {
 .modal-pay-btn { min-width: 160px; justify-content: center; }
 .btn-spinner { width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; animation: spin 0.7s linear infinite; flex-shrink: 0; }
 
-/* Verify banner */
+/* Success banner */
 .verify-banner { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: .625rem; background: var(--surface-container-highest); border: 1px solid #22c55e; border-radius: 12px; padding: .75rem 1.25rem; font-size: .875rem; font-weight: 600; color: var(--on-surface); box-shadow: 0 8px 24px rgba(0,0,0,.2); white-space: nowrap; z-index: 600; }
 .vb-close { background: none; border: none; cursor: pointer; color: var(--on-surface-variant); display: flex; align-items: center; }
+
+/* History filter tabs */
+.hist-tabs { display: flex; gap: .375rem; padding: .875rem 1.5rem .25rem; overflow-x: auto; scrollbar-width: none; }
+.hist-tabs::-webkit-scrollbar { display: none; }
+.hist-tab  { padding: .35rem .875rem; border-radius: 999px; border: 1.5px solid var(--outline-variant); background: none; font-size: .8rem; font-weight: 600; color: var(--on-surface-variant); cursor: pointer; white-space: nowrap; transition: all .15s; flex-shrink: 0; }
+.hist-tab:hover { border-color: var(--primary); color: var(--primary); }
+.hist-tab.active { border-color: var(--primary); background: color-mix(in srgb,var(--primary) 10%,transparent); color: var(--primary); }
+
+/* Receipt */
+.receipt-wrap   { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+.receipt-header { display: flex; flex-direction: column; align-items: center; gap: .625rem; padding-bottom: 1rem; border-bottom: 1px solid var(--outline-variant); }
+.receipt-ico-wrap { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
+.receipt-ico    { font-size: 28px; }
+.receipt-amt    { font-family: var(--font-headline); font-size: 2rem; font-weight: 800; }
+.receipt-amt.pos { color: #16a34a; }
+.receipt-amt.neg { color: #ef4444; }
+.receipt-rows   { display: flex; flex-direction: column; }
+.receipt-row    { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; padding: .625rem 0; border-bottom: 1px solid var(--outline-variant); }
+.receipt-row:last-child { border-bottom: none; }
+.receipt-lbl    { font-size: .8rem; color: var(--on-surface-variant); flex-shrink: 0; }
+.receipt-val    { font-size: .85rem; font-weight: 600; color: var(--on-surface); text-align: right; word-break: break-all; max-width: 60%; }
+.mono           { font-family: monospace; font-size: .75rem !important; }
+.receipt-brand  { text-align: center; font-size: .72rem; color: var(--on-surface-variant); opacity: .6; }
+.receipt-actions { display: flex; gap: .625rem; padding: .875rem 1.5rem 1.5rem; border-top: 1px solid var(--outline-variant); }
+.receipt-actions .btn-ghost { flex: 1; justify-content: center; }
+
+/* Slide-down for account verified */
+.slide-down-enter-active, .slide-down-leave-active { transition: all .2s ease; }
+.slide-down-enter-from, .slide-down-leave-to { opacity: 0; transform: translateY(-6px); }
 
 /* Transitions */
 .modal-enter-active, .modal-leave-active { transition: all .2s ease; }
