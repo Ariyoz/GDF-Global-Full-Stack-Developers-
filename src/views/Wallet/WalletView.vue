@@ -26,6 +26,12 @@
         <p class="bc-label">Total Balance</p>
         <p class="bc-amount">{{ fmtWallet(balance) }}</p>
         <p class="bc-sub">Available for withdrawal · <span class="bc-curr">{{ currencyStore.current.code }}</span></p>
+        <!-- Username chip — users share this for transfers -->
+        <button v-if="authStore.profile?.username" class="bc-username-chip" @click="copyUsername" :title="usernameCopied ? 'Copied!' : 'Copy your GFD username'">
+          <span class="material-symbols-outlined" style="font-size:14px">alternate_email</span>
+          {{ authStore.profile.username }}
+          <span class="material-symbols-outlined" style="font-size:13px;opacity:.7">{{ usernameCopied ? 'check' : 'content_copy' }}</span>
+        </button>
       </div>
       <div class="bc-stats">
         <div class="bc-stat">
@@ -520,10 +526,12 @@ import { useRoute } from 'vue-router'
 import { walletService } from '@/services/wallet.service'
 import { useUiStore } from '@/store/ui'
 import { useCurrencyStore } from '@/store/currency'
+import { useAuthStore } from '@/store/auth'
 
 const uiStore       = useUiStore()
 const route         = useRoute()
 const currencyStore = useCurrencyStore()
+const authStore     = useAuthStore()
 
 const NGN_TO_USD = 1 / 1650
 function fmtWallet(ngnAmount) {
@@ -557,6 +565,7 @@ const banksLoading     = ref(false)
 const virtualAccount   = ref(null)
 const creatingDVA      = ref(false)
 const acctCopied       = ref(false)
+const usernameCopied   = ref(false)
 const verifyingAccount = ref(false)
 let   verifyTimer      = null
 
@@ -803,6 +812,14 @@ async function copyAcctNum() {
   await navigator.clipboard.writeText(virtualAccount.value.account_number).catch(() => {})
   acctCopied.value = true
   setTimeout(() => acctCopied.value = false, 2000)
+}
+
+async function copyUsername() {
+  const username = authStore.profile?.username
+  if (!username) return
+  await navigator.clipboard.writeText(username).catch(() => {})
+  usernameCopied.value = true
+  setTimeout(() => usernameCopied.value = false, 2000)
 }
 
 // ── Account verification ───────────────────────────────────────────────────
@@ -1104,6 +1121,10 @@ onMounted(async () => {
 .receipt-brand  { text-align: center; font-size: .72rem; color: var(--on-surface-variant); opacity: .6; }
 .receipt-actions { display: flex; gap: .625rem; padding: .875rem 1.5rem 1.5rem; border-top: 1px solid var(--outline-variant); }
 .receipt-actions .btn-ghost { flex: 1; justify-content: center; }
+
+/* Username chip on balance card */
+.bc-username-chip { display: inline-flex; align-items: center; gap: .3rem; margin-top: .5rem; padding: .3rem .75rem; border-radius: 999px; border: 1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.08); color: rgba(255,255,255,.85); font-size: .78rem; font-weight: 600; cursor: pointer; transition: background .15s; font-family: monospace; }
+.bc-username-chip:hover { background: rgba(255,255,255,.15); }
 
 /* Slide-down for account verified */
 .slide-down-enter-active, .slide-down-leave-active { transition: all .2s ease; }
