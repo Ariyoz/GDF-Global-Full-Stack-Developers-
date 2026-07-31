@@ -257,14 +257,6 @@ async function handleApprove(id) {
   if (busyId.value === id) return   // already in flight
   busyId.value = id
   try {
-    // First hit debug to get exact server state
-    try {
-      const dbg = await http.get(`/admin/wallet/withdrawals/${id}/debug`)
-      console.log('[debug]', JSON.stringify(dbg))
-    } catch(de) {
-      console.log('[debug-error]', de?.response?.status, de?.response?.data)
-    }
-
     const res = await http.patch(`/admin/wallet/withdrawals/${id}/approve`)
     ui.showSuccess(res?.message || '✅ Approved — user notified')
     await fetchWithdrawals()
