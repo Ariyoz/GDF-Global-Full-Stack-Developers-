@@ -257,13 +257,23 @@ async function handleApprove(id) {
   if (busyId.value === id) return   // already in flight
   busyId.value = id
   try {
+    // First hit debug to get exact server state
+    try {
+      const dbg = await http.get(`/admin/wallet/withdrawals/${id}/debug`)
+      console.log('[debug]', JSON.stringify(dbg))
+    } catch(de) {
+      console.log('[debug-error]', de?.response?.status, de?.response?.data)
+    }
+
     const res = await http.patch(`/admin/wallet/withdrawals/${id}/approve`)
     ui.showSuccess(res?.message || '✅ Approved — user notified')
     await fetchWithdrawals()
   } catch (err) {
-    const msg = err?.response?.data?.detail || err?.message || 'Approve failed'
-    ui.showError('❌ ' + msg)
-    console.error('[approve]', err)
+    const status = err?.response?.status
+    const detail = err?.response?.data?.detail || err?.response?.data || err?.message || 'Unknown'
+    const msg = `❌ [${status}] ${typeof detail === 'object' ? JSON.stringify(detail) : detail}`
+    ui.showError(msg)
+    console.error('[approve-fail]', status, err?.response?.data)
   } finally {
     busyId.value = null
   }
