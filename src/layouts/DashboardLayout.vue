@@ -425,6 +425,7 @@ const moreNavItems = [
     { to: '/admin',          icon: 'shield',       label: 'Admin'          },
     { to: '/admin/users',    icon: 'group',        label: 'Users'          },
     { to: '/admin/projects', icon: 'folder_open',  label: 'Project Review' },
+    { to: '/admin/wallet',   icon: 'account_balance_wallet', label: 'Withdrawals' },
   ] : []),
 ]
 

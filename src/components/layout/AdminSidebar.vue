@@ -30,6 +30,9 @@
         <RouterLink to="/admin/subscriptions" class="admin-nav-link" :class="{ active: $route.path === '/admin/subscriptions' }" @click="$emit('navigate')">
           <span class="material-symbols-outlined">credit_card</span> Subscriptions
         </RouterLink>
+        <RouterLink to="/admin/wallet" class="admin-nav-link" :class="{ active: $route.path === '/admin/wallet' }" @click="$emit('navigate')">
+          <span class="material-symbols-outlined">account_balance_wallet</span> Wallet & Withdrawals
+        </RouterLink>
         <div class="admin-nav-divider" />
         <p class="admin-nav-section">Systems</p>
         <RouterLink to="/admin/analytics" class="admin-nav-link" :class="{ active: $route.path === '/admin/analytics' }" @click="$emit('navigate')">
