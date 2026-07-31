@@ -119,6 +119,10 @@
 
         <!-- Pending actions -->
         <div class="wd-actions" v-if="tab === 'pending'">
+          <div class="wd-action-info">
+            <span class="material-symbols-outlined" style="font-size:15px;color:#f59e0b">info</span>
+            Send ₦{{ fmt(wd.net_amount) }} to <strong>{{ wd.account_number }}</strong> ({{ wd.bank_name }}) from your bank first, then press Approve.
+          </div>
           <button
             class="btn-approve"
             :disabled="busyId === wd.id"
@@ -126,7 +130,7 @@
           >
             <span v-if="busyId === wd.id" class="btn-spinner"></span>
             <span v-else class="material-symbols-outlined" style="font-size:16px">check_circle</span>
-            {{ busyId === wd.id ? 'Confirming…' : 'Approve — Confirm Sent' }}
+            {{ busyId === wd.id ? 'Saving…' : 'I\'ve Sent It — Approve' }}
           </button>
           <button
             class="btn-reject"
@@ -390,6 +394,7 @@ onMounted(fetchWithdrawals)
 
 /* Actions */
 .wd-actions { display:flex; gap:.625rem; flex-wrap:wrap; align-items:center; padding-top:.75rem; border-top:1px solid var(--outline-variant); }
+.wd-action-info { flex:1 1 100%; font-size:.8rem; color:var(--on-surface-variant); display:flex; align-items:flex-start; gap:.35rem; flex-wrap:wrap; padding:.5rem .75rem; background:rgba(245,158,11,.07); border-radius:8px; border:1px solid rgba(245,158,11,.2); }
 .wd-action-note { flex:1 1 100%; font-size:.8rem; color:var(--on-surface-variant); display:flex; align-items:flex-start; gap:.35rem; flex-wrap:wrap; }
 @media(min-width:600px){ .wd-action-note{ flex:1 1 auto; } }
 
