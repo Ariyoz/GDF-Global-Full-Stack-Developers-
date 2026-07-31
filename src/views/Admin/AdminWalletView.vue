@@ -117,11 +117,12 @@
 
         <!-- Actions -->
         <div class="wd-actions" v-if="tab === 'pending'">
-          <button class="btn-approve" @click="approveWd(wd)" :disabled="acting === wd.id">
+          <button class="btn-approve" @click="approveWd(wd.id)" :disabled="acting === wd.id">
             <span class="material-symbols-outlined" style="font-size:15px">check_circle</span>
-            Approve — Start Processing
+            <span v-if="acting === wd.id">Processing…</span>
+            <span v-else>Approve — Start Processing</span>
           </button>
-          <button class="btn-reject" @click="rejectWd(wd)" :disabled="acting === wd.id">
+          <button class="btn-reject" @click="openRejectModal(wd)" :disabled="acting === wd.id">
             <span class="material-symbols-outlined" style="font-size:15px">cancel</span>
             Reject & Refund
           </button>
@@ -131,14 +132,47 @@
             <span class="material-symbols-outlined" style="font-size:15px;color:#f59e0b">info</span>
             Send ₦{{ fmt(wd.net_amount) }} to <strong>{{ wd.account_number }}</strong> ({{ wd.bank_name }}) manually, then mark as done.
           </p>
-          <button class="btn-complete" @click="completeWd(wd)" :disabled="acting === wd.id">
+          <button class="btn-complete" @click="completeWd(wd.id)" :disabled="acting === wd.id">
             <span class="material-symbols-outlined" style="font-size:15px">done_all</span>
-            Mark as Sent ✓
+            <span v-if="acting === wd.id">Saving…</span>
+            <span v-else>Mark as Sent ✓</span>
           </button>
         </div>
 
       </div>
     </div>
+
+  <!-- Reject Modal -->
+  <Teleport to="body">
+    <Transition name="modal-fade">
+      <div v-if="rejectModal.open" class="modal-backdrop" @click.self="rejectModal.open = false">
+        <div class="modal-box">
+          <h3 class="modal-title">Reject Withdrawal</h3>
+          <p class="modal-sub">
+            Refund <strong>₦{{ fmt(rejectModal.amount) }}</strong> to
+            <strong>{{ rejectModal.user_name }}</strong>?
+          </p>
+          <label class="modal-label">Reason (optional)</label>
+          <textarea
+            v-model="rejectModal.reason"
+            class="modal-textarea"
+            rows="3"
+            placeholder="e.g. Invalid bank details, suspicious activity…"
+          />
+          <div class="modal-actions">
+            <button class="btn-ghost-sm" @click="rejectModal.open = false" :disabled="acting === rejectModal.id">
+              Cancel
+            </button>
+            <button class="btn-reject-sm" @click="confirmReject" :disabled="acting === rejectModal.id">
+              <span class="material-symbols-outlined" style="font-size:15px">cancel</span>
+              <span v-if="acting === rejectModal.id">Rejecting…</span>
+              <span v-else>Reject & Refund</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+  </Teleport>
 
   </div>
 </template>
@@ -150,11 +184,14 @@ import { useUiStore } from '@/store/ui'
 
 const uiStore = useUiStore()
 const loading = ref(false)
-const acting  = ref(null)
+const acting  = ref(null)   // holds the withdrawal id currently being acted on
 const tab     = ref('pending')
-const withdrawals = ref([])
+const withdrawals  = ref([])
 const pendingCount = ref(0)
 const stats = ref(null)
+
+// ── Reject modal state ──
+const rejectModal = ref({ open: false, id: null, user_name: '', amount: 0, reason: '' })
 
 function fmt(n) {
   return Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -162,7 +199,10 @@ function fmt(n) {
 
 function formatDate(d) {
   if (!d) return '—'
-  return new Date(d).toLocaleString('en-NG', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+  return new Date(d).toLocaleString('en-NG', {
+    day: 'numeric', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  })
 }
 
 async function fetchWithdrawals() {
@@ -182,11 +222,13 @@ async function fetchWithdrawals() {
   }
 }
 
-async function approveWd(wd) {
-  acting.value = wd.id
+// Accept id string directly so the button click never passes a stale proxy object
+async function approveWd(id) {
+  if (acting.value) return
+  acting.value = id
   try {
-    await http.patch(`/admin/wallet/withdrawals/${wd.id}/approve`)
-    uiStore.showSuccess(`Approved — move to Processing`)
+    await http.patch(`/admin/wallet/withdrawals/${id}/approve`)
+    uiStore.showSuccess('Approved — moved to Processing')
     await fetchWithdrawals()
   } catch (e) {
     uiStore.showError(e?.response?.data?.detail || 'Failed to approve')
@@ -195,11 +237,12 @@ async function approveWd(wd) {
   }
 }
 
-async function completeWd(wd) {
-  acting.value = wd.id
+async function completeWd(id) {
+  if (acting.value) return
+  acting.value = id
   try {
-    await http.patch(`/admin/wallet/withdrawals/${wd.id}/complete`)
-    uiStore.showSuccess('Marked as completed')
+    await http.patch(`/admin/wallet/withdrawals/${id}/complete`)
+    uiStore.showSuccess('Marked as completed ✓')
     await fetchWithdrawals()
   } catch (e) {
     uiStore.showError(e?.response?.data?.detail || 'Failed to complete')
@@ -208,12 +251,27 @@ async function completeWd(wd) {
   }
 }
 
-async function rejectWd(wd) {
-  if (!confirm(`Reject this withdrawal and refund ₦${fmt(wd.amount)} to ${wd.user_name}?`)) return
-  acting.value = wd.id
+// Open modal instead of browser confirm() — confirm() is unreliable on mobile
+function openRejectModal(wd) {
+  rejectModal.value = {
+    open: true,
+    id: wd.id,
+    user_name: wd.user_name,
+    amount: wd.amount,
+    reason: '',
+  }
+}
+
+async function confirmReject() {
+  const { id, reason } = rejectModal.value
+  if (acting.value) return
+  acting.value = id
   try {
-    await http.patch(`/admin/wallet/withdrawals/${wd.id}/reject`, { reason: 'Rejected by admin' })
+    await http.patch(`/admin/wallet/withdrawals/${id}/reject`, {
+      reason: reason.trim() || 'Rejected by admin',
+    })
     uiStore.showSuccess('Rejected — funds refunded to user wallet')
+    rejectModal.value.open = false
     await fetchWithdrawals()
   } catch (e) {
     uiStore.showError(e?.response?.data?.detail || 'Failed to reject')
@@ -231,27 +289,41 @@ onMounted(fetchWithdrawals)
 </script>
 
 <style scoped>
-.admin-wallet-view { display: flex; flex-direction: column; gap: 1.25rem; }
-.page-header { display: flex; align-items: flex-start; justify-content: space-between; }
-.pg-title { font-family: var(--font-headline); font-size: 1.5rem; font-weight: 800; color: var(--on-surface); }
+/* ── Layout ── */
+.admin-wallet-view { display: flex; flex-direction: column; gap: 1.25rem; padding: 1rem; }
+@media (min-width: 768px) { .admin-wallet-view { padding: 1.5rem 2rem; } }
+
+.page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.pg-title { font-family: var(--font-headline); font-size: 1.3rem; font-weight: 800; color: var(--on-surface); }
+@media (min-width: 480px) { .pg-title { font-size: 1.5rem; } }
 .pg-sub   { font-size: .85rem; color: var(--on-surface-variant); margin-top: .25rem; }
-.btn-refresh { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--outline-variant); background: var(--surface-container); color: var(--on-surface-variant); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+.btn-refresh {
+  width: 38px; height: 38px; flex-shrink: 0;
+  border-radius: 50%; border: 1px solid var(--outline-variant);
+  background: var(--surface-container); color: var(--on-surface-variant);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
 .btn-refresh:hover { border-color: var(--primary); color: var(--primary); }
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* Stats */
-.wallet-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap: .75rem; }
-.wstat { background: var(--surface-container-lowest); border: 1px solid var(--outline-variant); border-radius: 12px; padding: .875rem 1rem; }
-.wstat-lbl { font-size: .72rem; color: var(--on-surface-variant); text-transform: uppercase; letter-spacing: .04em; }
-.wstat-val { font-family: var(--font-headline); font-size: 1.125rem; font-weight: 800; color: var(--on-surface); margin-top: .2rem; }
+.wallet-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: .625rem; }
+@media (min-width: 480px) { .wallet-stats { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 768px) { .wallet-stats { grid-template-columns: repeat(5, 1fr); } }
+.wstat { background: var(--surface-container-lowest); border: 1px solid var(--outline-variant); border-radius: 12px; padding: .75rem; }
+@media (min-width: 480px) { .wstat { padding: .875rem 1rem; } }
+.wstat-lbl { font-size: .68rem; color: var(--on-surface-variant); text-transform: uppercase; letter-spacing: .04em; }
+.wstat-val { font-family: var(--font-headline); font-size: 1rem; font-weight: 800; color: var(--on-surface); margin-top: .2rem; }
+@media (min-width: 480px) { .wstat-val { font-size: 1.125rem; } }
 
 /* Tabs */
-.tabs { display: flex; gap: .5rem; flex-wrap: wrap; }
-.tab  { padding: .4rem 1rem; border-radius: 999px; border: 1.5px solid var(--outline-variant); background: none; font-size: .82rem; font-weight: 600; color: var(--on-surface-variant); cursor: pointer; display: flex; align-items: center; gap: .35rem; transition: all .15s; }
+.tabs { display: flex; gap: .375rem; flex-wrap: wrap; }
+.tab  { padding: .4rem .875rem; border-radius: 999px; border: 1.5px solid var(--outline-variant); background: none; font-size: .78rem; font-weight: 600; color: var(--on-surface-variant); cursor: pointer; display: flex; align-items: center; gap: .3rem; transition: all .15s; white-space: nowrap; }
 .tab:hover { border-color: var(--primary); color: var(--primary); }
 .tab.active { border-color: var(--primary); background: color-mix(in srgb,var(--primary) 10%,transparent); color: var(--primary); }
-.tab-badge { background: #f59e0b; color: #fff; font-size: .65rem; font-weight: 800; padding: .1rem .4rem; border-radius: 999px; }
+.tab-badge { background: #f59e0b; color: #fff; font-size: .62rem; font-weight: 800; padding: .1rem .35rem; border-radius: 999px; }
 
 /* Skeleton */
 .wd-skel { height: 180px; border-radius: 16px; }
@@ -259,43 +331,88 @@ onMounted(fetchWithdrawals)
 @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
 /* Empty */
-.wd-empty { display: flex; flex-direction: column; align-items: center; gap: .5rem; padding: 3rem; color: var(--on-surface-variant); font-size: .9rem; }
+.wd-empty { display: flex; flex-direction: column; align-items: center; gap: .5rem; padding: 3rem 1rem; color: var(--on-surface-variant); font-size: .9rem; text-align: center; }
 
 /* Cards */
 .wd-list { display: flex; flex-direction: column; gap: .875rem; }
-.wd-card { background: var(--surface-container-lowest); border: 1px solid var(--outline-variant); border-radius: 16px; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+.wd-card { background: var(--surface-container-lowest); border: 1px solid var(--outline-variant); border-radius: 16px; padding: 1rem; display: flex; flex-direction: column; gap: .875rem; }
+@media (min-width: 480px) { .wd-card { padding: 1.25rem; gap: 1rem; } }
 
 /* User row */
-.wd-user-row { display: flex; align-items: center; gap: .875rem; }
-.wd-avatar { width: 40px; height: 40px; border-radius: 50%; background: color-mix(in srgb,var(--primary) 15%,transparent); color: var(--primary); font-family: var(--font-headline); font-weight: 800; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.wd-user-row { display: flex; align-items: center; gap: .75rem; }
+.wd-avatar { width: 38px; height: 38px; border-radius: 50%; background: color-mix(in srgb,var(--primary) 15%,transparent); color: var(--primary); font-family: var(--font-headline); font-weight: 800; font-size: 1rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .wd-user-info { flex: 1; min-width: 0; }
-.wd-user-name  { font-family: var(--font-headline); font-size: .95rem; font-weight: 700; color: var(--on-surface); }
-.wd-user-email { font-size: .78rem; color: var(--on-surface-variant); margin-top: .1rem; }
-.wd-status-pill { padding: .25rem .75rem; border-radius: 999px; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; flex-shrink: 0; }
+.wd-user-name  { font-family: var(--font-headline); font-size: .9rem; font-weight: 700; color: var(--on-surface); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wd-user-email { font-size: .75rem; color: var(--on-surface-variant); margin-top: .1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wd-status-pill { padding: .2rem .6rem; border-radius: 999px; font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; flex-shrink: 0; }
 .wd-status-pill.pending    { background: rgba(245,158,11,.12); color: #f59e0b; }
 .wd-status-pill.processing { background: rgba(99,14,212,.1);   color: var(--primary); }
 .wd-status-pill.success    { background: rgba(22,163,74,.12);  color: #16a34a; }
-.wd-status-pill.rejected   { background: rgba(239,68,68,.1);  color: #ef4444; }
+.wd-status-pill.rejected   { background: rgba(239,68,68,.1);   color: #ef4444; }
 
 /* Bank grid */
-.wd-bank-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: .625rem .5rem; }
-.wd-bank-item { display: flex; flex-direction: column; gap: .15rem; }
+.wd-bank-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: .5rem; }
+.wd-bank-item { display: flex; flex-direction: column; gap: .15rem; min-width: 0; }
 .wd-bank-item.full { grid-column: 1 / -1; }
-.wd-lbl { font-size: .72rem; color: var(--on-surface-variant); }
-.wd-val { font-size: .875rem; font-weight: 600; color: var(--on-surface); display: flex; align-items: center; gap: .35rem; }
-.wd-val.amt { font-family: var(--font-headline); font-size: 1.1rem; font-weight: 800; color: var(--primary); }
-.mono { font-family: monospace; font-size: .85rem !important; }
-.copy-btn { border: none; background: none; cursor: pointer; color: var(--on-surface-variant); display: flex; align-items: center; padding: 0; }
+.wd-lbl { font-size: .68rem; color: var(--on-surface-variant); }
+.wd-val { font-size: .85rem; font-weight: 600; color: var(--on-surface); display: flex; align-items: center; gap: .3rem; flex-wrap: wrap; word-break: break-word; }
+.wd-val.amt { font-family: var(--font-headline); font-size: 1.05rem; font-weight: 800; color: var(--primary); }
+.mono { font-family: monospace; font-size: .82rem !important; word-break: break-all; }
+.copy-btn { border: none; background: none; cursor: pointer; color: var(--on-surface-variant); display: flex; align-items: center; padding: 0; flex-shrink: 0; }
 .copy-btn:hover { color: var(--primary); }
 
 /* Actions */
-.wd-actions { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; padding-top: .5rem; border-top: 1px solid var(--outline-variant); }
-.wd-action-note { flex: 1; font-size: .82rem; color: var(--on-surface-variant); display: flex; align-items: center; gap: .35rem; }
-.btn-approve  { display: flex; align-items: center; gap: .375rem; padding: .55rem 1.25rem; border-radius: 10px; background: color-mix(in srgb,var(--primary) 12%,transparent); color: var(--primary); border: 1.5px solid var(--primary); font-size: .85rem; font-weight: 700; cursor: pointer; transition: all .15s; }
+.wd-actions { display: flex; gap: .625rem; flex-wrap: wrap; align-items: center; padding-top: .75rem; border-top: 1px solid var(--outline-variant); }
+.wd-action-note { flex: 1 1 100%; font-size: .8rem; color: var(--on-surface-variant); display: flex; align-items: flex-start; gap: .35rem; flex-wrap: wrap; }
+@media (min-width: 600px) { .wd-action-note { flex: 1 1 auto; } }
+
+.btn-approve, .btn-reject, .btn-complete {
+  display: flex; align-items: center; justify-content: center; gap: .35rem;
+  padding: .6rem 1.1rem; border-radius: 10px;
+  font-size: .82rem; font-weight: 700; cursor: pointer; transition: all .15s;
+  flex: 1 1 auto; min-width: 140px;
+}
+@media (min-width: 480px) { .btn-approve, .btn-reject, .btn-complete { flex: 0 1 auto; min-width: unset; } }
+
+.btn-approve  { background: color-mix(in srgb,var(--primary) 12%,transparent); color: var(--primary); border: 1.5px solid var(--primary); }
 .btn-approve:hover:not(:disabled)  { background: var(--primary); color: #fff; }
-.btn-complete { display: flex; align-items: center; gap: .375rem; padding: .55rem 1.25rem; border-radius: 10px; background: rgba(22,163,74,.1); color: #16a34a; border: 1.5px solid #16a34a; font-size: .85rem; font-weight: 700; cursor: pointer; transition: all .15s; }
+.btn-complete { background: rgba(22,163,74,.1); color: #16a34a; border: 1.5px solid #16a34a; }
 .btn-complete:hover:not(:disabled) { background: #16a34a; color: #fff; }
-.btn-reject   { display: flex; align-items: center; gap: .375rem; padding: .55rem 1.25rem; border-radius: 10px; background: rgba(239,68,68,.08); color: #ef4444; border: 1.5px solid #ef4444; font-size: .85rem; font-weight: 700; cursor: pointer; transition: all .15s; }
+.btn-reject   { background: rgba(239,68,68,.08); color: #ef4444; border: 1.5px solid #ef4444; }
 .btn-reject:hover:not(:disabled)   { background: #ef4444; color: #fff; }
-.btn-approve:disabled, .btn-complete:disabled, .btn-reject:disabled { opacity: .5; cursor: not-allowed; }
+.btn-approve:disabled, .btn-complete:disabled, .btn-reject:disabled { opacity: .45; cursor: not-allowed; }
+
+/* ── Reject Modal ── */
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 900;
+  background: rgba(0,0,0,.55); backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 1rem;
+}
+.modal-box {
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant);
+  border-radius: 18px; padding: 1.5rem;
+  width: 100%; max-width: 420px;
+  display: flex; flex-direction: column; gap: .875rem;
+}
+.modal-title { font-family: var(--font-headline); font-size: 1.1rem; font-weight: 800; color: var(--on-surface); }
+.modal-sub   { font-size: .875rem; color: var(--on-surface-variant); }
+.modal-label { font-size: .75rem; font-weight: 600; color: var(--on-surface-variant); }
+.modal-textarea {
+  width: 100%; padding: .625rem .75rem; resize: vertical;
+  background: var(--surface-container); border: 1.5px solid var(--outline-variant);
+  border-radius: 10px; color: var(--on-surface); font-size: .875rem;
+  font-family: inherit; box-sizing: border-box;
+}
+.modal-textarea:focus { outline: none; border-color: var(--primary); }
+.modal-actions { display: flex; gap: .625rem; justify-content: flex-end; flex-wrap: wrap; }
+.btn-ghost-sm  { padding: .5rem 1rem; border-radius: 8px; border: 1px solid var(--outline-variant); background: none; color: var(--on-surface-variant); font-size: .82rem; font-weight: 600; cursor: pointer; }
+.btn-ghost-sm:hover { background: var(--surface-container); }
+.btn-reject-sm { display: flex; align-items: center; gap: .35rem; padding: .5rem 1.1rem; border-radius: 8px; background: #ef4444; color: #fff; border: none; font-size: .82rem; font-weight: 700; cursor: pointer; transition: background .15s; }
+.btn-reject-sm:hover:not(:disabled) { background: #dc2626; }
+.btn-reject-sm:disabled, .btn-ghost-sm:disabled { opacity: .5; cursor: not-allowed; }
+
+.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity .2s ease; }
+.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; }
 </style>

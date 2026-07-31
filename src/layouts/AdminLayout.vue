@@ -107,10 +107,19 @@ watch(() => route.path, () => {
 /* Main */
 .admin-main {
   flex: 1;
+  min-width: 0;           /* prevent flex child overflow */
   overflow-y: auto;
-  max-width: 1200px;
+  overflow-x: hidden;
   padding-top: calc(56px + env(safe-area-inset-top, 0px));
+  /* mobile: full width below the fixed top header */
+  width: 100%;
 }
 
-@media (min-width: 768px) { .admin-main { padding-top: 0; } }
+@media (min-width: 768px) {
+  .admin-main {
+    padding-top: 0;
+    /* desktop: sidebar is sticky inside the flex row, main takes remaining space */
+    max-width: calc(100vw - 260px);
+  }
+}
 </style>
