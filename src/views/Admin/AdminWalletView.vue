@@ -118,9 +118,9 @@
         <!-- Actions -->
         <div class="wd-actions" v-if="tab === 'pending'">
           <button class="btn-approve" @click="approveWd(wd.id)" :disabled="acting === wd.id">
-            <span class="material-symbols-outlined" style="font-size:15px">check_circle</span>
-            <span v-if="acting === wd.id">Processing…</span>
-            <span v-else>Approve — Start Processing</span>
+            <span class="material-symbols-outlined" style="font-size:15px">send_money</span>
+            <span v-if="acting === wd.id">Sending…</span>
+            <span v-else>Approve & Send to Bank</span>
           </button>
           <button class="btn-reject" @click="openRejectModal(wd)" :disabled="acting === wd.id">
             <span class="material-symbols-outlined" style="font-size:15px">cancel</span>
@@ -227,11 +227,15 @@ async function approveWd(id) {
   if (acting.value) return
   acting.value = id
   try {
-    await http.patch(`/admin/wallet/withdrawals/${id}/approve`)
-    uiStore.showSuccess('Approved — moved to Processing')
+    const res = await http.patch(`/admin/wallet/withdrawals/${id}/approve`)
+    if (res.needs_manual) {
+      uiStore.showError(`⚠️ ${res.message}`)
+    } else {
+      uiStore.showSuccess(res.message || 'Approved — bank transfer initiated')
+    }
     await fetchWithdrawals()
   } catch (e) {
-    uiStore.showError(e?.response?.data?.detail || 'Failed to approve')
+    uiStore.showError(e?.response?.data?.detail || e?.message || 'Failed to approve')
   } finally {
     acting.value = null
   }
@@ -267,14 +271,14 @@ async function confirmReject() {
   if (acting.value) return
   acting.value = id
   try {
-    await http.patch(`/admin/wallet/withdrawals/${id}/reject`, {
+    const res = await http.patch(`/admin/wallet/withdrawals/${id}/reject`, {
       reason: reason.trim() || 'Rejected by admin',
     })
-    uiStore.showSuccess('Rejected — funds refunded to user wallet')
+    uiStore.showSuccess(res.message || 'Rejected — funds refunded to user wallet')
     rejectModal.value.open = false
     await fetchWithdrawals()
   } catch (e) {
-    uiStore.showError(e?.response?.data?.detail || 'Failed to reject')
+    uiStore.showError(e?.response?.data?.detail || e?.message || 'Failed to reject')
   } finally {
     acting.value = null
   }
