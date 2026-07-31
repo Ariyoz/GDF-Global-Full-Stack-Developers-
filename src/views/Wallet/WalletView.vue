@@ -205,7 +205,7 @@
             <span class="tx-amt" :class="isDebit(tx) ? 'neg' : 'pos'">
               {{ isDebit(tx) ? '-' : '+' }}{{ fmtNgn(tx.amount) }}
             </span>
-            <span class="tx-badge" :class="tx.status">{{ tx.status }}</span>
+            <span class="tx-badge" :class="tx.status">{{ txStatusLabel(tx) }}</span>
           </div>
         </div>
       </template>
@@ -290,7 +290,7 @@
                 <p class="receipt-amt" :class="isDebit(selectedTx) ? 'neg' : 'pos'">
                   {{ isDebit(selectedTx) ? '-' : '+' }}{{ fmtNgn(selectedTx.amount) }}
                 </p>
-                <span class="tx-badge" :class="selectedTx.status" style="font-size:.8rem;padding:.3rem .75rem">{{ selectedTx.status }}</span>
+                <span class="tx-badge" :class="selectedTx.status" style="font-size:.8rem;padding:.3rem .75rem">{{ txStatusLabel(selectedTx) }}</span>
               </div>
               <div class="receipt-rows">
                 <div class="receipt-row">
@@ -380,7 +380,7 @@
                     <span class="tx-amt" :class="isDebit(tx) ? 'neg' : 'pos'">
                       {{ isDebit(tx) ? '-' : '+' }}{{ fmtNgn(tx.amount) }}
                     </span>
-                    <span class="tx-badge" :class="tx.status">{{ tx.status }}</span>
+                    <span class="tx-badge" :class="tx.status">{{ txStatusLabel(tx) }}</span>
                   </div>
                 </div>
               </template>
@@ -622,6 +622,21 @@ function txStyle(tx) {
   if (isDebit(tx))            return { bg: 'background:rgba(186,26,26,.08)',   color: 'color:#ef4444' }
   if (tx.type === 'refund')   return { bg: 'background:rgba(245,158,11,.1)',   color: 'color:#f59e0b' }
   return { bg: 'background:rgba(99,14,212,.08)', color: 'color:var(--primary)' }
+}
+function txStatusLabel(tx) {
+  // For withdrawals give a user-friendly label instead of raw status
+  if (tx.type === 'withdrawal') {
+    if (tx.status === 'success')    return 'Sent ✓'
+    if (tx.status === 'pending')    return 'Pending'
+    if (tx.status === 'processing') return 'Processing'
+    if (tx.status === 'reversed')   return 'Refunded'
+    if (tx.status === 'failed')     return 'Failed'
+  }
+  if (tx.status === 'success')  return 'Success'
+  if (tx.status === 'pending')  return 'Pending'
+  if (tx.status === 'reversed') return 'Reversed'
+  if (tx.status === 'failed')   return 'Failed'
+  return tx.status || '—'
 }
 function getBankName(code) {
   return liveBanks.value.find(b => b.code === code)?.name || ''
@@ -1043,6 +1058,8 @@ onMounted(async () => {
 .tx-badge.success    { background: rgba(22,163,74,.1);  color: #16a34a; }
 .tx-badge.pending    { background: rgba(245,158,11,.1); color: #f59e0b; }
 .tx-badge.processing { background: rgba(99,14,212,.1);  color: var(--primary); }
+.tx-badge.reversed   { background: rgba(245,158,11,.1); color: #f59e0b; }
+.tx-badge.failed     { background: rgba(239,68,68,.1);  color: #ef4444; }
 .tx-badge.failed     { background: rgba(239,68,68,.1);  color: #ef4444; }
 
 /* Modal */

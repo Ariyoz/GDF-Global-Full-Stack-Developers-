@@ -118,9 +118,9 @@
         <!-- Actions -->
         <div class="wd-actions" v-if="tab === 'pending'">
           <button class="btn-approve" @click="approveWd(wd.id)" :disabled="acting === wd.id">
-            <span class="material-symbols-outlined" style="font-size:15px">send_money</span>
-            <span v-if="acting === wd.id">Sending…</span>
-            <span v-else>Approve & Send to Bank</span>
+            <span class="material-symbols-outlined" style="font-size:15px">check_circle</span>
+            <span v-if="acting === wd.id">Confirming…</span>
+            <span v-else>Approve — Mark as Sent</span>
           </button>
           <button class="btn-reject" @click="openRejectModal(wd)" :disabled="acting === wd.id">
             <span class="material-symbols-outlined" style="font-size:15px">cancel</span>
@@ -228,11 +228,7 @@ async function approveWd(id) {
   acting.value = id
   try {
     const res = await http.patch(`/admin/wallet/withdrawals/${id}/approve`)
-    if (res.needs_manual) {
-      uiStore.showError(`⚠️ ${res.message}`)
-    } else {
-      uiStore.showSuccess(res.message || 'Approved — bank transfer initiated')
-    }
+    uiStore.showSuccess(res.message || 'Withdrawal marked as successful — user notified')
     await fetchWithdrawals()
   } catch (e) {
     uiStore.showError(e?.response?.data?.detail || e?.message || 'Failed to approve')

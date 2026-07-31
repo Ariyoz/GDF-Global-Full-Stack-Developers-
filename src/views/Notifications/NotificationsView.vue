@@ -104,9 +104,11 @@ const tabs = [
   { value: 'message', label: 'Messages' },
   { value: 'job',     label: 'Jobs' },
   { value: 'social',  label: 'Social' },
+  { value: 'wallet',  label: 'Wallet' },
 ]
 
-const JOB_TYPES = ['job_invitation', 'application_received', 'application_accepted', 'application_rejected']
+const WALLET_TYPES = ['transfer_received', 'money_request', 'request_accepted', 'request_rejected']
+const JOB_TYPES = ['job_invitation', 'application_received', 'application_accepted', 'application_rejected', 'job_invite', 'hire_request']
 const SOCIAL_TYPES = ['like', 'comment', 'follow', 'mention', 'repost']
 
 const filteredItems = computed(() => {
@@ -115,6 +117,7 @@ const filteredItems = computed(() => {
     case 'message': return store.items.filter(n => n.type === 'message')
     case 'job':     return store.items.filter(n => JOB_TYPES.includes(n.type))
     case 'social':  return store.items.filter(n => SOCIAL_TYPES.includes(n.type))
+    case 'wallet':  return store.items.filter(n => WALLET_TYPES.includes(n.type))
     default:        return store.items
   }
 })
@@ -126,6 +129,12 @@ function iconName(type) {
     application_received: 'work', application_accepted: 'check_circle',
     application_rejected: 'cancel', job_invitation: 'mail',
     project_update: 'folder', system: 'info', admin_alert: 'warning',
+    transfer_received: 'account_balance_wallet',
+    money_request: 'request_quote',
+    request_accepted: 'check_circle',
+    request_rejected: 'cancel',
+    hire_request: 'handshake',
+    job_invite: 'mail',
   }
   return map[type] || 'notifications'
 }
@@ -135,9 +144,12 @@ function iconBg(type) {
   if (['comment', 'mention'].includes(type))         return 'rgba(59,130,246,0.12)'
   if (['follow'].includes(type))                     return 'rgba(34,197,94,0.12)'
   if (['message'].includes(type))                    return 'rgba(168,85,247,0.12)'
-  if (['application_accepted'].includes(type))        return 'rgba(34,197,94,0.12)'
-  if (['application_rejected'].includes(type))        return 'rgba(239,68,68,0.12)'
-  if (['job_invitation', 'application_received'].includes(type)) return 'rgba(251,146,60,0.12)'
+  if (['application_accepted', 'request_accepted'].includes(type)) return 'rgba(34,197,94,0.12)'
+  if (['application_rejected', 'request_rejected'].includes(type)) return 'rgba(239,68,68,0.12)'
+  if (['job_invitation', 'application_received', 'job_invite'].includes(type)) return 'rgba(251,146,60,0.12)'
+  if (['transfer_received'].includes(type))          return 'rgba(34,197,94,0.12)'
+  if (['money_request'].includes(type))              return 'rgba(245,158,11,0.12)'
+  if (['hire_request'].includes(type))               return 'rgba(99,14,212,0.12)'
   return 'rgba(168,85,247,0.10)'
 }
 
@@ -146,9 +158,12 @@ function iconColor(type) {
   if (['comment', 'mention'].includes(type))          return '#3b82f6'
   if (['follow'].includes(type))                      return '#22c55e'
   if (['message'].includes(type))                     return '#a855f7'
-  if (['application_accepted'].includes(type))         return '#22c55e'
-  if (['application_rejected'].includes(type))         return '#ef4444'
-  if (['job_invitation', 'application_received'].includes(type)) return '#f97316'
+  if (['application_accepted', 'request_accepted'].includes(type)) return '#22c55e'
+  if (['application_rejected', 'request_rejected'].includes(type)) return '#ef4444'
+  if (['job_invitation', 'application_received', 'job_invite'].includes(type)) return '#f97316'
+  if (['transfer_received'].includes(type))           return '#22c55e'
+  if (['money_request'].includes(type))               return '#f59e0b'
+  if (['hire_request'].includes(type))                return 'var(--primary)'
   return '#a855f7'
 }
 
