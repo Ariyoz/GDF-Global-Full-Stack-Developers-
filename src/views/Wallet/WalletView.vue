@@ -456,7 +456,7 @@
               <div class="input-group">
                 <span class="inp-prefix">₦</span>
                 <input v-model.number="wd.amount" type="number" class="modal-inp"
-                  placeholder="Min ₦1,000" min="1000" :max="balance" />
+                  placeholder="Min ₦100" min="100" :max="balance" />
               </div>
             </div>
             <div class="field-group">
@@ -575,7 +575,7 @@ const canTransfer = computed(() =>
 const wd = ref({ amount: 0, bank_code: '', bank_name: '', account_number: '', account_name: '', verified: false })
 const presets = [500, 1000, 2000, 5000, 10000, 20000]
 const canWithdraw = computed(() =>
-  wd.value.amount >= 1000 &&
+  wd.value.amount >= 100 &&
   wd.value.amount <= balance.value &&
   wd.value.bank_name.trim() &&
   wd.value.account_number.length >= 10 &&
