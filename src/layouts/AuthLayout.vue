@@ -1,21 +1,27 @@
 <template>
-  <div class="auth-layout">
-    <!-- Background -->
-    <div class="auth-bg">
-      <div class="glow-orb glow-orb-primary" style="width:500px;height:500px;top:-150px;right:-150px;opacity:0.5;" />
-      <div class="glow-orb glow-orb-primary" style="width:300px;height:300px;bottom:-100px;left:-100px;opacity:0.25;" />
+  <div class="auth-shell">
+
+    <!-- Animated background mesh -->
+    <div class="auth-mesh">
+      <div class="mesh-orb mesh-orb-1" />
+      <div class="mesh-orb mesh-orb-2" />
+      <div class="mesh-orb mesh-orb-3" />
     </div>
 
-    <!-- Brand -->
-    <RouterLink to="/" class="auth-brand">
-      <span class="auth-brand-logo">GFD</span>
-      <span class="auth-brand-name">Global Full-Stack Developers</span>
-    </RouterLink>
+    <!-- Top brand bar -->
+    <header class="auth-header">
+      <RouterLink to="/" class="brand-mark">
+        <div class="brand-icon">
+          <span class="material-symbols-outlined" style="font-size:18px;color:#fff">code</span>
+        </div>
+        <span class="brand-text">GFD</span>
+      </RouterLink>
+    </header>
 
-    <!-- Content -->
-    <main class="auth-main">
+    <!-- Page content -->
+    <main class="auth-body">
       <RouterView v-slot="{ Component }">
-        <Transition name="auth-page" mode="out-in">
+        <Transition name="slide-up" mode="out-in">
           <component :is="Component" />
         </Transition>
       </RouterView>
@@ -30,65 +36,87 @@ import ToastContainer from '@/components/ui/ToastContainer.vue'
 </script>
 
 <style scoped>
-.auth-layout {
-  min-height: 100vh;
+/* ── Shell ── */
+.auth-shell {
+  min-height: 100dvh;
   background: var(--background);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
   position: relative;
   overflow: hidden;
-  padding: calc(2rem + env(safe-area-inset-top, 0px)) 1.5rem calc(2rem + env(safe-area-inset-bottom, 0px));
-  transition: background-color 0.3s ease;
 }
 
-.auth-bg {
+/* ── Animated background ── */
+.auth-mesh { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+
+.mesh-orb {
   position: absolute;
-  inset: 0;
-  pointer-events: none;
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: float 8s ease-in-out infinite;
+}
+.mesh-orb-1 {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(168,85,247,0.18) 0%, transparent 70%);
+  top: -200px; right: -100px;
+  animation-delay: 0s;
+}
+.mesh-orb-2 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(99,14,212,0.12) 0%, transparent 70%);
+  bottom: -100px; left: -150px;
+  animation-delay: -3s;
+}
+.mesh-orb-3 {
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(168,85,247,0.08) 0%, transparent 70%);
+  top: 40%; left: 30%;
+  animation-delay: -5s;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50%       { transform: translateY(-30px) scale(1.05); }
 }
 
-.auth-brand {
-  position: absolute;
-  top: 1.5rem;
-  left: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+/* ── Header ── */
+.auth-header {
+  position: relative; z-index: 10;
+  padding: calc(1.25rem + env(safe-area-inset-top, 0px)) 1.5rem 0;
+}
+.brand-mark {
+  display: inline-flex; align-items: center; gap: 0.625rem;
   text-decoration: none;
-  z-index: 10;
 }
-
-.auth-brand-logo {
+.brand-icon {
+  width: 32px; height: 32px; border-radius: 10px;
+  background: var(--primary);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 12px rgba(168,85,247,0.4);
+}
+.brand-text {
   font-family: var(--font-headline);
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-size: 1.1rem; font-weight: 800;
   color: var(--on-surface);
+  letter-spacing: -0.02em;
 }
 
-.auth-brand-name {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--on-surface-variant);
-  display: none;
-}
-
-@media (min-width: 640px) {
-  .auth-brand-name { display: block; }
-}
-
-.auth-main {
+/* ── Body ── */
+.auth-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 1.5rem 1rem calc(2rem + env(safe-area-inset-bottom, 0px));
+  position: relative; z-index: 10;
   width: 100%;
-  max-width: 480px;
-  position: relative;
-  z-index: 10;
+  max-width: 460px;
+  margin: 0 auto;
 }
 
-.auth-page-enter-active,
-.auth-page-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
+/* ── Page transition ── */
+.slide-up-enter-active, .slide-up-leave-active {
+  transition: opacity 0.22s ease, transform 0.22s ease;
 }
-.auth-page-enter-from { opacity: 0; transform: scale(0.98); }
-.auth-page-leave-to   { opacity: 0; transform: scale(1.01); }
+.slide-up-enter-from { opacity: 0; transform: translateY(16px); }
+.slide-up-leave-to   { opacity: 0; transform: translateY(-8px); }
 </style>
