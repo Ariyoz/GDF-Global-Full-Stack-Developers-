@@ -168,8 +168,22 @@
 <script setup>
 import { ref } from 'vue'
 
-const STORAGE_KEY = 'gfd_onboarded_v2'
-const visible = ref(!localStorage.getItem(STORAGE_KEY))
+const PERM_KEY    = 'gfd_onboarded_v2'   // permanent — set when user taps "Get Started"
+const SESSION_KEY = 'gfd_ob_session'      // session — set once per browser session after first view
+
+// Show if:
+// 1. User has never permanently dismissed (no PERM_KEY), OR
+// 2. This is a fresh page load/reload (no SESSION_KEY in sessionStorage)
+const alreadySeen = sessionStorage.getItem(SESSION_KEY)
+const permDone    = localStorage.getItem(PERM_KEY)
+
+const visible = ref(!alreadySeen || !permDone)
+
+// Mark this session as having seen the slides (won't re-show on route navigation)
+if (!alreadySeen) {
+  sessionStorage.setItem(SESSION_KEY, '1')
+}
+
 const current = ref(0)
 const dir = ref('ob-next')
 
@@ -193,7 +207,10 @@ const slides = [
 
 function next() { dir.value = 'ob-next'; current.value++ }
 function goTo(i) { dir.value = i > current.value ? 'ob-next' : 'ob-prev'; current.value = i }
-function finish() { localStorage.setItem(STORAGE_KEY, '1'); visible.value = false }
+function finish() {
+  localStorage.setItem(PERM_KEY, '1')
+  visible.value = false
+}
 </script>
 
 <style scoped>

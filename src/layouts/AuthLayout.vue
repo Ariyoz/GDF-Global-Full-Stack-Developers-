@@ -2,7 +2,6 @@
   <div class="auth-shell">
 
     <!-- Show onboarding if not seen yet — works even when navigating to /auth/login -->
-    <OnboardingSlides />
 
     <!-- Animated background mesh -->
     <div class="auth-mesh">
@@ -34,7 +33,6 @@
 
 <script setup>
 import ToastContainer from '@/components/ui/ToastContainer.vue'
-import OnboardingSlides from '@/components/ui/OnboardingSlides.vue'
 </script>
 
 <style scoped>
