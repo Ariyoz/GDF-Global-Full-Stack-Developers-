@@ -1,166 +1,193 @@
 <template>
-  <section class="section-gfd home-cta-section">
+  <section class="section-gfd cta-section">
     <div class="container-gfd">
-      <div class="cta-card animate-fade-in-up">
-        <div class="cta-glow cta-glow-right" />
-        <div class="cta-glow cta-glow-left" />
+      <div class="cta-wrap">
 
-        <!-- Left: text -->
-        <div class="cta-content">
-          <h2 class="cta-title">
-            Ready to build something
-            <span class="cta-highlight"> extraordinary?</span>
-          </h2>
-          <p class="cta-desc">
-            Join 10,000+ developers and companies building the future of the web.
-          </p>
-          <div class="cta-actions">
-            <RouterLink to="/auth/register" class="cta-btn-primary">
-              Get Started Today
-            </RouterLink>
-            <RouterLink to="/contact" class="cta-btn-ghost">
-              Contact Sales
-            </RouterLink>
+        <!-- Background glow -->
+        <div class="cta-glow-1" />
+        <div class="cta-glow-2" />
+        <div class="cta-grid" />
+
+        <div class="cta-inner">
+
+          <!-- Left: text -->
+          <div class="cta-body">
+            <div class="section-badge">Get started today</div>
+            <h2 class="cta-title">
+              Ready to build something<br>
+              <span class="cta-gradient">extraordinary?</span>
+            </h2>
+            <p class="cta-sub">
+              Join 10,000+ developers and companies already building the future on GFD.
+              No subscription fees, no middlemen.
+            </p>
+
+            <div class="cta-buttons">
+              <RouterLink to="/auth/register" class="cta-btn-primary">
+                <span class="material-symbols-outlined" style="font-size:18px">rocket_launch</span>
+                Start for free
+              </RouterLink>
+              <RouterLink to="/explore" class="cta-btn-ghost">
+                Browse developers →
+              </RouterLink>
+            </div>
+
+            <!-- Mini stats -->
+            <div class="cta-mini-stats">
+              <div class="mini-stat">
+                <span class="material-symbols-outlined" style="font-size:16px;font-variation-settings:'FILL' 1;color:#22c55e">check_circle</span>
+                Free to join
+              </div>
+              <div class="mini-stat">
+                <span class="material-symbols-outlined" style="font-size:16px;font-variation-settings:'FILL' 1;color:#22c55e">check_circle</span>
+                No hidden fees
+              </div>
+              <div class="mini-stat">
+                <span class="material-symbols-outlined" style="font-size:16px;font-variation-settings:'FILL' 1;color:#22c55e">check_circle</span>
+                Instant payments
+              </div>
+            </div>
           </div>
-        </div>
 
+          <!-- Right: feature cards -->
+          <div class="cta-cards">
+            <div class="cta-card" v-for="f in features" :key="f.title">
+              <div class="cta-card-ico" :style="`background:${f.bg}`">
+                <span class="material-symbols-outlined" :style="`color:${f.color};font-size:20px`">{{ f.icon }}</span>
+              </div>
+              <div>
+                <p class="cta-card-title">{{ f.title }}</p>
+                <p class="cta-card-desc">{{ f.desc }}</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
       </div>
     </div>
   </section>
 </template>
 
+<script setup>
+const features = [
+  { icon: 'verified_user', title: 'Verified talent', desc: 'Every developer is GitHub-verified', bg: 'rgba(99,14,212,.15)', color: '#a855f7' },
+  { icon: 'account_balance_wallet', title: 'Built-in wallet', desc: 'Instant payments & withdrawals', bg: 'rgba(22,163,74,.15)', color: '#16a34a' },
+  { icon: 'chat', title: 'Direct messaging', desc: 'No middlemen, talk directly', bg: 'rgba(59,130,246,.15)', color: '#3b82f6' },
+  { icon: 'analytics', title: 'Smart matching', desc: 'AI-powered talent discovery', bg: 'rgba(245,158,11,.15)', color: '#f59e0b' },
+]
+</script>
+
 <style scoped>
-.home-cta-section { background: var(--background); }
+.cta-section { background: var(--surface-container-low); }
 
-.cta-card {
-  background: linear-gradient(135deg, #1a0840 0%, #2d1060 50%, #1a1a2e 100%);
-  border-radius: 1.5rem;
-  padding: 2.5rem 1.5rem;
-  position: relative;
-  overflow: hidden;
-  border: 1px solid rgba(168,85,247,0.15);
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  align-items: center;
+.cta-wrap {
+  position: relative; overflow: hidden;
+  background: linear-gradient(135deg, #0d0520 0%, #1a0840 50%, #0a0a18 100%);
+  border-radius: 24px; border: 1px solid rgba(168,85,247,.2);
 }
 
-@media (min-width: 768px) {
-  .cta-card {
-    padding: 3.5rem 3rem;
-    border-radius: 2rem;
-  }
+.cta-glow-1 {
+  position: absolute; width: 500px; height: 400px;
+  top: -150px; right: -100px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(168,85,247,.25) 0%, transparent 70%);
+  pointer-events: none; filter: blur(40px);
+}
+.cta-glow-2 {
+  position: absolute; width: 400px; height: 400px;
+  bottom: -150px; left: -100px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(99,14,212,.2) 0%, transparent 70%);
+  pointer-events: none; filter: blur(40px);
+}
+.cta-grid {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(168,85,247,.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(168,85,247,.06) 1px, transparent 1px);
+  background-size: 50px 50px;
 }
 
+.cta-inner {
+  position: relative; z-index: 1;
+  display: grid; grid-template-columns: 1fr;
+  gap: 2.5rem; padding: 2.5rem 1.5rem;
+}
+@media (min-width: 768px) { .cta-inner { padding: 3.5rem 3rem; } }
 @media (min-width: 1024px) {
-  .cta-card { padding: 4rem 4rem; }
+  .cta-inner { grid-template-columns: 1fr 1fr; align-items: center; padding: 4rem; }
 }
 
-.cta-glow {
-  position: absolute;
-  width: 200px;
-  height: 200px;
-  background: var(--primary);
-  filter: blur(100px);
-  opacity: 0.3;
-  pointer-events: none;
-}
-.cta-glow-right { top: -100px; right: -100px; }
-.cta-glow-left  { bottom: -100px; left: -100px; }
+/* Text side */
+.cta-body { display: flex; flex-direction: column; gap: 1.25rem; }
 
-/* Content column */
-.cta-content {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  width: 100%;
-  max-width: 700px;
-  text-align: center;
-  align-items: center;
-}
-
-@media (min-width: 768px) {
-  .cta-content {
-    max-width: 760px;
-  }
+.section-badge {
+  display: inline-flex; padding: .3rem .875rem;
+  background: rgba(168,85,247,.2); color: #c4b5fd;
+  border-radius: 999px; font-family: var(--font-headline);
+  font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+  width: fit-content;
 }
 
 .cta-title {
-  font-family: var(--font-headline);
-  font-size: clamp(1.5rem, 4vw, 2.5rem);
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: -0.025em;
-  line-height: 1.15;
+  font-family: var(--font-headline); font-size: clamp(1.75rem, 4vw, 2.6rem);
+  font-weight: 900; letter-spacing: -.03em; line-height: 1.1; color: #fff;
 }
-
-.cta-highlight { color: var(--primary-fixed); }
-
-.cta-desc {
-  font-size: clamp(0.875rem, 1.5vw, 1rem);
-  color: rgba(255,255,255,0.65);
-  max-width: 520px;
-  line-height: 1.6;
+.cta-gradient {
+  background: linear-gradient(135deg, #a855f7, #c084fc, #818cf8);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
 }
+.cta-sub { font-size: .95rem; color: rgba(255,255,255,.6); line-height: 1.65; max-width: 460px; }
 
-.cta-actions {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-@media (max-width: 400px) {
-  .cta-actions { flex-direction: column; align-items: stretch; }
-}
-
-/* Buttons */
+.cta-buttons { display: flex; gap: .75rem; flex-wrap: wrap; }
 .cta-btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.75rem 1.75rem;
-  background: var(--primary);
-  color: var(--on-primary);
-  border: none;
-  border-radius: var(--radius-lg);
-  font-family: var(--font-headline);
-  font-size: 0.875rem;
-  font-weight: 600;
-  text-decoration: none;
-  cursor: pointer;
-  transition: all 0.25s ease;
-  box-shadow: 0 6px 24px rgba(99,14,212,0.4);
-  white-space: nowrap;
+  display: inline-flex; align-items: center; gap: .5rem;
+  padding: .8rem 1.75rem; border-radius: 14px; border: none;
+  background: #fff; color: #0d0520;
+  font-family: var(--font-headline); font-size: .95rem; font-weight: 700;
+  text-decoration: none; cursor: pointer;
+  box-shadow: 0 6px 24px rgba(255,255,255,.15);
+  transition: all .2s;
 }
-
-.cta-btn-primary:hover {
-  background: var(--primary-container);
-  transform: translateY(-1px);
-  box-shadow: 0 10px 32px rgba(99,14,212,0.5);
-}
-
+.cta-btn-primary:hover { opacity: .92; transform: translateY(-2px); }
 .cta-btn-ghost {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.75rem 1.75rem;
-  background: transparent;
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: var(--radius-lg);
-  font-family: var(--font-headline);
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #fff;
-  text-decoration: none;
-  transition: var(--transition-base);
-  white-space: nowrap;
+  display: inline-flex; align-items: center;
+  padding: .8rem 1.5rem; border-radius: 14px;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18);
+  font-family: var(--font-headline); font-size: .95rem; font-weight: 600;
+  color: rgba(255,255,255,.85); text-decoration: none;
+  transition: all .2s;
+}
+.cta-btn-ghost:hover { background: rgba(255,255,255,.14); color: #fff; }
+
+.cta-mini-stats { display: flex; flex-wrap: wrap; gap: .875rem; }
+.mini-stat {
+  display: flex; align-items: center; gap: .375rem;
+  font-size: .82rem; color: rgba(255,255,255,.6);
+  font-family: var(--font-headline); font-weight: 500;
 }
 
-.cta-btn-ghost:hover {
-  background: rgba(255,255,255,0.1);
-  border-color: rgba(255,255,255,0.35);
+/* Feature cards */
+.cta-cards { display: grid; grid-template-columns: 1fr 1fr; gap: .875rem; }
+
+.cta-card {
+  display: flex; align-items: flex-start; gap: .75rem;
+  padding: .875rem 1rem;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 14px;
+  transition: background .15s, border-color .15s;
+}
+.cta-card:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.2); }
+
+.cta-card-ico {
+  width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.cta-card-title { font-family: var(--font-headline); font-size: .82rem; font-weight: 700; color: #fff; }
+.cta-card-desc { font-size: .72rem; color: rgba(255,255,255,.5); margin-top: .15rem; line-height: 1.4; }
+
+@media (max-width: 479px) {
+  .cta-buttons { flex-direction: column; }
+  .cta-btn-primary, .cta-btn-ghost { justify-content: center; }
+  .cta-cards { grid-template-columns: 1fr; }
 }
 </style>
