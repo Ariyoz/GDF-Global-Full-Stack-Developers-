@@ -239,6 +239,13 @@ router.beforeEach(async (to, _from, next) => {
     ])
   }
 
+  // On Android/iOS Capacitor app — lock ALL non-auth routes behind login
+  const isNativeApp = !!(window.Capacitor?.isNativePlatform?.() || window.Capacitor?.platform)
+  const isAuthRoute = to.path.startsWith('/auth') || to.name === 'privacy-policy'
+  if (isNativeApp && !authStore.isAuthenticated && !isAuthRoute) {
+    return next({ name: 'login', query: { redirect: to.fullPath } })
+  }
+
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     return next({ name: 'login', query: { redirect: to.fullPath } })
   }
