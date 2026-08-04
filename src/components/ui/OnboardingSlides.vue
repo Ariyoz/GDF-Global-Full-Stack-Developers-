@@ -3,31 +3,25 @@
     <Transition name="ob-fade">
       <div v-if="visible" class="ob-shell" :class="[`ob-bg-${current}`, isDark ? 'ob-dark' : 'ob-light']">
 
+        <!-- Decorative backgrounds (outside header, full-screen) -->
+        <template v-if="current === 0">
+          <div class="bg-deco bg-fans" aria-hidden="true">
+            <div v-for="i in 6" :key="i" class="fan-card fan-left" :style="`--i:${i}`" />
+            <div v-for="i in 6" :key="i+6" class="fan-card fan-right" :style="`--i:${i}`" />
+          </div>
+        </template>
+        <template v-else-if="current === 1">
+          <div class="bg-deco bg-target" aria-hidden="true">
+            <div class="target-ring" style="--r:280px;--o:.12" />
+            <div class="target-ring" style="--r:210px;--o:.16" />
+            <div class="target-ring" style="--r:145px;--o:.2" />
+            <div class="target-ring" style="--r:85px;--o:.25" />
+            <div class="target-core" />
+          </div>
+        </template>
+
         <!-- Top bar -->
         <header class="ob-bar">
-
-          <!-- Slide 0 bg: glass card fans -->
-          <template v-if="current === 0">
-            <div class="bg-deco bg-fans" aria-hidden="true">
-              <div v-for="i in 6" :key="i" class="fan-card fan-left" :style="`--i:${i}`" />
-              <div v-for="i in 6" :key="i+6" class="fan-card fan-right" :style="`--i:${i}`" />
-            </div>
-          </template>
-
-          <!-- Slide 1 bg: target/bullseye rings -->
-          <template v-else-if="current === 1">
-            <div class="bg-deco bg-target" aria-hidden="true">
-              <div class="target-ring" style="--r:280px;--o:.12" />
-              <div class="target-ring" style="--r:210px;--o:.16" />
-              <div class="target-ring" style="--r:145px;--o:.2" />
-              <div class="target-ring" style="--r:85px;--o:.25" />
-              <div class="target-core" />
-            </div>
-          </template>
-
-          <!-- Slide 2 bg: dot wave (CSS only, handled by ::after) -->
-
-        </header>
           <div class="ob-brand">
             <img src="@/assets/icons/icon.png" alt="GFD" class="ob-logo" />
             <span class="ob-name">GFD</span>
