@@ -1,72 +1,89 @@
 <template>
-  <section class="section-gfd featured-section">
+  <section class="section-gfd feat-section">
     <div class="container-gfd">
-      <!-- Header -->
-      <div class="section-top">
+
+      <div class="feat-head">
         <div>
-          <h2 class="text-headline-lg">Featured Developers</h2>
-          <p class="text-body-md" style="margin-top:0.25rem">Top-rated full-stack talent currently available for hire.</p>
+          <div class="section-badge">Featured talent</div>
+          <h2 class="feat-title">Top developers<br><span class="text-gradient">ready to hire</span></h2>
+          <p class="feat-sub">Verified full-stack engineers available for your next project.</p>
         </div>
-        <RouterLink to="/explore" class="view-all-link">
-          View all
-          <span class="material-symbols-outlined" style="font-size:16px">arrow_forward</span>
+        <RouterLink to="/explore" class="feat-view-all">
+          Browse all developers
+          <span class="material-symbols-outlined" style="font-size:15px">arrow_forward</span>
         </RouterLink>
       </div>
 
-      <!-- Grid -->
-      <div class="devs-grid">
-        <div
-          v-for="(dev, i) in developers"
-          :key="dev.name"
-          class="dev-card glass-card animate-fade-in-up"
-          :class="`delay-${i * 100}`"
-        >
-          <!-- Card Header -->
-          <div class="dev-card-header">
-            <div class="dev-avatar">
-              <img v-if="dev.avatar" :src="dev.avatar" :alt="dev.name" class="dev-avatar-img" />
-              <span v-else class="dev-initials">{{ initials(dev.name) }}</span>
-              <span v-if="dev.available" class="dev-online-dot" />
+      <!-- Skeleton -->
+      <div v-if="loading" class="dev-grid">
+        <div v-for="i in 6" :key="i" class="dev-skel shimmer" />
+      </div>
+
+      <!-- Cards -->
+      <div v-else-if="developers.length" class="dev-grid">
+        <div v-for="(dev, i) in developers" :key="dev.id"
+          class="dev-card animate-fade-in-up"
+          :class="`delay-${i * 80}`">
+
+          <!-- Cover gradient + avatar -->
+          <div class="dev-cover" :style="`background:${coverGrad(i)}`">
+            <div class="dev-av-wrap">
+              <img v-if="dev.avatar" :src="dev.avatar" :alt="dev.name" class="dev-av-img" />
+              <div v-else class="dev-av-ini" :style="`background:${avatarColor(i)}`">
+                {{ initials(dev.name) }}
+              </div>
             </div>
-            <div class="dev-meta">
-              <h3 class="dev-name">{{ dev.name }}</h3>
-              <p class="dev-role">{{ dev.role }}</p>
-            </div>
+            <span v-if="dev.available" class="dev-live">
+              <span class="live-dot" />Available
+            </span>
           </div>
 
-          <!-- Tags -->
-          <div class="dev-tags">
-            <span v-for="tag in dev.tags" :key="tag" class="chip">{{ tag }}</span>
-          </div>
-
-          <!-- Bio -->
-          <p class="dev-bio">{{ dev.bio }}</p>
-
-          <!-- Footer -->
-          <div class="dev-footer">
-            <div class="dev-stats">
-              <span class="dev-stat">
+          <!-- Body -->
+          <div class="dev-body">
+            <div class="dev-name-row">
+              <div>
+                <h3 class="dev-name">{{ dev.name }}</h3>
+                <p class="dev-role">{{ dev.role }}</p>
+              </div>
+              <div class="dev-rating">
                 <span class="material-symbols-outlined" style="font-size:13px;color:#f59e0b;font-variation-settings:'FILL' 1">star</span>
                 {{ dev.rating }}
-              </span>
-              <span class="dev-stat">
-                <span class="material-symbols-outlined" style="font-size:13px;color:var(--outline)">work</span>
-                {{ dev.projects }} projects
-              </span>
+              </div>
             </div>
-            <div class="dev-footer-actions">
-              <RouterLink :to="`/developer/${dev.id}`" class="btn-view">
-                <span class="material-symbols-outlined" style="font-size:14px">person</span>
-                Portfolio
-              </RouterLink>
-              <RouterLink :to="`/hire?dev=${dev.id}&name=${encodeURIComponent(dev.name)}`" class="btn-hire">
-                <span class="material-symbols-outlined" style="font-size:14px">handshake</span>
-                Hire
-              </RouterLink>
+
+            <p class="dev-bio">{{ dev.bio }}</p>
+
+            <!-- Skills -->
+            <div class="dev-skills">
+              <span v-for="tag in dev.tags.slice(0, 3)" :key="tag" class="dev-skill">{{ tag }}</span>
+              <span v-if="dev.tags.length > 3" class="dev-skill dev-skill-more">+{{ dev.tags.length - 3 }}</span>
+            </div>
+
+            <!-- Footer -->
+            <div class="dev-foot">
+              <div class="dev-meta">
+                <span class="material-symbols-outlined" style="font-size:14px;color:var(--outline)">work_outline</span>
+                <span class="dev-meta-txt">{{ dev.projects }} projects</span>
+              </div>
+              <div class="dev-foot-btns">
+                <RouterLink :to="`/developer/${dev.id}`" class="dev-btn-portfolio">Portfolio</RouterLink>
+                <RouterLink :to="`/hire?dev=${dev.id}&name=${encodeURIComponent(dev.name)}`" class="dev-btn-hire">
+                  <span class="material-symbols-outlined" style="font-size:13px">handshake</span>
+                  Hire
+                </RouterLink>
+              </div>
             </div>
           </div>
+
         </div>
       </div>
+
+      <!-- Empty -->
+      <div v-else class="feat-empty">
+        <span class="material-symbols-outlined" style="font-size:2.5rem;opacity:.2">people</span>
+        <p>Be the first to <RouterLink to="/auth/register" style="color:var(--primary)">join GFD</RouterLink> as a developer!</p>
+      </div>
+
     </div>
   </section>
 </template>
@@ -76,261 +93,175 @@ import { ref, onMounted } from 'vue'
 import http from '@/services/http'
 
 const developers = ref([])
+const loading    = ref(true)
+
+const COVER_GRADS = [
+  'linear-gradient(135deg,#1a0840 0%,#3b0f82 100%)',
+  'linear-gradient(135deg,#041036 0%,#0c2ea8 100%)',
+  'linear-gradient(135deg,#052010 0%,#0a6630 100%)',
+  'linear-gradient(135deg,#2a0020 0%,#8b0060 100%)',
+  'linear-gradient(135deg,#1a1000 0%,#7a4500 100%)',
+  'linear-gradient(135deg,#000f2a 0%,#00408a 100%)',
+]
+const AVATAR_COLORS = ['#7c3aed','#2563eb','#16a34a','#db2777','#d97706','#0891b2']
+
+function coverGrad(i) { return COVER_GRADS[i % COVER_GRADS.length] }
+function avatarColor(i) { return AVATAR_COLORS[i % AVATAR_COLORS.length] }
+function initials(name) {
+  if (!name) return 'U'
+  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+}
 
 onMounted(async () => {
   try {
     const data = await http.get('/explore/developers?limit=6')
     developers.value = (data.developers || []).map(d => ({
-      id: d.id,
-      name: d.full_name || d.username,
-      role: d.experience_level || 'Developer',
-      avatar: d.avatar,
-      tags: (d.skills || []).slice(0, 3),
-      bio: d.bio || 'Available for hire on GFD.',
-      rating: '5.0',
-      projects: 0,
+      id:        d.id,
+      name:      d.full_name || d.username || 'Developer',
+      role:      d.job_title || d.experience_level || 'Full-Stack Developer',
+      avatar:    d.avatar,
+      tags:      (d.skills || []).slice(0, 5),
+      bio:       d.bio?.slice(0, 70) || 'Available for hire on GFD.',
+      rating:    '5.0',
+      projects:  d.projects_count || 0,
       available: d.available_for_hire !== false,
     }))
-  } catch {
-    // Not logged in or API error — show empty
-  }
+  } catch { /* not authenticated or API error */ }
+  finally { loading.value = false }
 })
-
-function initials(name) {
-  if (!name) return 'U'
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-}
 </script>
 
 <style scoped>
-/* Subtle tinted background — adapts to dark mode via CSS variable */
-.featured-section {
-  background: var(--surface-container-low);
-}
+.feat-section { background: var(--background); }
 
-.featured-section > .container-gfd {
-  padding-left: 1rem;
-  padding-right: 1rem;
+/* Header */
+.feat-head {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;
 }
+.section-badge {
+  display: inline-flex; padding: .3rem .875rem; margin-bottom: .5rem;
+  background: var(--primary-fixed); color: var(--primary);
+  border-radius: 999px; font-family: var(--font-headline);
+  font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+}
+.feat-title {
+  font-family: var(--font-headline); font-size: clamp(1.5rem, 3.5vw, 2.2rem);
+  font-weight: 900; letter-spacing: -.03em; line-height: 1.1; color: var(--on-surface);
+}
+.feat-sub { font-size: .9rem; color: var(--on-surface-variant); margin-top: .375rem; }
+.feat-view-all {
+  display: inline-flex; align-items: center; gap: .3rem;
+  font-family: var(--font-headline); font-size: .875rem; font-weight: 600;
+  color: var(--primary); text-decoration: none; white-space: nowrap; flex-shrink: 0;
+  transition: gap .15s;
+}
+.feat-view-all:hover { gap: .5rem; }
 
-@media (min-width: 640px) {
-  .featured-section > .container-gfd {
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-  }
+/* Grid */
+.dev-grid {
+  display: grid; grid-template-columns: 1fr; gap: 1rem;
 }
+@media (min-width: 480px) { .dev-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1024px) { .dev-grid { grid-template-columns: repeat(3, 1fr); } }
 
-/* Section header */
-.section-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
+/* Skeleton */
+.dev-skel { height: 280px; border-radius: 18px; }
+.shimmer {
+  background: linear-gradient(90deg, var(--surface-container) 25%, var(--surface-container-high) 50%, var(--surface-container) 75%);
+  background-size: 200% 100%; animation: shimmer 1.4s infinite;
 }
-
-.view-all-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-  font-family: var(--font-headline);
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--primary);
-  text-decoration: none;
-  white-space: nowrap;
-  flex-shrink: 0;
-  margin-top: 0.25rem;
-}
-.view-all-link:hover { text-decoration: underline; }
-
-/* Grid — 1 col mobile, 2 col tablet, 3 col desktop */
-.devs-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
-}
-
-@media (min-width: 640px) {
-  .devs-grid { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (min-width: 1024px) {
-  .devs-grid { grid-template-columns: repeat(3, 1fr); }
-}
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
 /* Card */
 .dev-card {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 1rem;
-  width: 100%;
-  box-sizing: border-box;
+  border-radius: 18px; overflow: hidden;
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant);
+  transition: transform .2s, box-shadow .2s, border-color .2s;
 }
+.dev-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--primary); }
 
-/* Card header */
-.dev-card-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+/* Cover */
+.dev-cover {
+  position: relative; height: 80px;
+  display: flex; align-items: flex-end; justify-content: flex-end;
+  padding: .75rem;
 }
-
-.dev-avatar {
-  position: relative;
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-full);
-  background: var(--primary-fixed);
-  border: 2px solid rgba(99,14,212,0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  overflow: hidden;
+.dev-av-wrap {
+  position: absolute; bottom: -20px; left: 1.25rem;
+  width: 56px; height: 56px; border-radius: 14px;
+  border: 3px solid var(--surface-container-lowest);
+  overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,.2);
 }
-
-.dev-initials {
-  font-family: var(--font-headline);
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--primary);
+.dev-av-img { width: 100%; height: 100%; object-fit: cover; }
+.dev-av-ini {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-headline); font-size: 1.1rem; font-weight: 800; color: #fff;
 }
-
-.dev-avatar-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: var(--radius-full);
+.dev-live {
+  display: inline-flex; align-items: center; gap: .3rem;
+  padding: .2rem .625rem; border-radius: 999px;
+  background: rgba(34,197,94,.15); color: #16a34a;
+  font-size: .65rem; font-weight: 700; border: 1px solid rgba(34,197,94,.25);
 }
+.live-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; flex-shrink: 0; }
 
-.dev-online-dot {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 12px;
-  height: 12px;
-  background: #22c55e;
-  border-radius: 50%;
-  border: 2px solid var(--surface-container-lowest);
+/* Body */
+.dev-body { padding: 1.5rem 1.25rem 1.125rem; display: flex; flex-direction: column; gap: .625rem; }
+.dev-name-row { display: flex; align-items: flex-start; justify-content: space-between; gap: .5rem; margin-top: .625rem; }
+.dev-name { font-family: var(--font-headline); font-size: 1rem; font-weight: 800; color: var(--on-surface); }
+.dev-role { font-size: .75rem; color: var(--primary); font-weight: 600; margin-top: .15rem; }
+.dev-rating {
+  display: flex; align-items: center; gap: .2rem;
+  font-family: var(--font-headline); font-size: .78rem; font-weight: 700;
+  color: var(--on-surface-variant); flex-shrink: 0;
 }
-
-.dev-meta { min-width: 0; }
-
-.dev-name {
-  font-family: var(--font-headline);
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--on-surface);
-  line-height: 1.3;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.dev-role {
-  font-family: var(--font-headline);
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--primary);
-  margin-top: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Tags */
-.dev-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
-
-/* Bio */
 .dev-bio {
-  font-size: 0.82rem;
-  color: var(--on-surface-variant);
-  line-height: 1.45;
-  flex: 1;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  font-size: .8rem; color: var(--on-surface-variant); line-height: 1.5;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
+.dev-skills { display: flex; flex-wrap: wrap; gap: .3rem; }
+.dev-skill {
+  padding: .18rem .55rem; border-radius: 999px;
+  background: var(--surface-container); border: 1px solid var(--outline-variant);
+  font-family: var(--font-headline); font-size: .68rem; font-weight: 600;
+  color: var(--on-surface-variant);
+}
+.dev-skill-more { background: var(--primary-fixed); color: var(--primary); border-color: transparent; }
 
 /* Footer */
-.dev-footer {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid var(--outline-variant);
+.dev-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: .75rem; border-top: 1px solid var(--outline-variant); gap: .5rem;
+  flex-wrap: wrap;
 }
+.dev-meta { display: flex; align-items: center; gap: .3rem; }
+.dev-meta-txt { font-size: .75rem; color: var(--on-surface-variant); }
+.dev-foot-btns { display: flex; gap: .4rem; }
 
-.dev-stats {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
+.dev-btn-portfolio {
+  padding: .4rem .75rem; border-radius: 8px;
+  background: var(--surface-container-high); border: 1px solid var(--outline-variant);
+  font-family: var(--font-headline); font-size: .75rem; font-weight: 600;
+  color: var(--on-surface); text-decoration: none; transition: all .15s;
 }
+.dev-btn-portfolio:hover { border-color: var(--outline); color: var(--on-surface); }
 
-.dev-stat {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  font-family: var(--font-headline);
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--on-surface-variant);
-  white-space: nowrap;
+.dev-btn-hire {
+  display: inline-flex; align-items: center; gap: .25rem;
+  padding: .4rem .75rem; border-radius: 8px;
+  background: var(--primary); color: #fff; border: none;
+  font-family: var(--font-headline); font-size: .75rem; font-weight: 700;
+  text-decoration: none; transition: opacity .15s;
+  box-shadow: 0 2px 10px rgba(99,14,212,.25);
 }
+.dev-btn-hire:hover { opacity: .9; }
 
-/* Action buttons — side by side, equal width, compact */
-.dev-footer-actions {
-  display: flex;
-  gap: 0.5rem;
-  width: 100%;
-}
-
-.btn-view,
-.btn-hire {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.25rem;
-  padding: 0.45rem 0.5rem;
-  border-radius: var(--radius-lg);
-  font-family: var(--font-headline);
-  font-size: 0.78rem;
-  font-weight: 600;
-  text-decoration: none;
-  cursor: pointer;
-  transition: var(--transition-base);
-  white-space: nowrap;
-  border: none;
-}
-
-/* Portfolio — outlined style */
-.btn-view {
-  background: var(--surface-container-high);
-  border: 1px solid var(--outline-variant);
-  color: var(--on-surface);
-}
-.btn-view:hover {
-  background: var(--surface-container-highest);
-  border-color: var(--outline);
-  color: var(--on-surface);
-}
-
-/* Hire — primary purple */
-.btn-hire {
-  background: var(--primary);
-  color: var(--on-primary);
-  box-shadow: 0 2px 10px rgba(99,14,212,0.25);
-}
-.btn-hire:hover {
-  background: var(--primary-container);
-  color: var(--on-primary);
-  transform: translateY(-1px);
+/* Empty */
+.feat-empty {
+  display: flex; flex-direction: column; align-items: center; gap: .5rem;
+  padding: 4rem 1rem; color: var(--on-surface-variant); font-size: .9rem; text-align: center;
 }
 </style>

@@ -1,105 +1,83 @@
 <template>
-  <header class="navbar-gfd" :class="{ 'navbar-scrolled': scrolled }" role="banner">
-    <div class="navbar-inner container-gfd">
+  <header class="navbar" :class="{ scrolled }" role="banner">
+    <div class="nav-inner">
 
       <!-- Logo -->
-      <RouterLink to="/" class="navbar-logo" @click="closeMobileMenu">
-        <img src="@/assets/icons/icon.png" alt="GFD" class="navbar-logo-img" />
-        <span class="logo-text">GFD</span>
+      <RouterLink to="/" class="nav-logo" @click="closeMobileMenu">
+        <img src="@/assets/icons/icon.png" alt="GFD" class="logo-img" />
+        <span class="logo-txt">GFD</span>
       </RouterLink>
 
-      <!-- Desktop Nav -->
-      <nav class="navbar-links" aria-label="Main navigation">
-        <RouterLink
-          v-for="link in NAV_LINKS"
-          :key="link.to"
-          :to="link.to"
-          class="nav-link"
-          :class="{ 'nav-link-active': isActive(link) }"
-        >
-          {{ link.label }}
+      <!-- Desktop centre links -->
+      <nav class="nav-centre" aria-label="Main navigation">
+        <RouterLink v-for="l in NAV_LINKS" :key="l.to" :to="l.to"
+          class="nav-lnk" :class="{ active: isActive(l) }">
+          {{ l.label }}
         </RouterLink>
       </nav>
 
-      <!-- Desktop Actions -->
-      <div class="navbar-actions">
-        <!-- Theme Toggle -->
-        <button class="icon-btn theme-btn" :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'" @click="toggle">
-          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">
+      <!-- Desktop right actions -->
+      <div class="nav-right">
+        <!-- Theme toggle -->
+        <button class="icon-btn" @click="toggle" :title="isDark ? 'Light mode' : 'Dark mode'">
+          <span class="material-symbols-outlined" style="font-size:18px;font-variation-settings:'FILL' 1">
             {{ isDark ? 'light_mode' : 'dark_mode' }}
           </span>
         </button>
 
         <template v-if="isAuthenticated">
-          <button type="button" class="btn-ghost nav-signout" @click="handleSignOut">Sign Out</button>
-          <RouterLink to="/messaging" class="icon-btn" aria-label="Messages">
-            <span class="material-symbols-outlined">mail</span>
+          <RouterLink to="/notifications" class="icon-btn" title="Notifications">
+            <span class="material-symbols-outlined" style="font-size:18px">notifications</span>
           </RouterLink>
-          <RouterLink to="/notifications" class="icon-btn" aria-label="Notifications">
-            <span class="material-symbols-outlined">notifications</span>
-          </RouterLink>
-          <RouterLink to="/dashboard" class="nav-avatar" aria-label="Dashboard">
-            <span class="avatar-initials">{{ userInitials }}</span>
+          <RouterLink to="/dashboard" class="user-pill" title="Dashboard">
+            <span class="user-initials">{{ userInitials }}</span>
+            <span class="user-name">{{ firstName }}</span>
+            <span class="material-symbols-outlined" style="font-size:14px;opacity:.5">expand_more</span>
           </RouterLink>
         </template>
         <template v-else>
-          <RouterLink to="/auth/login" class="btn-ghost nav-signin">Sign In</RouterLink>
-          <RouterLink to="/hire" class="btn-primary nav-hire">Hire Talent</RouterLink>
+          <RouterLink to="/auth/login" class="btn-ghost-nav">Sign In</RouterLink>
+          <RouterLink to="/auth/register" class="btn-primary-nav">
+            Get Started
+            <span class="material-symbols-outlined" style="font-size:14px">arrow_forward</span>
+          </RouterLink>
         </template>
       </div>
 
-      <!-- Mobile right side: theme toggle + hamburger -->
-      <div class="mobile-right">
-        <button class="icon-btn theme-btn" :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'" @click="toggle">
-          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">
+      <!-- Mobile: theme + menu -->
+      <div class="mob-right">
+        <button class="icon-btn" @click="toggle">
+          <span class="material-symbols-outlined" style="font-size:18px;font-variation-settings:'FILL' 1">
             {{ isDark ? 'light_mode' : 'dark_mode' }}
           </span>
         </button>
-        <button
-          class="navbar-toggle"
-          :aria-expanded="String(mobileMenuOpen)"
-          aria-label="Toggle navigation"
-          @click="toggleMobileMenu"
-        >
-          <span class="material-symbols-outlined">{{ mobileMenuOpen ? 'close' : 'menu' }}</span>
+        <button class="icon-btn" @click="toggleMobileMenu" :aria-expanded="String(mobileMenuOpen)">
+          <span class="material-symbols-outlined" style="font-size:22px">
+            {{ mobileMenuOpen ? 'close' : 'menu' }}
+          </span>
         </button>
       </div>
+
     </div>
 
-    <!-- Mobile Drawer -->
-    <Transition name="mobile-menu">
-      <div v-if="mobileMenuOpen" class="mobile-menu" role="navigation" aria-label="Mobile navigation">
-        <nav class="mobile-nav">
-          <RouterLink
-            v-for="link in NAV_LINKS"
-            :key="link.to"
-            :to="link.to"
-            class="mobile-nav-link"
-            :class="{ 'mobile-nav-link-active': isActive(link) }"
-            @click="closeMobileMenu"
-          >
-            {{ link.label }}
+    <!-- Mobile drawer -->
+    <Transition name="drawer">
+      <div v-if="mobileMenuOpen" class="mob-drawer">
+        <nav class="mob-links">
+          <RouterLink v-for="l in NAV_LINKS" :key="l.to" :to="l.to"
+            class="mob-lnk" :class="{ active: isActive(l) }"
+            @click="closeMobileMenu">
+            {{ l.label }}
           </RouterLink>
         </nav>
-        <div class="mobile-actions">
+        <div class="mob-actions">
           <template v-if="isAuthenticated">
-            <button type="button" class="mobile-action-btn mobile-action-outline" @click="handleSignOut">
-              Sign Out
-            </button>
-            <RouterLink to="/messaging" class="mobile-action-btn mobile-action-outline" @click="closeMobileMenu">
-              Messages
-            </RouterLink>
-            <RouterLink to="/dashboard" class="mobile-action-btn mobile-action-primary" @click="closeMobileMenu">
-              Dashboard
-            </RouterLink>
+            <RouterLink to="/dashboard" class="mob-btn mob-primary" @click="closeMobileMenu">Dashboard</RouterLink>
+            <button class="mob-btn mob-ghost" @click="handleSignOut">Sign Out</button>
           </template>
           <template v-else>
-            <RouterLink to="/auth/login" class="mobile-action-btn mobile-action-outline" @click="closeMobileMenu">
-              Sign In
-            </RouterLink>
-            <RouterLink to="/hire" class="mobile-action-btn mobile-action-primary" @click="closeMobileMenu">
-              Hire Talent
-            </RouterLink>
+            <RouterLink to="/auth/login" class="mob-btn mob-ghost" @click="closeMobileMenu">Sign In</RouterLink>
+            <RouterLink to="/auth/register" class="mob-btn mob-primary" @click="closeMobileMenu">Get Started →</RouterLink>
           </template>
         </div>
       </div>
@@ -129,8 +107,13 @@ const { isDark, toggle }                    = useTheme()
 const scrolled = ref(false)
 
 const userInitials = computed(() => {
-  const name = user.value?.name || 'GFD'
+  const name = user.value?.full_name || user.value?.name || 'GFD'
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+})
+
+const firstName = computed(() => {
+  const name = user.value?.full_name || user.value?.name || ''
+  return name.split(' ')[0] || 'Account'
 })
 
 function isActive(link) {
@@ -144,274 +127,155 @@ function handleSignOut() {
   router.push('/')
 }
 
-function handleScroll() {
-  scrolled.value = window.scrollY > 10
-}
-
-onMounted(() => window.addEventListener('scroll', handleScroll, { passive: true }))
-onUnmounted(() => window.removeEventListener('scroll', handleScroll))
+function onScroll() { scrolled.value = window.scrollY > 12 }
+onMounted(() => window.addEventListener('scroll', onScroll, { passive: true }))
+onUnmounted(() => window.removeEventListener('scroll', onScroll))
 </script>
 
 <style scoped>
 /* ── Shell ── */
-.navbar-gfd {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  z-index: 1000;
-  width: 100%;
-  max-width: 100vw;
-  overflow: hidden;
+.navbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
   padding-top: env(safe-area-inset-top, 0px);
-  background: rgba(249, 249, 255, 0.92);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
+  transition: background .25s, border-color .2s, box-shadow .2s;
+  /* Default: transparent, transitions to frosted glass on scroll */
+  background: transparent;
   border-bottom: 1px solid transparent;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.3s ease;
 }
-
-.navbar-gfd.navbar-scrolled {
+.navbar.scrolled {
+  background: rgba(249,249,255,.82);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border-bottom-color: var(--outline-variant);
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 32px rgba(0,0,0,.06);
+}
+[data-theme="dark"] .navbar.scrolled {
+  background: rgba(13,13,20,.85);
+  border-bottom-color: rgba(168,85,247,.12);
+  box-shadow: 0 1px 32px rgba(0,0,0,.4);
 }
 
-/* ── Inner ── */
-.navbar-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 64px;
-  gap: 0.75rem;
-  padding: 0 1rem;
-  width: 100%;
-  box-sizing: border-box;
+/* ── Inner container ── */
+.nav-inner {
+  max-width: 1280px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 68px; padding: 0 1.25rem; gap: 1rem; box-sizing: border-box;
 }
-
-@media (max-width: 640px) {
-  .navbar-inner {
-    gap: 0.5rem;
-    padding: 0 0.75rem;
-  }
-  .mobile-right {
-    gap: 0.25rem;
-  }
-}
+@media (min-width: 1024px) { .nav-inner { padding: 0 2rem; } }
 
 /* ── Logo ── */
-.navbar-logo { text-decoration: none; flex-shrink: 0; display: flex; align-items: center; gap: 0.5rem; }
-.navbar-logo-img { width: 28px; height: 28px; border-radius: 8px; object-fit: contain; flex-shrink: 0; }
-
-.logo-text {
-  font-family: var(--font-headline);
-  font-size: 1.2rem;
-  font-weight: 800;
-  color: var(--on-surface);
-  letter-spacing: -0.02em;
-  transition: color 0.3s ease;
+.nav-logo { display: flex; align-items: center; gap: .5rem; text-decoration: none; flex-shrink: 0; }
+.logo-img { width: 32px; height: 32px; border-radius: 9px; object-fit: contain; }
+.logo-txt {
+  font-family: var(--font-headline); font-size: 1.2rem; font-weight: 900;
+  color: var(--on-surface); letter-spacing: -.025em;
 }
 
-/* ── Desktop nav ── */
-.navbar-links {
-  display: none;
-  align-items: center;
-  gap: 0.125rem;
-  flex: 1;
+/* ── Centre nav ── */
+.nav-centre {
+  display: none; align-items: center; gap: .25rem;
+  position: absolute; left: 50%; transform: translateX(-50%);
 }
-@media (min-width: 768px) { .navbar-links { display: flex; } }
+@media (min-width: 768px) { .nav-centre { display: flex; } }
 
-.nav-link {
-  font-family: var(--font-body);
-  font-size: 0.9375rem;
-  font-weight: 400;
-  color: var(--on-surface-variant);
-  text-decoration: none;
-  padding: 0.375rem 0.625rem;
-  border-radius: var(--radius-lg);
-  transition: color 0.15s ease, background 0.15s ease;
+.nav-lnk {
+  padding: .45rem 1rem; border-radius: 999px;
+  font-family: var(--font-headline); font-size: .875rem; font-weight: 500;
+  color: var(--on-surface-variant); text-decoration: none;
+  transition: color .15s, background .15s;
 }
-.nav-link:hover { color: var(--primary); background: rgba(168,85,247,0.06); }
-.nav-link-active { color: var(--primary); font-weight: 600; background: rgba(168,85,247,0.08); }
+.nav-lnk:hover  { color: var(--on-surface); background: var(--surface-container); }
+.nav-lnk.active { color: var(--primary); background: var(--primary-fixed); font-weight: 700; }
 
-/* ── Desktop actions ── */
-.navbar-actions {
-  display: none;
-  align-items: center;
-  gap: 0.375rem;
-  margin-left: auto;
-  flex-shrink: 0;
-}
-@media (min-width: 768px) { .navbar-actions { display: flex; } }
+/* ── Right actions ── */
+.nav-right { display: none; align-items: center; gap: .375rem; }
+@media (min-width: 768px) { .nav-right { display: flex; } }
 
-/* ── Icon button (shared) ── */
 .icon-btn {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  border-radius: var(--radius-full);
-  color: var(--on-surface-variant);
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-  text-decoration: none;
-  flex-shrink: 0;
+  width: 36px; height: 36px; border-radius: 10px; border: none; background: none;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--on-surface-variant); cursor: pointer;
+  transition: background .15s, color .15s; text-decoration: none; flex-shrink: 0;
 }
-.icon-btn:hover { background: rgba(168,85,247,0.08); color: var(--primary); }
-.icon-btn .material-symbols-outlined { font-size: 20px; }
+.icon-btn:hover { background: var(--surface-container); color: var(--primary); }
 
-/* Theme button */
-.theme-btn { color: var(--on-surface-variant); }
-.theme-btn:hover { color: var(--primary); }
-
-/* ── Avatar ── */
-.nav-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-full);
-  border: 1.5px solid var(--outline-variant);
-  background: var(--surface-container);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-  cursor: pointer;
-  transition: border-color 0.15s ease;
-}
-.nav-avatar:hover { border-color: var(--primary); }
-
-.avatar-initials {
-  font-family: var(--font-headline);
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: var(--primary);
-}
-
-/* Compact nav buttons — tighter padding so they don't overflow */
-.nav-signin {
-  font-size: 0.8rem;
-  padding: 0.35rem 0.75rem;
-  border-radius: var(--radius-lg);
-  white-space: nowrap;
-}
-.nav-signout {
-  font-size: 0.8rem;
-  padding: 0.35rem 0.75rem;
-  border-radius: var(--radius-lg);
-  white-space: nowrap;
-}
-.nav-hire {
-  font-size: 0.8rem;
-  padding: 0.4rem 0.875rem;
-  white-space: nowrap;
-}
-
-/* ── Mobile right cluster ── */
-.mobile-right {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  margin-left: auto;
-}
-@media (min-width: 768px) { .mobile-right { display: none; } }
-
-/* ── Hamburger ── */
-.navbar-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--on-surface);
-  padding: 0.375rem;
-  border-radius: var(--radius-lg);
-  transition: background 0.15s ease;
-}
-.navbar-toggle:hover { background: rgba(168,85,247,0.06); }
-.navbar-toggle .material-symbols-outlined { font-size: 24px; }
-
-/* ── Mobile Drawer ── */
-.mobile-menu {
-  background: var(--surface-container-lowest);
-  border-top: 1px solid var(--outline-variant);
-  padding: 0.75rem 0.75rem 1.25rem;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
-  width: 100%;
-  box-sizing: border-box;
-  overflow-x: hidden;
-}
-
-.mobile-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-  margin-bottom: 1rem;
-}
-
-.mobile-nav-link {
-  display: block;
-  padding: 0.75rem 1rem;
-  font-family: var(--font-body);
-  font-size: 1rem;
-  font-weight: 400;
-  color: var(--on-surface-variant);
-  text-decoration: none;
-  border-radius: var(--radius-lg);
-  transition: color 0.15s ease, background 0.15s ease;
-}
-.mobile-nav-link:hover,
-.mobile-nav-link-active { color: var(--primary); background: rgba(168,85,247,0.06); }
-.mobile-nav-link-active { font-weight: 600; }
-
-.mobile-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid var(--outline-variant);
-}
-
-.mobile-action-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius-lg);
-  font-family: var(--font-headline);
-  font-size: 0.9rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition: all 0.15s ease;
-  cursor: pointer;
-  border: none;
-  color: var(--on-surface);
-  background: var(--surface-container);
-}
-
-.mobile-action-btn:hover {
+.user-pill {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .3rem .75rem .3rem .3rem; border-radius: 999px;
   background: var(--surface-container-low);
-}
-
-.mobile-action-outline {
-  background: transparent;
   border: 1px solid var(--outline-variant);
-  color: var(--on-surface);
+  text-decoration: none; cursor: pointer;
+  transition: border-color .15s, background .15s;
 }
-.mobile-action-outline:hover { border-color: var(--primary); color: var(--primary); }
+.user-pill:hover { border-color: var(--primary); background: var(--primary-fixed); }
+.user-initials {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--primary); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-headline); font-size: .68rem; font-weight: 800; flex-shrink: 0;
+}
+.user-name {
+  font-family: var(--font-headline); font-size: .82rem; font-weight: 600;
+  color: var(--on-surface); max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 
-.mobile-action-primary {
-  background: var(--primary);
-  color: var(--on-primary);
-  box-shadow: 0 2px 12px rgba(168,85,247,0.3);
+.btn-ghost-nav {
+  padding: .45rem .875rem; border-radius: 999px;
+  background: none; border: 1.5px solid var(--outline-variant);
+  font-family: var(--font-headline); font-size: .85rem; font-weight: 600;
+  color: var(--on-surface); text-decoration: none; white-space: nowrap;
+  transition: border-color .15s, color .15s;
 }
-.mobile-action-primary:hover { background: var(--primary-container); }
+.btn-ghost-nav:hover { border-color: var(--primary); color: var(--primary); }
+
+.btn-primary-nav {
+  display: inline-flex; align-items: center; gap: .3rem;
+  padding: .5rem 1.125rem; border-radius: 999px;
+  background: var(--primary); color: #fff; border: none;
+  font-family: var(--font-headline); font-size: .85rem; font-weight: 700;
+  text-decoration: none; white-space: nowrap;
+  box-shadow: 0 2px 16px rgba(99,14,212,.3);
+  transition: opacity .15s, transform .1s;
+}
+.btn-primary-nav:hover { opacity: .9; transform: translateY(-1px); }
+
+/* ── Mobile right ── */
+.mob-right { display: flex; align-items: center; gap: .25rem; }
+@media (min-width: 768px) { .mob-right { display: none; } }
+
+/* ── Mobile drawer ── */
+.mob-drawer {
+  border-top: 1px solid var(--outline-variant);
+  background: var(--surface-container-lowest);
+  padding: .875rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom,0px));
+}
+[data-theme="dark"] .mob-drawer { background: #111118; }
+
+.mob-links { display: flex; flex-direction: column; gap: .125rem; margin-bottom: 1rem; }
+.mob-lnk {
+  display: block; padding: .75rem 1rem; border-radius: 12px;
+  font-family: var(--font-headline); font-size: .95rem; font-weight: 500;
+  color: var(--on-surface-variant); text-decoration: none;
+  transition: background .15s, color .15s;
+}
+.mob-lnk:hover, .mob-lnk.active { background: var(--primary-fixed); color: var(--primary); font-weight: 700; }
+
+.mob-actions {
+  display: flex; flex-direction: column; gap: .5rem;
+  padding-top: .875rem; border-top: 1px solid var(--outline-variant);
+}
+.mob-btn {
+  display: flex; align-items: center; justify-content: center; width: 100%;
+  padding: .8rem 1rem; border-radius: 14px;
+  font-family: var(--font-headline); font-size: .9rem; font-weight: 700;
+  text-decoration: none; cursor: pointer; border: none; transition: all .15s;
+}
+.mob-primary { background: var(--primary); color: #fff; box-shadow: 0 2px 12px rgba(99,14,212,.3); }
+.mob-primary:hover { opacity: .9; }
+.mob-ghost { background: none; border: 1.5px solid var(--outline-variant); color: var(--on-surface); }
+.mob-ghost:hover { border-color: var(--primary); color: var(--primary); }
 
 /* ── Transition ── */
-.mobile-menu-enter-active,
-.mobile-menu-leave-active { transition: opacity 0.18s ease, transform 0.18s ease; }
-.mobile-menu-enter-from,
-.mobile-menu-leave-to { opacity: 0; transform: translateY(-6px); }
+.drawer-enter-active, .drawer-leave-active { transition: opacity .18s, transform .18s; }
+.drawer-enter-from, .drawer-leave-to { opacity: 0; transform: translateY(-6px); }
 </style>
