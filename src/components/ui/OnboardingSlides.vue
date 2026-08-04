@@ -1,199 +1,201 @@
 <template>
   <Teleport to="body">
     <Transition name="ob-fade">
-      <div v-if="visible" class="ob-overlay" :class="`ob-bg-${current}`">
+      <div v-if="visible" class="ob-shell" :class="`ob-bg-${current}`">
 
         <!-- Top bar -->
-        <div class="ob-topbar">
+        <header class="ob-bar">
           <div class="ob-brand">
-            <img src="@/assets/icons/icon.png" alt="GFD" class="ob-brand-ico" />
-            <span class="ob-brand-name">GFD</span>
+            <img src="@/assets/icons/icon.png" alt="GFD" class="ob-logo" />
+            <span class="ob-name">GFD</span>
           </div>
           <button class="ob-skip" @click="finish">Skip →</button>
-        </div>
+        </header>
 
-        <!-- Slide area — takes all remaining space -->
-        <div class="ob-body">
+        <!-- Main content — centred container -->
+        <div class="ob-container">
           <Transition :name="dir" mode="out-in">
 
-            <!-- ── Slide 0: Developer profile ── -->
-            <div v-if="current === 0" key="s0" class="ob-slide">
-              <div class="ob-cards">
-                <!-- Top float -->
-                <div class="mc-float mc-float-tr">
-                  <span class="mc-float-ico">🚀</span>
-                  <div><p class="mc-ft">Available for hire</p><p class="mc-fs">Responds in &lt; 1hr</p></div>
-                  <div class="mc-live-dot" />
-                </div>
+            <!-- ───────── SLIDE 0 ───────── -->
+            <div v-if="current === 0" key="s0" class="ob-inner">
 
-                <!-- Main card -->
-                <div class="mc-main">
-                  <div class="mc-row">
-                    <!-- Real man avatar using DiceBear -->
-                    <img
-                      src="https://api.dicebear.com/7.x/adventurer/svg?seed=Alex&backgroundColor=b6e3f4"
-                      alt="Alex Morgan"
-                      class="mc-avatar-img"
-                    />
-                    <div class="mc-info">
-                      <p class="mc-name">Alex Morgan</p>
-                      <p class="mc-role">Full-Stack Developer</p>
+              <!-- Illustration column -->
+              <div class="ob-art">
+                <div class="art-wrap">
+                  <!-- float top-right -->
+                  <div class="fl fl-tr">
+                    <span class="fl-ico">🚀</span>
+                    <div><p class="fl-t">Available for hire</p><p class="fl-s">Responds in &lt;1hr</p></div>
+                    <div class="live-dot" />
+                  </div>
+                  <!-- main card -->
+                  <div class="card card-main">
+                    <div class="card-row">
+                      <img
+                        src="https://api.dicebear.com/7.x/adventurer/svg?seed=AlexMorgan&backgroundColor=b6e3f4"
+                        class="av-img" alt="Alex Morgan"
+                        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+                      />
+                      <div class="av-fallback">A</div>
+                      <div class="card-meta">
+                        <p class="c-name">Alex Morgan</p>
+                        <p class="c-sub">Full-Stack Developer</p>
+                      </div>
+                      <span class="c-badge">⭐ 4.9</span>
                     </div>
-                    <div class="mc-badge">⭐ 4.9</div>
+                    <div class="chips">
+                      <span class="chip cp">React</span>
+                      <span class="chip cp">Node.js</span>
+                      <span class="chip cp">Python</span>
+                      <span class="chip cp">+4</span>
+                    </div>
+                    <div class="stats-row">
+                      <div class="stat"><b>42</b><span>Projects</span></div>
+                      <div class="stat-div" />
+                      <div class="stat"><b>₦2.4M</b><span>Earned</span></div>
+                      <div class="stat-div" />
+                      <div class="stat"><b>100%</b><span>Success</span></div>
+                    </div>
                   </div>
-                  <div class="mc-chips">
-                    <span class="chip chip-p">React</span>
-                    <span class="chip chip-p">Node.js</span>
-                    <span class="chip chip-p">Python</span>
-                    <span class="chip chip-p">+4</span>
+                  <!-- float bottom-left -->
+                  <div class="fl fl-bl">
+                    <span class="fl-ico">💼</span>
+                    <div><p class="fl-t">New job offer</p><p class="fl-s">₦450,000 · Remote</p></div>
+                    <span class="new-badge">NEW</span>
                   </div>
-                  <div class="mc-stats">
-                    <div class="mc-stat"><b>42</b><span>Projects</span></div>
-                    <div class="mc-divv" />
-                    <div class="mc-stat"><b>₦2.4M</b><span>Earned</span></div>
-                    <div class="mc-divv" />
-                    <div class="mc-stat"><b>100%</b><span>Success</span></div>
-                  </div>
-                </div>
-
-                <!-- Bottom float -->
-                <div class="mc-float mc-float-bl">
-                  <span class="mc-float-ico">💼</span>
-                  <div><p class="mc-ft">New job offer</p><p class="mc-fs">₦450,000 · Remote</p></div>
-                  <span class="mc-new">NEW</span>
                 </div>
               </div>
 
-              <div class="ob-text">
+              <!-- Text column -->
+              <div class="ob-copy">
                 <p class="ob-tag">01 — Discover</p>
-                <h2 class="ob-title">Find top developers<br>instantly.</h2>
-                <p class="ob-desc">Browse verified developer profiles, check skills and ratings, then hire in minutes.</p>
+                <h2 class="ob-h">Find top developers<br>instantly.</h2>
+                <p class="ob-p">Browse verified developer profiles, check skills and ratings, then hire in minutes.</p>
               </div>
+
             </div>
 
-            <!-- ── Slide 1: Job board ── -->
-            <div v-else-if="current === 1" key="s1" class="ob-slide">
-              <div class="ob-cards">
-                <!-- Top float -->
-                <div class="mc-float mc-float-tr">
-                  <span class="mc-float-ico">✅</span>
-                  <div><p class="mc-ft">98% Match</p><p class="mc-fs">Perfect fit for you</p></div>
-                </div>
+            <!-- ───────── SLIDE 1 ───────── -->
+            <div v-else-if="current === 1" key="s1" class="ob-inner">
 
-                <!-- Main card -->
-                <div class="mc-main">
-                  <div class="mc-row">
-                    <!-- GFD logo for company -->
-                    <img src="@/assets/icons/icon.png" alt="GFD" class="mc-co-logo" />
-                    <div class="mc-info">
-                      <p class="mc-name">Senior React Developer</p>
-                      <p class="mc-role">GlobalFD · Remote</p>
+              <div class="ob-art">
+                <div class="art-wrap">
+                  <div class="fl fl-tr">
+                    <span class="fl-ico">✅</span>
+                    <div><p class="fl-t">98% Match</p><p class="fl-s">Perfect fit for you</p></div>
+                  </div>
+                  <div class="card card-main">
+                    <div class="card-row">
+                      <img src="@/assets/icons/icon.png" class="co-logo" alt="GFD" />
+                      <div class="card-meta">
+                        <p class="c-name">Senior React Developer</p>
+                        <p class="c-sub">GlobalFD · Remote</p>
+                      </div>
                     </div>
-                  </div>
-                  <div class="mc-chips" style="margin-top:.625rem">
-                    <span class="chip chip-b">Full-time</span>
-                    <span class="chip chip-b">React</span>
-                    <span class="chip chip-b">TypeScript</span>
-                  </div>
-                  <p class="mc-salary">₦600,000 <span class="mc-per">/ month</span></p>
-                  <div class="mc-applicants">
-                    <div class="mc-avstack">
-                      <span class="mc-av av-p">A</span>
-                      <span class="mc-av av-b">B</span>
-                      <span class="mc-av av-g">C</span>
+                    <div class="chips" style="margin-top:.5rem">
+                      <span class="chip cb">Full-time</span>
+                      <span class="chip cb">React</span>
+                      <span class="chip cb">TypeScript</span>
                     </div>
-                    <span class="mc-apcount">24 applicants</span>
+                    <p class="salary">₦600,000 <span class="salary-sub">/ month</span></p>
+                    <div class="app-row">
+                      <div class="av-stack">
+                        <span class="av-s av-p">A</span>
+                        <span class="av-s av-b">B</span>
+                        <span class="av-s av-g">C</span>
+                      </div>
+                      <span class="app-count">24 applicants</span>
+                    </div>
+                    <button class="apply-btn">Apply Now</button>
                   </div>
-                  <button class="mc-apply">Apply Now</button>
-                </div>
-
-                <!-- Bottom float -->
-                <div class="mc-float mc-float-bl">
-                  <span class="mc-float-ico">💬</span>
-                  <div><p class="mc-ft">Interview scheduled</p><p class="mc-fs">Tomorrow, 10:00 AM</p></div>
+                  <div class="fl fl-bl">
+                    <span class="fl-ico">💬</span>
+                    <div><p class="fl-t">Interview scheduled</p><p class="fl-s">Tomorrow, 10:00 AM</p></div>
+                  </div>
                 </div>
               </div>
 
-              <div class="ob-text">
+              <div class="ob-copy">
                 <p class="ob-tag">02 — Work</p>
-                <h2 class="ob-title">Post jobs.<br>Get hired fast.</h2>
-                <p class="ob-desc">Clients post real projects, developers apply and chat directly. No agencies, no delays.</p>
+                <h2 class="ob-h">Post jobs.<br>Get hired fast.</h2>
+                <p class="ob-p">Clients post real projects, developers apply and chat directly. No agencies, no delays.</p>
               </div>
+
             </div>
 
-            <!-- ── Slide 2: Wallet ── -->
-            <div v-else key="s2" class="ob-slide">
-              <div class="ob-cards">
-                <!-- Top float -->
-                <div class="mc-float mc-float-tr">
-                  <span class="mc-float-ico">🔒</span>
-                  <div><p class="mc-ft">Secured payments</p><p class="mc-fs">Bank-grade encryption</p></div>
-                </div>
+            <!-- ───────── SLIDE 2 ───────── -->
+            <div v-else key="s2" class="ob-inner">
 
-                <!-- Main card (wallet) -->
-                <div class="mc-main mc-wallet">
-                  <div class="mc-wrow">
-                    <span class="mc-wlbl">Total Balance</span>
-                    <span>💳</span>
+              <div class="ob-art">
+                <div class="art-wrap">
+                  <div class="fl fl-tr">
+                    <span class="fl-ico">🔒</span>
+                    <div><p class="fl-t">Secured payments</p><p class="fl-s">Bank-grade encryption</p></div>
                   </div>
-                  <p class="mc-wbal">₦124,500.00</p>
-                  <div class="mc-wbtns">
-                    <button class="mc-wb mc-wb-g">+ Fund</button>
-                    <button class="mc-wb mc-wb-b">↑ Send</button>
-                    <button class="mc-wb mc-wb-p">↓ Withdraw</button>
+                  <div class="card card-main card-wallet">
+                    <div class="w-header">
+                      <span class="w-lbl">Total Balance</span>
+                      <span>💳</span>
+                    </div>
+                    <p class="w-bal">₦124,500.00</p>
+                    <div class="w-btns">
+                      <button class="wb wb-g">+ Fund</button>
+                      <button class="wb wb-b">↑ Send</button>
+                      <button class="wb wb-p">↓ Withdraw</button>
+                    </div>
+                    <div class="txs">
+                      <div class="tx">
+                        <div class="tx-ico" style="background:rgba(22,163,74,.18)">↓</div>
+                        <div class="tx-info"><p>Project Payment</p><p class="tx-d">Today</p></div>
+                        <span class="cr">+₦45,000</span>
+                      </div>
+                      <div class="tx">
+                        <div class="tx-ico" style="background:rgba(59,130,246,.18)">↑</div>
+                        <div class="tx-info"><p>Sent to James</p><p class="tx-d">Yesterday</p></div>
+                        <span class="dr">-₦5,000</span>
+                      </div>
+                      <div class="tx">
+                        <div class="tx-ico" style="background:rgba(22,163,74,.18)">↓</div>
+                        <div class="tx-info"><p>Freelance Job</p><p class="tx-d">Monday</p></div>
+                        <span class="cr">+₦80,000</span>
+                      </div>
+                    </div>
                   </div>
-                  <div class="mc-txs">
-                    <div class="mc-tx">
-                      <div class="mc-txico" style="background:rgba(22,163,74,.18)">↓</div>
-                      <div class="mc-txinfo"><p>Project Payment</p><p class="mc-txd">Today</p></div>
-                      <span class="mc-cr">+₦45,000</span>
-                    </div>
-                    <div class="mc-tx">
-                      <div class="mc-txico" style="background:rgba(59,130,246,.18)">↑</div>
-                      <div class="mc-txinfo"><p>Sent to James</p><p class="mc-txd">Yesterday</p></div>
-                      <span class="mc-dr">-₦5,000</span>
-                    </div>
-                    <div class="mc-tx">
-                      <div class="mc-txico" style="background:rgba(22,163,74,.18)">↓</div>
-                      <div class="mc-txinfo"><p>Freelance Job</p><p class="mc-txd">Monday</p></div>
-                      <span class="mc-cr">+₦80,000</span>
-                    </div>
+                  <div class="fl fl-bl">
+                    <span class="fl-ico">⚡</span>
+                    <div><p class="fl-t">Instant withdrawal</p><p class="fl-s">Any Nigerian bank</p></div>
                   </div>
-                </div>
-
-                <!-- Bottom float -->
-                <div class="mc-float mc-float-bl">
-                  <span class="mc-float-ico">⚡</span>
-                  <div><p class="mc-ft">Instant withdrawal</p><p class="mc-fs">To any Nigerian bank</p></div>
                 </div>
               </div>
 
-              <div class="ob-text">
+              <div class="ob-copy">
                 <p class="ob-tag">03 — Get Paid</p>
-                <h2 class="ob-title">Your money,<br>your control.</h2>
-                <p class="ob-desc">Built-in wallet, instant transfers, and direct bank withdrawals. Secure every time.</p>
+                <h2 class="ob-h">Your money,<br>your control.</h2>
+                <p class="ob-p">Built-in wallet, instant transfers, and direct bank withdrawals. Secure every time.</p>
               </div>
+
             </div>
 
           </Transition>
         </div>
 
-        <!-- Bottom: dots + button -->
-        <div class="ob-footer">
+        <!-- Footer -->
+        <footer class="ob-foot">
           <div class="ob-dots">
             <button v-for="(_, i) in 3" :key="i"
-              class="ob-dot" :class="{ active: i === current }"
+              class="dot" :class="{ active: i === current }"
               @click="goTo(i)" />
           </div>
-          <button v-if="current < 2" class="ob-btn-n" @click="next">
-            Next <span class="material-symbols-outlined" style="font-size:16px;line-height:1">arrow_forward</span>
+          <button v-if="current < 2" class="btn-n" @click="next">
+            Next
+            <span class="material-symbols-outlined" style="font-size:16px;line-height:1">arrow_forward</span>
           </button>
-          <button v-else class="ob-btn-s" @click="finish">
+          <button v-else class="btn-s" @click="finish">
             <img src="@/assets/icons/icon.png" alt=""
               style="width:18px;height:18px;border-radius:5px;object-fit:contain;flex-shrink:0" />
             Get Started
           </button>
-        </div>
+        </footer>
 
       </div>
     </Transition>
@@ -202,17 +204,14 @@
 
 <script setup>
 import { ref } from 'vue'
-
 const PERM_KEY    = 'gfd_onboarded_v2'
 const SESSION_KEY = 'gfd_ob_session'
 const alreadySeen = sessionStorage.getItem(SESSION_KEY)
 const permDone    = localStorage.getItem(PERM_KEY)
 const visible     = ref(!alreadySeen || !permDone)
 if (!alreadySeen) sessionStorage.setItem(SESSION_KEY, '1')
-
 const current = ref(0)
 const dir     = ref('ob-next')
-
 function next()  { dir.value = 'ob-next';  current.value++ }
 function goTo(i) { dir.value = i > current.value ? 'ob-next' : 'ob-prev'; current.value = i }
 function finish() { localStorage.setItem(PERM_KEY, '1'); visible.value = false }
@@ -220,7 +219,7 @@ function finish() { localStorage.setItem(PERM_KEY, '1'); visible.value = false }
 
 <style scoped>
 /* ── Shell ── */
-.ob-overlay {
+.ob-shell {
   position: fixed; inset: 0; z-index: 10000;
   display: flex; flex-direction: column;
   overflow: hidden;
@@ -232,214 +231,250 @@ function finish() { localStorage.setItem(PERM_KEY, '1'); visible.value = false }
 .ob-bg-0::before {
   content:''; position:absolute; inset:0; pointer-events:none;
   background:
-    radial-gradient(ellipse 75% 55% at 100% 0%,  rgba(168,85,247,.45) 0%, transparent 55%),
-    radial-gradient(ellipse 55% 45% at 0%   100%, rgba(99,14,212,.3)  0%, transparent 55%);
+    radial-gradient(ellipse 70% 60% at 100% 0%,   rgba(168,85,247,.45) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 45% at 0%   100%,  rgba(99,14,212,.3)  0%, transparent 55%);
 }
 .ob-bg-1::before {
   content:''; position:absolute; inset:0; pointer-events:none;
   background:
-    radial-gradient(ellipse 75% 55% at 0%   0%,   rgba(59,130,246,.4)  0%, transparent 55%),
-    radial-gradient(ellipse 55% 45% at 100% 100%, rgba(168,85,247,.25) 0%, transparent 55%);
+    radial-gradient(ellipse 70% 60% at 0%   0%,    rgba(59,130,246,.4)  0%, transparent 55%),
+    radial-gradient(ellipse 55% 45% at 100% 100%,  rgba(168,85,247,.25) 0%, transparent 55%);
 }
 .ob-bg-2::before {
   content:''; position:absolute; inset:0; pointer-events:none;
   background:
-    radial-gradient(ellipse 75% 55% at 100% 0%,  rgba(22,163,74,.4)   0%, transparent 55%),
-    radial-gradient(ellipse 55% 45% at 0%   100%, rgba(99,14,212,.25) 0%, transparent 55%);
+    radial-gradient(ellipse 70% 60% at 100% 0%,   rgba(22,163,74,.4)   0%, transparent 55%),
+    radial-gradient(ellipse 55% 45% at 0%   100%,  rgba(99,14,212,.25) 0%, transparent 55%);
 }
-.ob-overlay::after {
+.ob-shell::after {
   content:''; position:absolute; inset:0; pointer-events:none;
-  background-image: radial-gradient(circle, rgba(255,255,255,.05) 1px, transparent 1px);
-  background-size: 28px 28px;
-  mask-image: radial-gradient(ellipse 90% 90% at 50% 40%, black 10%, transparent 100%);
-  -webkit-mask-image: radial-gradient(ellipse 90% 90% at 50% 40%, black 10%, transparent 100%);
+  background-image: radial-gradient(circle, rgba(255,255,255,.045) 1px, transparent 1px);
+  background-size: 26px 26px;
+  mask-image: radial-gradient(ellipse 90% 90% at 50% 40%, black 0%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 90% 90% at 50% 40%, black 0%, transparent 100%);
 }
 
-/* Top bar */
-.ob-topbar {
+/* ── Top bar ── */
+.ob-bar {
   display: flex; align-items: center; justify-content: space-between;
-  padding: calc(1rem + env(safe-area-inset-top,0px)) 1.25rem .5rem;
+  padding: calc(.875rem + env(safe-area-inset-top,0px)) 1.25rem .5rem;
   position: relative; z-index: 3; flex-shrink: 0;
 }
 .ob-brand { display: flex; align-items: center; gap: .5rem; }
-.ob-brand-ico { width: 30px; height: 30px; border-radius: 9px; object-fit: contain; }
-.ob-brand-name {
+.ob-logo  { width: 30px; height: 30px; border-radius: 9px; object-fit: contain; display: block; }
+.ob-name  {
   font-family: var(--font-headline); font-size: 1.05rem; font-weight: 800;
   color: #fff; letter-spacing: -.01em;
 }
 .ob-skip {
-  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
   border-radius: 999px; padding: .3rem .875rem;
   font-family: var(--font-headline); font-size: .8rem; font-weight: 600;
   color: rgba(255,255,255,.7); cursor: pointer; transition: background .15s;
 }
 .ob-skip:hover { background: rgba(255,255,255,.2); color: #fff; }
 
-/* Body — flex 1 so it fills between topbar and footer */
-.ob-body {
-  flex: 1; min-height: 0;
-  display: flex; flex-direction: column;
-  position: relative; z-index: 1;
+/* ── Scrollable container ── */
+.ob-container {
+  flex: 1; overflow: hidden; position: relative; z-index: 1;
+}
+
+/* ── Inner: mobile = column, desktop = row ── */
+.ob-inner {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: .5rem 1.25rem 0;
+  gap: 1rem;
   overflow: hidden;
 }
-
-/* Each slide = cards + text stacked */
-.ob-slide {
-  flex: 1; display: flex; flex-direction: column;
-  padding: .5rem 1.25rem 0;
-  gap: .875rem;
+@media (min-width: 768px) {
+  .ob-inner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem 3rem;
+    gap: 3rem;
+    max-width: 960px;
+    margin: 0 auto;
+    width: 100%;
+  }
 }
 
-/* Cards container — relative, fixed height so floats don't overflow into text */
-.ob-cards {
-  position: relative;
-  height: 220px;
+/* ── Art column ── */
+.ob-art {
   flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+@media (min-width: 768px) {
+  .ob-art { flex: 0 0 380px; }
 }
 
-/* Main card */
-.mc-main {
-  position: absolute; left: 0; right: 0; top: 28px;
-  background: rgba(18,10,36,.9);
+/* Art wrap — positions float cards relative to main card */
+.art-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 340px;
+  /* height is driven by main card + float offsets */
+  padding: 28px 0 36px; /* room for float cards */
+}
+@media (min-width: 768px) {
+  .art-wrap { max-width: 380px; }
+}
+
+/* ── Main card ── */
+.card {
+  border-radius: 18px;
   border: 1px solid rgba(168,85,247,.2);
-  border-radius: 18px; padding: .875rem;
-  box-shadow: 0 16px 50px rgba(0,0,0,.5);
-  z-index: 1;
+  background: rgba(18,10,36,.92);
+  padding: .875rem 1rem;
+  box-shadow: 0 16px 48px rgba(0,0,0,.5);
 }
-.mc-wallet {
+.card-wallet {
   border-color: rgba(22,163,74,.2);
-  background: rgba(3,14,8,.9);
+  background: rgba(3,12,6,.92);
+}
+.card-main {
+  position: relative; z-index: 1;
 }
 
-/* Float cards */
-.mc-float {
+/* ── Float pills ── */
+.fl {
   position: absolute; z-index: 2;
   display: flex; align-items: center; gap: .5rem;
-  padding: .5rem .75rem;
-  background: rgba(255,255,255,.1);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255,255,255,.18);
+  padding: .45rem .75rem;
+  background: rgba(30,20,55,.92);
+  border: 1px solid rgba(255,255,255,.15);
   border-radius: 14px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.3);
-  min-width: 0;
+  box-shadow: 0 8px 24px rgba(0,0,0,.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  max-width: 220px;
 }
-.mc-float-tr { top: 0; right: 0; }
-.mc-float-bl { bottom: 0; left: 0; }
+.fl-tr { top: 0; right: -4px; }
+.fl-bl { bottom: 0; left: -4px; }
 
-.mc-float-ico { font-size: 1.1rem; flex-shrink: 0; }
-.mc-ft { font-family: var(--font-headline); font-size: .78rem; font-weight: 700; color: #fff; white-space: nowrap; }
-.mc-fs { font-size: .67rem; color: rgba(255,255,255,.55); white-space: nowrap; }
-.mc-live-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 6px #22c55e; margin-left: auto; flex-shrink: 0; }
-.mc-new { background: #7c3aed; color: #fff; font-size: .6rem; font-weight: 800; padding: .15rem .45rem; border-radius: 999px; margin-left: auto; flex-shrink: 0; white-space: nowrap; }
+.fl-ico { font-size: 1rem; flex-shrink: 0; }
+.fl-t   { font-family: var(--font-headline); font-size: .78rem; font-weight: 700; color: #fff; white-space: nowrap; }
+.fl-s   { font-size: .67rem; color: rgba(255,255,255,.55); }
+.live-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 6px #22c55e; margin-left: auto; flex-shrink: 0; }
+.new-badge { background: #7c3aed; color: #fff; font-size: .6rem; font-weight: 800; padding: .15rem .45rem; border-radius: 999px; margin-left: auto; flex-shrink: 0; }
 
-/* Profile slide internals */
-.mc-row { display: flex; align-items: center; gap: .625rem; margin-bottom: .625rem; }
-.mc-avatar-img {
-  width: 42px; height: 42px; border-radius: 12px; object-fit: cover;
-  background: #b6e3f4; flex-shrink: 0;
-}
-.mc-co-logo {
-  width: 38px; height: 38px; border-radius: 10px; object-fit: contain;
-  background: rgba(168,85,247,.15); padding: 4px; flex-shrink: 0;
-}
-.mc-info { flex: 1; min-width: 0; }
-.mc-name { font-family: var(--font-headline); font-size: .875rem; font-weight: 700; color: #fff; }
-.mc-role { font-size: .7rem; color: rgba(255,255,255,.5); margin-top: .1rem; }
-.mc-badge {
-  background: rgba(245,158,11,.15); color: #fbbf24;
-  border-radius: 999px; padding: .2rem .6rem;
-  font-size: .72rem; font-weight: 700; flex-shrink: 0;
-}
+/* ── Card internals ── */
+.card-row { display: flex; align-items: center; gap: .625rem; margin-bottom: .625rem; }
 
-/* Chips */
-.mc-chips { display: flex; flex-wrap: wrap; gap: .3rem; margin-bottom: .625rem; }
+.av-img { width: 40px; height: 40px; border-radius: 11px; object-fit: cover; background: #b6e3f4; flex-shrink: 0; }
+.av-fallback {
+  display: none; width: 40px; height: 40px; border-radius: 11px;
+  background: rgba(168,85,247,.2); color: #a855f7;
+  align-items: center; justify-content: center;
+  font-family: var(--font-headline); font-weight: 800; font-size: 1rem; flex-shrink: 0;
+}
+.co-logo { width: 36px; height: 36px; border-radius: 10px; object-fit: contain; background: rgba(168,85,247,.12); padding: 4px; flex-shrink: 0; }
+
+.card-meta { flex: 1; min-width: 0; }
+.c-name { font-family: var(--font-headline); font-size: .875rem; font-weight: 700; color: #fff; }
+.c-sub  { font-size: .7rem; color: rgba(255,255,255,.5); margin-top: .1rem; }
+.c-badge { background: rgba(245,158,11,.15); color: #fbbf24; border-radius: 999px; padding: .18rem .55rem; font-size: .7rem; font-weight: 700; flex-shrink: 0; }
+
+.chips { display: flex; flex-wrap: wrap; gap: .3rem; margin-bottom: .625rem; }
 .chip { padding: .18rem .55rem; border-radius: 999px; font-size: .68rem; font-weight: 600; }
-.chip-p { background: rgba(168,85,247,.18); color: #c4b5fd; }
-.chip-b { background: rgba(59,130,246,.18); color: #93c5fd; }
+.cp { background: rgba(168,85,247,.18); color: #c4b5fd; }
+.cb { background: rgba(59,130,246,.18); color: #93c5fd; }
 
-/* Stats */
-.mc-stats { display: flex; align-items: center; justify-content: space-around; padding-top: .5rem; border-top: 1px solid rgba(255,255,255,.07); }
-.mc-stat { display: flex; flex-direction: column; align-items: center; gap: .1rem; }
-.mc-stat b { font-family: var(--font-headline); font-size: .875rem; font-weight: 800; color: #fff; }
-.mc-stat span { font-size: .62rem; color: rgba(255,255,255,.4); }
-.mc-divv { width: 1px; height: 24px; background: rgba(255,255,255,.1); }
+.stats-row { display: flex; align-items: center; justify-content: space-around; padding-top: .5rem; border-top: 1px solid rgba(255,255,255,.07); }
+.stat { display: flex; flex-direction: column; align-items: center; gap: .1rem; }
+.stat b { font-family: var(--font-headline); font-size: .875rem; font-weight: 800; color: #fff; }
+.stat span { font-size: .62rem; color: rgba(255,255,255,.4); }
+.stat-div { width: 1px; height: 22px; background: rgba(255,255,255,.1); }
 
-/* Job slide */
-.mc-salary { font-family: var(--font-headline); font-size: 1.05rem; font-weight: 800; color: #fff; margin: .5rem 0; }
-.mc-per { font-size: .72rem; font-weight: 400; color: rgba(255,255,255,.4); }
-.mc-applicants { display: flex; align-items: center; gap: .5rem; margin-bottom: .5rem; }
-.mc-avstack { display: flex; }
-.mc-av {
-  width: 22px; height: 22px; border-radius: 999px; border: 1.5px solid rgba(18,10,36,.8);
+.salary { font-family: var(--font-headline); font-size: 1.05rem; font-weight: 800; color: #fff; margin: .5rem 0; }
+.salary-sub { font-size: .72rem; font-weight: 400; color: rgba(255,255,255,.4); }
+.app-row { display: flex; align-items: center; gap: .5rem; margin-bottom: .5rem; }
+.av-stack { display: flex; }
+.av-s {
+  width: 22px; height: 22px; border-radius: 999px;
+  border: 1.5px solid rgba(18,10,36,.8);
   display: flex; align-items: center; justify-content: center;
   font-size: .6rem; font-weight: 800; margin-left: -6px;
 }
-.mc-av:first-child { margin-left: 0; }
+.av-s:first-child { margin-left: 0; }
 .av-p { background: #7c3aed; color: #fff; }
 .av-b { background: #2563eb; color: #fff; }
 .av-g { background: #16a34a; color: #fff; }
-.mc-apcount { font-size: .7rem; color: rgba(255,255,255,.5); }
-.mc-apply {
+.app-count { font-size: .7rem; color: rgba(255,255,255,.5); }
+.apply-btn {
   width: 100%; padding: .5rem; border-radius: 10px;
   background: #7c3aed; color: #fff; border: none;
   font-family: var(--font-headline); font-size: .82rem; font-weight: 700; cursor: pointer;
+  transition: opacity .15s;
 }
+.apply-btn:hover { opacity: .9; }
 
-/* Wallet slide */
-.mc-wrow { display: flex; justify-content: space-between; align-items: center; margin-bottom: .25rem; }
-.mc-wlbl { font-size: .7rem; color: rgba(255,255,255,.5); }
-.mc-wbal { font-family: var(--font-headline); font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: -.02em; margin-bottom: .625rem; }
-.mc-wbtns { display: flex; gap: .4rem; margin-bottom: .625rem; }
-.mc-wb { flex: 1; padding: .4rem; border-radius: 9px; border: none; font-family: var(--font-headline); font-size: .7rem; font-weight: 700; cursor: pointer; }
-.mc-wb-g { background: rgba(22,163,74,.2); color: #4ade80; }
-.mc-wb-b { background: rgba(59,130,246,.2); color: #60a5fa; }
-.mc-wb-p { background: rgba(168,85,247,.2); color: #c4b5fd; }
-.mc-txs { display: flex; flex-direction: column; gap: .3rem; }
-.mc-tx { display: flex; align-items: center; gap: .4rem; }
-.mc-txico { width: 26px; height: 26px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: .78rem; flex-shrink: 0; color: #fff; }
-.mc-txinfo { flex: 1; min-width: 0; }
-.mc-txinfo p:first-child { font-size: .75rem; font-weight: 600; color: #fff; }
-.mc-txd { font-size: .62rem; color: rgba(255,255,255,.4); }
-.mc-cr { font-family: var(--font-headline); font-size: .78rem; font-weight: 700; color: #4ade80; }
-.mc-dr { font-family: var(--font-headline); font-size: .78rem; font-weight: 700; color: #f87171; }
+/* Wallet card internals */
+.w-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: .25rem; }
+.w-lbl { font-size: .7rem; color: rgba(255,255,255,.5); }
+.w-bal { font-family: var(--font-headline); font-size: 1.4rem; font-weight: 900; color: #fff; letter-spacing: -.02em; margin-bottom: .625rem; }
+.w-btns { display: flex; gap: .375rem; margin-bottom: .625rem; }
+.wb { flex: 1; padding: .375rem; border-radius: 9px; border: none; font-family: var(--font-headline); font-size: .7rem; font-weight: 700; cursor: pointer; }
+.wb-g { background: rgba(22,163,74,.2); color: #4ade80; }
+.wb-b { background: rgba(59,130,246,.2); color: #60a5fa; }
+.wb-p { background: rgba(168,85,247,.2); color: #c4b5fd; }
+.txs { display: flex; flex-direction: column; gap: .3rem; }
+.tx { display: flex; align-items: center; gap: .4rem; }
+.tx-ico { width: 26px; height: 26px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: .75rem; flex-shrink: 0; color: #fff; }
+.tx-info { flex: 1; min-width: 0; }
+.tx-info p:first-child { font-size: .75rem; font-weight: 600; color: #fff; }
+.tx-d { font-size: .62rem; color: rgba(255,255,255,.4); }
+.cr { font-family: var(--font-headline); font-size: .78rem; font-weight: 700; color: #4ade80; }
+.dr { font-family: var(--font-headline); font-size: .78rem; font-weight: 700; color: #f87171; }
 
-/* Text section */
-.ob-text { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: .375rem; justify-content: center; }
+/* ── Copy column ── */
+.ob-copy {
+  display: flex; flex-direction: column; gap: .375rem;
+  flex: 1;
+}
+@media (min-width: 768px) {
+  .ob-copy { flex: 1; justify-content: center; }
+}
 .ob-tag { font-family: var(--font-headline); font-size: .68rem; font-weight: 700; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: .1em; }
-.ob-title { font-family: var(--font-headline); font-size: clamp(1.5rem,5vw,1.9rem); font-weight: 900; color: #fff; letter-spacing: -.02em; line-height: 1.1; }
-.ob-desc { font-size: .85rem; color: rgba(255,255,255,.55); line-height: 1.55; }
+.ob-h {
+  font-family: var(--font-headline); font-weight: 900; color: #fff;
+  letter-spacing: -.025em; line-height: 1.1;
+  font-size: clamp(1.6rem, 4.5vw, 2.6rem);
+}
+.ob-p { font-size: .9rem; color: rgba(255,255,255,.58); line-height: 1.6; max-width: 380px; }
 
-/* Footer */
-.ob-footer {
+/* ── Footer ── */
+.ob-foot {
   display: flex; align-items: center; justify-content: space-between;
   padding: .75rem 1.25rem calc(.875rem + env(safe-area-inset-bottom,0px));
-  position: relative; z-index: 3; flex-shrink: 0; gap: 1rem;
-  border-top: 1px solid rgba(255,255,255,.06);
+  position: relative; z-index: 3; flex-shrink: 0;
+  border-top: 1px solid rgba(255,255,255,.06); gap: 1rem;
 }
 .ob-dots { display: flex; gap: .375rem; align-items: center; }
-.ob-dot { width: 7px; height: 7px; border-radius: 999px; background: rgba(255,255,255,.22); border: none; cursor: pointer; transition: all .25s; padding: 0; }
-.ob-dot.active { width: 22px; background: #fff; }
+.dot { width: 7px; height: 7px; border-radius: 999px; background: rgba(255,255,255,.22); border: none; cursor: pointer; transition: all .25s; padding: 0; }
+.dot.active { width: 22px; background: #fff; }
 
-.ob-btn-n, .ob-btn-s {
+.btn-n, .btn-s {
   height: 44px; border-radius: 13px; border: none;
   font-family: var(--font-headline); font-size: .9rem; font-weight: 700;
   cursor: pointer; display: flex; align-items: center; justify-content: center;
   gap: .375rem; padding: 0 1.375rem; white-space: nowrap;
   transition: opacity .15s, transform .1s;
 }
-.ob-btn-n { background: rgba(255,255,255,.1); border: 1.5px solid rgba(255,255,255,.2); color: #fff; }
-.ob-btn-n:hover { background: rgba(255,255,255,.18); }
-.ob-btn-s { background: #fff; color: #0d0520; box-shadow: 0 4px 16px rgba(255,255,255,.12); }
-.ob-btn-s:hover { opacity: .92; transform: translateY(-1px); }
+.btn-n { background: rgba(255,255,255,.1); border: 1.5px solid rgba(255,255,255,.2); color: #fff; }
+.btn-n:hover { background: rgba(255,255,255,.18); }
+.btn-s { background: #fff; color: #0d0520; box-shadow: 0 4px 16px rgba(255,255,255,.12); }
+.btn-s:hover { opacity: .92; transform: translateY(-1px); }
 
-/* Transitions */
+/* ── Transitions ── */
 .ob-next-enter-active,.ob-next-leave-active,
 .ob-prev-enter-active,.ob-prev-leave-active { transition: opacity .28s ease, transform .28s ease; }
-.ob-next-enter-from  { opacity:0; transform:translateX(45px);  }
-.ob-next-leave-to    { opacity:0; transform:translateX(-45px); }
-.ob-prev-enter-from  { opacity:0; transform:translateX(-45px); }
-.ob-prev-leave-to    { opacity:0; transform:translateX(45px);  }
+.ob-next-enter-from  { opacity:0; transform:translateX(40px);  }
+.ob-next-leave-to    { opacity:0; transform:translateX(-40px); }
+.ob-prev-enter-from  { opacity:0; transform:translateX(-40px); }
+.ob-prev-leave-to    { opacity:0; transform:translateX(40px);  }
 .ob-fade-enter-active,.ob-fade-leave-active { transition: opacity .4s ease; }
 .ob-fade-enter-from,.ob-fade-leave-to { opacity:0; }
 </style>
