@@ -246,6 +246,20 @@ router.beforeEach(async (to, _from, next) => {
     return next({ name: 'login', query: { redirect: to.fullPath } })
   }
 
+  // ── Android/iOS native app: lock ALL pages behind login ──
+  // On the website, public pages (home, explore, etc.) are accessible without login.
+  // On the native app, every page requires auth — guests only see auth screens.
+  const isNativeApp = !!(
+    window?.Capacitor?.isNativePlatform?.() ||
+    window?.Capacitor?.platform === 'android' ||
+    window?.Capacitor?.platform === 'ios'
+  )
+  const isPublicAuthRoute = to.path.startsWith('/auth') || to.name === 'privacy-policy' || to.name === 'auth-callback'
+
+  if (isNativeApp && !authStore.isAuthenticated && !isPublicAuthRoute) {
+    return next({ name: 'login', query: { redirect: to.fullPath } })
+  }
+
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     return next({ name: 'login', query: { redirect: to.fullPath } })
   }
