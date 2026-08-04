@@ -239,16 +239,7 @@ router.beforeEach(async (to, _from, next) => {
     ])
   }
 
-  // On Android/iOS Capacitor app — lock ALL non-auth routes behind login
-  const isNativeApp = !!(window.Capacitor?.isNativePlatform?.() || window.Capacitor?.platform)
-  const isAuthRoute = to.path.startsWith('/auth') || to.name === 'privacy-policy'
-  if (isNativeApp && !authStore.isAuthenticated && !isAuthRoute) {
-    return next({ name: 'login', query: { redirect: to.fullPath } })
-  }
-
   // ── Android/iOS native app: lock ALL pages behind login ──
-  // On the website, public pages (home, explore, etc.) are accessible without login.
-  // On the native app, every page requires auth — guests only see auth screens.
   const isNativeApp = !!(
     window?.Capacitor?.isNativePlatform?.() ||
     window?.Capacitor?.platform === 'android' ||
