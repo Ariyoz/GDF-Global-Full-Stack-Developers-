@@ -12,17 +12,20 @@
 
         <!-- Big feature card -->
         <div class="feat-card feat-big glass-card animate-fade-in-up">
-          <div class="feat-ico-wrap feat-ico-purple">
-            <span class="material-symbols-outlined feat-ico">verified_user</span>
+          <div class="feat-top">
+            <div class="feat-ico-wrap feat-ico-purple">
+              <span class="material-symbols-outlined feat-ico">verified_user</span>
+            </div>
+            <h3 class="feat-title">GitHub-verified profiles</h3>
+            <p class="feat-desc">Every developer on GFD connects their GitHub account, giving you real proof of their skills — not just buzzwords on a CV.</p>
           </div>
-          <h3 class="feat-title">GitHub-verified profiles</h3>
-          <p class="feat-desc">Every developer on GFD connects their GitHub account, giving you real proof of their skills — not just a list of buzzwords on a CV.</p>
           <div class="feat-visual">
-            <div class="gh-bar" v-for="(b, i) in ghBars" :key="i" :style="`height:${b}px;background:${b > 50 ? 'var(--primary)' : 'var(--outline-variant)'}`" />
+            <div class="gh-bar" v-for="(b, i) in ghBars" :key="i"
+              :style="`height:${b}px;background:${b > 50 ? 'var(--primary)' : 'var(--outline-variant)'};opacity:${b > 50 ? 1 : 0.4}`" />
           </div>
         </div>
 
-        <!-- Smaller cards -->
+        <!-- Small cards -->
         <div class="feat-card glass-card animate-fade-in-up delay-100">
           <div class="feat-ico-wrap feat-ico-blue">
             <span class="material-symbols-outlined feat-ico">account_balance_wallet</span>
@@ -44,19 +47,22 @@
             <span class="material-symbols-outlined feat-ico">forum</span>
           </div>
           <h3 class="feat-title">Direct messaging</h3>
-          <p class="feat-desc">No gatekeepers. Chat directly with clients and developers, share files, and close deals fast.</p>
+          <p class="feat-desc">Chat directly with clients and developers, share files, and close deals fast.</p>
         </div>
 
         <!-- Big feature card 2 -->
         <div class="feat-card feat-big-2 glass-card animate-fade-in-up delay-200">
-          <div class="feat-ico-wrap feat-ico-pink">
-            <span class="material-symbols-outlined feat-ico">analytics</span>
+          <div class="feat-top">
+            <div class="feat-ico-wrap feat-ico-pink">
+              <span class="material-symbols-outlined feat-ico">analytics</span>
+            </div>
+            <h3 class="feat-title">Real-time analytics</h3>
+            <p class="feat-desc">Track profile views, application stats, and earnings — all in your personal dashboard.</p>
           </div>
-          <h3 class="feat-title">Real-time analytics</h3>
-          <p class="feat-desc">Track profile views, application stats, and earnings — all in your personal dashboard with beautiful charts.</p>
           <div class="analytics-mini">
             <div v-for="(v, i) in analyticsData" :key="i" class="analytics-bar-col">
-              <div class="analytics-bar" :style="`height:${v}%;background:${i===analyticsData.length-1?'var(--primary)':'var(--surface-container-high)'}`" />
+              <div class="analytics-bar"
+                :style="`height:${v}%;background:${i===analyticsData.length-1?'var(--primary)':'var(--surface-container-high)'}`" />
             </div>
           </div>
         </div>
@@ -107,6 +113,9 @@ const analyticsData = [30, 45, 35, 60, 50, 70, 55, 80, 65, 90, 75, 100]
 }
 .feat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--primary); }
 
+/* Groups icon + title + desc so visual always goes below */
+.feat-top { display: flex; flex-direction: column; gap: .75rem; }
+
 .feat-ico-wrap {
   width: 48px; height: 48px; border-radius: 14px;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
@@ -131,14 +140,22 @@ const analyticsData = [30, 45, 35, 60, 50, 70, 55, 80, 65, 90, 75, 100]
 
 /* GitHub bar chart visual */
 .feat-visual {
-  margin-top: auto; display: flex; align-items: flex-end; gap: 3px; height: 50px;
+  margin-top: .5rem;
+  display: flex; align-items: flex-end; gap: 3px; height: 56px;
+  padding-top: .75rem;
+  border-top: 1px solid var(--outline-variant);
+  overflow: hidden;
 }
-.gh-bar { width: 8px; border-radius: 2px; flex-shrink: 0; transition: height .3s; }
+.gh-bar { width: 8px; border-radius: 3px 3px 0 0; flex-shrink: 0; min-height: 4px; }
 
 /* Analytics bar chart */
 .analytics-mini {
-  margin-top: auto; display: flex; align-items: flex-end; gap: 4px; height: 60px;
+  margin-top: .5rem;
+  display: flex; align-items: flex-end; gap: 4px; height: 64px;
+  padding-top: .75rem;
+  border-top: 1px solid var(--outline-variant);
+  overflow: hidden;
 }
 .analytics-bar-col { flex: 1; display: flex; align-items: flex-end; }
-.analytics-bar { width: 100%; border-radius: 4px 4px 0 0; transition: height .4s; }
+.analytics-bar { width: 100%; border-radius: 4px 4px 0 0; }
 </style>
