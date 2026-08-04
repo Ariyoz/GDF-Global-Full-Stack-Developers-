@@ -60,14 +60,14 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 
-const STORAGE_KEY = 'gfd_cookie_consent'
+const STORAGE_KEY = 'gfd_cookie_consent_v2'
 const visible = ref(false)
 
 // Wait a short moment after mount — if onboarding is already done show immediately,
 // otherwise the onboarding overlay covers it anyway and we show after a delay
 onMounted(() => {
   if (localStorage.getItem(STORAGE_KEY)) return
-  const onboarded = !!localStorage.getItem('gfd_onboarded')
+  const onboarded = !!localStorage.getItem('gfd_onboarded_v2')
   setTimeout(() => { visible.value = true }, onboarded ? 400 : 3200)
 })
 

@@ -13,9 +13,14 @@
 
               <!-- Illustration -->
               <div class="ob-illo" :style="{ background: slides[current].bg }">
-                <span class="material-symbols-outlined ob-illo-icon" :style="{ color: slides[current].color }">
-                  {{ slides[current].icon }}
-                </span>
+                <template v-if="current === 0">
+                  <img src="@/assets/icons/icon.png" alt="GFD" class="ob-app-icon" />
+                </template>
+                <template v-else>
+                  <span class="material-symbols-outlined ob-illo-icon" :style="{ color: slides[current].color }">
+                    {{ slides[current].icon }}
+                  </span>
+                </template>
                 <div class="ob-illo-ring ob-ring-1" />
                 <div class="ob-illo-ring ob-ring-2" />
               </div>
@@ -69,7 +74,7 @@
 <script setup>
 import { ref } from 'vue'
 
-const STORAGE_KEY = 'gfd_onboarded'
+const STORAGE_KEY = 'gfd_onboarded_v2'   // bump version → all existing users see it again
 const visible = ref(!localStorage.getItem(STORAGE_KEY))
 const current = ref(0)
 const dir     = ref('ob-next')
@@ -151,6 +156,13 @@ function finish() {
   flex-shrink: 0;
 }
 .ob-illo-icon { font-size: 80px; position: relative; z-index: 1; }
+.ob-app-icon {
+  width: 110px; height: 110px;
+  border-radius: 28px;
+  object-fit: contain;
+  position: relative; z-index: 1;
+  box-shadow: 0 12px 40px rgba(168,85,247,.3);
+}
 .ob-illo-ring {
   position: absolute; border-radius: 50%;
   border: 1.5px solid rgba(168,85,247,.15);
