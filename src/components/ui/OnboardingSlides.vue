@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <Transition name="ob-fade">
-      <div v-if="visible" class="ob-shell" :class="`ob-bg-${current}`">
+      <div v-if="visible" class="ob-shell" :class="[`ob-bg-${current}`, isDark ? 'ob-dark' : 'ob-light']">
 
         <!-- Top bar -->
         <header class="ob-bar">
@@ -203,15 +203,30 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
+
 const PERM_KEY    = 'gfd_onboarded_v2'
 const SESSION_KEY = 'gfd_ob_session'
 const alreadySeen = sessionStorage.getItem(SESSION_KEY)
 const permDone    = localStorage.getItem(PERM_KEY)
 const visible     = ref(!alreadySeen || !permDone)
 if (!alreadySeen) sessionStorage.setItem(SESSION_KEY, '1')
+
 const current = ref(0)
 const dir     = ref('ob-next')
+
+// ── Theme: follow app setting or OS preference ──
+const stored = localStorage.getItem('gfd_theme')
+const prefersDark = window.matchMedia('(prefers-color-scheme: dark)')
+const isDark = ref(stored ? stored === 'dark' : prefersDark.matches)
+
+// Listen for OS theme changes in real time (no stored pref)
+function onOsChange(e) {
+  if (!localStorage.getItem('gfd_theme')) isDark.value = e.matches
+}
+onMounted(()  => prefersDark.addEventListener('change', onOsChange))
+onUnmounted(() => prefersDark.removeEventListener('change', onOsChange))
+
 function next()  { dir.value = 'ob-next';  current.value++ }
 function goTo(i) { dir.value = i > current.value ? 'ob-next' : 'ob-prev'; current.value = i }
 function finish() { localStorage.setItem(PERM_KEY, '1'); visible.value = false }
@@ -224,34 +239,64 @@ function finish() { localStorage.setItem(PERM_KEY, '1'); visible.value = false }
   display: flex; flex-direction: column;
   overflow: hidden;
 }
-.ob-bg-0 { background: #0f0a1e; }
-.ob-bg-1 { background: #040d1f; }
-.ob-bg-2 { background: #050e08; }
+/* ── Dark backgrounds ── */
+.ob-dark.ob-bg-0 { background: #0f0a1e; }
+.ob-dark.ob-bg-1 { background: #040d1f; }
+.ob-dark.ob-bg-2 { background: #050e08; }
 
-.ob-bg-0::before {
+.ob-dark.ob-bg-0::before {
   content:''; position:absolute; inset:0; pointer-events:none;
   background:
     radial-gradient(ellipse 70% 60% at 100% 0%,   rgba(168,85,247,.45) 0%, transparent 55%),
     radial-gradient(ellipse 55% 45% at 0%   100%,  rgba(99,14,212,.3)  0%, transparent 55%);
 }
-.ob-bg-1::before {
+.ob-dark.ob-bg-1::before {
   content:''; position:absolute; inset:0; pointer-events:none;
   background:
     radial-gradient(ellipse 70% 60% at 0%   0%,    rgba(59,130,246,.4)  0%, transparent 55%),
     radial-gradient(ellipse 55% 45% at 100% 100%,  rgba(168,85,247,.25) 0%, transparent 55%);
 }
-.ob-bg-2::before {
+.ob-dark.ob-bg-2::before {
   content:''; position:absolute; inset:0; pointer-events:none;
   background:
     radial-gradient(ellipse 70% 60% at 100% 0%,   rgba(22,163,74,.4)   0%, transparent 55%),
     radial-gradient(ellipse 55% 45% at 0%   100%,  rgba(99,14,212,.25) 0%, transparent 55%);
 }
+
+/* ── Light backgrounds ── */
+.ob-light.ob-bg-0 { background: #f5f0ff; }
+.ob-light.ob-bg-1 { background: #f0f5ff; }
+.ob-light.ob-bg-2 { background: #f0fff5; }
+
+.ob-light.ob-bg-0::before {
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:
+    radial-gradient(ellipse 70% 60% at 100% 0%,   rgba(168,85,247,.18) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 45% at 0%   100%,  rgba(99,14,212,.1)  0%, transparent 55%);
+}
+.ob-light.ob-bg-1::before {
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:
+    radial-gradient(ellipse 70% 60% at 0%   0%,    rgba(59,130,246,.15) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 45% at 100% 100%,  rgba(168,85,247,.1)  0%, transparent 55%);
+}
+.ob-light.ob-bg-2::before {
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background:
+    radial-gradient(ellipse 70% 60% at 100% 0%,   rgba(22,163,74,.18) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 45% at 0%   100%,  rgba(99,14,212,.1)  0%, transparent 55%);
+}
+
+/* dot grid — lighter opacity in light mode */
 .ob-shell::after {
   content:''; position:absolute; inset:0; pointer-events:none;
-  background-image: radial-gradient(circle, rgba(255,255,255,.045) 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgba(0,0,0,.06) 1px, transparent 1px);
   background-size: 26px 26px;
   mask-image: radial-gradient(ellipse 90% 90% at 50% 40%, black 0%, transparent 100%);
   -webkit-mask-image: radial-gradient(ellipse 90% 90% at 50% 40%, black 0%, transparent 100%);
+}
+.ob-dark.ob-shell::after {
+  background-image: radial-gradient(circle, rgba(255,255,255,.045) 1px, transparent 1px);
 }
 
 /* ── Top bar ── */
@@ -467,6 +512,56 @@ function finish() { localStorage.setItem(PERM_KEY, '1'); visible.value = false }
 .btn-n:hover { background: rgba(255,255,255,.18); }
 .btn-s { background: #fff; color: #0d0520; box-shadow: 0 4px 16px rgba(255,255,255,.12); }
 .btn-s:hover { opacity: .92; transform: translateY(-1px); }
+
+/* ── Light mode overrides ── */
+.ob-light .ob-name        { color: #1a0a3c; }
+.ob-light .ob-skip        { background: rgba(0,0,0,.07); border-color: rgba(0,0,0,.15); color: rgba(0,0,0,.6); }
+.ob-light .ob-skip:hover  { background: rgba(0,0,0,.12); color: #1a0a3c; }
+.ob-light .ob-tag         { color: rgba(0,0,0,.4); }
+.ob-light .ob-h           { color: #1a0a3c; }
+.ob-light .ob-p           { color: rgba(0,0,0,.55); }
+.ob-light .ob-foot        { border-top-color: rgba(0,0,0,.08); }
+.ob-light .dot            { background: rgba(0,0,0,.2); }
+.ob-light .dot.active     { background: #7c3aed; }
+.ob-light .btn-n          { background: rgba(0,0,0,.06); border-color: rgba(0,0,0,.18); color: #1a0a3c; }
+.ob-light .btn-n:hover    { background: rgba(0,0,0,.1); }
+.ob-light .btn-s          { background: #7c3aed; color: #fff; box-shadow: 0 4px 16px rgba(124,58,237,.3); }
+.ob-light .btn-s:hover    { opacity: .9; }
+
+/* Light — cards */
+.ob-light .card {
+  background: rgba(255,255,255,.85);
+  border-color: rgba(124,58,237,.15);
+  box-shadow: 0 12px 40px rgba(0,0,0,.1);
+}
+.ob-light .card-wallet {
+  background: rgba(255,255,255,.85);
+  border-color: rgba(22,163,74,.2);
+}
+.ob-light .c-name  { color: #1a0a3c; }
+.ob-light .c-sub   { color: rgba(0,0,0,.5); }
+.ob-light .stat b  { color: #1a0a3c; }
+.ob-light .stat span { color: rgba(0,0,0,.4); }
+.ob-light .stat-div  { background: rgba(0,0,0,.1); }
+.ob-light .salary    { color: #1a0a3c; }
+.ob-light .salary-sub { color: rgba(0,0,0,.4); }
+.ob-light .app-count { color: rgba(0,0,0,.5); }
+.ob-light .apply-btn { background: #7c3aed; }
+.ob-light .w-lbl     { color: rgba(0,0,0,.5); }
+.ob-light .w-bal     { color: #1a0a3c; }
+.ob-light .tx-info p:first-child { color: #1a0a3c; }
+.ob-light .tx-d      { color: rgba(0,0,0,.4); }
+.ob-light .stats-row { border-top-color: rgba(0,0,0,.08); }
+
+/* Light — float pills */
+.ob-light .fl {
+  background: rgba(255,255,255,.92);
+  border-color: rgba(0,0,0,.1);
+  box-shadow: 0 4px 16px rgba(0,0,0,.1);
+}
+.ob-light .fl-t { color: #1a0a3c; }
+.ob-light .fl-s { color: rgba(0,0,0,.5); }
+.ob-light .new-badge { background: #7c3aed; }
 
 /* ── Transitions ── */
 .ob-next-enter-active,.ob-next-leave-active,
