@@ -3,7 +3,7 @@
     <div class="admin-sidebar-inner">
       <div class="admin-sidebar-top">
         <div class="admin-logo">
-          <span class="material-symbols-outlined" style="color:var(--primary)">shield</span>
+          <img src="@/assets/icons/icon.png" alt="GFD" class="admin-logo-img" />
           <span class="admin-logo-text">GFD Admin</span>
         </div>
         <button class="sidebar-close-btn" @click="$emit('navigate')">
@@ -173,7 +173,13 @@ const { isDark, toggle } = useTheme()
 
 .admin-nav-divider { height: 1px; background: var(--outline-variant); margin: 0.5rem 0; }
 
-.admin-server-status { padding: 0.875rem; border-radius: var(--radius-lg); }
+.admin-logo-img {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
 
 .admin-theme-toggle { margin-top: auto; }
 

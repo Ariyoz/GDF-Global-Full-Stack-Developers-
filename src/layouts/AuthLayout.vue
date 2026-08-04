@@ -11,7 +11,7 @@
     <!-- Top brand bar -->
     <header class="auth-header">
       <RouterLink to="/" class="brand-mark">
-        <img src="@/assets/logo.svg" alt="GFD" class="brand-logo" />
+        <img src="@/assets/icons/icon.png" alt="GFD" class="brand-logo" />
         <span class="brand-text">GFD</span>
       </RouterLink>
     </header>
