@@ -5,6 +5,12 @@
     </Transition>
   </RouterView>
 
+  <!-- Onboarding slides — first time only -->
+  <OnboardingSlides />
+
+  <!-- Cookie consent — shown after onboarding, first time only -->
+  <CookieConsent />
+
   <!-- Global incoming notification popup -->
   <Transition name="page">
     <div v-if="incomingAlert" class="global-alert" @click="handleAlertClick">
@@ -32,6 +38,8 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { websocketService } from '@/services/websocket.service'
+import OnboardingSlides from '@/components/ui/OnboardingSlides.vue'
+import CookieConsent    from '@/components/ui/CookieConsent.vue'
 
 const router = useRouter()
 const incomingAlert = ref(null)
