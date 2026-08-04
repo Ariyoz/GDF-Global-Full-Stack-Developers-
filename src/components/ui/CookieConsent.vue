@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <Transition name="cc-slide">
-      <div v-if="visible" class="cc-overlay" @click.self="/* do nothing */">
+      <div v-if="visible" class="cc-overlay">
         <div class="cc-sheet">
 
           <!-- Handle -->
