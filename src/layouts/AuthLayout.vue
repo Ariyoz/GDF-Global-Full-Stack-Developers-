@@ -11,9 +11,7 @@
     <!-- Top brand bar -->
     <header class="auth-header">
       <RouterLink to="/" class="brand-mark">
-        <div class="brand-icon">
-          <span class="material-symbols-outlined" style="font-size:18px;color:#fff">code</span>
-        </div>
+        <img src="@/assets/logo.svg" alt="GFD" class="brand-logo" />
         <span class="brand-text">GFD</span>
       </RouterLink>
     </header>
@@ -87,11 +85,11 @@ import ToastContainer from '@/components/ui/ToastContainer.vue'
   display: inline-flex; align-items: center; gap: 0.625rem;
   text-decoration: none;
 }
-.brand-icon {
-  width: 32px; height: 32px; border-radius: 10px;
-  background: var(--primary);
-  display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 4px 12px rgba(168,85,247,0.4);
+.brand-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  object-fit: contain;
 }
 .brand-text {
   font-family: var(--font-headline);
