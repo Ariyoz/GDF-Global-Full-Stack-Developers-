@@ -538,31 +538,36 @@ function goHire(dev) {
 .shimmer { background:linear-gradient(90deg,var(--surface-container) 25%,var(--surface-container-high) 50%,var(--surface-container) 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; }
 @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
-/* Dev card */
-.dev-card { display:flex; flex-direction:column; border-radius:18px; overflow:hidden; background:var(--surface-container-lowest); border:1px solid var(--outline-variant); text-decoration:none; transition:transform .2s, box-shadow .2s, border-color .2s; cursor:pointer; }
+/* Card — NO overflow:hidden so avatar is never clipped */
+.dev-card { display:flex; flex-direction:column; border-radius:18px; background:var(--surface-container-lowest); border:1px solid var(--outline-variant); text-decoration:none; transition:transform .2s, box-shadow .2s, border-color .2s; cursor:pointer; }
 .dev-card:hover { transform:translateY(-4px); box-shadow:var(--shadow-md); border-color:var(--primary); }
 
-.dc-cover { position:relative; height:80px; flex-shrink:0; overflow:hidden; }
-.dc-avail { position:absolute; top:.625rem; right:.625rem; display:inline-flex; align-items:center; gap:.3rem; padding:.18rem .55rem; border-radius:999px; background:rgba(0,0,0,.35); backdrop-filter:blur(8px); color:#4ade80; font-size:.62rem; font-weight:700; border:1px solid rgba(34,197,94,.35); }
-.dc-busy  { position:absolute; top:.625rem; right:.625rem; padding:.18rem .55rem; border-radius:999px; background:rgba(0,0,0,.35); backdrop-filter:blur(8px); color:rgba(255,255,255,.6); font-size:.62rem; font-weight:700; }
+.dc-cover { position:relative; height:90px; flex-shrink:0; border-radius:17px 17px 0 0; overflow:hidden; }
+.dc-avail { position:absolute; top:.625rem; right:.625rem; display:inline-flex; align-items:center; gap:.3rem; padding:.2rem .625rem; border-radius:999px; background:rgba(0,0,0,.45); backdrop-filter:blur(8px); color:#4ade80; font-size:.62rem; font-weight:700; border:1px solid rgba(34,197,94,.3); }
+.dc-busy  { position:absolute; top:.625rem; right:.625rem; padding:.2rem .625rem; border-radius:999px; background:rgba(0,0,0,.4); backdrop-filter:blur(8px); color:rgba(255,255,255,.55); font-size:.62rem; font-weight:700; }
 .live-dot { width:5px; height:5px; border-radius:50%; background:#22c55e; flex-shrink:0; animation:pulse 2s ease-in-out infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
+/* Avatar sits in dc-body as FIRST element, pulled up with negative margin-top */
+/* The card has NO overflow:hidden so it won't clip */
 .dc-av-wrap {
-  margin:-28px 0 0 1rem;
-  width: 56px; height: 56px;
+  width: 64px; height: 64px;
   border-radius: 50%;
   border: 3px solid var(--surface-container-lowest);
   overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0,0,0,.25);
+  box-shadow: 0 4px 18px rgba(0,0,0,.3);
   flex-shrink: 0;
   background: var(--surface-container);
+  margin-top: -32px;
+  margin-left: 1rem;
+  position: relative;
+  z-index: 10;
 }
 .dc-av-img  { width:100%; height:100%; object-fit:cover; display:block; }
 .dc-av-ini  {
   width:100%; height:100%;
   display:flex; align-items:center; justify-content:center;
-  font-family:var(--font-headline); font-size:1.1rem; font-weight:800; color:#fff;
+  font-family:var(--font-headline); font-size:1.2rem; font-weight:800; color:#fff;
 }
 
 .dc-body { padding:.75rem 1.125rem 1rem; display:flex; flex-direction:column; gap:.5rem; flex:1; }
