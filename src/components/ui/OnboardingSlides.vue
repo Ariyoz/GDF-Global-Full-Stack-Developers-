@@ -5,6 +5,29 @@
 
         <!-- Top bar -->
         <header class="ob-bar">
+
+          <!-- Slide 0 bg: glass card fans -->
+          <template v-if="current === 0">
+            <div class="bg-deco bg-fans" aria-hidden="true">
+              <div v-for="i in 6" :key="i" class="fan-card fan-left" :style="`--i:${i}`" />
+              <div v-for="i in 6" :key="i+6" class="fan-card fan-right" :style="`--i:${i}`" />
+            </div>
+          </template>
+
+          <!-- Slide 1 bg: target/bullseye rings -->
+          <template v-else-if="current === 1">
+            <div class="bg-deco bg-target" aria-hidden="true">
+              <div class="target-ring" style="--r:280px;--o:.12" />
+              <div class="target-ring" style="--r:210px;--o:.16" />
+              <div class="target-ring" style="--r:145px;--o:.2" />
+              <div class="target-ring" style="--r:85px;--o:.25" />
+              <div class="target-core" />
+            </div>
+          </template>
+
+          <!-- Slide 2 bg: dot wave (CSS only, handled by ::after) -->
+
+        </header>
           <div class="ob-brand">
             <img src="@/assets/icons/icon.png" alt="GFD" class="ob-logo" />
             <span class="ob-name">GFD</span>
@@ -240,64 +263,150 @@ function finish() { localStorage.setItem(PERM_KEY, '1'); visible.value = false }
   overflow: hidden;
 }
 /* ── Dark backgrounds ── */
-.ob-dark.ob-bg-0 { background: #0f0a1e; }
-.ob-dark.ob-bg-1 { background: #040d1f; }
-.ob-dark.ob-bg-2 { background: #050e08; }
+.ob-dark.ob-bg-0 { background: #0d0a1e; }
+.ob-dark.ob-bg-1 { background: #060d20; }
+.ob-dark.ob-bg-2 { background: #060e0a; }
 
+/* Slide 0 dark — floating glass card fans (like image 1) */
 .ob-dark.ob-bg-0::before {
   content:''; position:absolute; inset:0; pointer-events:none;
   background:
-    radial-gradient(ellipse 70% 60% at 100% 0%,   rgba(168,85,247,.45) 0%, transparent 55%),
-    radial-gradient(ellipse 55% 45% at 0%   100%,  rgba(99,14,212,.3)  0%, transparent 55%);
+    radial-gradient(ellipse 60% 80% at -5% 50%,  rgba(59,130,246,.35)  0%, transparent 55%),
+    radial-gradient(ellipse 55% 70% at 105% 50%, rgba(168,85,247,.35)  0%, transparent 55%),
+    radial-gradient(ellipse 50% 50% at 50%  50%, rgba(255,255,255,.02) 0%, transparent 70%);
 }
+/* Slide 1 dark — target/precision (radial rings) */
 .ob-dark.ob-bg-1::before {
   content:''; position:absolute; inset:0; pointer-events:none;
   background:
-    radial-gradient(ellipse 70% 60% at 0%   0%,    rgba(59,130,246,.4)  0%, transparent 55%),
-    radial-gradient(ellipse 55% 45% at 100% 100%,  rgba(168,85,247,.25) 0%, transparent 55%);
+    radial-gradient(circle 320px at 50% 35%, rgba(59,130,246,.15) 0%, transparent 60%),
+    radial-gradient(circle 220px at 50% 35%, rgba(96,165,250,.12) 0%, transparent 55%),
+    radial-gradient(circle 120px at 50% 35%, rgba(147,197,253,.1) 0%, transparent 50%),
+    radial-gradient(ellipse 70% 60% at 10% 5%, rgba(59,130,246,.35) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 45% at 90% 95%, rgba(168,85,247,.25) 0%, transparent 55%);
 }
+/* Slide 2 dark — dot wave pattern */
 .ob-dark.ob-bg-2::before {
   content:''; position:absolute; inset:0; pointer-events:none;
   background:
-    radial-gradient(ellipse 70% 60% at 100% 0%,   rgba(22,163,74,.4)   0%, transparent 55%),
-    radial-gradient(ellipse 55% 45% at 0%   100%,  rgba(99,14,212,.25) 0%, transparent 55%);
+    radial-gradient(ellipse 70% 60% at 100% 0%,  rgba(22,163,74,.4)  0%, transparent 55%),
+    radial-gradient(ellipse 55% 45% at 0%  100%, rgba(99,14,212,.25) 0%, transparent 55%);
 }
 
 /* ── Light backgrounds ── */
-.ob-light.ob-bg-0 { background: #f5f0ff; }
-.ob-light.ob-bg-1 { background: #f0f5ff; }
-.ob-light.ob-bg-2 { background: #f0fff5; }
+.ob-light.ob-bg-0 { background: #f0f4ff; }
+.ob-light.ob-bg-1 { background: #f0f6ff; }
+.ob-light.ob-bg-2 { background: #f0fff6; }
 
+/* Slide 0 light — glass card fan glow */
 .ob-light.ob-bg-0::before {
   content:''; position:absolute; inset:0; pointer-events:none;
   background:
-    radial-gradient(ellipse 70% 60% at 100% 0%,   rgba(168,85,247,.18) 0%, transparent 55%),
-    radial-gradient(ellipse 55% 45% at 0%   100%,  rgba(99,14,212,.1)  0%, transparent 55%);
+    radial-gradient(ellipse 60% 80% at -5% 50%,  rgba(59,130,246,.22)  0%, transparent 55%),
+    radial-gradient(ellipse 55% 70% at 105% 50%, rgba(236,72,153,.18)  0%, transparent 55%),
+    radial-gradient(ellipse 40% 40% at 50%  50%, rgba(255,255,255,.6)  0%, transparent 60%);
 }
+/* Slide 1 light — target/precision rings */
 .ob-light.ob-bg-1::before {
   content:''; position:absolute; inset:0; pointer-events:none;
   background:
-    radial-gradient(ellipse 70% 60% at 0%   0%,    rgba(59,130,246,.15) 0%, transparent 55%),
-    radial-gradient(ellipse 55% 45% at 100% 100%,  rgba(168,85,247,.1)  0%, transparent 55%);
+    radial-gradient(circle 300px at 50% 35%, rgba(59,130,246,.12) 0%, transparent 60%),
+    radial-gradient(circle 200px at 50% 35%, rgba(96,165,250,.1)  0%, transparent 55%),
+    radial-gradient(circle 100px at 50% 35%, rgba(147,197,253,.08)0%, transparent 50%),
+    radial-gradient(ellipse 70% 50% at 10% 0%,  rgba(59,130,246,.2) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 45% at 90% 95%, rgba(168,85,247,.15) 0%, transparent 55%);
 }
+/* Slide 2 light — dot wave */
 .ob-light.ob-bg-2::before {
   content:''; position:absolute; inset:0; pointer-events:none;
   background:
-    radial-gradient(ellipse 70% 60% at 100% 0%,   rgba(22,163,74,.18) 0%, transparent 55%),
-    radial-gradient(ellipse 55% 45% at 0%   100%,  rgba(99,14,212,.1)  0%, transparent 55%);
+    radial-gradient(ellipse 70% 60% at 100% 0%,  rgba(22,163,74,.15) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 45% at 0%  100%, rgba(99,14,212,.1)  0%, transparent 55%);
 }
 
-/* dot grid — lighter opacity in light mode */
-.ob-shell::after {
+/* ── Slide-specific decorative overlays ── */
+
+/* Slide 0: stacked glass card fans on left and right */
+.ob-bg-0 .ob-shell-deco {
+  position:absolute; inset:0; pointer-events:none; overflow:hidden; z-index:0;
+}
+
+/* Dot grid — slide 2 wave pattern */
+.ob-bg-2::after {
   content:''; position:absolute; inset:0; pointer-events:none;
-  background-image: radial-gradient(circle, rgba(0,0,0,.06) 1px, transparent 1px);
+  background-image:
+    radial-gradient(circle, currentColor 1.5px, transparent 1.5px);
+  background-size: 18px 18px;
+  mask-image:
+    linear-gradient(to bottom right,
+      transparent 0%, rgba(0,0,0,.5) 20%, rgba(0,0,0,.8) 45%,
+      rgba(0,0,0,.5) 65%, transparent 100%),
+    radial-gradient(ellipse 80% 60% at 30% 60%, black 20%, transparent 80%);
+  mask-composite: intersect;
+  -webkit-mask-composite: source-in;
+}
+.ob-dark.ob-bg-2::after { color: rgba(22,163,74,.18); }
+.ob-light.ob-bg-2::after { color: rgba(0,100,60,.12); }
+
+/* Regular dot grid for slides 0 and 1 */
+.ob-bg-0::after, .ob-bg-1::after {
+  content:''; position:absolute; inset:0; pointer-events:none;
+  background-image: radial-gradient(circle, rgba(255,255,255,.04) 1px, transparent 1px);
   background-size: 26px 26px;
   mask-image: radial-gradient(ellipse 90% 90% at 50% 40%, black 0%, transparent 100%);
   -webkit-mask-image: radial-gradient(ellipse 90% 90% at 50% 40%, black 0%, transparent 100%);
 }
-.ob-dark.ob-shell::after {
-  background-image: radial-gradient(circle, rgba(255,255,255,.045) 1px, transparent 1px);
+.ob-light.ob-bg-0::after, .ob-light.ob-bg-1::after {
+  background-image: radial-gradient(circle, rgba(0,0,0,.05) 1px, transparent 1px);
 }
+
+/* ── Decorative background elements ── */
+.bg-deco { position:absolute; inset:0; pointer-events:none; overflow:hidden; z-index:0; }
+
+/* Glass card fans (slide 0) */
+.bg-fans { }
+.fan-card {
+  position:absolute; width:80px; height:110px; border-radius:12px;
+  border: 1px solid rgba(100,160,255,.3);
+  backdrop-filter: blur(2px);
+}
+.ob-dark  .fan-card { background: rgba(59,130,246,.08); border-color:rgba(100,160,255,.2); }
+.ob-light .fan-card { background: rgba(59,130,246,.07); border-color:rgba(59,130,246,.25); }
+
+.fan-left  { left: -20px; top: 50%; transform-origin: right center; }
+.fan-right { right:-20px; top: 50%; transform-origin: left center; }
+
+.fan-left[style*='--i:1']  { transform: translateY(-50%) rotate(-50deg); opacity:.5; top:45%; }
+.fan-left[style*='--i:2']  { transform: translateY(-50%) rotate(-35deg); opacity:.6; top:47%; }
+.fan-left[style*='--i:3']  { transform: translateY(-50%) rotate(-20deg); opacity:.7; top:49%; }
+.fan-left[style*='--i:4']  { transform: translateY(-50%) rotate(-8deg);  opacity:.8; top:51%; }
+.fan-left[style*='--i:5']  { transform: translateY(-50%) rotate(5deg);   opacity:.7; top:53%; }
+.fan-left[style*='--i:6']  { transform: translateY(-50%) rotate(18deg);  opacity:.5; top:55%; }
+
+.fan-right[style*='--i:1']  { transform: translateY(-50%) rotate(50deg);  opacity:.5; top:45%; }
+.fan-right[style*='--i:2']  { transform: translateY(-50%) rotate(35deg);  opacity:.6; top:47%; }
+.fan-right[style*='--i:3']  { transform: translateY(-50%) rotate(20deg);  opacity:.7; top:49%; background: rgba(168,85,247,.06); border-color:rgba(200,130,255,.25); }
+.fan-right[style*='--i:4']  { transform: translateY(-50%) rotate(8deg);   opacity:.8; top:51%; background: rgba(236,72,153,.06); border-color:rgba(236,72,153,.25); }
+.fan-right[style*='--i:5']  { transform: translateY(-50%) rotate(-5deg);  opacity:.7; top:53%; background: rgba(168,85,247,.07); }
+.fan-right[style*='--i:6']  { transform: translateY(-50%) rotate(-18deg); opacity:.5; top:55%; }
+
+/* Target/bullseye rings (slide 1) */
+.bg-target {
+  display:flex; align-items:center; justify-content:center;
+  top: -10%; /* centre rings higher up, behind the art */
+}
+.target-ring {
+  position:absolute;
+  width: var(--r); height: var(--r);
+  border-radius:50%;
+  border: 2px solid rgba(59,130,246, var(--o));
+}
+.ob-light .target-ring { border-color: rgba(37,99,235, calc(var(--o) * .7)); }
+.target-core {
+  position:absolute; width:32px; height:32px; border-radius:50%;
+  background: radial-gradient(circle, rgba(59,130,246,.5) 0%, rgba(96,165,250,.2) 100%);
+}
+.ob-light .target-core { background: radial-gradient(circle, rgba(37,99,235,.4) 0%, rgba(96,165,250,.15) 100%); }
 
 /* ── Top bar ── */
 .ob-bar {
