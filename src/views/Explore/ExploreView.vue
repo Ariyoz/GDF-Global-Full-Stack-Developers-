@@ -159,14 +159,17 @@
             class="dev-card animate-fade-in-up"
             :class="`delay-${(i%9)*50}`"
           >
-            <!-- Cover -->
-            <div class="dc-cover" :style="`background:${COVER_GRADS[i % COVER_GRADS.length]}`">
+            <!-- Cover — uses user's banner if set, otherwise gradient -->
+            <div class="dc-cover"
+              :style="dev.banner
+                ? `background-image:url('${dev.banner}');background-size:cover;background-position:center`
+                : `background:${COVER_GRADS[i % COVER_GRADS.length]}`">
               <span v-if="dev.available" class="dc-avail">
                 <span class="live-dot" />Available
               </span>
               <span v-else class="dc-busy">Busy</span>
             </div>
-            <!-- Avatar -->
+            <!-- Avatar — bigger, circular, properly positioned -->
             <div class="dc-av-wrap">
               <img v-if="dev.avatar" :src="dev.avatar" :alt="dev.name" class="dc-av-img" />
               <div v-else class="dc-av-ini" :style="`background:${AV_COLORS[i % AV_COLORS.length]}`">
@@ -315,21 +318,23 @@ const currentPage  = ref(1)
 
 const filters = ref({ availability: [], experience: [], skills: [] })
 
-onMounted(() => devStore.fetchDevelopers({ limit: 18 }))
+onMounted(() => devStore.fetchDevelopers({ limit: 50 }))
 
 let searchTimeout = null
 function onSearchInput() {
   clearTimeout(searchTimeout)
   searchTimeout = setTimeout(() => {
-    devStore.fetchDevelopers({ search: searchQuery.value.trim() || undefined, limit: 18 })
+    currentPage.value = 1
+    devStore.fetchDevelopers({ search: searchQuery.value.trim() || undefined, limit: 50 })
   }, 450)
 }
 
 function setRole(r) {
   activeRole.value = r
+  currentPage.value = 1
   devStore.fetchDevelopers({
     experience_level: r === 'All' ? undefined : r.toLowerCase().replace(' ', '_'),
-    limit: 18,
+    limit: 50,
   })
 }
 
@@ -342,13 +347,14 @@ function toggleSkill(s) {
 function resetFilters() {
   searchQuery.value = ''
   activeRole.value  = 'All'
+  currentPage.value = 1
   filters.value = { availability: [], experience: [], skills: [] }
-  devStore.fetchDevelopers({ limit: 18 })
+  devStore.fetchDevelopers({ limit: 50 })
 }
 
 async function loadMore() {
   currentPage.value++
-  await devStore.fetchDevelopers({ page: currentPage.value, limit: 18 })
+  await devStore.fetchDevelopers({ page: currentPage.value, limit: 50 })
 }
 
 const activeFilterCount = computed(() => {
@@ -536,17 +542,31 @@ function goHire(dev) {
 .dev-card { display:flex; flex-direction:column; border-radius:18px; overflow:hidden; background:var(--surface-container-lowest); border:1px solid var(--outline-variant); text-decoration:none; transition:transform .2s, box-shadow .2s, border-color .2s; cursor:pointer; }
 .dev-card:hover { transform:translateY(-4px); box-shadow:var(--shadow-md); border-color:var(--primary); }
 
-.dc-cover { position:relative; height:72px; flex-shrink:0; }
-.dc-avail { position:absolute; top:.625rem; right:.625rem; display:inline-flex; align-items:center; gap:.3rem; padding:.18rem .55rem; border-radius:999px; background:rgba(34,197,94,.15); color:#16a34a; font-size:.62rem; font-weight:700; border:1px solid rgba(34,197,94,.25); }
-.dc-busy  { position:absolute; top:.625rem; right:.625rem; padding:.18rem .55rem; border-radius:999px; background:rgba(0,0,0,.2); color:rgba(255,255,255,.6); font-size:.62rem; font-weight:700; }
-.live-dot { width:5px; height:5px; border-radius:50%; background:#22c55e; flex-shrink:0; }
+.dc-cover { position:relative; height:80px; flex-shrink:0; overflow:hidden; }
+.dc-avail { position:absolute; top:.625rem; right:.625rem; display:inline-flex; align-items:center; gap:.3rem; padding:.18rem .55rem; border-radius:999px; background:rgba(0,0,0,.35); backdrop-filter:blur(8px); color:#4ade80; font-size:.62rem; font-weight:700; border:1px solid rgba(34,197,94,.35); }
+.dc-busy  { position:absolute; top:.625rem; right:.625rem; padding:.18rem .55rem; border-radius:999px; background:rgba(0,0,0,.35); backdrop-filter:blur(8px); color:rgba(255,255,255,.6); font-size:.62rem; font-weight:700; }
+.live-dot { width:5px; height:5px; border-radius:50%; background:#22c55e; flex-shrink:0; animation:pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
-.dc-av-wrap { margin:-22px 0 0 1.125rem; width:48px; height:48px; border-radius:13px; border:3px solid var(--surface-container-lowest); overflow:hidden; box-shadow:0 4px 14px rgba(0,0,0,.18); flex-shrink:0; }
-.dc-av-img  { width:100%; height:100%; object-fit:cover; }
-.dc-av-ini  { width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-family:var(--font-headline); font-size:1rem; font-weight:800; color:#fff; }
+.dc-av-wrap {
+  margin:-28px 0 0 1rem;
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  border: 3px solid var(--surface-container-lowest);
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,.25);
+  flex-shrink: 0;
+  background: var(--surface-container);
+}
+.dc-av-img  { width:100%; height:100%; object-fit:cover; display:block; }
+.dc-av-ini  {
+  width:100%; height:100%;
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-headline); font-size:1.1rem; font-weight:800; color:#fff;
+}
 
-.dc-body { padding:.875rem 1.125rem 1rem; display:flex; flex-direction:column; gap:.5rem; flex:1; }
-.dc-name-row { display:flex; align-items:center; gap:.3rem; margin-top:.375rem; }
+.dc-body { padding:.75rem 1.125rem 1rem; display:flex; flex-direction:column; gap:.5rem; flex:1; }
+.dc-name-row { display:flex; align-items:center; gap:.3rem; margin-top:.5rem; }
 .dc-name { font-family:var(--font-headline); font-size:.95rem; font-weight:800; color:var(--on-surface); }
 .dc-verified { font-size:16px; color:var(--primary); flex-shrink:0; }
 .dc-role { font-size:.75rem; color:var(--primary); font-weight:600; }
