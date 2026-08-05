@@ -53,6 +53,8 @@
       <!-- Sidebar -->
       <aside class="sidebar" :class="{ open: drawerOpen }">
         <div class="sidebar-inner">
+          <!-- Drag handle (mobile only) -->
+          <div class="drawer-handle" />
           <div class="sidebar-header">
             <h3 class="sidebar-title">Filters</h3>
             <button class="sidebar-close" @click="drawerOpen = false">
@@ -456,22 +458,28 @@ function goHire(dev) {
 @media (min-width:1024px) { .explore-layout { grid-template-columns:256px 1fr; gap:2rem; padding-top:2rem; } }
 
 /* ── Sidebar ── */
-.sidebar {
-  display:none;
-}
-@media (min-width:1024px) {
-  .sidebar { display:block; }
-}
-/* Mobile drawer */
+.sidebar { display:none; }
+@media (min-width:1024px) { .sidebar { display:block; } }
+
+/* Mobile drawer — slides up from bottom as a sheet */
 @media (max-width:1023px) {
   .sidebar.open {
-    display:block; position:fixed; top:0; left:0; bottom:0; z-index:600;
-    width:min(300px, 85vw); overflow-y:auto;
-    animation:slideInLeft .22s ease;
+    display:block;
+    position:fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 600;
+    max-height: 85vh;
+    overflow-y: auto;
+    animation: slideUp .25s ease;
+    border-radius: 20px 20px 0 0;
   }
 }
-@keyframes slideInLeft { from{transform:translateX(-100%)} to{transform:translateX(0)} }
-.drawer-overlay { position:fixed; inset:0; z-index:599; background:rgba(0,0,0,.45); backdrop-filter:blur(2px); }
+@keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+
+.drawer-overlay {
+  position:fixed; inset:0; z-index:599;
+  background:rgba(0,0,0,.5); backdrop-filter:blur(3px);
+}
 .fade-enter-active,.fade-leave-active { transition:opacity .2s; }
 .fade-enter-from,.fade-leave-to { opacity:0; }
 
@@ -482,12 +490,35 @@ function goHire(dev) {
   position:sticky; top:88px;
   display:flex; flex-direction:column; gap:1.25rem;
 }
-@media (max-width:1023px) { .sidebar-inner { border-radius:0; border:none; min-height:100%; } }
+@media (max-width:1023px) {
+  .sidebar-inner {
+    border-radius:20px 20px 0 0;
+    border-bottom:none;
+    border-left:none;
+    border-right:none;
+    border-top:1px solid var(--outline-variant);
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom,0px));
+  }
+}
 
 .sidebar-header { display:flex; align-items:center; justify-content:space-between; }
 .sidebar-title { font-family:var(--font-headline); font-size:1rem; font-weight:800; color:var(--on-surface); }
-.sidebar-close { display:none; border:none; background:none; cursor:pointer; color:var(--on-surface-variant); }
-@media (max-width:1023px) { .sidebar-close { display:flex; align-items:center; } }
+.sidebar-close { border:none; background:none; cursor:pointer; color:var(--on-surface-variant); display:flex; align-items:center; padding:4px; border-radius:8px; }
+.sidebar-close:hover { background:var(--surface-container); }
+
+/* Drag handle — mobile only */
+.drawer-handle {
+  display: none;
+  width: 36px; height: 4px; border-radius: 999px;
+  background: var(--outline-variant); margin: 0 auto -4px;
+}
+@media (max-width:1023px) {
+  .drawer-handle { display:block; }
+  .sidebar-close { display:flex; }
+}
+@media (min-width:1024px) {
+  .sidebar-close { display:none; }
+}
 
 .filter-grp { display:flex; flex-direction:column; gap:.5rem; }
 .filter-lbl { font-family:var(--font-headline); font-size:.72rem; font-weight:800; color:var(--on-surface); text-transform:uppercase; letter-spacing:.08em; padding-bottom:.25rem; border-bottom:1px solid var(--outline-variant); }
