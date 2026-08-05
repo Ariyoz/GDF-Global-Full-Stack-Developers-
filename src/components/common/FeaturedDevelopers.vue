@@ -25,8 +25,11 @@
           class="dev-card animate-fade-in-up"
           :class="[`delay-${i * 80}`, i >= 4 ? 'hide-mobile' : '']">
 
-          <!-- Cover gradient (no avatar inside) -->
-          <div class="dev-cover" :style="`background:${coverGrad(i)}`">
+          <!-- Cover — uses user's banner if set, otherwise gradient -->
+          <div class="dev-cover"
+            :style="dev.banner
+              ? `background-image:url('${dev.banner}');background-size:cover;background-position:center`
+              : `background:${coverGrad(i)}`">
             <span v-if="dev.available" class="dev-live">
               <span class="live-dot" />Available
             </span>
@@ -122,6 +125,7 @@ onMounted(async () => {
       name:      d.full_name || d.username || 'Developer',
       role:      d.job_title || d.experience_level || 'Full-Stack Developer',
       avatar:    d.avatar,
+      banner:    d.banner || d.cover_image || d.banner_image || null,
       tags:      (d.skills || []).slice(0, 5),
       bio:       d.bio?.slice(0, 70) || 'Available for hire on GFD.',
       rating:    '5.0',
