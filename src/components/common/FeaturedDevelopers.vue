@@ -23,19 +23,21 @@
       <div v-else-if="developers.length" class="dev-grid">
         <div v-for="(dev, i) in developers" :key="dev.id"
           class="dev-card animate-fade-in-up"
-          :class="`delay-${i * 80}`">
+          :class="[`delay-${i * 80}`, i >= 4 ? 'hide-mobile' : '']">
 
-          <!-- Cover gradient + avatar -->
+          <!-- Cover gradient (no avatar inside) -->
           <div class="dev-cover" :style="`background:${coverGrad(i)}`">
-            <div class="dev-av-wrap">
-              <img v-if="dev.avatar" :src="dev.avatar" :alt="dev.name" class="dev-av-img" />
-              <div v-else class="dev-av-ini" :style="`background:${avatarColor(i)}`">
-                {{ initials(dev.name) }}
-              </div>
-            </div>
             <span v-if="dev.available" class="dev-live">
               <span class="live-dot" />Available
             </span>
+          </div>
+
+          <!-- Avatar sits OUTSIDE the cover, pulled up with negative margin — never clipped -->
+          <div class="dev-av-wrap">
+            <img v-if="dev.avatar" :src="dev.avatar" :alt="dev.name" class="dev-av-img" />
+            <div v-else class="dev-av-ini" :style="`background:${avatarColor(i)}`">
+              {{ initials(dev.name) }}
+            </div>
           </div>
 
           <!-- Body -->
@@ -173,7 +175,7 @@ onMounted(async () => {
 }
 @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
-/* Card — no overflow:hidden so avatar never clips */
+/* Card — NO overflow:hidden so avatar hangs outside the cover cleanly */
 .dev-card {
   border-radius: 16px;
   background: var(--surface-container-lowest);
@@ -182,19 +184,35 @@ onMounted(async () => {
 }
 .dev-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--primary); }
 
+/* Hide cards 5-8 on mobile — only show 4 */
+@media (max-width: 767px) { .hide-mobile { display: none; } }
+
 /* Cover */
 .dev-cover {
   position: relative; height: 64px;
   border-radius: 15px 15px 0 0; overflow: hidden;
-  display: flex; align-items: flex-end; justify-content: flex-end;
-  padding: .5rem;
 }
+.dev-live {
+  position: absolute; top: .5rem; right: .5rem;
+  display: inline-flex; align-items: center; gap: .3rem;
+  padding: .18rem .55rem; border-radius: 999px;
+  background: rgba(0,0,0,.4); backdrop-filter: blur(6px);
+  color: #4ade80; font-size: .62rem; font-weight: 700;
+  border: 1px solid rgba(34,197,94,.3);
+}
+.live-dot { width: 5px; height: 5px; border-radius: 50%; background: #22c55e; flex-shrink: 0; }
+
+/* Avatar — sibling of cover, pulled up with negative margin */
 .dev-av-wrap {
-  position: absolute; bottom: -20px; left: .875rem;
   width: 52px; height: 52px; border-radius: 50%;
   border: 3px solid var(--surface-container-lowest);
-  overflow: hidden; box-shadow: 0 3px 12px rgba(0,0,0,.2);
+  overflow: hidden;
+  box-shadow: 0 3px 12px rgba(0,0,0,.2);
   background: var(--surface-container);
+  margin-top: -26px;
+  margin-left: .875rem;
+  position: relative;
+  z-index: 2;
 }
 .dev-av-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .dev-av-ini {
@@ -202,18 +220,10 @@ onMounted(async () => {
   display: flex; align-items: center; justify-content: center;
   font-family: var(--font-headline); font-size: 1rem; font-weight: 800; color: #fff;
 }
-.dev-live {
-  display: inline-flex; align-items: center; gap: .25rem;
-  padding: .15rem .5rem; border-radius: 999px;
-  background: rgba(0,0,0,.4); backdrop-filter: blur(6px);
-  color: #4ade80; font-size: .58rem; font-weight: 700;
-  border: 1px solid rgba(34,197,94,.3);
-}
-.live-dot { width: 5px; height: 5px; border-radius: 50%; background: #22c55e; flex-shrink: 0; }
 
-/* Body — tighter padding, extra top for avatar overlap */
-.dev-body { padding: 1.25rem .875rem .875rem; display: flex; flex-direction: column; gap: .375rem; }
-.dev-name-row { display: flex; align-items: flex-start; justify-content: space-between; gap: .375rem; margin-top: .125rem; }
+/* Body — top padding accounts for avatar overlap */
+.dev-body { padding: .75rem .875rem .875rem; display: flex; flex-direction: column; gap: .375rem; }
+.dev-name-row { display: flex; align-items: flex-start; justify-content: space-between; gap: .375rem; margin-top: .25rem; }
 .dev-name { font-family: var(--font-headline); font-size: .875rem; font-weight: 800; color: var(--on-surface); line-height: 1.2; }
 .dev-role { font-size: .7rem; color: var(--primary); font-weight: 600; margin-top: .1rem; }
 .dev-rating {
