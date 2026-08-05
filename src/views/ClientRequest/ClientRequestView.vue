@@ -115,7 +115,9 @@
             <!-- ═ STEP 0: Project Type ═ -->
             <div v-if="currentStep === 0" key="s0" class="fstep">
               <div class="fstep-head">
-                <div class="fstep-emoji">🚀</div>
+                <div class="fstep-icon-wrap">
+                  <span class="material-symbols-outlined fstep-icon" style="font-variation-settings:'FILL' 1">category</span>
+                </div>
                 <div>
                   <h2 class="fstep-title">What are you building?</h2>
                   <p class="fstep-desc">Select the type of project you need help with.</p>
@@ -127,15 +129,17 @@
                   class="type-card"
                   :class="{ active: form.projectType === t.value }"
                   @click="form.projectType = t.value; nextStep()">
-                  <div class="type-card-ico">{{ t.icon }}</div>
+                  <div class="type-card-ico">
+                    <span class="material-symbols-outlined" style="font-size:22px;font-variation-settings:'FILL' 1">{{ t.icon }}</span>
+                  </div>
                   <div class="type-card-body">
                     <p class="type-card-lbl">{{ t.label }}</p>
                     <p class="type-card-desc">{{ t.desc }}</p>
                   </div>
                   <span v-if="form.projectType === t.value"
-                    class="type-check material-symbols-outlined"
+                    class="material-symbols-outlined type-check"
                     style="font-variation-settings:'FILL' 1">check_circle</span>
-                  <div class="type-card-arrow material-symbols-outlined">arrow_forward</div>
+                  <span v-else class="material-symbols-outlined type-card-arrow">arrow_forward_ios</span>
                 </button>
               </div>
             </div>
@@ -143,7 +147,9 @@
             <!-- ═ STEP 1: Skills ═ -->
             <div v-else-if="currentStep === 1" key="s1" class="fstep">
               <div class="fstep-head">
-                <div class="fstep-emoji">⚙️</div>
+                <div class="fstep-icon-wrap">
+                  <span class="material-symbols-outlined fstep-icon" style="font-variation-settings:'FILL' 1">code</span>
+                </div>
                 <div>
                   <h2 class="fstep-title">Tech Stack & Skills</h2>
                   <p class="fstep-desc">What technologies does your project involve? Pick all that apply.</p>
@@ -174,7 +180,9 @@
             <!-- ═ STEP 2: Budget & Timeline ═ -->
             <div v-else-if="currentStep === 2" key="s2" class="fstep">
               <div class="fstep-head">
-                <div class="fstep-emoji">💰</div>
+                <div class="fstep-icon-wrap">
+                  <span class="material-symbols-outlined fstep-icon" style="font-variation-settings:'FILL' 1">payments</span>
+                </div>
                 <div>
                   <h2 class="fstep-title">Budget & Timeline</h2>
                   <p class="fstep-desc">Set your project scope so developers can plan accordingly.</p>
@@ -223,7 +231,9 @@
             <!-- ═ STEP 3: Details ═ -->
             <div v-else-if="currentStep === 3" key="s3" class="fstep">
               <div class="fstep-head">
-                <div class="fstep-emoji">📋</div>
+                <div class="fstep-icon-wrap">
+                  <span class="material-symbols-outlined fstep-icon" style="font-variation-settings:'FILL' 1">assignment</span>
+                </div>
                 <div>
                   <h2 class="fstep-title">Project Details</h2>
                   <p class="fstep-desc">Tell us about yourself and your vision.</p>
@@ -376,14 +386,14 @@ const DEV_AVATARS = [
 ]
 
 const PROJECT_TYPES = [
-  { value: 'web',      icon: '🌐', label: 'Web Application',    desc: 'Full-stack or frontend web app' },
-  { value: 'mobile',   icon: '📱', label: 'Mobile App',         desc: 'iOS, Android or cross-platform' },
-  { value: 'backend',  icon: '⚙️', label: 'API / Backend',      desc: 'REST, GraphQL, microservices'   },
-  { value: 'design',   icon: '🎨', label: 'UI/UX Design',       desc: 'Figma, prototypes, design systems' },
-  { value: 'ai',       icon: '🤖', label: 'AI / ML',            desc: 'Models, pipelines, integrations'  },
-  { value: 'devops',   icon: '🚀', label: 'DevOps / Cloud',     desc: 'Infra, CI/CD, Kubernetes'         },
-  { value: 'data',     icon: '📊', label: 'Data Engineering',   desc: 'ETL, analytics, dashboards'       },
-  { value: 'other',    icon: '✨', label: 'Something Else',     desc: 'Tell us about your idea'          },
+  { value: 'web',      icon: 'public',          label: 'Web Application',    desc: 'Full-stack or frontend web app' },
+  { value: 'mobile',   icon: 'smartphone',       label: 'Mobile App',         desc: 'iOS, Android or cross-platform' },
+  { value: 'backend',  icon: 'settings_ethernet',label: 'API / Backend',      desc: 'REST, GraphQL, microservices'   },
+  { value: 'design',   icon: 'palette',          label: 'UI/UX Design',       desc: 'Figma, prototypes, design systems' },
+  { value: 'ai',       icon: 'smart_toy',        label: 'AI / ML',            desc: 'Models, pipelines, integrations'  },
+  { value: 'devops',   icon: 'cloud_upload',     label: 'DevOps / Cloud',     desc: 'Infra, CI/CD, Kubernetes'         },
+  { value: 'data',     icon: 'bar_chart',        label: 'Data Engineering',   desc: 'ETL, analytics, dashboards'       },
+  { value: 'other',    icon: 'lightbulb',        label: 'Something Else',     desc: 'Tell us about your idea'          },
 ]
 
 const SKILLS = [
@@ -408,10 +418,10 @@ const TIMELINES = [
 ]
 
 const STEPS = [
-  { title: 'Project Type'  },
-  { title: 'Tech Stack'    },
-  { title: 'Budget & Time' },
-  { title: 'Your Details'  },
+  { title: 'Project Type',  icon: 'category'   },
+  { title: 'Tech Stack',    icon: 'code'        },
+  { title: 'Budget & Time', icon: 'payments'    },
+  { title: 'Your Details',  icon: 'person'      },
 ]
 
 const SUCCESS_STEPS = [
@@ -453,12 +463,20 @@ async function handleSubmit() {
   loading.value = true
   try {
     const devId = targetDevId.value
+    const budgetLabel = BUDGET_RANGES.find(b => b.value === form.budget)?.range || form.budget
+    const timelineLabel = TIMELINES.find(t => t.value === form.timeline)?.label || form.timeline
+    const projectTypeLabel = PROJECT_TYPES.find(t => t.value === form.projectType)?.label || form.projectType
+
     await hireService.sendHireRequest(devId, {
-      projectTitle: `${form.projectType} project`,
-      description:  form.description,
-      budget:       form.budget,
-      duration:     form.timeline,
-      skills:       form.skills,
+      projectTitle:  projectTypeLabel,
+      projectType:   form.projectType,
+      description:   form.description,
+      budget:        budgetLabel,
+      duration:      timelineLabel,
+      skills:        form.skills,
+      clientName:    form.name,
+      clientEmail:   form.email,
+      company:       form.company,
     })
     currentStep.value = STEPS.length // show success
   } catch (e) {
@@ -846,11 +864,22 @@ async function handleSubmit() {
   padding-bottom: 1.25rem;
   border-bottom: 1px solid var(--outline-variant);
 }
-.fstep-emoji {
-  font-size: 1.75rem;
-  line-height: 1;
+.fstep-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-lg);
+  background: rgba(99,14,212,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.15));
+}
+[data-theme="dark"] .fstep-icon-wrap {
+  background: rgba(168,85,247,0.12);
+}
+.fstep-icon {
+  font-size: 22px !important;
+  color: var(--primary);
 }
 .fstep-title {
   font-family: var(--font-headline);
@@ -911,11 +940,26 @@ async function handleSubmit() {
   box-shadow: 0 0 0 3px rgba(168,85,247,0.15);
 }
 .type-card-ico {
-  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: rgba(99,14,212,0.07);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
   flex-shrink: 0;
   z-index: 1;
   position: relative;
+  transition: background 0.2s ease;
 }
+.type-card:hover .type-card-ico,
+.type-card.active .type-card-ico {
+  background: rgba(99,14,212,0.14);
+}
+[data-theme="dark"] .type-card-ico { background: rgba(168,85,247,0.10); }
+[data-theme="dark"] .type-card:hover .type-card-ico,
+[data-theme="dark"] .type-card.active .type-card-ico { background: rgba(168,85,247,0.18); }
 .type-card-body { flex: 1; z-index: 1; position: relative; }
 .type-card-lbl {
   font-family: var(--font-headline);
@@ -937,14 +981,14 @@ async function handleSubmit() {
   flex-shrink: 0;
 }
 .type-card-arrow {
-  font-size: 16px !important;
+  font-size: 14px !important;
   color: var(--on-surface-variant);
   transition: transform 0.2s ease, color 0.2s ease;
   z-index: 1;
   position: relative;
   flex-shrink: 0;
 }
-.type-card:hover .type-card-arrow { transform: translateX(4px); color: var(--primary); }
+.type-card:hover .type-card-arrow { transform: translateX(3px); color: var(--primary); }
 .type-card.active .type-card-arrow { display: none; }
 
 /* ── SKILL GRID ── */

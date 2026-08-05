@@ -7,11 +7,15 @@ const { hire } = API_ENDPOINTS
 export const hireService = {
   async sendHireRequest(developerId, data) {
     return http.post(hire.send(developerId), {
-      project_title: data.projectTitle || data.title || 'New Project',
-      description: data.description || '',
-      budget: data.budget || '',
-      duration: data.duration || '',
-      skills_needed: data.skills || [],
+      project_title:  data.projectTitle  || 'New Project',
+      project_type:   data.projectType   || '',
+      description:    data.description   || '',
+      budget:         data.budget        || '',
+      duration:       data.duration      || '',
+      skills_needed:  data.skills        || [],
+      client_name:    data.clientName    || '',
+      client_email:   data.clientEmail   || '',
+      company:        data.company       || '',
     })
   },
 }
