@@ -114,7 +114,7 @@ function initials(name) {
 
 onMounted(async () => {
   try {
-    const data = await http.get('/explore/developers?limit=6')
+    const data = await http.get('/explore/developers?limit=8')
     developers.value = (data.developers || []).map(d => ({
       id:        d.id,
       name:      d.full_name || d.username || 'Developer',
@@ -190,12 +190,11 @@ onMounted(async () => {
   padding: .5rem;
 }
 .dev-av-wrap {
-  position: relative; z-index: 10;
+  position: absolute; bottom: -20px; left: .875rem;
   width: 52px; height: 52px; border-radius: 50%;
   border: 3px solid var(--surface-container-lowest);
   overflow: hidden; box-shadow: 0 3px 12px rgba(0,0,0,.2);
-  margin-top: -26px; margin-left: .875rem;
-  background: var(--surface-container); flex-shrink: 0;
+  background: var(--surface-container);
 }
 .dev-av-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .dev-av-ini {
@@ -212,9 +211,9 @@ onMounted(async () => {
 }
 .live-dot { width: 5px; height: 5px; border-radius: 50%; background: #22c55e; flex-shrink: 0; }
 
-/* Body — tighter padding */
-.dev-body { padding: .625rem .875rem .875rem; display: flex; flex-direction: column; gap: .375rem; }
-.dev-name-row { display: flex; align-items: flex-start; justify-content: space-between; gap: .375rem; margin-top: .25rem; }
+/* Body — tighter padding, extra top for avatar overlap */
+.dev-body { padding: 1.25rem .875rem .875rem; display: flex; flex-direction: column; gap: .375rem; }
+.dev-name-row { display: flex; align-items: flex-start; justify-content: space-between; gap: .375rem; margin-top: .125rem; }
 .dev-name { font-family: var(--font-headline); font-size: .875rem; font-weight: 800; color: var(--on-surface); line-height: 1.2; }
 .dev-role { font-size: .7rem; color: var(--primary); font-weight: 600; margin-top: .1rem; }
 .dev-rating {
