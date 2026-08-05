@@ -8,8 +8,8 @@
           <span class="material-symbols-outlined" style="font-size:22px">handshake</span>
         </div>
         <div>
-          <h2 class="req-title">{{ isClient ? 'Hire Requests Sent' : 'Incoming Hire Requests' }}</h2>
-          <p class="req-sub">{{ isClient ? 'Track all developers you have reached out to hire' : 'Developers who want to work with you' }}</p>
+          <h2 class="req-title">{{ view === 'sent' ? 'Hire Requests Sent' : 'Incoming Hire Requests' }}</h2>
+          <p class="req-sub">{{ view === 'sent' ? 'Track all developers you have reached out to hire' : 'Developers who want to work with you' }}</p>
         </div>
       </div>
       <div class="req-header-actions">
@@ -138,23 +138,22 @@ const sent     = ref([])
 const received = ref([])
 const view     = ref('received')
 
-// Clients only see sent; developers see both tabs
+// Show both tabs for everyone — anyone can send or receive hire requests
 const isClient     = computed(() => authStore.isClient)
-const isClientOnly = computed(() => authStore.isClient && !authStore.isAdmin)
+const isClientOnly = computed(() => false) // always show both tabs
 
 const items = computed(() => view.value === 'sent' ? sent.value : received.value)
 
 async function load() {
   loading.value = true
   try {
-    if (view.value === 'sent' || authStore.isClient) {
-      const s = await hireService.getSentRequests()
-      sent.value = s
-    }
-    if (view.value === 'received' || !authStore.isClient) {
-      const r = await hireService.getReceivedRequests()
-      received.value = r
-    }
+    // Always fetch both — any user can send AND receive hire requests
+    const [s, r] = await Promise.all([
+      hireService.getSentRequests().catch(() => []),
+      hireService.getReceivedRequests().catch(() => []),
+    ])
+    sent.value     = s
+    received.value = r
   } catch (e) {
     console.error('Failed to load hire requests:', e)
   } finally {
@@ -214,8 +213,8 @@ async function openConversation(req) {
 }
 
 onMounted(async () => {
-  // Start on received for developers, sent for clients
-  view.value = authStore.isClient ? 'sent' : 'received'
+  // Start on sent tab so user immediately sees what they sent
+  view.value = 'sent'
   await load()
 })
 </script>
