@@ -169,7 +169,7 @@
                   <div class="post-author-line">
                     <span class="post-author-name">{{ post.parent_post.author?.full_name }}</span>
                     <span class="post-author-username">@{{ post.parent_post.author?.username }}</span>
-                    <span class="post-time-dot">Â·</span>
+                    <span class="post-time-dot">·</span>
                     <span class="post-time">{{ formatTime(post.parent_post.created_at) }}</span>
                   </div>
                 </div>
@@ -186,14 +186,14 @@
               <div class="post-author-info" @click="goToProfile(post.author?.id)">
                 <div class="post-avatar">
                   <img v-if="post.author?.avatar" :src="post.author.avatar" :alt="post.author.full_name" class="post-avatar-img" />
-                  <span v-else>{{ getInitials(post.author?.full_name || post.author) }}</span>
+                  <span v-else>{{ getInitials(post.author?.full_name || (typeof post.author === 'string' ? post.author : '')) }}</span>
                 </div>
                 <div class="post-author-text">
                   <div class="post-author-line">
-                    <span class="post-author-name">{{ post.author?.full_name || post.author }}</span>
-                    <span v-if="post.author?.is_verified" class="material-symbols-outlined verified-tick" style="font-variation-settings:'FILL' 1">verified</span>
+                    <span class="post-author-name">{{ post.author?.full_name || (typeof post.author === 'string' ? post.author : 'Unknown') }}</span>
+                    <span v-if="post.author?.is_verified" class="material-symbols-outlined verified-tick">verified</span>
                     <span class="post-author-username">@{{ post.author?.username || '' }}</span>
-                    <span class="post-time-dot">Â·</span>
+                    <span class="post-time-dot">·</span>
                     <span class="post-time">{{ formatTime(post.created_at) }}</span>
                   </div>
                 </div>
@@ -927,7 +927,7 @@ function submitComment(post, e) {
     max-height: calc(100vh - 96px); overflow-y: auto; scrollbar-width: none; z-index: 10;
   }
   .feed-right-sidebar::-webkit-scrollbar { display: none; }
-  .feed-main { margin-left: calc(220px + 2rem); margin-right: calc(240px + 2rem); }
+  .feed-main { margin-left: calc(220px + 2rem); margin-right: calc(240px + 2.5rem); max-width: none; }
 }
 
 /* LEFT SIDEBAR */
@@ -1039,7 +1039,7 @@ function submitComment(post, e) {
 .post-author-text { flex: 1; min-width: 0; }
 .post-author-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; }
 .post-author-name { font-family: var(--font-headline); font-size: 0.9rem; font-weight: 700; color: var(--on-surface); }
-.verified-tick { font-size: 15px !important; color: #1d9bf0; }
+.verified-tick { font-size: 15px !important; color: #1d9bf0; font-variation-settings: 'FILL' 1; }
 .post-author-username { font-size: 0.8rem; color: var(--on-surface-variant); }
 .post-time-dot { color: var(--on-surface-variant); font-size: 0.8rem; }
 .post-time { font-size: 0.8rem; color: var(--on-surface-variant); }
