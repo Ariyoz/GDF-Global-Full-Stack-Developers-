@@ -175,12 +175,14 @@ onMounted(async () => {
 }
 @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
-/* Card — NO overflow:hidden so avatar hangs outside the cover cleanly */
+/* Card */
 .dev-card {
   border-radius: 16px;
   background: var(--surface-container-lowest);
   border: 1px solid var(--outline-variant);
   transition: transform .2s, box-shadow .2s, border-color .2s;
+  position: relative; /* needed for absolute avatar */
+  overflow: visible;  /* must NOT clip the avatar */
 }
 .dev-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--primary); }
 
@@ -202,17 +204,18 @@ onMounted(async () => {
 }
 .live-dot { width: 5px; height: 5px; border-radius: 50%; background: #22c55e; flex-shrink: 0; }
 
-/* Avatar — sibling of cover, pulled up with negative margin */
+/* Avatar — absolute positioned over the cover/body boundary */
+.dev-card { position: relative; }
 .dev-av-wrap {
-  width: 52px; height: 52px; border-radius: 50%;
+  width: 56px; height: 56px; border-radius: 50%;
   border: 3px solid var(--surface-container-lowest);
   overflow: hidden;
-  box-shadow: 0 3px 12px rgba(0,0,0,.2);
+  box-shadow: 0 4px 16px rgba(0,0,0,.25);
   background: var(--surface-container);
-  margin-top: -26px;
-  margin-left: .875rem;
-  position: relative;
-  z-index: 2;
+  position: absolute;
+  top: 36px; /* cover is 64px tall, avatar is 56px — centres it at the boundary: 64 - 56/2 = 36 */
+  left: .875rem;
+  z-index: 10;
 }
 .dev-av-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .dev-av-ini {
@@ -221,8 +224,8 @@ onMounted(async () => {
   font-family: var(--font-headline); font-size: 1rem; font-weight: 800; color: #fff;
 }
 
-/* Body — top padding accounts for avatar overlap */
-.dev-body { padding: .75rem .875rem .875rem; display: flex; flex-direction: column; gap: .375rem; }
+/* Body — top padding leaves room for the half-protruding avatar (56px avatar, 64px cover = 28px hangs below cover) */
+.dev-body { padding: 2rem .875rem .875rem; display: flex; flex-direction: column; gap: .375rem; }
 .dev-name-row { display: flex; align-items: flex-start; justify-content: space-between; gap: .375rem; margin-top: .25rem; }
 .dev-name { font-family: var(--font-headline); font-size: .875rem; font-weight: 800; color: var(--on-surface); line-height: 1.2; }
 .dev-role { font-size: .7rem; color: var(--primary); font-weight: 600; margin-top: .1rem; }
