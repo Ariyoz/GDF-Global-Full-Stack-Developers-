@@ -73,11 +73,21 @@
         <span class="results-count">
           <strong>{{ jobs.length }}</strong> job{{ jobs.length !== 1 ? 's' : '' }} found
         </span>
-        <select v-model="sortBy" class="sort-sel gfd-select">
-          <option value="newest">Newest First</option>
-          <option value="salary">Highest Salary</option>
-          <option value="applications">Most Applied</option>
-        </select>
+        <div class="toolbar-right">
+          <select v-model="sortBy" class="sort-sel gfd-select">
+            <option value="newest">Newest First</option>
+            <option value="salary">Highest Salary</option>
+            <option value="applications">Most Applied</option>
+          </select>
+          <div class="view-toggle">
+            <button :class="{ active: viewMode === 'grid' }" @click="viewMode = 'grid'" title="Grid view">
+              <span class="material-symbols-outlined" style="font-size:18px">grid_view</span>
+            </button>
+            <button :class="{ active: viewMode === 'list' }" @click="viewMode = 'list'" title="List view">
+              <span class="material-symbols-outlined" style="font-size:18px">table_rows</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Skeleton loading -->
@@ -104,7 +114,10 @@
       </div>
 
       <!-- Jobs grid -->
-      <div v-else-if="sortedJobs.length" class="jobs-grid">
+      <div v-else-if="sortedJobs.length" :class="viewMode === 'grid' ? 'jobs-grid' : 'jobs-list'">
+
+        <!-- Grid cards -->
+        <template v-if="viewMode === 'grid'">
         <article
           v-for="job in sortedJobs" :key="job.id"
           class="job-card animate-fade-in-up"
@@ -177,6 +190,46 @@
             </div>
           </div>
         </article>
+        </template>
+
+        <!-- List view rows -->
+        <template v-else>
+          <div v-for="job in sortedJobs" :key="job.id"
+            class="job-row animate-fade-in-up"
+            @click="openJobDetail(job)">
+            <!-- Type strip (left border) -->
+            <div class="jr-strip" :data-type="job.job_type || 'full_time'" />
+            <!-- Logo -->
+            <div class="jr-logo">
+              <img v-if="job.company_logo" :src="job.company_logo" :alt="job.company"
+                class="jr-logo-img" @error="$event.target.style.display='none'" />
+              <span v-else class="jr-logo-ini">{{ (job.company || 'C')[0] }}</span>
+            </div>
+            <!-- Info -->
+            <div class="jr-info">
+              <h3 class="jr-title">{{ job.title }}</h3>
+              <p class="jr-company">{{ job.company || job.poster_name }}</p>
+              <div class="jr-tags">
+                <span class="jc-tag">{{ (job.job_type || 'full_time').replace('_', ' ') }}</span>
+                <span v-if="job.is_remote" class="jc-tag jc-remote">Remote</span>
+                <span v-if="job.location && !job.is_remote" class="jc-tag">{{ job.location }}</span>
+                <span v-for="s in (job.skills_required || []).slice(0, 2)" :key="s" class="jc-skill">{{ s }}</span>
+              </div>
+            </div>
+            <!-- Right meta -->
+            <div class="jr-meta">
+              <span v-if="job.salary_min" class="jr-salary">
+                {{ fmtSalary(job.salary_min) }}{{ job.salary_max ? '–' + fmtSalary(job.salary_max) : '' }}<span class="jc-salary-period">/yr</span>
+              </span>
+              <span v-else class="jc-salary-empty" style="font-size:.75rem">Undisclosed</span>
+              <div style="display:flex;align-items:center;gap:.5rem">
+                <span class="jc-stat"><span class="material-symbols-outlined" style="font-size:13px">group</span>{{ job.application_count || 0 }}</span>
+                <span class="jc-time">{{ formatTime(job.created_at) }}</span>
+              </div>
+            </div>
+          </div>
+        </template>
+
       </div>
 
       <!-- Empty state -->
@@ -652,6 +705,7 @@ const myApplications   = ref([])
 const logoUploading    = ref(false)
 const editSaving       = ref(false)
 const currentReviewJob = ref(null)
+const viewMode         = ref('grid')
 
 const isClient    = computed(() => ['client','admin'].includes(authStore.profile?.role))
 const isDeveloper = computed(() => authStore.profile?.role === 'developer')
@@ -990,6 +1044,7 @@ onUnmounted(() => { if (refreshInterval) clearInterval(refreshInterval) })
   font-family: var(--font-headline); font-size: .875rem; color: var(--on-surface-variant);
 }
 .results-count strong { color: var(--on-surface); }
+.toolbar-right { display: flex; align-items: center; gap: .5rem; }
 .sort-sel {
   padding: .45rem .875rem; border-radius: 12px;
   background: var(--surface-container-lowest); border: 1.5px solid var(--outline-variant);
@@ -997,6 +1052,24 @@ onUnmounted(() => { if (refreshInterval) clearInterval(refreshInterval) })
   cursor: pointer; outline: none; transition: border-color .2s;
 }
 .sort-sel:focus { border-color: var(--primary); }
+
+/* View toggle — matches explore page */
+.view-toggle {
+  display: flex; gap: .25rem;
+  background: var(--surface-container-low);
+  border: 1px solid var(--outline-variant);
+  border-radius: 12px; padding: .25rem;
+}
+.view-toggle button {
+  width: 32px; height: 32px; border-radius: 8px; border: none;
+  background: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--on-surface-variant); transition: all .15s;
+}
+.view-toggle button.active {
+  background: var(--surface-container-highest); color: var(--primary);
+}
+.view-toggle button:hover:not(.active) { color: var(--on-surface); }
 
 /* ═══════════════════════════════════════════════════════════
    SKELETON LOADING
@@ -1043,6 +1116,51 @@ onUnmounted(() => { if (refreshInterval) clearInterval(refreshInterval) })
 @media (min-width: 1100px) {
   .jobs-grid { grid-template-columns: repeat(3, 1fr); }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   JOBS LIST
+═══════════════════════════════════════════════════════════ */
+.jobs-list { display: flex; flex-direction: column; gap: .625rem; }
+
+.job-row {
+  display: flex; align-items: center; gap: 1rem;
+  background: var(--surface-container-lowest);
+  border: 1.5px solid var(--outline-variant);
+  border-radius: 16px; overflow: hidden;
+  cursor: pointer; transition: transform .15s, border-color .15s, box-shadow .15s;
+  padding: .875rem 1rem; position: relative;
+}
+.job-row:hover { transform: translateX(4px); border-color: var(--primary); box-shadow: 0 4px 20px rgba(99,14,212,.1); }
+
+/* Coloured left strip */
+.jr-strip {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 4px; flex-shrink: 0;
+}
+.jr-strip[data-type="full_time"]  { background: linear-gradient(180deg, #630ed4, #a855f7); }
+.jr-strip[data-type="remote"]     { background: linear-gradient(180deg, #059669, #34d399); }
+.jr-strip[data-type="contract"]   { background: linear-gradient(180deg, #d97706, #fbbf24); }
+.jr-strip[data-type="freelance"]  { background: linear-gradient(180deg, #0284c7, #38bdf8); }
+.jr-strip[data-type="part_time"]  { background: linear-gradient(180deg, #be185d, #f472b6); }
+
+.jr-logo {
+  width: 44px; height: 44px; border-radius: 11px; flex-shrink: 0;
+  background: var(--surface-container); border: 1px solid var(--outline-variant);
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+  margin-left: .5rem;
+}
+.jr-logo-img { width: 100%; height: 100%; object-fit: cover; border-radius: 11px; }
+.jr-logo-ini { font-family: var(--font-headline); font-size: 1.1rem; font-weight: 800; color: var(--primary); text-transform: uppercase; }
+
+.jr-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .25rem; }
+.jr-title { font-family: var(--font-headline); font-size: .9rem; font-weight: 800; color: var(--on-surface); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; }
+.jr-company { font-size: .75rem; color: var(--on-surface-variant); margin: 0; }
+.jr-tags { display: flex; flex-wrap: wrap; gap: .25rem; margin-top: .2rem; }
+
+.jr-meta {
+  display: flex; flex-direction: column; align-items: flex-end; gap: .3rem;
+  flex-shrink: 0; min-width: 120px;
+}
+.jr-salary { font-family: var(--font-headline); font-size: .82rem; font-weight: 800; color: #059669; }
 
 /* ═══════════════════════════════════════════════════════════
    JOB CARD
