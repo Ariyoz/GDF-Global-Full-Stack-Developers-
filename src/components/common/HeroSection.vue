@@ -83,7 +83,7 @@
 
       <div class="preview-card preview-card-b animate-float" style="animation-delay:.8s">
         <div class="pc-check">
-          <span class="material-symbols-outlined" style="font-size:16px;color:#22c55e;font-variation-settings:'FILL' 1">check_circle</span>
+          <span class="material-symbols-outlined hero-check-icon">check_circle</span>
           <span>Hired in 2 days</span>
         </div>
         <div class="pc-rating">⭐ 4.98 · 63 reviews</div>
@@ -335,6 +335,25 @@ onMounted(async () => {
 }
 .pc-av-1 { background: rgba(99,14,212,.15); color: var(--primary); }
 .pc-name { font-family: var(--font-headline); font-size: .85rem; font-weight: 700; color: var(--on-surface); }
+
+.pc-rate { font-family: var(--font-headline); font-size: .95rem; font-weight: 700; color: var(--on-surface); }
+.pc-rate span { font-size: .75rem; color: var(--on-surface-variant); font-weight: 500; }
+
+.pc-check {
+  display: flex; align-items: center; gap: .4rem;
+  font-family: var(--font-headline); font-size: .8rem; font-weight: 600;
+  color: var(--on-surface); margin-bottom: .4rem;
+}
+.hero-check-icon {
+  font-size: 16px;
+  color: #22c55e;
+  font-variation-settings: 'FILL' 1;
+  flex-shrink: 0;
+}
+.pc-rating { font-size: .8rem; color: var(--on-surface-variant); }
+
+.pc-notif-title { font-family: var(--font-headline); font-size: .85rem; font-weight: 700; color: var(--on-surface); margin-bottom: .2rem; }
+.pc-notif-sub { font-size: .78rem; color: var(--on-surface-variant); }
 .pc-role { font-size: .7rem; color: var(--on-surface-variant); }
 .pc-avail {
   margin-left: auto; padding: .15rem .5rem; border-radius: 999px;
