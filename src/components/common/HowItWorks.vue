@@ -89,11 +89,11 @@ const steps = [
   .how-steps { grid-template-columns: repeat(3, 1fr); gap: 2rem; }
 }
 
-.how-step { display: flex; flex-direction: column; gap: 1rem; }
+.how-step { display: flex; flex-direction: column; gap: 1rem; align-items: center; text-align: center; }
 
-/* Track: number + line (horizontal on desktop) */
+/* Track: number + line */
 .step-track {
-  display: flex; align-items: center; gap: 0;
+  display: flex; align-items: center; gap: 0; width: 100%;
 }
 @media (min-width: 768px) {
   .step-track { flex-direction: row; }
@@ -103,9 +103,7 @@ const steps = [
   color: var(--outline-variant); line-height: 1; flex-shrink: 0;
   letter-spacing: -.05em;
 }
-.step-line {
-  display: none;
-}
+.step-line { display: none; }
 @media (min-width: 768px) {
   .step-line {
     display: block; flex: 1; height: 2px; margin: 0 1rem;
@@ -113,7 +111,7 @@ const steps = [
   }
 }
 
-.step-body { display: flex; flex-direction: column; gap: .625rem; }
+.step-body { display: flex; flex-direction: column; gap: .625rem; align-items: center; }
 
 .step-ico-wrap {
   width: 52px; height: 52px; border-radius: 14px;
@@ -125,10 +123,10 @@ const steps = [
   font-family: var(--font-headline); font-size: 1.15rem; font-weight: 800;
   color: var(--on-surface); letter-spacing: -.02em;
 }
-.step-desc { font-size: .875rem; color: var(--on-surface-variant); line-height: 1.6; }
+.step-desc { font-size: .875rem; color: var(--on-surface-variant); line-height: 1.6; max-width: 260px; }
 
 .step-points {
-  list-style: none; display: flex; flex-direction: column; gap: .35rem; margin-top: .25rem;
+  list-style: none; display: flex; flex-direction: column; gap: .35rem; margin-top: .25rem; align-items: center;
 }
 .step-points li {
   display: flex; align-items: center; gap: .375rem;
