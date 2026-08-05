@@ -359,7 +359,8 @@ import { hireService } from '@/services/hire.service'
 const route  = useRoute()
 const auth   = useAuthStore()
 
-const targetDev = computed(() => route.query.dev || null)
+const targetDev = computed(() => route.query.name || null)
+const targetDevId = computed(() => route.query.dev || null)
 
 // ── Constants ──────────────────────────────────────────────
 const TRUST = [
@@ -451,9 +452,9 @@ function nextStep() {
 async function handleSubmit() {
   loading.value = true
   try {
-    const devId = route.query.devId || null
-    await hireService.sendHireRequest(devId || 'general', {
-      title:        `${form.projectType} project`,
+    const devId = targetDevId.value
+    await hireService.sendHireRequest(devId, {
+      projectTitle: `${form.projectType} project`,
       description:  form.description,
       budget:       form.budget,
       duration:     form.timeline,
