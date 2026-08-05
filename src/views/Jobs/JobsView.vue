@@ -1,191 +1,337 @@
 <template>
-  <div class="jobs-view">
-    <!-- Header -->
-    <div class="jobs-header">
-      <h1 class="jobs-title">Jobs</h1>
-      <div class="header-btns">
-        <button v-if="isDeveloper" class="btn-my-apps" @click="fetchMyApplications">
-          <span class="material-symbols-outlined">work_history</span>
-          My Applications
-        </button>
-        <button v-if="isClient || authStore.profile?.role === 'admin'" class="btn-post-job" @click="showPostJob = true">
-          <span class="material-symbols-outlined">add</span>
-          Post Job
-        </button>
+  <div class="jobs-root">
+
+    <!-- ══ HERO ══ -->
+    <div class="jobs-hero">
+      <div class="hero-mesh" aria-hidden="true">
+        <div class="mesh-blob mesh-1" />
+        <div class="mesh-blob mesh-2" />
+        <div class="mesh-blob mesh-3" />
+        <div class="hero-grid" />
       </div>
-    </div>
 
-    <!-- Search -->
-    <div class="jobs-search">
-      <span class="material-symbols-outlined search-icon">search</span>
-      <input v-model="searchQuery" name="search" autocomplete="off" class="search-input" placeholder="Search jobs, skills, companies..." @input="debouncedSearch" />
-    </div>
-
-    <!-- Filters -->
-    <div class="jobs-filters">
-      <button v-for="f in filters" :key="f.value" class="filter-chip" :class="{ active: activeFilter === f.value }" @click="activeFilter = f.value; fetchJobs()">
-        {{ f.label }}
-      </button>
-    </div>
-
-    <!-- Jobs List -->
-    <div class="jobs-list">
-      <div v-for="job in jobs" :key="job.id" class="job-card" @click="openJobDetail(job)">
-        <div class="job-card-header">
-          <div class="job-company-logo">
-            <img v-if="job.company_logo" :src="job.company_logo" :alt="job.company" class="company-logo-img" />
-            <span v-else class="company-initials">{{ (job.company || 'C')[0] }}</span>
+      <div class="container-gfd hero-body">
+        <!-- Top row: tag + actions -->
+        <div class="hero-toprow animate-fade-in-up">
+          <div class="hero-tag">
+            <span class="tag-dot" />
+            {{ jobs.length }} open positions
           </div>
-          <div class="job-info">
-            <h3 class="job-title">{{ job.title }}</h3>
-            <a v-if="job.company_url" :href="job.company_url" target="_blank" rel="noopener" class="job-company job-company-link" @click.stop>
-              {{ job.company }}
-              <span class="material-symbols-outlined" style="font-size:11px;vertical-align:middle;opacity:.7">open_in_new</span>
-            </a>
-            <p v-else class="job-company">{{ job.company }}</p>
+          <div class="hero-actions">
+            <button v-if="isDeveloper" class="btn-my-apps" @click="fetchMyApplications">
+              <span class="material-symbols-outlined">work_history</span>
+              My Applications
+            </button>
+            <button v-if="isClient || authStore.profile?.role === 'admin'" class="btn-post" @click="showPostJob = true">
+              <span class="material-symbols-outlined">add</span>
+              Post a Job
+            </button>
           </div>
         </div>
-        <div class="job-meta">
-          <span class="job-tag">{{ job.job_type?.replace('_', ' ') }}</span>
-          <span v-if="job.is_remote" class="job-tag remote">Remote</span>
-          <span v-if="job.location" class="job-tag">{{ job.location }}</span>
-        </div>
-        <p class="job-desc">{{ job.description?.slice(0, 120) }}{{ job.description?.length > 120 ? '...' : '' }}</p>
-        <div class="job-footer">
-          <span v-if="job.salary_min" class="job-salary">{{ fmtSalary(job.salary_min) }}{{ job.salary_max ? ' – ' + fmtSalary(job.salary_max) : '' }}/yr</span>
-          <span class="job-time">{{ formatTime(job.created_at) }}</span>
-          <button v-if="job.poster_name === authStore.profile?.full_name || isClient" class="job-delete-btn" @click.stop="deleteJob(job)" title="Delete job">
-            <span class="material-symbols-outlined">delete</span>
+
+        <!-- Headline -->
+        <h1 class="hero-h animate-fade-in-up delay-100">
+          Find your next<br /><span class="text-gradient">dream opportunity</span>
+        </h1>
+        <p class="hero-sub animate-fade-in-up delay-200">
+          Browse hundreds of remote and on-site roles from verified companies and clients.
+        </p>
+
+        <!-- Search bar -->
+        <div class="search-bar animate-fade-in-up delay-300" :class="{ focused: searchFocused }">
+          <span class="material-symbols-outlined s-ico">search</span>
+          <input
+            v-model="searchQuery" type="text"
+            placeholder="Search job title, skill, or company…"
+            class="s-inp" autocomplete="off"
+            @input="debouncedSearch"
+            @focus="searchFocused = true"
+            @blur="searchFocused = false"
+          />
+          <button v-if="searchQuery" class="s-clear" @click="searchQuery = ''; fetchJobs()">
+            <span class="material-symbols-outlined" style="font-size:16px">close</span>
           </button>
+          <button class="s-btn" @click="fetchJobs">Search</button>
+        </div>
+
+        <!-- Filter chips -->
+        <div class="filter-chips animate-fade-in-up delay-400">
+          <button
+            v-for="f in JOB_FILTERS" :key="f.value"
+            class="fchip" :class="{ active: activeFilter === f.value }"
+            @click="activeFilter = f.value; fetchJobs()"
+          >{{ f.label }}</button>
         </div>
       </div>
+    </div>
 
-      <div v-if="loading" class="jobs-loading">
-        <div v-for="i in 3" :key="i" class="skeleton-job">
-          <div class="skeleton-shimmer" style="width:48px;height:48px;border-radius:12px;"></div>
-          <div style="flex:1;">
-            <div class="skeleton-shimmer" style="width:70%;height:14px;border-radius:4px;"></div>
-            <div class="skeleton-shimmer" style="width:40%;height:12px;border-radius:4px;margin-top:6px;"></div>
+    <!-- ══ CONTENT AREA ══ -->
+    <div class="container-gfd jobs-content">
+
+      <!-- Toolbar -->
+      <div class="jobs-toolbar">
+        <span class="results-count">
+          <strong>{{ jobs.length }}</strong> job{{ jobs.length !== 1 ? 's' : '' }} found
+        </span>
+        <select v-model="sortBy" class="sort-sel gfd-select">
+          <option value="newest">Newest First</option>
+          <option value="salary">Highest Salary</option>
+          <option value="applications">Most Applied</option>
+        </select>
+      </div>
+
+      <!-- Skeleton loading -->
+      <div v-if="loading" class="jobs-grid">
+        <div v-for="i in 6" :key="i" class="job-skel">
+          <div class="skel-strip shimmer" />
+          <div class="skel-body">
+            <div class="skel-row">
+              <div class="skel-logo shimmer" />
+              <div class="skel-lines">
+                <div class="skel-line shimmer" style="width:60%" />
+                <div class="skel-line shimmer" style="width:40%;margin-top:.4rem" />
+              </div>
+            </div>
+            <div class="skel-line shimmer" style="width:90%;margin-top:1rem" />
+            <div class="skel-line shimmer" style="width:75%;margin-top:.4rem" />
+            <div class="skel-tags">
+              <div class="skel-tag shimmer" />
+              <div class="skel-tag shimmer" />
+              <div class="skel-tag shimmer" />
+            </div>
           </div>
         </div>
       </div>
 
-      <div v-if="!loading && jobs.length === 0" class="jobs-empty">
-        <span class="material-symbols-outlined" style="font-size:3rem;color:var(--on-surface-variant)">work_off</span>
-        <p>No jobs posted yet</p>
-        <button v-if="isClient" class="btn-primary" @click="showPostJob = true">Post the first job</button>
-        <p v-else style="font-size:0.85rem;">Check back later for new opportunities</p>
+      <!-- Jobs grid -->
+      <div v-else-if="sortedJobs.length" class="jobs-grid">
+        <article
+          v-for="job in sortedJobs" :key="job.id"
+          class="job-card animate-fade-in-up"
+          @click="openJobDetail(job)"
+          tabindex="0"
+          :aria-label="`${job.title} at ${job.company || job.poster_name}`"
+        >
+          <!-- Coloured top strip -->
+          <div class="jc-strip" :data-type="job.job_type || 'full_time'" />
+
+          <!-- Card header -->
+          <div class="jc-top">
+            <div class="jc-logo">
+              <img v-if="job.company_logo" :src="job.company_logo" :alt="job.company"
+                class="jc-logo-img" @error="$event.target.style.display='none'" />
+              <span v-else class="jc-logo-ini">{{ (job.company || 'C')[0] }}</span>
+            </div>
+            <div class="jc-info">
+              <h3 class="jc-title">{{ job.title }}</h3>
+              <p class="jc-company">
+                <span class="material-symbols-outlined" style="font-size:13px;vertical-align:-2px">business</span>
+                {{ job.company || job.poster_name }}
+              </p>
+            </div>
+            <button
+              v-if="isClient || job.poster_name === authStore.profile?.full_name"
+              class="jc-del" title="Delete job" @click.stop="deleteJob(job)"
+            >
+              <span class="material-symbols-outlined" style="font-size:16px">delete</span>
+            </button>
+          </div>
+
+          <!-- Location -->
+          <p v-if="job.location || job.is_remote" class="jc-location">
+            <span class="material-symbols-outlined" style="font-size:13px">location_on</span>
+            {{ job.is_remote ? 'Remote' : job.location }}
+          </p>
+
+          <!-- Type / remote / level chips -->
+          <div class="jc-tags">
+            <span class="jc-tag">{{ (job.job_type || 'full_time').replace('_', ' ') }}</span>
+            <span v-if="job.is_remote" class="jc-tag jc-remote">Remote</span>
+            <span v-if="job.experience_level" class="jc-tag">{{ job.experience_level }}</span>
+          </div>
+
+          <!-- 1-line description -->
+          <p class="jc-desc">
+            {{ (job.description || '').slice(0, 110) }}{{ (job.description || '').length > 110 ? '…' : '' }}
+          </p>
+
+          <!-- Skills -->
+          <div v-if="job.skills_required?.length" class="jc-skills">
+            <span v-for="s in job.skills_required.slice(0, 3)" :key="s" class="jc-skill">{{ s }}</span>
+            <span v-if="job.skills_required.length > 3" class="jc-skill jc-more">+{{ job.skills_required.length - 3 }}</span>
+          </div>
+
+          <!-- Footer -->
+          <div class="jc-foot">
+            <span v-if="job.salary_min" class="jc-salary">
+              {{ fmtSalary(job.salary_min) }}{{ job.salary_max ? ' – ' + fmtSalary(job.salary_max) : '' }}
+              <span class="jc-salary-period">/yr</span>
+            </span>
+            <span v-else class="jc-salary-empty">Salary undisclosed</span>
+            <div class="jc-meta-right">
+              <span class="jc-stat">
+                <span class="material-symbols-outlined" style="font-size:13px">group</span>
+                {{ job.application_count || 0 }}
+              </span>
+              <span class="jc-time">{{ formatTime(job.created_at) }}</span>
+            </div>
+          </div>
+        </article>
       </div>
+
+      <!-- Empty state -->
+      <div v-else class="jobs-empty">
+        <div class="empty-ico-wrap">
+          <span class="material-symbols-outlined">work_off</span>
+        </div>
+        <h3 class="empty-title">No jobs found</h3>
+        <p class="empty-sub">Try different search terms or check back later.</p>
+        <button v-if="isClient" class="btn-primary" @click="showPostJob = true">Post the first job</button>
+      </div>
+
     </div>
 
-    <!-- Job Detail Modal -->
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- JOB DETAIL MODAL                               -->
+    <!-- ══════════════════════════════════════════════ -->
     <Transition name="modal">
       <div v-if="selectedJob" class="modal-overlay" @click.self="selectedJob = null">
-        <div class="job-detail-modal">
-          <div class="modal-header">
-            <h2 class="modal-title">{{ selectedJob.title }}</h2>
-            <button class="btn-ghost icon-only" @click="selectedJob = null">
+        <div class="modal-sheet">
+          <div class="modal-handle" />
+
+          <!-- Company header -->
+          <div class="modal-hdr">
+            <div class="modal-hdr-left">
+              <div class="modal-logo">
+                <img v-if="selectedJob.company_logo" :src="selectedJob.company_logo" class="modal-logo-img" alt="" />
+                <span v-else class="modal-logo-ini">{{ (selectedJob.company || 'C')[0] }}</span>
+              </div>
+              <div>
+                <h2 class="modal-title">{{ selectedJob.title }}</h2>
+                <a v-if="selectedJob.company_url" :href="selectedJob.company_url" target="_blank" rel="noopener"
+                  class="modal-company-lnk" @click.stop>
+                  {{ selectedJob.company }}
+                  <span class="material-symbols-outlined" style="font-size:11px">open_in_new</span>
+                </a>
+                <p v-else class="modal-company">{{ selectedJob.company }}</p>
+              </div>
+            </div>
+            <button class="modal-close" @click="selectedJob = null" aria-label="Close">
               <span class="material-symbols-outlined">close</span>
             </button>
           </div>
+
+          <!-- Scrollable body -->
           <div class="modal-body">
-            <div class="detail-company">
-              <div class="job-company-logo">
-                <img v-if="selectedJob.company_logo" :src="selectedJob.company_logo" class="company-logo-img" />
-                <span v-else class="company-initials">{{ (selectedJob.company || 'C')[0] }}</span>
+            <!-- Salary -->
+            <div v-if="selectedJob.salary_min" class="modal-salary">
+              <span class="material-symbols-outlined">payments</span>
+              {{ fmtSalary(selectedJob.salary_min) }}{{ selectedJob.salary_max ? ' – ' + fmtSalary(selectedJob.salary_max) : '' }} / year
+            </div>
+
+            <!-- Tags -->
+            <div class="modal-tags">
+              <span class="jc-tag">{{ (selectedJob.job_type || 'full_time').replace('_', ' ') }}</span>
+              <span v-if="selectedJob.is_remote" class="jc-tag jc-remote">Remote</span>
+              <span v-if="selectedJob.location" class="jc-tag">{{ selectedJob.location }}</span>
+              <span v-if="selectedJob.experience_level" class="jc-tag">{{ selectedJob.experience_level }}</span>
+            </div>
+
+            <!-- Stats -->
+            <div class="modal-stats">
+              <div class="mstat">
+                <span class="material-symbols-outlined">visibility</span>
+                {{ selectedJob.view_count || 0 }} views
               </div>
-              <div>
-                <a v-if="selectedJob.company_url" :href="selectedJob.company_url" target="_blank" rel="noopener" class="detail-company-name detail-company-link">
-                  {{ selectedJob.company }}
-                  <span class="material-symbols-outlined" style="font-size:13px;vertical-align:middle;opacity:.7">open_in_new</span>
-                </a>
-                <p v-else class="detail-company-name">{{ selectedJob.company }}</p>
-                <p class="detail-location">{{ selectedJob.location || 'Remote' }}</p>
+              <div class="mstat">
+                <span class="material-symbols-outlined">description</span>
+                {{ selectedJob.application_count || 0 }} applicants
               </div>
-            </div>
-            <div class="detail-tags">
-              <span class="job-tag">{{ selectedJob.job_type?.replace('_', ' ') }}</span>
-              <span v-if="selectedJob.is_remote" class="job-tag remote">Remote</span>
-              <span v-if="selectedJob.experience_level" class="job-tag">{{ selectedJob.experience_level }}</span>
-            </div>
-            <div v-if="selectedJob.salary_min" class="detail-salary">
-              💰 {{ fmtSalary(selectedJob.salary_min) }}{{ selectedJob.salary_max ? ' – ' + fmtSalary(selectedJob.salary_max) : '' }} / year
-            </div>
-            <div class="detail-section">
-              <h4>Description</h4>
-              <p>{{ selectedJob.description }}</p>
-            </div>
-            <div v-if="selectedJob.requirements" class="detail-section">
-              <h4>Requirements</h4>
-              <p>{{ selectedJob.requirements }}</p>
-            </div>
-            <div v-if="selectedJob.skills_required?.length" class="detail-section">
-              <h4>Skills</h4>
-              <div class="detail-skills">
-                <span v-for="skill in selectedJob.skills_required" :key="skill" class="skill-chip">{{ skill }}</span>
+              <div class="mstat">
+                <span class="material-symbols-outlined">schedule</span>
+                {{ formatTime(selectedJob.created_at) }}
               </div>
             </div>
-            <div class="detail-stats">
-              <span><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">visibility</span> {{ selectedJob.view_count }} views</span>
-              <span><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">description</span> {{ selectedJob.application_count }} applications</span>
+
+            <!-- Description -->
+            <div class="modal-section">
+              <h4 class="modal-section-title">Description</h4>
+              <p class="modal-section-body" style="white-space:pre-line">{{ selectedJob.description }}</p>
+            </div>
+            <div v-if="selectedJob.requirements" class="modal-section">
+              <h4 class="modal-section-title">Requirements</h4>
+              <p class="modal-section-body" style="white-space:pre-line">{{ selectedJob.requirements }}</p>
+            </div>
+            <div v-if="selectedJob.skills_required?.length" class="modal-section">
+              <h4 class="modal-section-title">Skills needed</h4>
+              <div class="modal-skills">
+                <span v-for="s in selectedJob.skills_required" :key="s" class="modal-skill">{{ s }}</span>
+              </div>
             </div>
           </div>
-          <div class="modal-footer">
-            <button v-if="isDeveloper" class="btn-primary apply-btn" @click="showApplyModal = true">
+
+          <!-- Sticky footer -->
+          <div class="modal-foot">
+            <button v-if="isDeveloper" class="btn-apply" @click="showApplyModal = true">
               <span class="material-symbols-outlined">send</span>
               Apply Now
             </button>
-            <div v-else-if="isClient || selectedJob?.poster_name === authStore.profile?.full_name" class="modal-footer-row">
-              <button class="btn-primary apply-btn" @click="viewApplicants(selectedJob); currentReviewJob.value = selectedJob">
+            <template v-else-if="isClient || selectedJob?.poster_name === authStore.profile?.full_name">
+              <button class="btn-applicants" @click="viewApplicants(selectedJob)">
                 <span class="material-symbols-outlined">group</span>
                 Applicants ({{ selectedJob?.application_count || 0 }})
               </button>
-              <button class="btn-edit-job" @click="openEditJob(selectedJob)">
-                <span class="material-symbols-outlined">edit</span>
-                Edit
+              <button class="btn-edit" @click="openEditJob(selectedJob)">
+                <span class="material-symbols-outlined">edit</span>Edit
               </button>
               <button v-if="selectedJob?.status !== 'closed'" class="btn-close-job" @click="closeJob(selectedJob)">
-                <span class="material-symbols-outlined">lock</span>
-                Close
+                <span class="material-symbols-outlined">lock</span>Close
               </button>
               <span v-else class="closed-badge">Closed</span>
-            </div>
+            </template>
           </div>
         </div>
       </div>
     </Transition>
 
-    <!-- Apply Modal -->
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- APPLY MODAL                                    -->
+    <!-- ══════════════════════════════════════════════ -->
     <Transition name="modal">
       <div v-if="showApplyModal" class="modal-overlay" @click.self="showApplyModal = false">
-        <div class="job-detail-modal">
-          <div class="modal-header">
-            <h2 class="modal-title">Apply to {{ selectedJob?.title }}</h2>
-            <button class="btn-ghost icon-only" @click="showApplyModal = false">
+        <div class="modal-sheet modal-form">
+          <div class="modal-handle" />
+          <div class="modal-hdr">
+            <h2 class="modal-title">Apply — {{ selectedJob?.title }}</h2>
+            <button class="modal-close" @click="showApplyModal = false">
               <span class="material-symbols-outlined">close</span>
             </button>
           </div>
           <div class="modal-body">
             <div class="form-fields">
               <div class="form-field">
-                <label>Cover Letter</label>
-                <textarea v-model="applyForm.cover_letter" rows="4" placeholder="Why are you a great fit for this role?"></textarea>
+                <label>Cover Letter <span class="req">*</span></label>
+                <textarea v-model="applyForm.cover_letter" rows="4" placeholder="Why are you a great fit?" />
               </div>
-              <div class="form-field">
-                <label>Resume URL</label>
-                <input v-model="applyForm.resume_url" name="resume_url" autocomplete="url" type="url" placeholder="https://drive.google.com/your-resume" />
+              <div class="form-row">
+                <div class="form-field">
+                  <label>Resume URL</label>
+                  <input v-model="applyForm.resume_url" type="url" placeholder="https://drive.google.com/…" />
+                </div>
+                <div class="form-field">
+                  <label>Portfolio URL</label>
+                  <input v-model="applyForm.portfolio_url" type="url" placeholder="https://yoursite.com" />
+                </div>
               </div>
-              <div class="form-field">
-                <label>Portfolio URL</label>
-                <input v-model="applyForm.portfolio_url" name="portfolio_url" autocomplete="url" type="url" placeholder="https://yourportfolio.com" />
-              </div>
-              <div class="form-field">
-                <label>GitHub URL</label>
-                <input v-model="applyForm.github_url" name="github_url" autocomplete="url" type="url" placeholder="https://github.com/username" />
-              </div>
-              <div class="form-field">
-                <label>Years of Experience</label>
-                <input v-model.number="applyForm.years_experience" name="years_experience" type="number" placeholder="3" />
+              <div class="form-row">
+                <div class="form-field">
+                  <label>GitHub URL</label>
+                  <input v-model="applyForm.github_url" type="url" placeholder="https://github.com/…" />
+                </div>
+                <div class="form-field">
+                  <label>Years Experience</label>
+                  <input v-model.number="applyForm.years_experience" type="number" placeholder="3" />
+                </div>
               </div>
               <div class="form-field">
                 <label>Availability</label>
@@ -198,8 +344,9 @@
               </div>
             </div>
           </div>
-          <div class="modal-footer">
-            <button class="btn-primary apply-btn" @click="submitApplication" :disabled="!applyForm.cover_letter">
+          <div class="modal-foot">
+            <button class="btn-apply" @click="submitApplication" :disabled="!applyForm.cover_letter">
+              <span class="material-symbols-outlined">send</span>
               Submit Application
             </button>
           </div>
@@ -207,91 +354,90 @@
       </div>
     </Transition>
 
-    <!-- Post Job Modal -->
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- POST JOB MODAL                                 -->
+    <!-- ══════════════════════════════════════════════ -->
     <Transition name="modal">
       <div v-if="showPostJob" class="modal-overlay" @click.self="showPostJob = false">
-        <div class="job-detail-modal">
-          <div class="modal-header">
+        <div class="modal-sheet modal-form">
+          <div class="modal-handle" />
+          <div class="modal-hdr">
             <h2 class="modal-title">Post a Job</h2>
-            <button class="btn-ghost icon-only" @click="showPostJob = false">
+            <button class="modal-close" @click="showPostJob = false">
               <span class="material-symbols-outlined">close</span>
             </button>
           </div>
           <div class="modal-body">
             <div class="form-fields">
               <div class="form-field">
-                <label>Job Title *</label>
-                <input v-model="jobForm.title" name="title" type="text" placeholder="Senior Frontend Developer" />
+                <label>Job Title <span class="req">*</span></label>
+                <input v-model="jobForm.title" type="text" placeholder="Senior Frontend Developer" />
               </div>
-              <div class="form-field">
-                <label>Company Name</label>
-                <input v-model="jobForm.company" name="company" autocomplete="organization" type="text" placeholder="Your company name" />
+              <div class="form-row">
+                <div class="form-field"><label>Company</label>
+                  <input v-model="jobForm.company" type="text" placeholder="Company name" />
+                </div>
+                <div class="form-field"><label>Location</label>
+                  <input v-model="jobForm.location" type="text" placeholder="Remote / City" />
+                </div>
               </div>
               <div class="form-field">
                 <label>Company Logo</label>
-                <div class="logo-upload-box">
-                  <!-- Preview -->
-                  <div class="logo-preview-circle" :class="{ 'has-logo': jobForm.company_logo }">
-                    <img v-if="jobForm.company_logo" :src="jobForm.company_logo" @error="jobForm.company_logo=''" alt="Logo" />
-                    <span v-else class="material-symbols-outlined" style="font-size:28px;color:var(--on-surface-variant)">add_photo_alternate</span>
+                <div class="logo-box">
+                  <div class="logo-preview" :class="{ filled: jobForm.company_logo }">
+                    <img v-if="jobForm.company_logo" :src="jobForm.company_logo" @error="jobForm.company_logo = ''" alt="Logo" />
+                    <span v-else class="material-symbols-outlined" style="font-size:22px;color:var(--on-surface-variant)">add_photo_alternate</span>
                   </div>
-                  <div class="logo-upload-options">
-                    <!-- Upload from device -->
+                  <div class="logo-opts">
                     <button type="button" class="logo-upload-btn" @click="$refs.logoFileInput.click()" :disabled="logoUploading">
-                      <span class="material-symbols-outlined" style="font-size:16px">upload</span>
-                      {{ logoUploading ? 'Uploading…' : 'Upload Image' }}
+                      <span class="material-symbols-outlined" style="font-size:14px">upload</span>
+                      {{ logoUploading ? 'Uploading…' : 'Upload' }}
                     </button>
                     <input ref="logoFileInput" type="file" accept="image/*" class="hidden-f" @change="uploadLogoFile" />
-                    <span class="logo-or">or</span>
-                    <!-- Paste URL -->
-                    <input v-model="jobForm.company_logo" type="url" placeholder="Paste logo URL" class="logo-url-input" />
+                    <span style="font-size:.72rem;color:var(--on-surface-variant)">or</span>
+                    <input v-model="jobForm.company_logo" type="url" placeholder="Paste logo URL" class="logo-url-inp" />
                   </div>
                 </div>
               </div>
               <div class="form-field">
-                <label>Company Website</label>
-                <input v-model="jobForm.company_url" name="company_url" type="url" placeholder="https://yourcompany.com" autocomplete="url" />
-              </div>
-              <div class="form-field">
-                <label>Description *</label>
-                <textarea v-model="jobForm.description" rows="4" placeholder="Describe the role..."></textarea>
+                <label>Description <span class="req">*</span></label>
+                <textarea v-model="jobForm.description" rows="4" placeholder="Describe the role…" />
               </div>
               <div class="form-field">
                 <label>Requirements</label>
-                <textarea v-model="jobForm.requirements" rows="3" placeholder="What skills/experience are needed?"></textarea>
+                <textarea v-model="jobForm.requirements" rows="3" placeholder="Skills / experience needed…" />
               </div>
               <div class="form-field">
-                <label>Skills (comma separated)</label>
-                <input v-model="jobForm.skillsText" name="skills" type="text" placeholder="React, Node.js, TypeScript" />
-              </div>
-              <div class="form-field">
-                <label>Job Type</label>
-                <select v-model="jobForm.job_type">
-                  <option value="full_time">Full Time</option>
-                  <option value="part_time">Part Time</option>
-                  <option value="contract">Contract</option>
-                  <option value="freelance">Freelance</option>
-                  <option value="remote">Remote</option>
-                </select>
-              </div>
-              <div class="form-field">
-                <label>Location</label>
-                <input v-model="jobForm.location" name="location" autocomplete="address-level2" type="text" placeholder="Remote / City, Country" />
+                <label>Skills <span class="field-hint">(comma separated)</span></label>
+                <input v-model="jobForm.skillsText" type="text" placeholder="React, Node.js, TypeScript" />
               </div>
               <div class="form-row">
-                <div class="form-field">
-                  <label>Min Salary ($)</label>
-                  <input v-model.number="jobForm.salary_min" name="salary_min" type="number" placeholder="50000" />
+                <div class="form-field"><label>Job Type</label>
+                  <select v-model="jobForm.job_type">
+                    <option value="full_time">Full Time</option>
+                    <option value="part_time">Part Time</option>
+                    <option value="contract">Contract</option>
+                    <option value="freelance">Freelance</option>
+                    <option value="remote">Remote</option>
+                  </select>
                 </div>
-                <div class="form-field">
-                  <label>Max Salary ($)</label>
-                  <input v-model.number="jobForm.salary_max" name="salary_max" type="number" placeholder="80000" />
+                <div class="form-field"><label>Company Website</label>
+                  <input v-model="jobForm.company_url" type="url" placeholder="https://…" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-field"><label>Min Salary ($)</label>
+                  <input v-model.number="jobForm.salary_min" type="number" placeholder="50000" />
+                </div>
+                <div class="form-field"><label>Max Salary ($)</label>
+                  <input v-model.number="jobForm.salary_max" type="number" placeholder="80000" />
                 </div>
               </div>
             </div>
           </div>
-          <div class="modal-footer">
-            <button class="btn-primary apply-btn" @click="postJob" :disabled="!jobForm.title || !jobForm.description">
+          <div class="modal-foot">
+            <button class="btn-apply" @click="postJob" :disabled="!jobForm.title || !jobForm.description">
+              <span class="material-symbols-outlined">publish</span>
               Post Job
             </button>
           </div>
@@ -299,89 +445,72 @@
       </div>
     </Transition>
 
-    <!-- Edit Job Modal -->
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- EDIT JOB MODAL                                 -->
+    <!-- ══════════════════════════════════════════════ -->
     <Transition name="modal">
       <div v-if="showEditJob" class="modal-overlay" @click.self="showEditJob = false">
-        <div class="job-detail-modal">
-          <div class="modal-header">
+        <div class="modal-sheet modal-form">
+          <div class="modal-handle" />
+          <div class="modal-hdr">
             <h2 class="modal-title">Edit Job</h2>
-            <button class="btn-ghost icon-only" @click="showEditJob = false">
+            <button class="modal-close" @click="showEditJob = false">
               <span class="material-symbols-outlined">close</span>
             </button>
           </div>
           <div class="modal-body">
             <div class="form-fields">
               <div class="form-field">
-                <label>Job Title *</label>
-                <input v-model="editForm.title" type="text" placeholder="Senior Frontend Developer" />
+                <label>Job Title <span class="req">*</span></label>
+                <input v-model="editForm.title" type="text" />
               </div>
-              <div class="form-field">
-                <label>Company Name</label>
-                <input v-model="editForm.company" type="text" placeholder="Your company name" />
-              </div>
-              <div class="form-field">
-                <label>Company Logo</label>
-                <div class="logo-upload-box">
-                  <div class="logo-preview-circle" :class="{ 'has-logo': editForm.company_logo }">
-                    <img v-if="editForm.company_logo" :src="editForm.company_logo" @error="editForm.company_logo=''" alt="Logo" />
-                    <span v-else class="material-symbols-outlined" style="font-size:24px;color:var(--on-surface-variant)">add_photo_alternate</span>
-                  </div>
-                  <div class="logo-upload-options">
-                    <button type="button" class="logo-upload-btn" @click="$refs.editLogoInput.click()" :disabled="logoUploading">
-                      <span class="material-symbols-outlined" style="font-size:16px">upload</span>
-                      {{ logoUploading ? 'Uploading…' : 'Upload Image' }}
-                    </button>
-                    <input ref="editLogoInput" type="file" accept="image/*" class="hidden-f" @change="uploadEditLogoFile" />
-                    <span class="logo-or">or</span>
-                    <input v-model="editForm.company_logo" type="url" placeholder="Paste logo URL" class="logo-url-input" />
-                  </div>
+              <div class="form-row">
+                <div class="form-field"><label>Company</label>
+                  <input v-model="editForm.company" type="text" />
+                </div>
+                <div class="form-field"><label>Location</label>
+                  <input v-model="editForm.location" type="text" />
                 </div>
               </div>
               <div class="form-field">
-                <label>Company Website</label>
-                <input v-model="editForm.company_url" type="url" placeholder="https://yourcompany.com" />
-              </div>
-              <div class="form-field">
-                <label>Description *</label>
-                <textarea v-model="editForm.description" rows="4" placeholder="Describe the role..."></textarea>
+                <label>Description <span class="req">*</span></label>
+                <textarea v-model="editForm.description" rows="4" />
               </div>
               <div class="form-field">
                 <label>Requirements</label>
-                <textarea v-model="editForm.requirements" rows="3" placeholder="What skills/experience are needed?"></textarea>
+                <textarea v-model="editForm.requirements" rows="3" />
               </div>
               <div class="form-field">
-                <label>Skills (comma separated)</label>
-                <input v-model="editForm.skillsText" type="text" placeholder="React, Node.js, TypeScript" />
-              </div>
-              <div class="form-field">
-                <label>Job Type</label>
-                <select v-model="editForm.job_type">
-                  <option value="full_time">Full Time</option>
-                  <option value="part_time">Part Time</option>
-                  <option value="contract">Contract</option>
-                  <option value="freelance">Freelance</option>
-                  <option value="remote">Remote</option>
-                </select>
-              </div>
-              <div class="form-field">
-                <label>Location</label>
-                <input v-model="editForm.location" type="text" placeholder="Remote / City, Country" />
+                <label>Skills <span class="field-hint">(comma separated)</span></label>
+                <input v-model="editForm.skillsText" type="text" />
               </div>
               <div class="form-row">
-                <div class="form-field">
-                  <label>Min Salary ($)</label>
-                  <input v-model.number="editForm.salary_min" type="number" placeholder="50000" />
+                <div class="form-field"><label>Job Type</label>
+                  <select v-model="editForm.job_type">
+                    <option value="full_time">Full Time</option>
+                    <option value="part_time">Part Time</option>
+                    <option value="contract">Contract</option>
+                    <option value="freelance">Freelance</option>
+                    <option value="remote">Remote</option>
+                  </select>
                 </div>
-                <div class="form-field">
-                  <label>Max Salary ($)</label>
-                  <input v-model.number="editForm.salary_max" type="number" placeholder="80000" />
+                <div class="form-field"><label>Company Logo URL</label>
+                  <input v-model="editForm.company_logo" type="url" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-field"><label>Min Salary ($)</label>
+                  <input v-model.number="editForm.salary_min" type="number" />
+                </div>
+                <div class="form-field"><label>Max Salary ($)</label>
+                  <input v-model.number="editForm.salary_max" type="number" />
                 </div>
               </div>
             </div>
           </div>
-          <div class="modal-footer">
-            <button class="btn-primary apply-btn" @click="saveEditJob" :disabled="!editForm.title || !editForm.description || editSaving">
-              <span v-if="editSaving" class="btn-spinner"></span>
+          <div class="modal-foot">
+            <button class="btn-apply" @click="saveEditJob" :disabled="!editForm.title || !editForm.description || editSaving">
+              <span v-if="editSaving" class="btn-spin" />
               <span v-else class="material-symbols-outlined">save</span>
               {{ editSaving ? 'Saving…' : 'Save Changes' }}
             </button>
@@ -390,114 +519,95 @@
       </div>
     </Transition>
 
-    <!-- My Applications Modal -->
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- MY APPLICATIONS MODAL                          -->
+    <!-- ══════════════════════════════════════════════ -->
     <Transition name="modal">
       <div v-if="showMyApplications" class="modal-overlay" @click.self="showMyApplications = false">
-        <div class="job-detail-modal">
-          <div class="modal-header">
+        <div class="modal-sheet">
+          <div class="modal-handle" />
+          <div class="modal-hdr">
             <h2 class="modal-title">My Applications</h2>
-            <button class="btn-ghost icon-only" @click="showMyApplications = false">
+            <button class="modal-close" @click="showMyApplications = false">
               <span class="material-symbols-outlined">close</span>
             </button>
           </div>
           <div class="modal-body">
-            <div v-if="myApplications.length === 0" class="jobs-empty" style="padding:1rem;">
-              <span class="material-symbols-outlined" style="font-size:2.5rem;color:var(--on-surface-variant)">work_history</span>
+            <div v-if="!myApplications.length" class="jobs-empty" style="padding:2rem 0">
+              <span class="material-symbols-outlined" style="font-size:2.5rem;color:var(--outline)">work_history</span>
               <p>No applications yet</p>
             </div>
-            <div v-for="app in myApplications" :key="app.id" class="my-app-card">
-              <div class="my-app-header">
-                <div class="my-app-info">
-                  <h4 class="my-app-title">{{ app.job_title }}</h4>
-                  <p class="my-app-company">{{ app.company }}</p>
-                  <p class="my-app-meta">{{ app.job_type?.replace('_',' ') }} · {{ app.is_remote ? 'Remote' : app.location }}</p>
+            <div v-for="app in myApplications" :key="app.id" class="app-card">
+              <div class="app-card-header">
+                <div>
+                  <h4 class="app-title">{{ app.job_title }}</h4>
+                  <p class="app-company">{{ app.company }} · {{ app.job_type?.replace('_', ' ') }}</p>
+                  <p class="app-date">Applied {{ formatTime(app.created_at) }}</p>
                 </div>
-                <span class="applicant-status" :class="app.status">{{ app.status }}</span>
+                <span class="app-status" :class="app.status">{{ app.status }}</span>
               </div>
-              <p class="my-app-date">Applied {{ formatTime(app.created_at) }}</p>
             </div>
           </div>
         </div>
       </div>
     </Transition>
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- APPLICANTS MODAL                               -->
+    <!-- ══════════════════════════════════════════════ -->
     <Transition name="modal">
       <div v-if="showApplicants" class="modal-overlay" @click.self="showApplicants = false">
-        <div class="job-detail-modal">
-          <div class="modal-header">
+        <div class="modal-sheet">
+          <div class="modal-handle" />
+          <div class="modal-hdr">
             <h2 class="modal-title">Applicants</h2>
-            <button class="btn-ghost icon-only" @click="showApplicants = false">
+            <button class="modal-close" @click="showApplicants = false">
               <span class="material-symbols-outlined">close</span>
             </button>
           </div>
           <div class="modal-body">
-            <div v-if="applicants.length === 0" class="jobs-empty" style="padding:1rem;">
-              <span class="material-symbols-outlined" style="font-size:2rem;color:var(--on-surface-variant)">person_off</span>
+            <div v-if="!applicants.length" class="jobs-empty" style="padding:2rem 0">
+              <span class="material-symbols-outlined" style="font-size:2rem;color:var(--outline)">person_off</span>
               <p>No applications yet</p>
             </div>
             <div v-for="app in applicants" :key="app.id" class="applicant-card">
-              <div class="applicant-header">
-                <div class="applicant-avatar">
-                  <img v-if="app.applicant_avatar" :src="app.applicant_avatar" class="applicant-avatar-img" />
+              <div class="applicant-hdr">
+                <div class="applicant-av">
+                  <img v-if="app.applicant_avatar" :src="app.applicant_avatar" class="applicant-av-img" alt="" />
                   <span v-else>{{ (app.applicant_name || 'U')[0] }}</span>
                 </div>
                 <div class="applicant-info">
-                  <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
+                  <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
                     <h4 class="applicant-name">{{ app.applicant_name }}</h4>
-                    <RouterLink v-if="app.applicant_id" :to="`/developer/${app.applicant_id}`" target="_blank" style="font-size:.75rem;color:var(--primary);text-decoration:none;display:flex;align-items:center;gap:2px;">
-                      <span class="material-symbols-outlined" style="font-size:13px">open_in_new</span>Profile
+                    <RouterLink v-if="app.applicant_id" :to="`/developer/${app.applicant_id}`" target="_blank" class="profile-link">
+                      <span class="material-symbols-outlined" style="font-size:12px">open_in_new</span>Profile
                     </RouterLink>
                   </div>
                   <p class="applicant-meta">
-                    {{ app.years_experience ? app.years_experience + ' yrs exp' : '' }}
-                    {{ app.years_experience && app.availability ? ' · ' : '' }}
-                    {{ app.availability ? app.availability.replace('_',' ') : '' }}
-                  </p>
-                  <p v-if="app.expected_salary" style="font-size:.78rem;color:var(--primary);font-weight:600;margin-top:.2rem;">
-                    Expected: {{ fmtSalary(app.expected_salary) }}
+                    {{ app.years_experience ? app.years_experience + ' yrs' : '' }}
+                    {{ app.availability ? '· ' + app.availability.replace('_', ' ') : '' }}
                   </p>
                 </div>
-                <span class="applicant-status" :class="app.status">{{ app.status }}</span>
+                <span class="app-status" :class="app.status">{{ app.status }}</span>
               </div>
-              <!-- Full cover letter -->
-              <div v-if="app.cover_letter" style="margin-top:.5rem;">
-                <p style="font-size:.72rem;font-weight:700;color:var(--on-surface-variant);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.25rem;">Cover Letter</p>
-                <p class="applicant-cover">{{ app.cover_letter }}</p>
+              <div v-if="app.cover_letter" class="applicant-cover">{{ app.cover_letter }}</div>
+              <div class="applicant-links">
+                <a v-if="app.resume_url"    :href="app.resume_url"    target="_blank" class="app-link">📄 Resume</a>
+                <a v-if="app.portfolio_url" :href="app.portfolio_url" target="_blank" class="app-link">🌐 Portfolio</a>
+                <a v-if="app.github_url"    :href="app.github_url"    target="_blank" class="app-link">💻 GitHub</a>
               </div>
-              <!-- All links -->
-              <div class="applicant-links" style="margin-top:.5rem;flex-wrap:wrap;gap:.4rem;">
-                <a v-if="app.resume_url" :href="app.resume_url" target="_blank" class="app-link" style="display:flex;align-items:center;gap:3px;">
-                  <span class="material-symbols-outlined" style="font-size:13px">description</span> Resume
-                </a>
-                <a v-if="app.portfolio_url" :href="app.portfolio_url" target="_blank" class="app-link" style="display:flex;align-items:center;gap:3px;">
-                  <span class="material-symbols-outlined" style="font-size:13px">language</span> Portfolio
-                </a>
-                <a v-if="app.github_url" :href="app.github_url" target="_blank" class="app-link" style="display:flex;align-items:center;gap:3px;">
-                  <span class="material-symbols-outlined" style="font-size:13px">code</span> GitHub
-                </a>
-                <a v-if="app.linkedin_url" :href="app.linkedin_url" target="_blank" class="app-link" style="display:flex;align-items:center;gap:3px;">
-                  <span class="material-symbols-outlined" style="font-size:13px">work</span> LinkedIn
-                </a>
-              </div>
-              <div v-if="app.status === 'pending' || app.status === 'reviewed'" class="applicant-actions">
-                <button class="btn-approve" @click="updateApplicationStatus(app, 'shortlisted')">
-                  <span class="material-symbols-outlined">check</span> Shortlist
+              <div v-if="['pending','reviewed','shortlisted'].includes(app.status)" class="applicant-actions">
+                <button class="act-shortlist" v-if="app.status !== 'shortlisted'" @click="updateApplicationStatus(app, 'shortlisted')">
+                  <span class="material-symbols-outlined" style="font-size:14px">check</span>Shortlist
                 </button>
-                <button class="btn-chat" @click="openHiringChat(selectedJob, app)">
-                  <span class="material-symbols-outlined">chat</span> Message
+                <button class="act-accept" v-if="app.status === 'shortlisted'" @click="updateApplicationStatus(app, 'accepted')">
+                  <span class="material-symbols-outlined" style="font-size:14px">how_to_reg</span>Accept
                 </button>
-                <button class="btn-decline" @click="updateApplicationStatus(app, 'rejected')">
-                  <span class="material-symbols-outlined">close</span> Decline
+                <button class="act-chat" @click="openHiringChat(selectedJob, app)">
+                  <span class="material-symbols-outlined" style="font-size:14px">chat</span>Message
                 </button>
-              </div>
-              <div v-else-if="app.status === 'shortlisted'" class="applicant-actions">
-                <button class="btn-approve" style="background:rgba(168,85,247,0.1);border-color:rgba(168,85,247,0.3);color:var(--primary)" @click="updateApplicationStatus(app, 'accepted')">
-                  <span class="material-symbols-outlined">how_to_reg</span> Accept
-                </button>
-                <button class="btn-chat" @click="openHiringChat(selectedJob, app)">
-                  <span class="material-symbols-outlined">chat</span> Message
-                </button>
-                <button class="btn-decline" @click="updateApplicationStatus(app, 'rejected')">
-                  <span class="material-symbols-outlined">close</span> Decline
+                <button class="act-decline" @click="updateApplicationStatus(app, 'rejected')">
+                  <span class="material-symbols-outlined" style="font-size:14px">close</span>Decline
                 </button>
               </div>
             </div>
@@ -505,6 +615,7 @@
         </div>
       </div>
     </Transition>
+
   </div>
 </template>
 
@@ -517,221 +628,127 @@ import { useUiStore } from '@/store/ui'
 import { useCurrencyStore } from '@/store/currency'
 import http from '@/services/http'
 
-const currencyStore = useCurrencyStore()
-// Salaries are stored in USD
-const fmtSalary = (usd) => currencyStore.format(usd)
-
 useSeo(pageSeo.jobs)
+const authStore     = useAuthStore()
+const uiStore       = useUiStore()
+const router        = useRouter()
+const currencyStore = useCurrencyStore()
+const fmtSalary     = (usd) => currencyStore.format(usd)
 
-const authStore = useAuthStore()
-const uiStore = useUiStore()
-const router = useRouter()
+const jobs             = ref([])
+const loading          = ref(true)
+const searchQuery      = ref('')
+const searchFocused    = ref(false)
+const activeFilter     = ref('all')
+const sortBy           = ref('newest')
+const selectedJob      = ref(null)
+const showApplyModal   = ref(false)
+const showPostJob      = ref(false)
+const showEditJob      = ref(false)
+const showApplicants   = ref(false)
+const showMyApplications = ref(false)
+const applicants       = ref([])
+const myApplications   = ref([])
+const logoUploading    = ref(false)
+const editSaving       = ref(false)
+const currentReviewJob = ref(null)
 
-const jobs = ref([])
-const loading = ref(true)
-const searchQuery = ref('')
-const activeFilter = ref('all')
-const selectedJob = ref(null)
-const showApplyModal = ref(false)
-const showPostJob = ref(false)
-const showApplicants = ref(false)
-const applicants = ref([])
-
-const isClient = computed(() => authStore.profile?.role === 'client' || authStore.profile?.role === 'admin')
+const isClient    = computed(() => ['client','admin'].includes(authStore.profile?.role))
 const isDeveloper = computed(() => authStore.profile?.role === 'developer')
 
-const filters = [
-  { value: 'all', label: 'All' },
+const JOB_FILTERS = [
+  { value: 'all',       label: 'All Jobs' },
   { value: 'full_time', label: 'Full Time' },
-  { value: 'remote', label: 'Remote' },
-  { value: 'contract', label: 'Contract' },
+  { value: 'remote',    label: 'Remote' },
+  { value: 'contract',  label: 'Contract' },
   { value: 'freelance', label: 'Freelance' },
+  { value: 'part_time', label: 'Part Time' },
 ]
 
-const applyForm = ref({
-  cover_letter: '',
-  resume_url: '',
-  portfolio_url: '',
-  github_url: '',
-  years_experience: null,
-  availability: 'immediately',
+const sortedJobs = computed(() => {
+  const list = [...jobs.value]
+  if (sortBy.value === 'salary')       list.sort((a,b) => (b.salary_min||0) - (a.salary_min||0))
+  if (sortBy.value === 'applications') list.sort((a,b) => (b.application_count||0) - (a.application_count||0))
+  return list
 })
 
-const jobForm = ref({
-  title: '',
-  company: '',
-  company_logo: '',
-  company_url: '',
-  description: '',
-  requirements: '',
-  skillsText: '',
-  job_type: 'full_time',
-  location: '',
-  salary_min: null,
-  salary_max: null,
-})
+const applyForm = ref({ cover_letter:'', resume_url:'', portfolio_url:'', github_url:'', years_experience:null, availability:'immediately' })
+const jobForm   = ref({ title:'', company:'', company_logo:'', company_url:'', description:'', requirements:'', skillsText:'', job_type:'full_time', location:'', salary_min:null, salary_max:null })
+const editForm  = ref({ id:'', title:'', company:'', company_logo:'', company_url:'', description:'', requirements:'', skillsText:'', job_type:'full_time', location:'', salary_min:null, salary_max:null })
 
-const logoUploading = ref(false)
-
-async function uploadLogoFile(e) {
-  const file = e.target.files?.[0]
-  if (!file) return
-  logoUploading.value = true
-  try {
-    const formData = new FormData()
-    formData.append('file', file)
-    const data = await http.post('/uploads/media', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
-    if (data.url) jobForm.value.company_logo = data.url
-    else uiStore.showError('Upload failed — no URL returned')
-  } catch { uiStore.showError('Failed to upload logo. Try pasting a URL instead.') }
-  finally {
-    logoUploading.value = false
-    e.target.value = ''
-  }
-}
-
-// ── Edit Job ──
-const showEditJob = ref(false)
-const editSaving  = ref(false)
-const editForm    = ref({
-  id: '', title: '', company: '', company_logo: '', company_url: '',
-  description: '', requirements: '', skillsText: '',
-  job_type: 'full_time', location: '', salary_min: null, salary_max: null,
-})
-
-function openEditJob(job) {
-  editForm.value = {
-    id:           job.id,
-    title:        job.title || '',
-    company:      job.company || '',
-    company_logo: job.company_logo || '',
-    company_url:  job.company_url || '',
-    description:  job.description || '',
-    requirements: job.requirements || '',
-    skillsText:   (job.skills_required || []).join(', '),
-    job_type:     job.job_type || 'full_time',
-    location:     job.location || '',
-    salary_min:   job.salary_min || null,
-    salary_max:   job.salary_max || null,
-  }
-  selectedJob.value = null
-  showEditJob.value = true
-}
-
-async function uploadEditLogoFile(e) {
-  const file = e.target.files?.[0]
-  if (!file) return
-  logoUploading.value = true
-  try {
-    const formData = new FormData()
-    formData.append('file', file)
-    const data = await http.post('/uploads/media', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
-    if (data.url) editForm.value.company_logo = data.url
-    else uiStore.showError('Upload failed — no URL returned')
-  } catch { uiStore.showError('Failed to upload logo.') }
-  finally {
-    logoUploading.value = false
-    e.target.value = ''
-  }
-}
-
-async function saveEditJob() {
-  if (!editForm.value.title || !editForm.value.description) return
-  editSaving.value = true
-  try {
-    await http.patch(`/jobs/${editForm.value.id}`, {
-      title:          editForm.value.title,
-      company:        editForm.value.company || undefined,
-      company_logo:   editForm.value.company_logo || undefined,
-      company_url:    editForm.value.company_url || undefined,
-      description:    editForm.value.description,
-      requirements:   editForm.value.requirements || undefined,
-      skills_required: editForm.value.skillsText
-        ? editForm.value.skillsText.split(',').map(s => s.trim()).filter(Boolean)
-        : [],
-      job_type:   editForm.value.job_type,
-      location:   editForm.value.location || undefined,
-      salary_min: editForm.value.salary_min || undefined,
-      salary_max: editForm.value.salary_max || undefined,
-      is_remote:  !editForm.value.location || editForm.value.location.toLowerCase().includes('remote'),
-    })
-    uiStore.showSuccess('Job updated!')
-    showEditJob.value = false
-    fetchJobs()
-  } catch (err) {
-    uiStore.showError(err?.response?.data?.detail || 'Failed to update job')
-  } finally {
-    editSaving.value = false
-  }
-}let searchTimeout = null
+let searchTimeout = null
 function debouncedSearch() {
   clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(fetchJobs, 500)
-}
-
-async function openJobDetail(job) {
-  // Set immediately for instant feel
-  selectedJob.value = job
-  // Then fetch fresh data (this also increments view_count on backend)
-  try {
-    const fresh = await http.get(`/jobs/${job.id}`)
-    selectedJob.value = { ...job, ...fresh }
-  } catch { /* keep stale data */ }
+  searchTimeout = setTimeout(fetchJobs, 450)
 }
 
 async function fetchJobs() {
   loading.value = true
   try {
-    let url = '/jobs?limit=30'
+    let url = '/jobs?limit=50'
     if (activeFilter.value !== 'all') url += `&job_type=${activeFilter.value}`
-    if (searchQuery.value) url += `&search=${searchQuery.value}`
-
-    // Try with auth first, fallback to public fetch
+    if (searchQuery.value) url += `&search=${encodeURIComponent(searchQuery.value)}`
     try {
       const data = await http.get(url)
       jobs.value = data.jobs || []
     } catch {
-      // Fallback: fetch without auth token
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1'
-      const res = await fetch(`${baseUrl}${url}`)
-      if (res.ok) {
-        const data = await res.json()
-        jobs.value = data.jobs || []
-      }
+      const base = import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1'
+      const res = await fetch(`${base}${url}`)
+      if (res.ok) jobs.value = (await res.json()).jobs || []
     }
-  } catch (err) {
-    console.error('Fetch jobs error:', err)
-    jobs.value = []
-  } finally {
-    loading.value = false
-  }
+  } catch { jobs.value = [] }
+  finally { loading.value = false }
+}
+
+async function openJobDetail(job) {
+  selectedJob.value = job
+  try {
+    const fresh = await http.get(`/jobs/${job.id}`)
+    selectedJob.value = { ...job, ...fresh }
+  } catch {}
 }
 
 async function postJob() {
   try {
-    const payload = {
-      title: jobForm.value.title,
-      company: jobForm.value.company || undefined,
-      company_logo: jobForm.value.company_logo || undefined,
-      company_url: jobForm.value.company_url || undefined,
-      description: jobForm.value.description,
-      requirements: jobForm.value.requirements || undefined,
-      skills_required: jobForm.value.skillsText ? jobForm.value.skillsText.split(',').map(s => s.trim()).filter(Boolean) : [],
-      job_type: jobForm.value.job_type || 'full_time',
-      location: jobForm.value.location || undefined,
+    await http.post('/jobs/', {
+      title: jobForm.value.title, company: jobForm.value.company || undefined,
+      company_logo: jobForm.value.company_logo || undefined, company_url: jobForm.value.company_url || undefined,
+      description: jobForm.value.description, requirements: jobForm.value.requirements || undefined,
+      skills_required: jobForm.value.skillsText ? jobForm.value.skillsText.split(',').map(s=>s.trim()).filter(Boolean) : [],
+      job_type: jobForm.value.job_type, location: jobForm.value.location || undefined,
       is_remote: !jobForm.value.location || jobForm.value.location.toLowerCase().includes('remote'),
-      salary_min: jobForm.value.salary_min || undefined,
-      salary_max: jobForm.value.salary_max || undefined,
-    }
-    await http.post('/jobs/', payload)
-    uiStore.showSuccess('Job posted successfully!')
+      salary_min: jobForm.value.salary_min || undefined, salary_max: jobForm.value.salary_max || undefined,
+    })
+    uiStore.showSuccess('Job posted!')
     showPostJob.value = false
-    jobForm.value = { title: '', company: '', company_logo: '', company_url: '', description: '', requirements: '', skillsText: '', job_type: 'full_time', location: '', salary_min: null, salary_max: null }
+    jobForm.value = { title:'', company:'', company_logo:'', company_url:'', description:'', requirements:'', skillsText:'', job_type:'full_time', location:'', salary_min:null, salary_max:null }
     fetchJobs()
-  } catch (err) {
-    console.error('Post job error:', err.response?.data || err)
-    uiStore.showError(err.response?.data?.detail || 'Failed to post job. Please try again.')
-  }
+  } catch (err) { uiStore.showError(err?.response?.data?.detail || 'Failed to post job') }
+}
+
+async function uploadLogoFile(e) {
+  const file = e.target.files?.[0]; if (!file) return
+  logoUploading.value = true
+  try {
+    const fd = new FormData(); fd.append('file', file)
+    const data = await http.post('/uploads/media', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+    if (data.url) jobForm.value.company_logo = data.url
+  } catch { uiStore.showError('Upload failed') }
+  finally { logoUploading.value = false; e.target.value = '' }
+}
+
+function openEditJob(job) {
+  editForm.value = { id:job.id, title:job.title||'', company:job.company||'', company_logo:job.company_logo||'', company_url:job.company_url||'', description:job.description||'', requirements:job.requirements||'', skillsText:(job.skills_required||[]).join(', '), job_type:job.job_type||'full_time', location:job.location||'', salary_min:job.salary_min||null, salary_max:job.salary_max||null }
+  selectedJob.value = null; showEditJob.value = true
+}
+
+async function saveEditJob() {
+  editSaving.value = true
+  try {
+    await http.patch(`/jobs/${editForm.value.id}`, { ...editForm.value, skills_required: editForm.value.skillsText ? editForm.value.skillsText.split(',').map(s=>s.trim()).filter(Boolean) : [], is_remote: !editForm.value.location || editForm.value.location.toLowerCase().includes('remote') })
+    uiStore.showSuccess('Job updated!'); showEditJob.value = false; fetchJobs()
+  } catch (err) { uiStore.showError(err?.response?.data?.detail || 'Failed to update') }
+  finally { editSaving.value = false }
 }
 
 async function submitApplication() {
@@ -739,265 +756,776 @@ async function submitApplication() {
   try {
     await http.post(`/jobs/${selectedJob.value.id}/apply`, applyForm.value)
     uiStore.showSuccess('Application submitted!')
-    showApplyModal.value = false
-    selectedJob.value = null
-    applyForm.value = { cover_letter: '', resume_url: '', portfolio_url: '', github_url: '', years_experience: null, availability: 'immediately' }
-  } catch (err) {
-    uiStore.showError(err.response?.data?.detail || 'Failed to apply')
-  }
-}
-
-function formatTime(dateStr) {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diff = (now - date) / 1000
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
-  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    showApplyModal.value = false; selectedJob.value = null
+    applyForm.value = { cover_letter:'', resume_url:'', portfolio_url:'', github_url:'', years_experience:null, availability:'immediately' }
+  } catch (err) { uiStore.showError(err?.response?.data?.detail || 'Failed to apply') }
 }
 
 async function deleteJob(job) {
-  if (!confirm('Are you sure you want to delete this job posting?')) return
-  try {
-    await http.request({ method: 'DELETE', url: `/jobs/${job.id}` })
-    jobs.value = jobs.value.filter(j => j.id !== job.id)
-    uiStore.showSuccess('Job deleted')
-  } catch {
-    uiStore.showError('Failed to delete job')
-  }
+  if (!confirm('Delete this job posting?')) return
+  try { await http.request({ method:'DELETE', url:`/jobs/${job.id}` }); jobs.value = jobs.value.filter(j=>j.id!==job.id); uiStore.showSuccess('Job deleted') }
+  catch { uiStore.showError('Failed to delete') }
 }
 
 async function viewApplicants(job) {
-  if (!job) return
-  currentReviewJob.value = job
-  try {
-    const data = await http.get(`/jobs/${job.id}/applications`)
-    applicants.value = data.applications || []
-    showApplicants.value = true
-    selectedJob.value = null
-  } catch (err) {
-    const msg = err?.response?.data?.detail || err?.message || 'Failed to load applicants'
-    uiStore.showError(msg)
-    console.error('[job-applications]', err?.response?.status, err?.response?.data)
-  }
+  if (!job) return; currentReviewJob.value = job
+  try { const data = await http.get(`/jobs/${job.id}/applications`); applicants.value = data.applications||[]; showApplicants.value = true; selectedJob.value = null }
+  catch (err) { uiStore.showError(err?.response?.data?.detail || 'Failed to load applicants') }
 }
 
-async function updateApplicationStatus(app, newStatus) {
+async function updateApplicationStatus(app, status) {
   try {
-    await http.patch(`/jobs/applications/${app.id}`, { status: newStatus })
-    app.status = newStatus
-    uiStore.showSuccess(
-      newStatus === 'shortlisted' ? 'Applicant shortlisted!' :
-      newStatus === 'accepted' ? '🎉 Applicant accepted!' :
-      newStatus === 'rejected' ? 'Application declined' : 'Status updated'
-    )
-  } catch {
-    uiStore.showError('Failed to update status')
-  }
+    await http.patch(`/jobs/applications/${app.id}`, { status })
+    app.status = status
+    uiStore.showSuccess(status === 'accepted' ? '🎉 Accepted!' : status === 'shortlisted' ? 'Shortlisted!' : 'Status updated')
+  } catch { uiStore.showError('Failed to update status') }
 }
 
 async function openHiringChat(job, app) {
-  const jobToUse = job || currentReviewJob.value
-  if (!jobToUse) { uiStore.showError('Job not found'); return }
   if (!app?.applicant_id) { uiStore.showError('Applicant not found'); return }
   try {
-    // Start or open a direct conversation with the applicant
-    const { default: http2 } = await import('@/services/http')
-    const data = await http2.post('/messages/conversations', {
-      participant_ids: [app.applicant_id],
-      type: 'direct',
-    })
-    uiStore.showSuccess('Opening chat with ' + (app.applicant_name || 'applicant'))
-    showApplicants.value = false
-    router.push({ path: '/messaging', query: { conv: data.id } })
-  } catch (err) {
-    uiStore.showError(err?.response?.data?.detail || 'Could not open chat')
-  }
+    const data = await http.post('/messages/conversations', { participant_ids:[app.applicant_id], type:'direct' })
+    showApplicants.value = false; router.push({ path:'/messaging', query:{ conv:data.id } })
+  } catch (err) { uiStore.showError(err?.response?.data?.detail || 'Could not open chat') }
 }
 
 async function closeJob(job) {
-  if (!confirm('Close this job? No more applications will be accepted.')) return
-  try {
-    await http.patch(`/jobs/${job.id}/close`, {})
-    job.status = 'closed'
-    jobs.value.forEach(j => { if (j.id === job.id) j.status = 'closed' })
-    uiStore.showSuccess('Job closed')
-    selectedJob.value = null
-  } catch {
-    uiStore.showError('Failed to close job')
-  }
+  if (!confirm('Close this job?')) return
+  try { await http.patch(`/jobs/${job.id}/close`, {}); job.status='closed'; jobs.value.forEach(j=>{ if(j.id===job.id) j.status='closed' }); uiStore.showSuccess('Job closed'); selectedJob.value = null }
+  catch { uiStore.showError('Failed to close job') }
 }
 
-const currentReviewJob = ref(null)
-
-const myApplications = ref([])
-const showMyApplications = ref(false)
-
 async function fetchMyApplications() {
-  try {
-    const data = await http.get('/jobs/my-applications')
-    myApplications.value = data.applications || []
-    showMyApplications.value = true
-  } catch (err) {
-    const msg = err?.response?.data?.detail || err?.message || 'Failed to load your applications'
-    uiStore.showError(msg)
-    console.error('[my-applications]', err?.response?.status, err?.response?.data)
-  }
+  try { const data = await http.get('/jobs/my-applications'); myApplications.value = data.applications||[]; showMyApplications.value = true }
+  catch (err) { uiStore.showError(err?.response?.data?.detail || 'Failed to load applications') }
+}
+
+function formatTime(d) {
+  if (!d) return ''
+  const diff = (Date.now() - new Date(d)) / 1000
+  if (diff < 3600)   return `${Math.floor(diff/60)}m ago`
+  if (diff < 86400)  return `${Math.floor(diff/3600)}h ago`
+  if (diff < 604800) return `${Math.floor(diff/86400)}d ago`
+  return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric'})
 }
 
 let refreshInterval = null
-onMounted(() => {
-  fetchJobs()
-  refreshInterval = setInterval(fetchJobs, 30000)
-})
-onUnmounted(() => {
-  if (refreshInterval) clearInterval(refreshInterval)
-})
+onMounted(() => { fetchJobs(); refreshInterval = setInterval(fetchJobs, 30000) })
+onUnmounted(() => { if (refreshInterval) clearInterval(refreshInterval) })
 </script>
 
 <style scoped>
-.jobs-view { padding: 0.5rem 0; min-height: 100vh; background: var(--background); padding-bottom: 80px; }
-.jobs-header { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; }
-.jobs-title { font-family: var(--font-headline); font-size: 1.25rem; font-weight: 700; color: var(--on-surface); }
-.btn-post-job { display: flex; align-items: center; gap: 0.3rem; padding: 0.5rem 1rem; background: var(--primary); color: #fff; border: none; border-radius: var(--radius-full); font-family: var(--font-headline); font-size: 0.8rem; font-weight: 600; cursor: pointer; }
-.btn-post-job .material-symbols-outlined { font-size: 18px; }
+/* ═══════════════════════════════════════════════════════════
+   ROOT
+═══════════════════════════════════════════════════════════ */
+.jobs-root { background: var(--background); min-height: 100vh; }
 
-.jobs-search { padding: 0 1rem 0.75rem; position: relative; }
-.search-icon { position: absolute; left: 1.75rem; top: 50%; transform: translateY(-50%); font-size: 20px; color: var(--on-surface-variant); pointer-events: none; margin-top: -0.375rem; }
-.search-input { width: 100%; padding: 0.6rem 0.75rem 0.6rem 2.75rem; background: var(--surface-container-low); border: 1px solid var(--outline-variant); border-radius: var(--radius-full); font-size: 0.875rem; color: var(--on-surface); outline: none; }
-.search-input:focus { border-color: var(--primary); }
+/* ═══════════════════════════════════════════════════════════
+   HERO
+═══════════════════════════════════════════════════════════ */
+.jobs-hero {
+  position: relative; overflow: hidden;
+  background: var(--background);
+  padding: calc(5rem + env(safe-area-inset-top, 0px)) 0 3.5rem;
+}
 
-.jobs-filters { display: flex; gap: 0.4rem; padding: 0 1rem 0.75rem; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-.jobs-filters::-webkit-scrollbar { display: none; }
-.filter-chip { padding: 0.4rem 1rem; background: var(--surface-container); border: 1px solid var(--outline-variant); border-radius: var(--radius-full); font-size: 0.8rem; font-weight: 600; color: var(--on-surface-variant); cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: all 0.15s; }
-.filter-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+/* Mesh background */
+.hero-mesh { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.mesh-blob { position: absolute; border-radius: 50%; filter: blur(90px); animation: blobFloat 8s ease-in-out infinite; }
+.mesh-1 {
+  width: 600px; height: 480px; top: -140px; right: -100px;
+  background: radial-gradient(circle, rgba(99,14,212,.13) 0%, transparent 70%);
+  animation-delay: 0s;
+}
+.mesh-2 {
+  width: 400px; height: 400px; bottom: -100px; left: -80px;
+  background: radial-gradient(circle, rgba(168,85,247,.1) 0%, transparent 70%);
+  animation-delay: -4s;
+}
+.mesh-3 {
+  width: 300px; height: 300px; top: 40%; left: 40%;
+  background: radial-gradient(circle, rgba(99,14,212,.07) 0%, transparent 70%);
+  animation-delay: -2s;
+}
 
-.jobs-list { padding: 0 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
-.job-card { padding: 1rem; background: var(--surface-container-lowest); border: 1px solid var(--outline-variant); border-radius: var(--radius-xl); cursor: pointer; transition: border-color 0.15s; }
-.job-card:hover { border-color: var(--primary); }
-.job-card-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
-.job-company-logo { width: 44px; height: 44px; border-radius: var(--radius-lg); background: var(--primary-fixed); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
-.company-logo-img { width: 100%; height: 100%; object-fit: cover; }
-.company-initials { font-family: var(--font-headline); font-size: 1rem; font-weight: 700; color: var(--primary); }
-.job-info { flex: 1; min-width: 0; }
-.job-title { font-family: var(--font-headline); font-size: 0.9rem; font-weight: 700; color: var(--on-surface); }
-.job-company { font-size: 0.8rem; color: var(--on-surface-variant); }
-.job-company-link { text-decoration: none; color: var(--primary); font-weight: 500; display: inline-flex; align-items: center; gap: 2px; }
-.job-company-link:hover { text-decoration: underline; }
-.job-meta { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.5rem; }
-.job-tag { padding: 0.2rem 0.5rem; background: var(--surface-container); border-radius: var(--radius-full); font-size: 0.7rem; font-weight: 500; color: var(--on-surface-variant); text-transform: capitalize; }
-.job-tag.remote { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
-.job-desc { font-size: 0.82rem; color: var(--on-surface-variant); line-height: 1.5; margin-bottom: 0.5rem; }
-.job-footer { display: flex; justify-content: space-between; align-items: center; }
-.job-salary { font-family: var(--font-headline); font-size: 0.8rem; font-weight: 600; color: var(--primary); }
-.job-time { font-size: 0.72rem; color: var(--on-surface-variant); }
-.job-delete-btn { background: none; border: none; color: var(--on-surface-variant); cursor: pointer; padding: 0.3rem; border-radius: 50%; transition: all 0.15s; margin-left: auto; }
-.job-delete-btn:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
-.job-delete-btn .material-symbols-outlined { font-size: 18px; }
+@keyframes blobFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%       { transform: translate(12px, -16px) scale(1.04); }
+  66%       { transform: translate(-8px, 10px) scale(.97); }
+}
 
-.jobs-loading { display: flex; flex-direction: column; gap: 1rem; }
-.skeleton-job { display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: var(--surface-container-lowest); border-radius: var(--radius-xl); }
-.skeleton-shimmer { background: linear-gradient(90deg, var(--surface-container) 25%, var(--surface-container-high) 50%, var(--surface-container) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
-@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+/* Dot grid */
+.hero-grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(var(--outline-variant) 1px, transparent 1px),
+    linear-gradient(90deg, var(--outline-variant) 1px, transparent 1px);
+  background-size: 60px 60px;
+  opacity: .22;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+}
 
-.jobs-empty { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 3rem 1rem; text-align: center; color: var(--on-surface-variant); }
+/* Hero body */
+.hero-body {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1.25rem;
+}
 
-/* Modals */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: flex-end; padding: 0; overflow: hidden; }
-@media (min-width: 640px) { .modal-overlay { align-items: center; padding: 1rem; } }
-.job-detail-modal { width: 100%; max-width: 560px; max-height: 85vh; display: flex; flex-direction: column; background: var(--surface-container-lowest); border-radius: var(--radius-2xl) var(--radius-2xl) 0 0; overflow: hidden; }
-@media (min-width: 640px) { .job-detail-modal { border-radius: var(--radius-2xl); margin: 0 auto; max-height: 80vh; } }
-.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.25rem 0.75rem; flex-shrink: 0; border-bottom: 1px solid var(--outline-variant); }
-.modal-title { font-family: var(--font-headline); font-size: 1.1rem; font-weight: 700; color: var(--on-surface); }
-.modal-body { display: flex; flex-direction: column; gap: 1rem; padding: 1rem 1.25rem; overflow-y: auto; flex: 1; min-height: 0; }
-.modal-footer { padding: 0.75rem 1.25rem 1.25rem; border-top: 1px solid var(--outline-variant); flex-shrink: 0; }
+/* Top row: tag + action buttons */
+.hero-toprow {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; max-width: 780px; flex-wrap: wrap; gap: .75rem;
+}
+.hero-tag {
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .3rem .875rem;
+  background: var(--surface-container-low);
+  border: 1px solid var(--outline-variant);
+  border-radius: 999px;
+  font-family: var(--font-headline); font-size: .8rem; font-weight: 600; color: var(--primary);
+}
+.tag-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,.65); flex-shrink: 0;
+}
+.hero-actions { display: flex; align-items: center; gap: .5rem; }
+.btn-my-apps, .btn-post {
+  display: inline-flex; align-items: center; gap: .35rem;
+  padding: .45rem 1rem; border-radius: 12px;
+  font-family: var(--font-headline); font-size: .8rem; font-weight: 700;
+  cursor: pointer; transition: all .2s; border: 1.5px solid transparent;
+}
+.btn-my-apps {
+  background: var(--surface-container-lowest);
+  border-color: var(--outline-variant); color: var(--on-surface);
+}
+.btn-my-apps:hover { border-color: var(--primary); color: var(--primary); }
+.btn-post {
+  background: var(--primary); color: #fff;
+}
+.btn-post:hover { opacity: .9; transform: translateY(-1px); }
+.btn-my-apps .material-symbols-outlined,
+.btn-post .material-symbols-outlined { font-size: 16px; }
 
-.detail-company { display: flex; align-items: center; gap: 0.75rem; }
-.detail-company-name { font-family: var(--font-headline); font-size: 0.9rem; font-weight: 600; color: var(--on-surface); }
-.detail-company-link { text-decoration: none; color: var(--primary); display: inline-flex; align-items: center; gap: 3px; }
-.detail-company-link:hover { text-decoration: underline; }
-.detail-location { font-size: 0.8rem; color: var(--on-surface-variant); }
-.detail-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-.detail-salary { font-family: var(--font-headline); font-size: 1rem; font-weight: 700; color: var(--primary); }
-.detail-section h4 { font-family: var(--font-headline); font-size: 0.875rem; font-weight: 700; color: var(--on-surface); margin-bottom: 0.35rem; }
-.detail-section p { font-size: 0.85rem; color: var(--on-surface-variant); line-height: 1.6; white-space: pre-line; }
-.detail-skills { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-.skill-chip { padding: 0.25rem 0.6rem; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.2); border-radius: var(--radius-full); font-size: 0.75rem; font-weight: 500; color: var(--primary); }
-.detail-stats { display: flex; gap: 1rem; font-size: 0.8rem; color: var(--on-surface-variant); }
+/* Headline */
+.hero-h {
+  font-family: var(--font-headline); font-size: clamp(2rem, 5.5vw, 3.2rem);
+  font-weight: 900; line-height: 1.07; letter-spacing: -.04em;
+  color: var(--on-surface); max-width: 640px;
+}
+.text-gradient {
+  background: linear-gradient(135deg, #a855f7 0%, #630ed4 50%, #a855f7 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-sub {
+  font-size: clamp(.95rem, 2vw, 1.1rem); color: var(--on-surface-variant);
+  line-height: 1.65; max-width: 500px;
+}
 
-.apply-btn { width: 100%; justify-content: center; padding: 0.75rem; font-size: 0.9rem; display: flex; align-items: center; gap: 0.4rem; }
-.posted-by-you { font-size: 0.85rem; color: var(--on-surface-variant); text-align: center; font-style: italic; }
+/* ═══════════════════════════════════════════════════════════
+   SEARCH BAR
+═══════════════════════════════════════════════════════════ */
+.search-bar {
+  display: flex; align-items: center; gap: .5rem;
+  width: 100%; max-width: 600px;
+  background: var(--surface-container-lowest);
+  border: 1.5px solid var(--outline-variant);
+  border-radius: 16px; padding: .5rem .5rem .5rem 1rem;
+  box-shadow: 0 2px 12px rgba(0,0,0,.07);
+  transition: border-color .2s, box-shadow .2s;
+}
+.search-bar.focused { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(99,14,212,.1); }
+.s-ico { color: var(--outline); font-size: 20px; flex-shrink: 0; }
+.s-inp {
+  flex: 1; border: none; background: transparent;
+  font-family: var(--font-body); font-size: .95rem; color: var(--on-surface);
+  outline: none; min-width: 0;
+}
+.s-inp::placeholder { color: var(--outline); }
+.s-clear {
+  border: none; background: none; cursor: pointer; color: var(--outline);
+  display: flex; align-items: center; padding: .25rem; flex-shrink: 0;
+}
+.s-clear:hover { color: var(--on-surface); }
+.s-btn {
+  flex-shrink: 0; padding: .55rem 1.2rem;
+  background: var(--primary); color: #fff; border: none; border-radius: 12px;
+  font-family: var(--font-headline); font-size: .85rem; font-weight: 700;
+  cursor: pointer; transition: opacity .15s, transform .15s; white-space: nowrap;
+}
+.s-btn:hover { opacity: .9; transform: translateY(-1px); }
 
-/* Applicant Cards */
-.applicant-card { padding: 1rem; background: var(--surface-container-low); border: 1px solid var(--outline-variant); border-radius: var(--radius-xl); display: flex; flex-direction: column; gap: 0.6rem; }
-.applicant-header { display: flex; align-items: center; gap: 0.75rem; }
-.applicant-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--primary-fixed); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; font-family: var(--font-headline); font-size: 0.9rem; font-weight: 700; color: var(--primary); }
-.applicant-avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
-.applicant-info { flex: 1; min-width: 0; }
-.applicant-name { font-family: var(--font-headline); font-size: 0.9rem; font-weight: 700; color: var(--on-surface); }
-.applicant-meta { font-size: 0.75rem; color: var(--on-surface-variant); }
-.applicant-status { padding: 0.2rem 0.5rem; border-radius: var(--radius-full); font-size: 0.7rem; font-weight: 600; text-transform: capitalize; }
-.applicant-status.pending { background: rgba(251, 146, 60, 0.1); color: #f59e0b; }
-.applicant-status.shortlisted { background: rgba(34, 197, 94, 0.1); color: #16a34a; }
-.applicant-status.rejected { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
-.applicant-status.accepted { background: rgba(168, 85, 247, 0.1); color: var(--primary); }
-.applicant-cover { font-size: 0.82rem; color: var(--on-surface-variant); line-height: 1.5; }
-.applicant-links { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.app-link { font-size: 0.78rem; color: var(--primary); text-decoration: none; font-weight: 500; }
-.app-link:hover { text-decoration: underline; }
-.applicant-actions { display: flex; gap: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--outline-variant); }
-.btn-approve { flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.3rem; padding: 0.5rem; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: var(--radius-lg); color: #16a34a; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
-.btn-approve:hover { background: rgba(34, 197, 94, 0.2); }
-.btn-approve .material-symbols-outlined { font-size: 16px; }
-.btn-decline { flex: 1; display: flex; align-items: center; justify-content: center; gap: 0.3rem; padding: 0.5rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-lg); color: #ef4444; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
-.btn-decline:hover { background: rgba(239, 68, 68, 0.2); }
-.btn-decline .material-symbols-outlined { font-size: 16px; }
+/* ═══════════════════════════════════════════════════════════
+   FILTER CHIPS
+═══════════════════════════════════════════════════════════ */
+.filter-chips {
+  display: flex; flex-wrap: wrap; gap: .4rem; justify-content: center;
+}
+.fchip {
+  padding: .4rem .9rem; border-radius: 999px;
+  border: 1.5px solid var(--outline-variant);
+  background: none; font-family: var(--font-headline); font-size: .8rem; font-weight: 600;
+  color: var(--on-surface-variant); cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.fchip:hover { border-color: var(--primary); color: var(--primary); }
+.fchip.active {
+  border-color: var(--primary); background: var(--primary-fixed); color: var(--primary);
+}
 
-.form-fields { display: flex; flex-direction: column; gap: 0.875rem; }
-.form-field { display: flex; flex-direction: column; gap: 0.3rem; }
-.form-field label { font-family: var(--font-headline); font-size: 0.8rem; font-weight: 600; color: var(--on-surface); }
-.form-field input, .form-field textarea, .form-field select { padding: 0.6rem 0.75rem; background: var(--surface-container-low); border: 1px solid var(--outline-variant); border-radius: var(--radius-lg); font-size: 0.85rem; color: var(--on-surface); outline: none; resize: none; }
-.form-field input:focus, .form-field textarea:focus, .form-field select:focus { border-color: var(--primary); }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-.logo-upload-box { display: flex; align-items: center; gap: 1rem; padding: 0.75rem; background: var(--surface-container-low); border: 1.5px dashed var(--outline-variant); border-radius: var(--radius-xl); }
-.logo-preview-circle { width: 60px; height: 60px; border-radius: var(--radius-lg); border: 1.5px solid var(--outline-variant); background: var(--surface-container); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
-.logo-preview-circle.has-logo { border-color: var(--primary); border-style: solid; }
-.logo-preview-circle img { width: 100%; height: 100%; object-fit: cover; }
-.logo-upload-options { flex: 1; display: flex; flex-direction: column; gap: 0.4rem; }
-.logo-upload-btn { display: flex; align-items: center; justify-content: center; gap: 0.35rem; padding: 0.45rem 0.875rem; background: var(--surface-container); border: 1px solid var(--outline-variant); border-radius: var(--radius-lg); font-size: 0.78rem; font-weight: 600; color: var(--on-surface); cursor: pointer; transition: border-color .15s; width: fit-content; }
-.logo-upload-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
-.logo-upload-btn:disabled { opacity: .6; cursor: not-allowed; }
-.logo-or { font-size: 0.72rem; color: var(--on-surface-variant); text-align: center; }
-.logo-url-input { padding: 0.45rem 0.65rem; background: var(--surface-container-lowest); border: 1px solid var(--outline-variant); border-radius: var(--radius-lg); font-size: 0.8rem; color: var(--on-surface); outline: none; width: 100%; }
-.logo-url-input:focus { border-color: var(--primary); }
+/* ═══════════════════════════════════════════════════════════
+   CONTENT AREA
+═══════════════════════════════════════════════════════════ */
+.jobs-content {
+  padding-top: 2rem; padding-bottom: 4rem;
+}
+
+/* Toolbar */
+.jobs-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: .75rem; margin-bottom: 1.5rem;
+}
+.results-count {
+  font-family: var(--font-headline); font-size: .875rem; color: var(--on-surface-variant);
+}
+.results-count strong { color: var(--on-surface); }
+.sort-sel {
+  padding: .45rem .875rem; border-radius: 12px;
+  background: var(--surface-container-lowest); border: 1.5px solid var(--outline-variant);
+  color: var(--on-surface); font-family: var(--font-headline); font-size: .82rem; font-weight: 600;
+  cursor: pointer; outline: none; transition: border-color .2s;
+}
+.sort-sel:focus { border-color: var(--primary); }
+
+/* ═══════════════════════════════════════════════════════════
+   SKELETON LOADING
+═══════════════════════════════════════════════════════════ */
+@keyframes shimmerMove {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.shimmer {
+  background: linear-gradient(90deg,
+    var(--surface-container-low) 25%,
+    var(--surface-container) 50%,
+    var(--surface-container-low) 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmerMove 1.4s infinite linear;
+  border-radius: 8px;
+}
+.job-skel {
+  border-radius: 18px; overflow: hidden;
+  border: 1px solid var(--outline-variant);
+  background: var(--surface-container-lowest);
+}
+.skel-strip { height: 6px; border-radius: 0; }
+.skel-body { padding: 1.25rem; display: flex; flex-direction: column; gap: .5rem; }
+.skel-row { display: flex; gap: .875rem; align-items: flex-start; }
+.skel-logo { width: 48px; height: 48px; border-radius: 12px; flex-shrink: 0; }
+.skel-lines { flex: 1; }
+.skel-line { height: 14px; border-radius: 6px; }
+.skel-tags { display: flex; gap: .4rem; margin-top: .5rem; }
+.skel-tag { height: 22px; width: 64px; border-radius: 999px; }
+
+/* ═══════════════════════════════════════════════════════════
+   JOBS GRID
+═══════════════════════════════════════════════════════════ */
+.jobs-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+@media (min-width: 640px) {
+  .jobs-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 1100px) {
+  .jobs-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   JOB CARD
+═══════════════════════════════════════════════════════════ */
+.job-card {
+  display: flex; flex-direction: column;
+  background: var(--surface-container-lowest);
+  border: 1.5px solid var(--outline-variant);
+  border-radius: 18px; overflow: hidden;
+  cursor: pointer; transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+  position: relative;
+}
+.job-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--primary);
+  box-shadow: 0 8px 32px rgba(99,14,212,.12);
+}
+.job-card:focus { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* Coloured top strip */
+.jc-strip {
+  height: 6px; width: 100%; flex-shrink: 0;
+}
+.jc-strip[data-type="full_time"]  { background: linear-gradient(90deg, #630ed4, #a855f7); }
+.jc-strip[data-type="remote"]     { background: linear-gradient(90deg, #059669, #34d399); }
+.jc-strip[data-type="contract"]   { background: linear-gradient(90deg, #d97706, #fbbf24); }
+.jc-strip[data-type="freelance"]  { background: linear-gradient(90deg, #0284c7, #38bdf8); }
+.jc-strip[data-type="part_time"]  { background: linear-gradient(90deg, #be185d, #f472b6); }
+
+/* Card header */
+.jc-top {
+  display: flex; align-items: flex-start; gap: .875rem;
+  padding: 1.125rem 1.125rem .625rem;
+}
+.jc-logo {
+  width: 48px; height: 48px; border-radius: 12px; flex-shrink: 0;
+  background: var(--surface-container); border: 1px solid var(--outline-variant);
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.jc-logo-img { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; }
+.jc-logo-ini {
+  font-family: var(--font-headline); font-size: 1.2rem; font-weight: 800;
+  color: var(--primary); text-transform: uppercase;
+}
+.jc-info { flex: 1; min-width: 0; }
+.jc-title {
+  font-family: var(--font-headline); font-size: .975rem; font-weight: 800;
+  color: var(--on-surface); margin: 0; line-height: 1.3;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.jc-company {
+  font-size: .8rem; color: var(--on-surface-variant); margin: .2rem 0 0;
+  display: flex; align-items: center; gap: .2rem;
+}
+.jc-del {
+  border: none; background: none; cursor: pointer; color: var(--outline);
+  display: flex; align-items: center; padding: 4px; border-radius: 8px;
+  flex-shrink: 0; transition: color .15s, background .15s;
+}
+.jc-del:hover { color: #ef4444; background: rgba(239,68,68,.08); }
+
+/* Location line */
+.jc-location {
+  display: flex; align-items: center; gap: .25rem;
+  font-size: .78rem; color: var(--on-surface-variant);
+  padding: 0 1.125rem; margin-top: -.25rem;
+}
+
+/* Type / level tags */
+.jc-tags {
+  display: flex; flex-wrap: wrap; gap: .3rem;
+  padding: .5rem 1.125rem 0;
+}
+.jc-tag {
+  display: inline-flex; align-items: center; gap: .2rem;
+  padding: .2rem .6rem; border-radius: 999px;
+  background: var(--surface-container); border: 1px solid var(--outline-variant);
+  font-family: var(--font-headline); font-size: .72rem; font-weight: 600;
+  color: var(--on-surface-variant); text-transform: capitalize; white-space: nowrap;
+}
+.jc-remote { background: rgba(5,150,105,.1); border-color: rgba(5,150,105,.25); color: #059669; }
+
+/* Description */
+.jc-desc {
+  font-size: .825rem; color: var(--on-surface-variant); line-height: 1.55;
+  padding: .625rem 1.125rem 0;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  flex: 1;
+}
+
+/* Skills chips */
+.jc-skills {
+  display: flex; flex-wrap: wrap; gap: .3rem;
+  padding: .625rem 1.125rem 0;
+}
+.jc-skill {
+  padding: .18rem .55rem; border-radius: 6px;
+  background: rgba(99,14,212,.07); border: 1px solid rgba(99,14,212,.15);
+  font-family: var(--font-headline); font-size: .7rem; font-weight: 700; color: var(--primary);
+}
+.jc-more { background: var(--surface-container); border-color: var(--outline-variant); color: var(--on-surface-variant); }
+
+/* Card footer */
+.jc-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .75rem 1.125rem 1rem; margin-top: auto;
+}
+.jc-salary {
+  font-family: var(--font-headline); font-size: .875rem; font-weight: 800; color: #059669;
+}
+.jc-salary-period { font-size: .7rem; font-weight: 600; opacity: .8; }
+.jc-salary-empty { font-size: .78rem; color: var(--outline); font-style: italic; }
+.jc-meta-right { display: flex; align-items: center; gap: .5rem; }
+.jc-stat {
+  display: flex; align-items: center; gap: .2rem;
+  font-size: .78rem; color: var(--on-surface-variant);
+}
+.jc-time { font-size: .75rem; color: var(--outline); }
+
+/* ═══════════════════════════════════════════════════════════
+   EMPTY STATE
+═══════════════════════════════════════════════════════════ */
+.jobs-empty {
+  display: flex; flex-direction: column; align-items: center;
+  gap: .75rem; padding: 4rem 1rem; text-align: center;
+}
+.empty-ico-wrap {
+  width: 72px; height: 72px; border-radius: 20px;
+  background: var(--surface-container-lowest); border: 1px solid var(--outline-variant);
+  display: flex; align-items: center; justify-content: center;
+}
+.empty-ico-wrap .material-symbols-outlined { font-size: 2.2rem; color: var(--outline); }
+.empty-title { font-family: var(--font-headline); font-size: 1.15rem; font-weight: 800; color: var(--on-surface); margin: 0; }
+.empty-sub { font-size: .875rem; color: var(--on-surface-variant); margin: 0; }
+.btn-primary {
+  padding: .6rem 1.5rem; border-radius: 12px;
+  background: var(--primary); color: #fff; border: none;
+  font-family: var(--font-headline); font-size: .875rem; font-weight: 700;
+  cursor: pointer; transition: opacity .15s;
+}
+.btn-primary:hover { opacity: .9; }
+
+/* ═══════════════════════════════════════════════════════════
+   MODAL OVERLAY
+═══════════════════════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 700;
+  background: rgba(0,0,0,.55); backdrop-filter: blur(6px);
+  display: flex; align-items: flex-end; justify-content: center;
+}
+@media (min-width: 680px) {
+  .modal-overlay { align-items: center; }
+}
+
+/* Modal sheet */
+.modal-sheet {
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant);
+  border-radius: 24px 24px 0 0;
+  width: 100%; max-width: 720px;
+  max-height: 90vh; display: flex; flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 -8px 40px rgba(0,0,0,.2);
+}
+@media (min-width: 680px) {
+  .modal-sheet {
+    border-radius: 24px;
+    max-height: 85vh;
+    margin: 1rem;
+  }
+}
+.modal-handle {
+  width: 36px; height: 4px; border-radius: 999px;
+  background: var(--outline-variant); margin: .75rem auto .25rem; flex-shrink: 0;
+}
+@media (min-width: 680px) { .modal-handle { display: none; } }
+
+/* Modal header */
+.modal-hdr {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+  padding: 1rem 1.25rem .75rem; flex-shrink: 0;
+  border-bottom: 1px solid var(--outline-variant);
+}
+.modal-hdr-left { display: flex; align-items: flex-start; gap: .875rem; }
+.modal-logo {
+  width: 52px; height: 52px; border-radius: 14px; flex-shrink: 0;
+  background: var(--surface-container); border: 1px solid var(--outline-variant);
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.modal-logo-img { width: 100%; height: 100%; object-fit: cover; }
+.modal-logo-ini {
+  font-family: var(--font-headline); font-size: 1.4rem; font-weight: 800;
+  color: var(--primary); text-transform: uppercase;
+}
+.modal-title { font-family: var(--font-headline); font-size: 1.05rem; font-weight: 800; color: var(--on-surface); margin: 0 0 .2rem; }
+.modal-company { font-size: .85rem; color: var(--on-surface-variant); margin: 0; }
+.modal-company-lnk {
+  display: inline-flex; align-items: center; gap: .2rem;
+  font-size: .85rem; color: var(--primary); text-decoration: none;
+}
+.modal-company-lnk:hover { text-decoration: underline; }
+.modal-close {
+  border: none; background: none; cursor: pointer; color: var(--on-surface-variant);
+  display: flex; align-items: center; padding: 6px; border-radius: 10px;
+  flex-shrink: 0; transition: background .15s, color .15s;
+}
+.modal-close:hover { background: var(--surface-container); color: var(--on-surface); }
+
+/* Modal body (scrollable) */
+.modal-body { flex: 1; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+.modal-body::-webkit-scrollbar { width: 6px; }
+.modal-body::-webkit-scrollbar-track { background: transparent; }
+.modal-body::-webkit-scrollbar-thumb { background: var(--outline-variant); border-radius: 3px; }
+
+/* Salary */
+.modal-salary {
+  display: inline-flex; align-items: center; gap: .375rem;
+  padding: .5rem 1rem; border-radius: 12px;
+  background: rgba(5,150,105,.08); border: 1px solid rgba(5,150,105,.2);
+  font-family: var(--font-headline); font-size: 1.05rem; font-weight: 800; color: #059669;
+  align-self: flex-start;
+}
+.modal-salary .material-symbols-outlined { font-size: 16px; }
+
+/* Tags in modal */
+.modal-tags { display: flex; flex-wrap: wrap; gap: .35rem; }
+
+/* Stats row */
+.modal-stats {
+  display: flex; flex-wrap: wrap; gap: .75rem;
+  padding: .75rem; border-radius: 14px;
+  background: var(--surface-container); border: 1px solid var(--outline-variant);
+}
+.mstat {
+  display: flex; align-items: center; gap: .35rem;
+  font-size: .82rem; color: var(--on-surface-variant);
+}
+.mstat .material-symbols-outlined { font-size: 15px; }
+
+/* Description / Requirements sections */
+.modal-section { display: flex; flex-direction: column; gap: .5rem; }
+.modal-section-title {
+  font-family: var(--font-headline); font-size: .8rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: .07em; color: var(--primary);
+  margin: 0;
+}
+.modal-section-body { font-size: .875rem; color: var(--on-surface-variant); line-height: 1.7; margin: 0; }
+.modal-skills { display: flex; flex-wrap: wrap; gap: .4rem; }
+.modal-skill {
+  padding: .3rem .75rem; border-radius: 8px;
+  background: rgba(99,14,212,.08); border: 1px solid rgba(99,14,212,.18);
+  font-family: var(--font-headline); font-size: .78rem; font-weight: 700; color: var(--primary);
+}
+
+/* Modal sticky footer */
+.modal-foot {
+  display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+  padding: 1rem 1.25rem calc(1rem + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--outline-variant); flex-shrink: 0;
+  background: var(--surface-container-lowest);
+}
+
+/* Footer buttons */
+.btn-apply {
+  display: inline-flex; align-items: center; gap: .4rem; flex: 1; justify-content: center;
+  padding: .7rem 1.5rem; border-radius: 14px;
+  background: var(--primary); color: #fff; border: none;
+  font-family: var(--font-headline); font-size: .9rem; font-weight: 700;
+  cursor: pointer; transition: opacity .15s, transform .15s;
+}
+.btn-apply:hover:not(:disabled) { opacity: .9; transform: translateY(-1px); }
+.btn-apply:disabled { opacity: .5; cursor: not-allowed; }
+.btn-apply .material-symbols-outlined { font-size: 18px; }
+
+.btn-applicants {
+  display: inline-flex; align-items: center; gap: .35rem;
+  padding: .6rem 1.1rem; border-radius: 12px;
+  background: var(--surface-container); border: 1.5px solid var(--outline-variant);
+  color: var(--on-surface); font-family: var(--font-headline); font-size: .82rem; font-weight: 700;
+  cursor: pointer; transition: all .15s;
+}
+.btn-applicants:hover { border-color: var(--primary); color: var(--primary); }
+.btn-applicants .material-symbols-outlined { font-size: 16px; }
+
+.btn-edit {
+  display: inline-flex; align-items: center; gap: .3rem;
+  padding: .6rem .9rem; border-radius: 12px;
+  background: none; border: 1.5px solid var(--outline-variant);
+  color: var(--on-surface-variant); font-family: var(--font-headline); font-size: .82rem; font-weight: 700;
+  cursor: pointer; transition: all .15s;
+}
+.btn-edit:hover { border-color: var(--primary); color: var(--primary); }
+.btn-edit .material-symbols-outlined { font-size: 15px; }
+
+.btn-close-job {
+  display: inline-flex; align-items: center; gap: .3rem;
+  padding: .6rem .9rem; border-radius: 12px;
+  background: none; border: 1.5px solid rgba(239,68,68,.3);
+  color: #ef4444; font-family: var(--font-headline); font-size: .82rem; font-weight: 700;
+  cursor: pointer; transition: all .15s;
+}
+.btn-close-job:hover { background: rgba(239,68,68,.07); border-color: #ef4444; }
+.btn-close-job .material-symbols-outlined { font-size: 15px; }
+.closed-badge {
+  padding: .4rem .875rem; border-radius: 999px;
+  background: var(--surface-container); font-family: var(--font-headline);
+  font-size: .8rem; font-weight: 700; color: var(--outline);
+}
+
+/* Spinner */
+.btn-spin {
+  width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.35);
+  border-top-color: #fff; border-radius: 50%;
+  animation: spin .6s linear infinite; display: inline-block; flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ═══════════════════════════════════════════════════════════
+   FORM MODALS
+═══════════════════════════════════════════════════════════ */
+.modal-form .modal-sheet { max-width: 680px; }
+
+.form-fields { display: flex; flex-direction: column; gap: 1rem; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+@media (max-width: 520px) { .form-row { grid-template-columns: 1fr; } }
+
+.form-field { display: flex; flex-direction: column; gap: .35rem; }
+.form-field label {
+  font-family: var(--font-headline); font-size: .78rem; font-weight: 700;
+  color: var(--on-surface); text-transform: uppercase; letter-spacing: .06em;
+}
+.req { color: #ef4444; }
+.field-hint { font-weight: 500; text-transform: none; letter-spacing: 0; opacity: .7; }
+
+.form-field input,
+.form-field textarea,
+.form-field select {
+  padding: .6rem .875rem; border-radius: 12px;
+  background: var(--surface-container); border: 1.5px solid var(--outline-variant);
+  color: var(--on-surface); font-family: var(--font-body); font-size: .9rem;
+  outline: none; transition: border-color .2s;
+  resize: vertical;
+}
+.form-field input:focus,
+.form-field textarea:focus,
+.form-field select:focus { border-color: var(--primary); }
+.form-field input::placeholder,
+.form-field textarea::placeholder { color: var(--outline); }
+
+/* Logo box */
+.logo-box { display: flex; align-items: center; gap: .875rem; }
+.logo-preview {
+  width: 52px; height: 52px; border-radius: 12px; flex-shrink: 0;
+  background: var(--surface-container); border: 1.5px dashed var(--outline-variant);
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.logo-preview.filled { border-style: solid; }
+.logo-preview img { width: 100%; height: 100%; object-fit: cover; }
+.logo-opts { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; flex: 1; }
+.logo-upload-btn {
+  display: inline-flex; align-items: center; gap: .3rem;
+  padding: .4rem .8rem; border-radius: 10px;
+  background: var(--surface-container); border: 1.5px solid var(--outline-variant);
+  font-family: var(--font-headline); font-size: .78rem; font-weight: 700; color: var(--on-surface);
+  cursor: pointer; transition: border-color .15s;
+}
+.logo-upload-btn:hover { border-color: var(--primary); color: var(--primary); }
+.logo-upload-btn:disabled { opacity: .5; cursor: not-allowed; }
+.logo-url-inp { flex: 1; min-width: 100px; }
 .hidden-f { display: none; }
 
-.modal-enter-active, .modal-leave-active { transition: opacity 0.2s, transform 0.25s; }
-.modal-enter-from, .modal-leave-to { opacity: 0; transform: translateY(20px); }
+/* ═══════════════════════════════════════════════════════════
+   MY APPLICATIONS LIST
+═══════════════════════════════════════════════════════════ */
+.app-card {
+  padding: 1rem; border-radius: 14px;
+  background: var(--surface-container); border: 1px solid var(--outline-variant);
+  margin-bottom: .75rem;
+}
+.app-card:last-child { margin-bottom: 0; }
+.app-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: .75rem; }
+.app-title { font-family: var(--font-headline); font-size: .95rem; font-weight: 800; color: var(--on-surface); margin: 0 0 .2rem; }
+.app-company { font-size: .8rem; color: var(--on-surface-variant); margin: 0 0 .2rem; }
+.app-date { font-size: .75rem; color: var(--outline); margin: 0; }
 
-/* New styles */
-.header-btns { display:flex; align-items:center; gap:0.5rem; }
-.btn-my-apps { display:flex; align-items:center; gap:0.3rem; padding:0.5rem 0.875rem; background:var(--surface-container); border:1px solid var(--outline-variant); border-radius:var(--radius-full); font-family:var(--font-headline); font-size:0.8rem; font-weight:600; color:var(--on-surface); cursor:pointer; }
-.btn-my-apps .material-symbols-outlined { font-size:16px; }
-.modal-footer-row { display:flex; gap:.5rem; align-items:center; flex-wrap:wrap; }
-.btn-close-job { display:flex; align-items:center; gap:0.3rem; padding:0.5rem 0.75rem; background:var(--surface-container); border:1px solid var(--outline-variant); border-radius:var(--radius-lg); font-size:0.8rem; font-weight:600; color:var(--on-surface-variant); cursor:pointer; white-space:nowrap; }
-.btn-close-job:hover { background:rgba(239,68,68,0.08); color:#ef4444; border-color:rgba(239,68,68,0.3); }
-.btn-edit-job { display:flex; align-items:center; gap:0.3rem; padding:0.5rem 0.75rem; background:var(--surface-container); border:1px solid var(--outline-variant); border-radius:var(--radius-lg); font-size:0.8rem; font-weight:600; color:var(--on-surface-variant); cursor:pointer; white-space:nowrap; }
-.btn-edit-job:hover { background:rgba(99,14,212,0.08); color:var(--primary); border-color:rgba(99,14,212,0.3); }
-.btn-edit-job .material-symbols-outlined { font-size:15px; }
-.apply-btn { flex:1; min-width:0; }
-.btn-spinner { width:16px; height:16px; border-radius:50%; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; animation:spin 0.7s linear infinite; flex-shrink:0; }
-.closed-badge { padding:0.35rem 0.75rem; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.2); border-radius:var(--radius-full); font-size:0.78rem; font-weight:600; color:#ef4444; }
-.btn-chat { flex:1; display:flex; align-items:center; justify-content:center; gap:0.3rem; padding:0.5rem; background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.2); border-radius:var(--radius-lg); color:var(--primary); font-size:0.8rem; font-weight:600; cursor:pointer; }
-.btn-chat:hover { background:rgba(99,102,241,0.15); }
-.btn-chat .material-symbols-outlined { font-size:16px; }
-.my-app-card { padding:0.875rem; background:var(--surface-container-low); border:1px solid var(--outline-variant); border-radius:var(--radius-xl); display:flex; flex-direction:column; gap:0.4rem; }
-.my-app-header { display:flex; align-items:flex-start; justify-content:space-between; gap:0.5rem; }
-.my-app-info { flex:1; min-width:0; }
-.my-app-title { font-family:var(--font-headline); font-size:0.9rem; font-weight:700; color:var(--on-surface); }
-.my-app-company { font-size:0.8rem; color:var(--on-surface-variant); }
-.my-app-meta { font-size:0.75rem; color:var(--on-surface-variant); text-transform:capitalize; }
-.my-app-date { font-size:0.72rem; color:var(--on-surface-variant); }
+/* ═══════════════════════════════════════════════════════════
+   STATUS BADGES
+═══════════════════════════════════════════════════════════ */
+.app-status {
+  padding: .25rem .75rem; border-radius: 999px; flex-shrink: 0;
+  font-family: var(--font-headline); font-size: .72rem; font-weight: 800;
+  text-transform: capitalize;
+}
+.app-status.pending    { background: rgba(234,179,8,.12);  color: #ca8a04; border: 1px solid rgba(234,179,8,.25); }
+.app-status.reviewed   { background: rgba(99,102,241,.1); color: #6366f1; border: 1px solid rgba(99,102,241,.25); }
+.app-status.shortlisted{ background: rgba(14,165,233,.1);  color: #0ea5e9; border: 1px solid rgba(14,165,233,.25); }
+.app-status.accepted   { background: rgba(34,197,94,.1);   color: #16a34a; border: 1px solid rgba(34,197,94,.25); }
+.app-status.rejected   { background: rgba(239,68,68,.08);  color: #ef4444; border: 1px solid rgba(239,68,68,.2); }
+
+/* ═══════════════════════════════════════════════════════════
+   APPLICANT CARDS
+═══════════════════════════════════════════════════════════ */
+.applicant-card {
+  padding: 1rem; border-radius: 14px;
+  background: var(--surface-container); border: 1px solid var(--outline-variant);
+  margin-bottom: .75rem; display: flex; flex-direction: column; gap: .75rem;
+}
+.applicant-card:last-child { margin-bottom: 0; }
+.applicant-hdr { display: flex; align-items: flex-start; gap: .75rem; }
+.applicant-av {
+  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+  background: var(--primary-fixed); border: 1px solid var(--outline-variant);
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+  font-family: var(--font-headline); font-size: 1rem; font-weight: 800; color: var(--primary);
+}
+.applicant-av-img { width: 100%; height: 100%; object-fit: cover; }
+.applicant-info { flex: 1; }
+.applicant-name { font-family: var(--font-headline); font-size: .9rem; font-weight: 800; color: var(--on-surface); margin: 0; }
+.applicant-meta { font-size: .78rem; color: var(--on-surface-variant); margin: .1rem 0 0; }
+.profile-link {
+  display: inline-flex; align-items: center; gap: .2rem;
+  font-size: .72rem; color: var(--primary); text-decoration: none; font-weight: 600;
+}
+.profile-link:hover { text-decoration: underline; }
+.applicant-cover {
+  font-size: .84rem; color: var(--on-surface-variant); line-height: 1.6;
+  padding: .75rem; border-radius: 10px; background: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant);
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.applicant-links { display: flex; flex-wrap: wrap; gap: .5rem; }
+.app-link {
+  display: inline-flex; align-items: center; gap: .25rem;
+  padding: .28rem .7rem; border-radius: 8px;
+  background: var(--surface-container-lowest); border: 1px solid var(--outline-variant);
+  font-family: var(--font-headline); font-size: .75rem; font-weight: 600;
+  color: var(--on-surface); text-decoration: none; transition: border-color .15s, color .15s;
+}
+.app-link:hover { border-color: var(--primary); color: var(--primary); }
+.applicant-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.act-shortlist, .act-accept, .act-chat, .act-decline {
+  display: inline-flex; align-items: center; gap: .3rem;
+  padding: .35rem .8rem; border-radius: 10px;
+  font-family: var(--font-headline); font-size: .78rem; font-weight: 700;
+  cursor: pointer; border: 1.5px solid; transition: all .15s;
+}
+.act-shortlist { background: rgba(14,165,233,.07); border-color: rgba(14,165,233,.3); color: #0ea5e9; }
+.act-shortlist:hover { background: rgba(14,165,233,.15); }
+.act-accept { background: rgba(34,197,94,.07); border-color: rgba(34,197,94,.3); color: #16a34a; }
+.act-accept:hover { background: rgba(34,197,94,.15); }
+.act-chat { background: rgba(99,14,212,.07); border-color: rgba(99,14,212,.2); color: var(--primary); }
+.act-chat:hover { background: rgba(99,14,212,.14); }
+.act-decline { background: rgba(239,68,68,.06); border-color: rgba(239,68,68,.2); color: #ef4444; }
+.act-decline:hover { background: rgba(239,68,68,.12); }
+
+/* ═══════════════════════════════════════════════════════════
+   MODAL TRANSITIONS
+═══════════════════════════════════════════════════════════ */
+.modal-enter-active { animation: modalIn .28s ease; }
+.modal-leave-active { animation: modalOut .22s ease; }
+@keyframes modalIn  { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes modalOut { from { opacity: 1; transform: translateY(0); }   to { opacity: 0; transform: translateY(16px); } }
+
+/* ═══════════════════════════════════════════════════════════
+   CARD ENTRANCE ANIMATION
+═══════════════════════════════════════════════════════════ */
+.animate-fade-in-up {
+  animation: fadeInUp .45s ease both;
+}
+.delay-100 { animation-delay: .1s; }
+.delay-200 { animation-delay: .2s; }
+.delay-300 { animation-delay: .3s; }
+.delay-400 { animation-delay: .4s; }
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CONTAINER HELPER (matches explore page)
+═══════════════════════════════════════════════════════════ */
+.container-gfd {
+  width: 100%; max-width: 1280px; margin-inline: auto;
+  padding-inline: clamp(1rem, 4vw, 2.5rem);
+}
 </style>
