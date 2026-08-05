@@ -23,15 +23,24 @@
           <p class="t-quote">{{ t.quote }}</p>
           <!-- Author -->
           <div class="t-author">
-            <div class="t-av" :style="`background:${t.bg}`">
-              <span style="font-family:var(--font-headline);font-weight:800;color:#fff;font-size:.9rem">{{ t.name[0] }}</span>
+            <div class="t-av-wrap">
+              <img
+                v-if="t.avatar"
+                :src="t.avatar"
+                :alt="t.name"
+                class="t-av-img"
+                @error="$event.target.style.display='none'"
+              />
+              <div class="t-av-fallback" :style="`background:${t.bg}`">
+                <span>{{ t.name[0] }}</span>
+              </div>
             </div>
             <div>
               <p class="t-name">{{ t.name }}</p>
               <p class="t-role">{{ t.role }}</p>
             </div>
             <div class="t-type-badge" :class="t.type === 'developer' ? 'badge-dev' : 'badge-client'">
-              {{ t.type }}
+              {{ t.type === 'developer' ? 'Developer' : 'Client' }}
             </div>
           </div>
         </div>
@@ -54,6 +63,7 @@ const testimonials = [
     role: 'Frontend Lead @ TechCorp',
     type: 'developer',
     quote: 'GFD completely changed how I find clients. Within my first week I landed a ₦600k project. The platform is clean, fast, and the clients are serious.',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face&auto=format',
     bg: '#7c3aed',
   },
   {
@@ -61,6 +71,7 @@ const testimonials = [
     role: 'CTO, Fintech Startup',
     type: 'client',
     quote: 'We hired three developers through GFD and they delivered a production-ready product in 6 weeks. The quality is unmatched compared to other platforms.',
+    avatar: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=80&h=80&fit=crop&crop=face&auto=format',
     bg: '#2563eb',
   },
   {
@@ -68,6 +79,7 @@ const testimonials = [
     role: 'Full-Stack Developer',
     type: 'developer',
     quote: 'I was skeptical at first, but GFD has become my primary income source. The wallet feature is a game changer — withdrawals hit my bank same day.',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face&auto=format',
     bg: '#16a34a',
   },
   {
@@ -75,6 +87,7 @@ const testimonials = [
     role: 'Founder, E-commerce Brand',
     type: 'client',
     quote: 'Posted my project and had 12 quality applications within 24 hours. Hired within 48. The vetting process GFD does saves us so much time.',
+    avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=80&h=80&fit=crop&crop=face&auto=format',
     bg: '#db2777',
   },
   {
@@ -82,6 +95,7 @@ const testimonials = [
     role: 'React Native Developer',
     type: 'developer',
     quote: 'The community here is incredible. Not just jobs — I\'ve found collaborators, mentors, and friends. GFD is building something special.',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face&auto=format',
     bg: '#d97706',
   },
   {
@@ -89,6 +103,7 @@ const testimonials = [
     role: 'Product Manager, SaaS Co.',
     type: 'client',
     quote: 'Third time using GFD for projects. Every developer we\'ve hired has been exceptional. The platform keeps getting better with every update.',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&crop=face&auto=format',
     bg: '#0891b2',
   },
 ]
@@ -139,9 +154,22 @@ const testimonials = [
   display: flex; align-items: center; gap: .625rem;
   padding-top: .875rem; border-top: 1px solid var(--outline-variant);
 }
-.t-av {
-  width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+.t-av-wrap {
+  width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+  position: relative; overflow: hidden;
+  border: 2px solid var(--outline-variant);
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+.t-av-img {
+  width: 100%; height: 100%; object-fit: cover;
+  display: block; border-radius: 50%;
+  position: relative; z-index: 2;
+}
+.t-av-fallback {
+  position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; z-index: 1;
+  font-family: var(--font-headline); font-weight: 800; color: #fff; font-size: .9rem;
 }
 .t-name { font-family: var(--font-headline); font-size: .875rem; font-weight: 700; color: var(--on-surface); }
 .t-role { font-size: .72rem; color: var(--on-surface-variant); margin-top: .1rem; }
