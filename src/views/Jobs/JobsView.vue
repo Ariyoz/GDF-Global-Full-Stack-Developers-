@@ -215,13 +215,28 @@
                 <span v-if="job.location && !job.is_remote" class="jc-tag">{{ job.location }}</span>
                 <span v-for="s in (job.skills_required || []).slice(0, 2)" :key="s" class="jc-skill">{{ s }}</span>
               </div>
+              <!-- Salary + meta visible on mobile inside the info block -->
+              <div class="jr-salary-row">
+                <span v-if="job.salary_min" class="jr-salary">
+                  {{ fmtSalary(job.salary_min) }}{{ job.salary_max ? '–' + fmtSalary(job.salary_max) : '' }}
+                  <span class="jc-salary-period">/yr</span>
+                </span>
+                <span v-else class="jr-salary-empty">Undisclosed</span>
+                <div class="jr-bottom-meta">
+                  <span class="jc-stat">
+                    <span class="material-symbols-outlined" style="font-size:13px">group</span>
+                    {{ job.application_count || 0 }}
+                  </span>
+                  <span class="jc-time">{{ formatTime(job.created_at) }}</span>
+                </div>
+              </div>
             </div>
-            <!-- Right meta -->
+            <!-- Right meta — desktop only -->
             <div class="jr-meta">
               <span v-if="job.salary_min" class="jr-salary">
                 {{ fmtSalary(job.salary_min) }}{{ job.salary_max ? '–' + fmtSalary(job.salary_max) : '' }}<span class="jc-salary-period">/yr</span>
               </span>
-              <span v-else class="jc-salary-empty" style="font-size:.75rem">Undisclosed</span>
+              <span v-else class="jr-salary-empty" style="font-size:.75rem">Undisclosed</span>
               <div style="display:flex;align-items:center;gap:.5rem">
                 <span class="jc-stat"><span class="material-symbols-outlined" style="font-size:13px">group</span>{{ job.application_count || 0 }}</span>
                 <span class="jc-time">{{ formatTime(job.created_at) }}</span>
@@ -1120,14 +1135,15 @@ onUnmounted(() => { if (refreshInterval) clearInterval(refreshInterval) })
 .jobs-list { display: flex; flex-direction: column; gap: .625rem; }
 
 .job-row {
-  display: flex; align-items: center; gap: 1rem;
+  display: flex; align-items: flex-start; gap: .875rem;
   background: var(--surface-container-lowest);
   border: 1.5px solid var(--outline-variant);
   border-radius: 16px; overflow: hidden;
   cursor: pointer; transition: transform .15s, border-color .15s, box-shadow .15s;
-  padding: .875rem 1rem; position: relative;
+  padding: .875rem 1rem .875rem 1.25rem;
+  position: relative;
 }
-.job-row:hover { transform: translateX(4px); border-color: var(--primary); box-shadow: 0 4px 20px rgba(99,14,212,.1); }
+.job-row:hover { transform: translateX(3px); border-color: var(--primary); box-shadow: 0 4px 20px rgba(99,14,212,.1); }
 
 /* Coloured left strip */
 .jr-strip {
@@ -1143,21 +1159,49 @@ onUnmounted(() => { if (refreshInterval) clearInterval(refreshInterval) })
   width: 44px; height: 44px; border-radius: 11px; flex-shrink: 0;
   background: var(--surface-container); border: 1px solid var(--outline-variant);
   display: flex; align-items: center; justify-content: center; overflow: hidden;
-  margin-left: .5rem;
 }
 .jr-logo-img { width: 100%; height: 100%; object-fit: cover; border-radius: 11px; }
 .jr-logo-ini { font-family: var(--font-headline); font-size: 1.1rem; font-weight: 800; color: var(--primary); text-transform: uppercase; }
 
-.jr-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .25rem; }
-.jr-title { font-family: var(--font-headline); font-size: .9rem; font-weight: 800; color: var(--on-surface); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; max-width: 100%; }
-.jr-company { font-size: .75rem; color: var(--on-surface-variant); margin: 0; }
-.jr-tags { display: flex; flex-wrap: wrap; gap: .25rem; margin-top: .2rem; }
+/* Main info block — takes all remaining space */
+.jr-info {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; gap: .3rem;
+}
 
-.jr-meta {
-  display: flex; flex-direction: column; align-items: flex-end; gap: .3rem;
-  flex-shrink: 0; min-width: 120px;
+/* Title never truncates — wraps instead */
+.jr-title {
+  font-family: var(--font-headline); font-size: .925rem; font-weight: 800;
+  color: var(--on-surface); margin: 0; line-height: 1.3;
+  white-space: normal; word-break: break-word;
+}
+.jr-company { font-size: .75rem; color: var(--on-surface-variant); margin: 0; }
+.jr-tags { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .15rem; }
+
+/* Salary + meta — below tags on mobile, right-aligned on desktop */
+.jr-salary-row {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: .3rem; margin-top: .375rem;
+  padding-top: .375rem; border-top: 1px solid var(--outline-variant);
 }
 .jr-salary { font-family: var(--font-headline); font-size: .82rem; font-weight: 800; color: #059669; }
+.jr-salary-empty { font-size: .75rem; color: var(--outline); font-style: italic; }
+.jr-bottom-meta { display: flex; align-items: center; gap: .5rem; }
+
+/* On desktop — keep meta column on the right */
+@media (min-width: 640px) {
+  .job-row { align-items: center; }
+  .jr-info { gap: .2rem; }
+  .jr-salary-row { display: none; }
+  .jr-meta {
+    display: flex; flex-direction: column; align-items: flex-end; gap: .3rem;
+    flex-shrink: 0;
+  }
+  .jr-meta .jr-salary { display: block; }
+}
+@media (max-width: 639px) {
+  .jr-meta { display: none; }
+}
 
 /* ═══════════════════════════════════════════════════════════
    JOB CARD
