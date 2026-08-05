@@ -224,25 +224,32 @@ import { ref, onMounted, onUnmounted } from 'vue'
 
 const PERM_KEY    = 'gfd_onboarded_v2'
 const SESSION_KEY = 'gfd_ob_session'
-const alreadySeen = sessionStorage.getItem(SESSION_KEY)
-const permDone    = localStorage.getItem(PERM_KEY)
-const visible     = ref(!alreadySeen || !permDone)
-if (!alreadySeen) sessionStorage.setItem(SESSION_KEY, '1')
 
-const current = ref(0)
-const dir     = ref('ob-next')
+const visible     = ref(false)
+const current     = ref(0)
+const dir         = ref('ob-next')
+const isDark      = ref(false)
 
-// ── Theme: follow app setting or OS preference ──
-const stored = localStorage.getItem('gfd_theme')
-const prefersDark = window.matchMedia('(prefers-color-scheme: dark)')
-const isDark = ref(stored ? stored === 'dark' : prefersDark.matches)
+onMounted(() => {
+  // Read storage only after mount (safe in all environments)
+  const alreadySeen = sessionStorage.getItem(SESSION_KEY)
+  const permDone    = localStorage.getItem(PERM_KEY)
+  visible.value = !alreadySeen || !permDone
+  if (!alreadySeen) sessionStorage.setItem(SESSION_KEY, '1')
 
-// Listen for OS theme changes in real time (no stored pref)
+  // Theme
+  const stored = localStorage.getItem('gfd_theme')
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)')
+  isDark.value = stored ? stored === 'dark' : prefersDark.matches
+  prefersDark.addEventListener('change', onOsChange)
+})
+
 function onOsChange(e) {
   if (!localStorage.getItem('gfd_theme')) isDark.value = e.matches
 }
-onMounted(()  => prefersDark.addEventListener('change', onOsChange))
-onUnmounted(() => prefersDark.removeEventListener('change', onOsChange))
+onUnmounted(() => {
+  window.matchMedia('(prefers-color-scheme: dark)').removeEventListener('change', onOsChange)
+})
 
 function next()  { dir.value = 'ob-next';  current.value++ }
 function goTo(i) { dir.value = i > current.value ? 'ob-next' : 'ob-prev'; current.value = i }
