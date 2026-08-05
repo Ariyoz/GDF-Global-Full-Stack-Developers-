@@ -155,7 +155,7 @@
             <!-- Repost label â€” shown above the header for reposts -->
             <div v-if="post.parent_post_id && post.parent_post" class="repost-label">
               <span class="material-symbols-outlined" style="font-size:14px">repeat</span>
-              <span>{{ post.author?.full_name || 'Someone' }} reposted</span>
+              <span>{{ post.author?.full_name || post.author?.username || 'Someone' }} reposted</span>
             </div>
 
             <!-- For reposts: show ORIGINAL author in header, not the reposter -->
@@ -186,11 +186,11 @@
               <div class="post-author-info" @click="goToProfile(post.author?.id)">
                 <div class="post-avatar">
                   <img v-if="post.author?.avatar" :src="post.author.avatar" :alt="post.author.full_name" class="post-avatar-img" />
-                  <span v-else>{{ getInitials(post.author?.full_name || (typeof post.author === 'string' ? post.author : '')) }}</span>
+                  <span v-else>{{ getInitials(post.author?.full_name || post.author?.username || (typeof post.author === 'string' ? post.author : '')) }}</span>
                 </div>
                 <div class="post-author-text">
                   <div class="post-author-line">
-                    <span class="post-author-name">{{ post.author?.full_name || (typeof post.author === 'string' ? post.author : 'Unknown') }}</span>
+                    <span class="post-author-name">{{ post.author?.full_name || post.author?.username || (typeof post.author === 'string' ? post.author : 'User') }}</span>
                     <span v-if="post.author?.is_verified" class="material-symbols-outlined verified-tick">verified</span>
                     <span class="post-author-username">@{{ post.author?.username || '' }}</span>
                     <span class="post-time-dot">·</span>
