@@ -626,11 +626,11 @@ function copyProfileLink() {
 }
 .quick-links-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.75rem;
 }
-@media (max-width: 900px)  { .quick-links-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 540px)  { .quick-links-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 540px)  { .quick-links-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 900px)  { .quick-links-grid { grid-template-columns: repeat(5, 1fr); } }
 
 .quick-link {
   display: flex;
@@ -666,9 +666,9 @@ function copyProfileLink() {
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--on-surface);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.3;
 }
 .ql-arrow {
   font-size: 12px !important;

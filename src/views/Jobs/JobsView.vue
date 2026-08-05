@@ -1149,7 +1149,7 @@ onUnmounted(() => { if (refreshInterval) clearInterval(refreshInterval) })
 .jr-logo-ini { font-family: var(--font-headline); font-size: 1.1rem; font-weight: 800; color: var(--primary); text-transform: uppercase; }
 
 .jr-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .25rem; }
-.jr-title { font-family: var(--font-headline); font-size: .9rem; font-weight: 800; color: var(--on-surface); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; }
+.jr-title { font-family: var(--font-headline); font-size: .9rem; font-weight: 800; color: var(--on-surface); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; max-width: 100%; }
 .jr-company { font-size: .75rem; color: var(--on-surface-variant); margin: 0; }
 .jr-tags { display: flex; flex-wrap: wrap; gap: .25rem; margin-top: .2rem; }
 
@@ -1206,7 +1206,10 @@ onUnmounted(() => { if (refreshInterval) clearInterval(refreshInterval) })
 .jc-title {
   font-family: var(--font-headline); font-size: .975rem; font-weight: 800;
   color: var(--on-surface); margin: 0; line-height: 1.3;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  /* allow wrapping on mobile instead of truncating */
+  white-space: normal;
+  word-break: break-word;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 .jc-company {
   font-size: .8rem; color: var(--on-surface-variant); margin: .2rem 0 0;
@@ -1260,17 +1263,20 @@ onUnmounted(() => { if (refreshInterval) clearInterval(refreshInterval) })
 }
 .jc-more { background: var(--surface-container); border-color: var(--outline-variant); color: var(--on-surface-variant); }
 
-/* Card footer */
+/* Card footer — stack on very small screens */
 .jc-foot {
   display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: .4rem;
   padding: .75rem 1.125rem 1rem; margin-top: auto;
+  border-top: 1px solid var(--outline-variant);
 }
 .jc-salary {
   font-family: var(--font-headline); font-size: .875rem; font-weight: 800; color: #059669;
+  white-space: nowrap;
 }
 .jc-salary-period { font-size: .7rem; font-weight: 600; opacity: .8; }
 .jc-salary-empty { font-size: .78rem; color: var(--outline); font-style: italic; }
-.jc-meta-right { display: flex; align-items: center; gap: .5rem; }
+.jc-meta-right { display: flex; align-items: center; gap: .5rem; flex-shrink: 0; }
 .jc-stat {
   display: flex; align-items: center; gap: .2rem;
   font-size: .78rem; color: var(--on-surface-variant);

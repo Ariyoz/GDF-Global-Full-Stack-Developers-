@@ -247,35 +247,42 @@ watch(activeTab, () => {
 .danger-btn { color: #ef4444; }
 .danger-btn:hover { background: rgba(239,68,68,0.08); }
 
-/* Tabs */
+/* Tabs — scrollable row, never wraps, no clipping */
 .notif-tabs {
   display: flex;
   gap: 0.25rem;
   overflow-x: auto;
   scrollbar-width: none;
-  padding-bottom: 0.75rem;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 0 0.75rem;
+  /* negative margin lets tabs touch the edge on mobile */
+  margin: 0 -1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
   border-bottom: 1px solid var(--outline-variant);
   margin-bottom: 0.75rem;
 }
 .notif-tabs::-webkit-scrollbar { display: none; }
 .notif-tab {
   display: flex; align-items: center; gap: 0.3rem;
-  padding: 0.45rem 1rem;
+  padding: 0.45rem 0.875rem;
   border-radius: var(--radius-full);
-  border: 1px solid transparent;
-  font-size: 0.82rem;
+  border: 1.5px solid transparent;
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--on-surface-variant);
-  background: none;
+  background: var(--surface-container-low);
   cursor: pointer;
   white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.15s;
 }
-.notif-tab:hover { background: var(--surface-container-low); }
+.notif-tab:hover { border-color: var(--primary); color: var(--primary); background: color-mix(in srgb,var(--primary) 6%,transparent); }
 .notif-tab.active {
   background: var(--primary);
   color: #fff;
   border-color: var(--primary);
+  box-shadow: 0 2px 12px rgba(99,14,212,.3);
 }
 .tab-badge {
   min-width: 16px; height: 16px;
