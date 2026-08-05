@@ -409,21 +409,20 @@ const navItems = [
 
 // All sections shown in the "More" drawer on mobile
 const moreNavItems = [
-  { to: '/dashboard',           icon: 'dashboard',              label: 'Dashboard'   },
-  { to: '/feed',                icon: 'dynamic_feed',           label: 'Feed'        },
-  { to: '/jobs',                icon: 'work_outline',           label: 'Job Board'   },
-  { to: '/jobs',                icon: 'work',                   label: 'Jobs'        },
-  { to: '/dashboard/projects',  icon: 'folder',                 label: 'Projects'    },
-  { to: '/dashboard/analytics', icon: 'analytics',              label: 'Analytics'   },
-  { to: '/dashboard/requests',  icon: 'inbox',                  label: 'Requests'    },
-  { to: '/wallet',              icon: 'account_balance_wallet', label: 'Wallet'      },
-  { to: '/notifications',       icon: 'notifications',          label: 'Notifications'},
-  { to: '/explore',             icon: 'search',                 label: 'Explore'     },
-  { to: '/courses',             icon: 'school',                 label: 'Courses'     },
-  { to: '/messaging',           icon: 'chat',                   label: 'Messages'    },
-  { to: '/dashboard/profile',   icon: 'person',                 label: 'Profile'     },
-  { to: '/settings',            icon: 'settings',               label: 'Settings'    },
-  { to: '/plans',               icon: 'workspace_premium',      label: 'Plans'       },
+  { to: '/dashboard',           icon: 'dashboard',              label: 'Dashboard'  },
+  { to: '/feed',                icon: 'dynamic_feed',           label: 'Feed'       },
+  { to: '/jobs',                icon: 'work',                   label: 'Jobs'       },
+  { to: '/explore',             icon: 'search',                 label: 'Explore'    },
+  { to: '/dashboard/projects',  icon: 'folder',                 label: 'Projects'   },
+  { to: '/dashboard/analytics', icon: 'analytics',              label: 'Analytics'  },
+  { to: '/dashboard/requests',  icon: 'inbox',                  label: 'Requests'   },
+  { to: '/wallet',              icon: 'account_balance_wallet', label: 'Wallet'     },
+  { to: '/notifications',       icon: 'notifications',          label: 'Notifs'     },
+  { to: '/courses',             icon: 'school',                 label: 'Courses'    },
+  { to: '/messaging',           icon: 'chat',                   label: 'Messages'   },
+  { to: '/dashboard/profile',   icon: 'person',                 label: 'Profile'    },
+  { to: '/settings',            icon: 'settings',               label: 'Settings'   },
+  { to: '/plans',               icon: 'workspace_premium',      label: 'Plans'      },
   ...(isAdmin.value ? [
     { to: '/admin',          icon: 'shield',       label: 'Admin'          },
     { to: '/admin/users',    icon: 'group',        label: 'Users'          },
@@ -1457,7 +1456,7 @@ function handleSignOut() {
 .more-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 0.6rem;
+  gap: 0.5rem;
 }
 
 /* More items — compact native feel */
@@ -1465,14 +1464,16 @@ function handleSignOut() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.75rem 0.4rem;
+  gap: 0.3rem;
+  padding: 0.625rem 0.25rem;
   border-radius: var(--radius-xl);
   background: var(--surface-container-low);
   border: 1px solid var(--outline-variant);
   text-decoration: none;
   transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   cursor: pointer;
+  overflow: hidden; /* prevent label overflow */
+  min-width: 0;
 }
 
 .more-item:hover,
@@ -1523,11 +1524,15 @@ function handleSignOut() {
 
 .more-item-label {
   font-family: var(--font-headline);
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 600;
   color: var(--on-surface-variant);
   text-align: center;
   transition: color 0.15s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .more-item:hover .more-item-label,

@@ -164,10 +164,13 @@ onMounted(async () => {
 }
 .feat-view-all:hover { gap: .5rem; }
 
-/* Grid */
+/* Grid — single col on very small screens to prevent clipping */
 .dev-grid {
-  display: grid; grid-template-columns: repeat(2, 1fr); gap: .75rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: .875rem;
 }
+@media (min-width: 480px)  { .dev-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 768px)  { .dev-grid { grid-template-columns: repeat(3, 1fr); } }
 @media (min-width: 1100px) { .dev-grid { grid-template-columns: repeat(4, 1fr); } }
 
@@ -255,27 +258,28 @@ onMounted(async () => {
 .dev-foot {
   display: flex; align-items: center; justify-content: space-between;
   padding-top: .5rem; border-top: 1px solid var(--outline-variant); gap: .375rem;
-  flex-wrap: wrap;
+  flex-wrap: nowrap; /* keep on one line always */
 }
-.dev-meta { display: flex; align-items: center; gap: .25rem; }
-.dev-meta-txt { font-size: .7rem; color: var(--on-surface-variant); }
-.dev-foot-btns { display: flex; gap: .3rem; }
+.dev-meta { display: flex; align-items: center; gap: .25rem; min-width: 0; flex-shrink: 1; }
+.dev-meta-txt { font-size: .7rem; color: var(--on-surface-variant); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dev-foot-btns { display: flex; gap: .3rem; flex-shrink: 0; }
 
 .dev-btn-portfolio {
-  padding: .3rem .625rem; border-radius: 7px;
+  padding: .3rem .5rem; border-radius: 7px;
   background: var(--surface-container-high); border: 1px solid var(--outline-variant);
   font-family: var(--font-headline); font-size: .7rem; font-weight: 600;
   color: var(--on-surface); text-decoration: none; transition: all .15s;
+  white-space: nowrap;
 }
 .dev-btn-portfolio:hover { border-color: var(--outline); }
 
 .dev-btn-hire {
   display: inline-flex; align-items: center; gap: .25rem;
-  padding: .4rem .75rem; border-radius: 8px;
+  padding: .4rem .65rem; border-radius: 8px;
   background: var(--primary); color: #fff; border: none;
   font-family: var(--font-headline); font-size: .75rem; font-weight: 700;
   text-decoration: none; transition: opacity .15s;
-  box-shadow: 0 2px 10px rgba(99,14,212,.25);
+  box-shadow: 0 2px 10px rgba(99,14,212,.25); white-space: nowrap;
 }
 .dev-btn-hire:hover { opacity: .9; }
 
