@@ -876,7 +876,12 @@ function formatTime(d) {
 }
 
 let refreshInterval = null
-onMounted(() => { fetchJobs(); refreshInterval = setInterval(fetchJobs, 30000) })
+onMounted(() => {
+  fetchJobs()
+  refreshInterval = setInterval(fetchJobs, 30000)
+  // Force grid on mobile
+  if (window.innerWidth <= 640) viewMode.value = 'grid'
+})
 onUnmounted(() => { if (refreshInterval) clearInterval(refreshInterval) })
 </script>
 
@@ -1072,6 +1077,8 @@ onUnmounted(() => { if (refreshInterval) clearInterval(refreshInterval) })
   border: 1px solid var(--outline-variant);
   border-radius: 12px; padding: .25rem;
 }
+/* Hide list-view toggle on mobile — grid only */
+@media (max-width: 640px) { .view-toggle { display: none; } }
 .view-toggle button {
   width: 32px; height: 32px; border-radius: 8px; border: none;
   background: none; cursor: pointer;

@@ -320,7 +320,11 @@ const currentPage  = ref(1)
 
 const filters = ref({ availability: [], experience: [], skills: [] })
 
-onMounted(() => devStore.fetchDevelopers({ limit: 50 }))
+onMounted(() => {
+  devStore.fetchDevelopers({ limit: 50 })
+  // Force grid on mobile
+  if (window.innerWidth <= 640) viewMode.value = 'grid'
+})
 
 let searchTimeout = null
 function onSearchInput() {
@@ -558,6 +562,8 @@ function goHire(dev) {
 .sort-sel { font-size:.82rem; padding:.4rem .7rem; }
 
 .view-toggle { display:flex; gap:.25rem; background:var(--surface-container-low); border:1px solid var(--outline-variant); border-radius:10px; padding:.2rem; }
+/* Hide list-view toggle on mobile — grid only */
+@media (max-width: 640px) { .view-toggle { display: none; } }
 .view-toggle button { width:30px; height:30px; border-radius:7px; border:none; background:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:var(--on-surface-variant); transition:all .15s; }
 .view-toggle button.active { background:var(--surface-container-highest); color:var(--primary); }
 

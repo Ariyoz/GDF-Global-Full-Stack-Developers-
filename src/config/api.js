@@ -55,7 +55,9 @@ export const API_ENDPOINTS = {
 
   // Direct Hiring
   hire: {
-    send: (devId) => `/hire/${devId}`,
+    send:             (devId) => `/hire/${devId}`,
+    sentRequests:     '/hire/requests/sent',
+    receivedRequests: '/hire/requests/received',
   },
 
   // Projects / Hiring

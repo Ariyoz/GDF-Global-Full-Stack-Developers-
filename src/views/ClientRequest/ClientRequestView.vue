@@ -345,6 +345,10 @@
                   <span class="material-symbols-outlined" style="font-size:16px">chat</span>
                   View Messages
                 </RouterLink>
+                <RouterLink to="/dashboard/requests" class="nav-submit" style="text-decoration:none;background:var(--surface-container);color:var(--primary);border:1.5px solid rgba(99,14,212,.25);box-shadow:none">
+                  <span class="material-symbols-outlined" style="font-size:16px">handshake</span>
+                  My Hire Requests
+                </RouterLink>
                 <RouterLink to="/explore" class="nav-back" style="text-decoration:none">
                   Explore More
                 </RouterLink>

@@ -18,4 +18,14 @@ export const hireService = {
       company:        data.company       || '',
     })
   },
+
+  async getSentRequests() {
+    const data = await http.get(hire.sentRequests)
+    return data.requests || []
+  },
+
+  async getReceivedRequests() {
+    const data = await http.get(hire.receivedRequests)
+    return data.requests || []
+  },
 }
