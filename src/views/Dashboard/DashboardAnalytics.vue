@@ -71,7 +71,10 @@
             <div class="event-icon-wrap" :style="{ background: row.bg }">
               <span class="material-symbols-outlined event-icon" :style="{ color: row.color }">{{ row.icon }}</span>
             </div>
-            <span class="event-name">{{ row.event }}</span>
+            <div>
+              <span class="event-name">{{ row.event }}</span>
+              <div class="row-event-meta">{{ row.source }} · {{ row.date }}</div>
+            </div>
           </div>
           <span class="row-source">{{ row.source }}</span>
           <span class="row-date">{{ row.date }}</span>
@@ -385,8 +388,9 @@ onMounted(loadAnalytics)
 
 /* ── Table Card ──────────────────────────── */
 .table-card {
-  padding: 1.5rem;
+  padding: 1.25rem;
   border-radius: var(--radius-xl);
+  overflow: hidden;
 }
 
 .activity-table {
@@ -394,62 +398,94 @@ onMounted(loadAnalytics)
   flex-direction: column;
 }
 
+/* Desktop: 4-column grid */
 .table-head {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
-  gap: 1rem;
-  padding: 0.5rem 0.875rem;
-  font-size: 0.7rem;
+  display: none; /* hidden on mobile, shown on desktop */
+  grid-template-columns: 2fr 1fr 1fr 0.6fr;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.68rem;
   font-weight: 700;
   color: var(--on-surface-variant);
   text-transform: uppercase;
   letter-spacing: 0.07em;
   border-bottom: 1px solid var(--outline-variant);
-  margin-bottom: 0.375rem;
+  margin-bottom: 0.25rem;
+}
+@media (min-width: 540px) {
+  .table-head { display: grid; }
 }
 
 .table-row {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
-  gap: 1rem;
-  padding: 0.75rem 0.875rem;
-  border-radius: var(--radius-lg);
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0.5rem;
+  border-bottom: 1px solid var(--outline-variant);
   transition: background 0.15s ease;
 }
-.table-row:hover {
-  background: var(--surface-container-low);
+.table-row:last-child { border-bottom: none; }
+.table-row:hover { background: var(--surface-container-low); border-radius: var(--radius-lg); }
+
+/* On desktop show all 4 columns in a grid */
+@media (min-width: 540px) {
+  .table-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 0.6fr;
+    gap: 0.5rem;
+    padding: 0.625rem 0.75rem;
+    border-bottom: 1px solid var(--outline-variant);
+  }
+  .row-source, .row-date { display: block; }
 }
+
+/* Mobile: hide source & date columns, show inline */
+.row-source, .row-date {
+  display: none;
+}
+
+/* Mobile sub-text below event name */
+.row-event-meta {
+  font-size: 0.7rem;
+  color: var(--on-surface-variant);
+  margin-top: 0.1rem;
+}
+@media (min-width: 540px) { .row-event-meta { display: none; } }
 
 .row-event {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.625rem;
+  min-width: 0;
 }
 
 .event-icon-wrap {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
-.event-icon { font-size: 16px; }
+.event-icon { font-size: 15px; }
 
 .event-name {
   font-family: var(--font-headline);
-  font-size: 0.875rem;
+  font-size: 0.825rem;
   font-weight: 600;
   color: var(--on-surface);
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.3;
 }
 .row-source {
-  font-size: 0.8rem;
+  font-size: 0.775rem;
   color: var(--on-surface-variant);
 }
 .row-date {
-  font-size: 0.8rem;
+  font-size: 0.775rem;
   color: var(--on-surface-variant);
 }
 .row-value {
@@ -458,10 +494,6 @@ onMounted(loadAnalytics)
   font-weight: 700;
   color: var(--on-surface-variant);
 }
-.row-value.positive {
-  color: #16a34a;
-}
-[data-theme="dark"] .row-value.positive {
-  color: #4ade80;
-}
+.row-value.positive { color: #16a34a; }
+[data-theme="dark"] .row-value.positive { color: #4ade80; }
 </style>

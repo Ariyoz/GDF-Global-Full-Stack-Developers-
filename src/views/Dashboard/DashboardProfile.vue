@@ -301,10 +301,10 @@ async function handleSave() {
 
 .profile-header-card {
   display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  padding: 1.75rem;
-  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1.25rem;
+  padding: 1.25rem;
+  flex-wrap: nowrap; /* keep avatar + meta side by side */
 }
 
 .profile-avatar-lg {
@@ -354,12 +354,12 @@ async function handleSave() {
   display: none;
 }
 
-.profile-meta { display: flex; flex-direction: column; gap: 0.3rem; flex: 1; min-width: 0; }
+.profile-meta { display: flex; flex-direction: column; gap: 0.3rem; flex: 1; min-width: 0; overflow: hidden; }
 
-.profile-name { font-family: var(--font-headline); font-size: 1.25rem; font-weight: 700; color: var(--on-surface); }
-.profile-title { font-size: 0.9rem; color: var(--primary); font-weight: 500; }
-.profile-email { font-size: 0.8rem; color: var(--on-surface-variant); }
-.profile-location { display: inline-flex; align-items: center; gap: 0.2rem; font-size: 0.8rem; color: var(--on-surface-variant); }
+.profile-name { font-family: var(--font-headline); font-size: 1.15rem; font-weight: 700; color: var(--on-surface); word-break: break-word; }
+.profile-title { font-size: 0.85rem; color: var(--primary); font-weight: 500; }
+.profile-email { font-size: 0.78rem; color: var(--on-surface-variant); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; display: block; }
+.profile-location { display: inline-flex; align-items: center; gap: 0.2rem; font-size: 0.78rem; color: var(--on-surface-variant); }
 
 .profile-badges { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.25rem; }
 

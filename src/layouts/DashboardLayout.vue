@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="dash-layout" :class="{ 'messaging-fullscreen': $route.path.startsWith('/messaging'), 'feed-page': $route.path === '/feed' }">
     <!-- Top Nav -->
     <header class="dash-topnav glass-nav">
@@ -792,14 +792,15 @@ function handleSignOut() {
   box-shadow: 0 4px 12px rgba(99,14,212,0.2);
 }
 
-/* Main â€” offset by sidebar width on desktop */
 .dash-main {
   flex: 1;
-  padding: var(--space-md);
+  padding: 1rem;
   max-width: 1200px;
   width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow-x: hidden;
   min-height: calc(100vh - 72px);
-  /* NO overflow-y: auto here â€” page-level scroll needed for sticky children */
 }
 
 @media (min-width: 768px) {
@@ -808,7 +809,6 @@ function handleSignOut() {
     margin-left: 256px;
   }
 }
-
 /* Mobile Bottom Nav — WhatsApp floating pill style */
 .mobile-bottom-nav {
   display: none;

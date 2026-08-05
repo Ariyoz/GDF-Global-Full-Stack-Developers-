@@ -314,28 +314,35 @@ function copyProfileLink() {
 
 .welcome-actions {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.625rem;
   flex-wrap: wrap;
-  align-self: center;
+  align-self: flex-start;
+  flex-shrink: 0;
 }
 .welcome-btn {
-  font-size: 0.875rem;
-  padding: 0.625rem 1.25rem;
+  font-size: 0.85rem;
+  padding: 0.6rem 1rem;
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+@media (max-width: 480px) {
+  .welcome-actions { width: 100%; }
+  .welcome-btn { flex: 1; justify-content: center; font-size: .8rem; padding: .55rem .75rem; }
 }
 
 /* ══════════════════════════════════════
-   STATS ROW
+   STATS ROW — horizontal scroll on mobile
 ══════════════════════════════════════ */
 .stats-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
 }
-@media (max-width: 900px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 480px) { .stats-row { grid-template-columns: 1fr 1fr; } }
+/* On mobile: 2x2 grid, no scroll */
+@media (max-width: 640px) { .stats-row { grid-template-columns: repeat(2, 1fr); gap: .75rem; } }
 
 .stat-card {
   padding: 1.25rem 1.25rem 1rem;
@@ -627,19 +634,20 @@ function copyProfileLink() {
 .quick-links-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
+  gap: 0.625rem;
 }
-@media (min-width: 540px)  { .quick-links-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 480px)  { .quick-links-grid { grid-template-columns: repeat(3, 1fr); } }
 @media (min-width: 900px)  { .quick-links-grid { grid-template-columns: repeat(5, 1fr); } }
 
 .quick-link {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.875rem 1rem;
+  gap: 0.625rem;
+  padding: 0.75rem 0.875rem;
   text-decoration: none;
   border-radius: var(--radius-xl);
   transition: all 0.2s ease;
+  min-width: 0;
 }
 .quick-link:hover {
   border-color: rgba(99,14,212,0.25) !important;
@@ -651,7 +659,7 @@ function copyProfileLink() {
   background: rgba(168,85,247,0.06) !important;
 }
 .ql-icon {
-  width: 36px; height: 36px;
+  width: 34px; height: 34px;
   border-radius: var(--radius-md);
   background: rgba(99,14,212,0.08);
   display: flex; align-items: center; justify-content: center;
@@ -666,14 +674,18 @@ function copyProfileLink() {
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--on-surface);
+  /* wrap cleanly — no mid-word breaks */
   white-space: normal;
-  word-break: break-word;
+  word-break: normal;
+  overflow-wrap: normal;
   line-height: 1.3;
+  min-width: 0;
 }
 .ql-arrow {
   font-size: 12px !important;
   color: var(--on-surface-variant);
   transition: transform 0.2s ease, color 0.2s ease;
+  flex-shrink: 0;
 }
 .quick-link:hover .ql-arrow { transform: translateX(2px); color: var(--primary); }
 
@@ -682,9 +694,30 @@ function copyProfileLink() {
 ══════════════════════════════════════ */
 @media (max-width: 640px) {
   .dash-home { gap: 1.25rem; }
-  .bento-card { padding: 1.125rem; }
-  .dash-welcome { padding: 1.25rem; }
+  .bento-card { padding: 1rem; }
+  .dash-welcome { padding: 1rem; }
   .welcome-actions { width: 100%; }
-  .welcome-btn { flex: 1; justify-content: center; }
+  .welcome-btn { flex: 1; justify-content: center; font-size: .8rem; }
+
+  /* Quick links: hide arrow, tighter layout */
+  .ql-arrow { display: none; }
+  .quick-link {
+    padding: .625rem .75rem;
+    gap: .5rem;
+  }
+  .ql-icon { width: 30px; height: 30px; flex-shrink: 0; }
+  .ql-icon .material-symbols-outlined { font-size: 17px !important; }
+  .ql-label {
+    font-size: .78rem;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  /* Stats: smaller value font */
+  .stat-value { font-size: 1.5rem; }
+  .stat-label-top { font-size: .65rem; }
+
+  /* Profile email — allow wrap */
+  .profile-email { overflow-wrap: break-word; word-break: break-all; }
 }
 </style>

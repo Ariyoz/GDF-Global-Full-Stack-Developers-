@@ -121,7 +121,7 @@
 .section-gfd {
   padding: var(--section-py) 0;
   position: relative;
-  overflow: hidden;
+  /* removed overflow:hidden — it clips absolutely-positioned avatars on dev cards */
 }
 
 .container-gfd {
