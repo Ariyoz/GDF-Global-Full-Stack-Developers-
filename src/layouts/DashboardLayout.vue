@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="dash-layout" :class="{ 'messaging-fullscreen': $route.path.startsWith('/messaging'), 'feed-page': $route.path === '/feed' }">
     <!-- Top Nav -->
     <header class="dash-topnav glass-nav">
@@ -463,7 +463,7 @@ function handleSignOut() {
   transition: background-color 0.3s ease;
 }
 
-/* Dark mode topnav â€” elevated surface so content is visible */
+/* Dark mode topnav — elevated surface so content is visible */
 :global([data-theme="dark"]) .dash-topnav {
   background: #16161f;
   border-bottom-color: rgba(168, 85, 247, 0.12);
@@ -570,7 +570,6 @@ function handleSignOut() {
   align-items: center;
   gap: 0.25rem;
   flex-shrink: 0;
-  /* NO flex-wrap â€” everything stays on one row */
 }
 
 .icon-btn {
@@ -610,6 +609,7 @@ function handleSignOut() {
   display: flex; align-items: center; justify-content: center;
   padding: 0 3px; pointer-events: none;
 }
+
 .topnav-user-pill {
   display: flex;
   align-items: center;
@@ -653,7 +653,6 @@ function handleSignOut() {
   text-overflow: ellipsis;
 }
 
-/* Sign out â€” icon-only button inside the pill */
 .dash-signout-btn {
   width: 26px;
   height: 26px;
@@ -672,10 +671,55 @@ function handleSignOut() {
 .dash-signout-btn:hover { color: var(--error); background: rgba(186,26,26,0.08); }
 .dash-signout-btn .material-symbols-outlined { font-size: 16px; }
 
-/* Hide mail/notifications on small screens â€” accessible via bottom nav */
+/* Hide mail/notifications on small screens — accessible via bottom nav */
 @media (max-width: 767px) {
   .topnav-hide-mobile { display: none; }
   .topnav-username { display: none; }
+
+  /* ── Mobile top nav: glass, 60px, cleaner ── */
+  .dash-topnav {
+    height: calc(60px + env(safe-area-inset-top, 0px));
+    background: rgba(255,255,255,0.82);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid rgba(168,85,247,0.10);
+  }
+
+  /* Hide back arrow on mobile */
+  .dash-back-btn { display: none; }
+
+  /* Bigger logo on mobile */
+  .dash-logo-img { width: 32px; height: 32px; border-radius: 9px; }
+  .dash-logo-text { font-size: 1.35rem; }
+
+  /* Avatar: 32px, purple gradient */
+  .dash-avatar {
+    width: 32px;
+    height: 32px;
+    background: var(--gradient-primary);
+    border: none;
+  }
+  .avatar-initials {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #fff;
+  }
+
+  /* Pill: slimmer on mobile */
+  .topnav-user-pill {
+    padding: 0.2rem 0.3rem 0.2rem 0.2rem;
+    gap: 0.3rem;
+  }
+}
+
+/* dark mode glass top nav on mobile */
+@media (max-width: 767px) {
+  :global([data-theme="dark"]) .dash-topnav {
+    background: rgba(17,17,24,0.88);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
+    border-bottom-color: rgba(168,85,247,0.18);
+  }
 }
 
 /* Body */
@@ -685,7 +729,13 @@ function handleSignOut() {
   min-height: 100vh;
 }
 
-/* Sidebar â€” FIXED so it never scrolls with the content */
+@media (max-width: 767px) {
+  .dash-body {
+    padding-top: calc(60px + env(safe-area-inset-top, 0px));
+  }
+}
+
+/* Sidebar — FIXED so it never scrolls with the content */
 .dash-sidebar {
   display: none;
   width: 256px;
@@ -705,7 +755,6 @@ function handleSignOut() {
   scrollbar-color: var(--outline-variant) transparent;
 }
 
-/* Dark mode sidebar â€” slightly elevated so links are readable */
 :global([data-theme="dark"]) .dash-sidebar {
   background: #13131c;
   border-right-color: rgba(168, 85, 247, 0.1);
@@ -809,7 +858,10 @@ function handleSignOut() {
     margin-left: 256px;
   }
 }
-/* Mobile Bottom Nav — WhatsApp floating pill style */
+
+/* ─────────────────────────────────────────────────
+   Mobile Bottom Nav — premium floating pill
+───────────────────────────────────────────────── */
 .mobile-bottom-nav {
   display: none;
   position: fixed;
@@ -821,42 +873,82 @@ function handleSignOut() {
   background: transparent;
   pointer-events: none;
 }
+
 @media (max-width: 767px) {
   .mobile-bottom-nav { display: flex; }
-  .dash-main { padding-bottom: 96px; }
-  /* Hide bottom nav and topnav when messaging is open on mobile */
+  .dash-main { padding-bottom: 100px; }
   .messaging-fullscreen .mobile-bottom-nav { display: none !important; }
   .messaging-fullscreen .dash-topnav { display: none !important; }
   .messaging-fullscreen .dash-body { padding-top: 0 !important; }
 }
+
+/* The pill itself */
 .nav-pill {
-  display: flex; align-items: center; justify-content: space-around;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
   background: var(--surface-container-lowest);
   border: 1px solid var(--outline-variant);
   border-radius: 999px;
-  padding: 0.5rem 0.75rem;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.15), 0 1px 4px rgba(0,0,0,0.08);
-  width: 100%; max-width: 400px;
-  position: relative; pointer-events: all;
+  padding: 0.55rem 0.875rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.10);
+  width: 100%;
+  max-width: 380px;
+  position: relative;
+  pointer-events: all;
+  height: 64px;
+  box-sizing: border-box;
 }
+
 :global([data-theme="dark"]) .nav-pill {
   background: #1a1a2e;
-  border-color: rgba(255,255,255,0.1);
-  box-shadow: 0 4px 32px rgba(0,0,0,0.5);
+  border-color: rgba(168,85,247,0.2);
+  box-shadow:
+    0 8px 32px rgba(0,0,0,0.55),
+    0 0 0 1px rgba(168,85,247,0.08) inset;
 }
+
+/* Nav pill items */
 .pill-item {
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
-  text-decoration: none; color: var(--on-surface-variant);
-  font-family: var(--font-headline); font-size: 0.6rem; font-weight: 600;
-  padding: 0.3rem 0.75rem; border-radius: 999px;
-  transition: all 0.15s; background: none; border: none; cursor: pointer;
-  position: relative; flex: 1; min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-decoration: none;
+  color: var(--on-surface-variant);
+  font-family: var(--font-headline);
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background: none;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  flex: 1;
+  min-width: 0;
 }
-.pill-item .material-symbols-outlined { font-size: 22px; }
-.pill-item.active { color: var(--primary); }
-:global([data-theme="dark"]) .pill-item { color: rgba(255,255,255,0.55); }
-:global([data-theme="dark"]) .pill-item.active { color: var(--primary); }
-.pill-label { font-size: 0.62rem; font-weight: 600; white-space: nowrap; }
+
+.pill-item .material-symbols-outlined { font-size: 22px; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+/* iOS-style active pill background behind icon+label */
+.pill-item.active {
+  color: var(--primary);
+  background: rgba(99,14,212,0.10);
+}
+:global([data-theme="dark"]) .pill-item.active {
+  background: rgba(168,85,247,0.14);
+  color: var(--primary);
+}
+.pill-item.active .material-symbols-outlined {
+  transform: scale(1.1);
+}
+
+:global([data-theme="dark"]) .pill-item { color: rgba(255,255,255,0.5); }
+
+.pill-label { font-size: 0.65rem; font-weight: 600; white-space: nowrap; }
+
 .pill-badge {
   position: absolute; top: 1px; right: 2px;
   min-width: 16px; height: 16px; border-radius: 8px;
@@ -864,32 +956,77 @@ function handleSignOut() {
   font-size: 0.55rem; font-weight: 800;
   display: flex; align-items: center; justify-content: center; padding: 0 3px;
 }
+
+/* FAB center button — circular, gradient, glow */
 .pill-center-btn {
-  width: 52px; height: 52px; border-radius: 16px;
-  background: var(--primary); border: none; color: #fff;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; flex-shrink: 0;
-  margin: -20px 0.35rem 0;
-  box-shadow: 0 4px 16px rgba(99,14,212,0.45), 0 0 0 4px var(--surface-container-lowest);
-  transition: transform 0.15s, box-shadow 0.15s; position: relative; z-index: 1;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  border: none;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin: -22px 0.35rem 0;
+  box-shadow:
+    0 4px 20px rgba(99,14,212,0.55),
+    0 0 0 4px var(--surface-container-lowest),
+    0 0 0 5px rgba(99,14,212,0.15);
+  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease;
+  position: relative;
+  z-index: 1;
 }
-.pill-avatar { width:24px; height:24px; border-radius:50%; overflow:hidden; flex-shrink:0; }
-.pill-avatar-img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
-.pill-center-btn:hover { transform: scale(1.06); }
+
+:global([data-theme="dark"]) .pill-center-btn {
+  box-shadow:
+    0 4px 24px rgba(168,85,247,0.6),
+    0 0 0 4px #1a1a2e,
+    0 0 0 5px rgba(168,85,247,0.2);
+}
+
+.pill-center-btn:active {
+  transform: scale(0.93);
+  box-shadow:
+    0 2px 10px rgba(99,14,212,0.45),
+    0 0 0 4px var(--surface-container-lowest);
+}
+
+.pill-center-btn:hover { transform: scale(1.07); }
 .pill-center-btn .material-symbols-outlined { font-size: 26px; }
 
-/* Page transition */
-.page-enter-active,
-.page-leave-active { transition: opacity 0.2s ease; }
-.page-enter-from,
-.page-leave-to { opacity: 0; }
+.pill-avatar { width:24px; height:24px; border-radius:50%; overflow:hidden; flex-shrink:0; }
+.pill-avatar-img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
 
-/* â”€â”€ Mobile Compose Sheet â”€â”€ */
+/* ─────────────────────────────────────────────────
+   Page transition — native slide + fade
+───────────────────────────────────────────────── */
+.page-enter-active {
+  transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.page-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+/* ─────────────────────────────────────────────────
+   Compose Sheet — Twitter/X style
+───────────────────────────────────────────────── */
 .compose-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   z-index: 600;
   display: flex;
   align-items: flex-end;
@@ -907,6 +1044,11 @@ function handleSignOut() {
   overflow-y: auto;
 }
 
+:global([data-theme="dark"]) .compose-sheet {
+  background: #16161f;
+  border-top: 1px solid rgba(168,85,247,0.15);
+}
+
 /* Drag handle */
 .sheet-handle {
   width: 40px;
@@ -917,11 +1059,20 @@ function handleSignOut() {
   flex-shrink: 0;
 }
 
-/* Sheet header */
+/* Sheet header — frosted glass feel */
 .sheet-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  background: var(--surface-container);
+  border-radius: var(--radius-xl);
+  margin-bottom: 0.25rem;
+}
+
+:global([data-theme="dark"]) .sheet-header {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
 }
 
 .sheet-user {
@@ -934,8 +1085,8 @@ function handleSignOut() {
   width: 44px;
   height: 44px;
   border-radius: var(--radius-full);
-  background: var(--primary-fixed);
-  color: var(--primary);
+  background: var(--gradient-primary);
+  color: #fff;
   font-family: var(--font-headline);
   font-size: 0.875rem;
   font-weight: 700;
@@ -979,22 +1130,37 @@ function handleSignOut() {
   cursor: pointer;
   color: var(--on-surface-variant);
   flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
+.sheet-close:hover { background: var(--surface-container-high); color: var(--on-surface); }
 .sheet-close .material-symbols-outlined { font-size: 20px; }
 
-/* Textarea */
+/* Textarea — larger, colored focus border */
 .sheet-textarea {
   width: 100%;
   background: transparent;
-  border: none;
+  border: 2px solid transparent;
+  border-radius: var(--radius-lg);
   outline: none;
   font-family: var(--font-body);
   font-size: 1rem;
   color: var(--on-surface);
   line-height: 1.65;
   resize: none;
-  min-height: 100px;
+  min-height: 140px;
+  padding: 0.5rem 0.25rem;
+  transition: border-color 0.2s ease;
+}
+
+.sheet-textarea:focus {
+  border-color: rgba(99,14,212,0.35);
+  background: rgba(99,14,212,0.03);
+}
+
+:global([data-theme="dark"]) .sheet-textarea:focus {
+  border-color: rgba(168,85,247,0.3);
+  background: rgba(168,85,247,0.04);
 }
 
 .sheet-textarea::placeholder { color: var(--outline); }
@@ -1146,33 +1312,29 @@ function handleSignOut() {
   transition: background 0.15s ease;
 }
 
-.preview-remove:hover {
-  background: rgba(0, 0, 0, 0.8);
-}
+.preview-remove:hover { background: rgba(0, 0, 0, 0.8); }
+.preview-remove .material-symbols-outlined { font-size: 18px; }
 
-.preview-remove .material-symbols-outlined {
-  font-size: 18px;
-}
-
-/* Footer */
+/* Compose footer — bigger, more app-like */
 .sheet-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 0.75rem;
+  padding-top: 0.875rem;
   border-top: 1px solid var(--outline-variant);
 }
 
 .sheet-tools {
   display: flex;
-  gap: 0.25rem;
+  gap: 0.35rem;
 }
 
+/* Tool buttons: subtle background, bigger tap target */
 .tool-btn {
-  width: 38px;
-  height: 38px;
+  width: 42px;
+  height: 42px;
   border-radius: var(--radius-full);
-  background: none;
+  background: var(--surface-container);
   border: none;
   display: flex;
   align-items: center;
@@ -1183,37 +1345,70 @@ function handleSignOut() {
 }
 
 .tool-btn:hover {
-  background: var(--surface-container);
+  background: rgba(99,14,212,0.10);
+  color: var(--primary);
+}
+
+:global([data-theme="dark"]) .tool-btn {
+  background: rgba(255,255,255,0.06);
+}
+:global([data-theme="dark"]) .tool-btn:hover {
+  background: rgba(168,85,247,0.14);
   color: var(--primary);
 }
 
 .tool-btn .material-symbols-outlined { font-size: 22px; }
 
+/* Post button — full gradient pill */
 .sheet-post-btn {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.6rem 1.25rem;
-  font-size: 0.875rem;
+  padding: 0.65rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  background: var(--gradient-primary);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(99,14,212,0.4);
+  transition: all 0.18s ease;
 }
+
+.sheet-post-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(99,14,212,0.5);
+}
+
+.sheet-post-btn:active { transform: scale(0.97); }
 
 .sheet-post-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
-/* Sheet slide-up transition */
-.sheet-enter-active { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease; }
-.sheet-leave-active { transition: transform 0.25s ease, opacity 0.2s ease; }
-.sheet-enter-from   { transform: translateY(100%); opacity: 0; }
-.sheet-leave-to     { transform: translateY(100%); opacity: 0; }
+/* Sheet slide-up transition — spring */
+.sheet-enter-active {
+  transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
+}
+.sheet-leave-active {
+  transition: transform 0.25s ease, opacity 0.2s ease;
+}
+.sheet-enter-from  { transform: translateY(100%); opacity: 0; }
+.sheet-leave-to    { transform: translateY(100%); opacity: 0; }
 
-/* â”€â”€ More Menu Drawer â”€â”€ */
+/* ─────────────────────────────────────────────────
+   More Menu Drawer — premium bottom sheet
+───────────────────────────────────────────────── */
 .more-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(4px);
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   z-index: 600;
   display: flex;
   align-items: flex-end;
@@ -1231,10 +1426,24 @@ function handleSignOut() {
   overflow-y: auto;
 }
 
+:global([data-theme="dark"]) .more-sheet {
+  background: #16161f;
+  border-top: 1px solid rgba(168,85,247,0.15);
+}
+
+/* Frosted glass header with user info */
 .more-sheet-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 0.625rem 0.875rem;
+  background: var(--surface-container);
+  border-radius: var(--radius-xl);
+}
+
+:global([data-theme="dark"]) .more-sheet-header {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
 }
 
 .more-sheet-title {
@@ -1244,37 +1453,46 @@ function handleSignOut() {
   color: var(--on-surface);
 }
 
-/* 3-column icon grid */
+/* 4-column icon grid */
 .more-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.75rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.6rem;
 }
 
+/* More items — compact native feel */
 .more-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.875rem 0.5rem;
+  gap: 0.35rem;
+  padding: 0.75rem 0.4rem;
   border-radius: var(--radius-xl);
   background: var(--surface-container-low);
   border: 1px solid var(--outline-variant);
   text-decoration: none;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   cursor: pointer;
 }
 
 .more-item:hover,
 .more-item.active {
-  background: var(--primary-fixed);
-  border-color: var(--primary);
+  background: rgba(99,14,212,0.08);
+  border-color: rgba(99,14,212,0.3);
+  transform: scale(1.04);
 }
 
+:global([data-theme="dark"]) .more-item:hover,
+:global([data-theme="dark"]) .more-item.active {
+  background: rgba(168,85,247,0.12);
+  border-color: rgba(168,85,247,0.3);
+}
+
+/* Colored circle icons per item */
 .more-item-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-lg);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   background: var(--surface-container);
   display: flex;
   align-items: center;
@@ -1284,11 +1502,16 @@ function handleSignOut() {
 
 .more-item:hover .more-item-icon,
 .more-item.active .more-item-icon {
-  background: rgba(168,85,247,0.12);
+  background: rgba(99,14,212,0.12);
+}
+
+:global([data-theme="dark"]) .more-item:hover .more-item-icon,
+:global([data-theme="dark"]) .more-item.active .more-item-icon {
+  background: rgba(168,85,247,0.15);
 }
 
 .more-item .material-symbols-outlined {
-  font-size: 22px;
+  font-size: 20px;
   color: var(--on-surface-variant);
   transition: color 0.15s ease;
 }
@@ -1300,7 +1523,7 @@ function handleSignOut() {
 
 .more-item-label {
   font-family: var(--font-headline);
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 600;
   color: var(--on-surface-variant);
   text-align: center;
