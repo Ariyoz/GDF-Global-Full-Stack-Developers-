@@ -169,7 +169,7 @@
               </span>
               <span v-else class="dc-busy">Busy</span>
             </div>
-            <!-- Avatar — bigger, circular, properly positioned -->
+            <!-- Avatar OUTSIDE the cover — never clipped -->
             <div class="dc-av-wrap">
               <img v-if="dev.avatar" :src="dev.avatar" :alt="dev.name" class="dc-av-img" />
               <div v-else class="dc-av-ini" :style="`background:${AV_COLORS[i % AV_COLORS.length]}`">
@@ -503,8 +503,13 @@ function goHire(dev) {
 .btn-reset:hover { border-color:var(--primary); color:var(--primary); }
 
 /* ── Toolbar ── */
-.toolbar { display:flex; align-items:center; justify-content:space-between; gap:.75rem; margin-bottom:1rem; flex-wrap:wrap; }
-.toolbar-left { display:flex; align-items:center; gap:.75rem; }
+.toolbar {
+  display:flex; flex-direction:column; gap:.625rem; margin-bottom:1rem;
+}
+@media (min-width: 560px) {
+  .toolbar { flex-direction:row; align-items:center; justify-content:space-between; }
+}
+.toolbar-left { display:flex; align-items:center; gap:.625rem; }
 .toolbar-right { display:flex; align-items:center; gap:.5rem; }
 
 .filter-toggle { display:flex; align-items:center; gap:.375rem; padding:.45rem .875rem; border-radius:10px; background:var(--surface-container-low); border:1.5px solid var(--outline-variant); font-family:var(--font-headline); font-size:.82rem; font-weight:600; color:var(--on-surface); cursor:pointer; transition:all .15s; }
@@ -528,9 +533,10 @@ function goHire(dev) {
 .af-clear { border:none; background:none; cursor:pointer; font-family:var(--font-headline); font-size:.75rem; font-weight:600; color:var(--on-surface-variant); text-decoration:underline; }
 
 /* ── Grid ── */
-.dev-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:.75rem; }
-@media (min-width: 640px)  { .dev-grid { grid-template-columns:repeat(3,1fr); } }
-@media (min-width: 1100px) { .dev-grid { grid-template-columns:repeat(4,1fr); } }
+.dev-grid { display:grid; grid-template-columns:1fr; gap:.75rem; }
+@media (min-width: 560px)  { .dev-grid { grid-template-columns:repeat(2,1fr); } }
+@media (min-width: 900px)  { .dev-grid { grid-template-columns:repeat(3,1fr); } }
+@media (min-width: 1200px) { .dev-grid { grid-template-columns:repeat(4,1fr); } }
 
 /* Skeleton */
 .dev-skel { height:300px; border-radius:18px; }
@@ -538,7 +544,7 @@ function goHire(dev) {
 .shimmer { background:linear-gradient(90deg,var(--surface-container) 25%,var(--surface-container-high) 50%,var(--surface-container) 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; }
 @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
-/* Card — NO overflow:hidden so avatar is never clipped */
+/* Card — NO overflow:hidden so avatar hangs outside cover cleanly */
 .dev-card { display:flex; flex-direction:column; border-radius:16px; background:var(--surface-container-lowest); border:1px solid var(--outline-variant); text-decoration:none; transition:transform .2s, box-shadow .2s, border-color .2s; cursor:pointer; }
 .dev-card:hover { transform:translateY(-3px); box-shadow:var(--shadow-md); border-color:var(--primary); }
 
@@ -548,19 +554,19 @@ function goHire(dev) {
 .live-dot { width:5px; height:5px; border-radius:50%; background:#22c55e; flex-shrink:0; animation:pulse 2s ease-in-out infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
-/* Avatar — compact 50px, circular, z-index above cover */
+/* Avatar — sibling of cover, pulled up with negative margin, never clipped */
 .dc-av-wrap {
   width: 50px; height: 50px;
   border-radius: 50%;
   border: 3px solid var(--surface-container-lowest);
   overflow: hidden;
   box-shadow: 0 3px 12px rgba(0,0,0,.25);
-  flex-shrink: 0;
   background: var(--surface-container);
   margin-top: -25px;
   margin-left: .875rem;
   position: relative;
   z-index: 2;
+  flex-shrink: 0;
 }
 .dc-av-img  { width:100%; height:100%; object-fit:cover; display:block; }
 .dc-av-ini  {
