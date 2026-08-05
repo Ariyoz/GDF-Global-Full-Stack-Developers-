@@ -755,11 +755,8 @@ async function fetchJobs() {
 }
 
 async function openJobDetail(job) {
-  selectedJob.value = job
-  try {
-    const fresh = await http.get(`/jobs/${job.id}`)
-    selectedJob.value = { ...job, ...fresh }
-  } catch {}
+  // Navigate to the full-page job detail / apply view
+  router.push(`/apply/${job.id}`)
 }
 
 async function postJob() {
