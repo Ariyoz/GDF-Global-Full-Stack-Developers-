@@ -5,7 +5,7 @@
     <div class="page-hdr">
       <div class="page-hdr-left">
         <div class="page-hdr-icon">
-          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">workspace_premium</span>
+          <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;font-size:22px">workspace_premium</span>
         </div>
         <div>
           <h1 class="page-title">Subscriptions</h1>
@@ -276,17 +276,23 @@ onMounted(async () => {
 
 <style scoped>
 /* ══ Root ══════════════════════════════════════════════════════════════════ */
-.admin-subs-view { display:flex; flex-direction:column; gap:1.5rem; padding-bottom:3rem; }
+.admin-subs-view {
+  display:flex; flex-direction:column; gap:1.5rem;
+  padding: 1.5rem; min-height: 100%;
+  animation: fadeInUp 0.35s ease forwards;
+}
+@media (min-width: 768px) { .admin-subs-view { padding: 2rem 2rem 2.5rem; } }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
 /* ══ Header ════════════════════════════════════════════════════════════════ */
 .page-hdr { display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
 .page-hdr-left { display:flex; align-items:center; gap:.875rem; }
 .page-hdr-icon {
   width:46px; height:46px; border-radius:13px; flex-shrink:0;
-  background:linear-gradient(135deg,rgba(245,158,11,.2),rgba(245,158,11,.08));
-  border:1px solid rgba(245,158,11,.3);
+  background: linear-gradient(135deg, rgba(99,14,212,.15), rgba(99,14,212,.08));
+  border:1px solid rgba(99,14,212,.2);
   display:flex; align-items:center; justify-content:center;
-  color:#f59e0b;
+  color: var(--primary);
 }
 .page-hdr-icon .material-symbols-outlined { font-size:22px; }
 .page-title { font-family:var(--font-headline); font-size:1.4rem; font-weight:800; color:var(--on-surface); letter-spacing:-.02em; margin:0; }

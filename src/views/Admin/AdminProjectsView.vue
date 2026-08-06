@@ -213,9 +213,11 @@ onMounted(loadProjects)
 </script>
 
 <style scoped>
-.admin-projects-view { display: flex; flex-direction: column; gap: 1.25rem; }
+.admin-projects-view { display: flex; flex-direction: column; gap: 1.25rem; padding: 1.5rem; min-height: 100%; animation: fadeInUp .35s ease forwards; }
+@media (min-width: 768px) { .admin-projects-view { padding: 2rem 2rem 2.5rem; } }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 .page-header { display: flex; align-items: flex-start; justify-content: space-between; }
-.pg-title { font-family: var(--font-headline); font-size: 1.5rem; font-weight: 800; color: var(--on-surface); }
+.pg-title { font-family: var(--font-headline); font-size: 1.4rem; font-weight: 800; color: var(--on-surface); letter-spacing: -.02em; margin: 0; }
 .pg-sub   { font-size: .85rem; color: var(--on-surface-variant); margin-top: .25rem; }
 .btn-refresh { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--outline-variant); background: var(--surface-container); color: var(--on-surface-variant); display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .spin { animation: spin 1s linear infinite; }
@@ -241,11 +243,12 @@ onMounted(loadProjects)
 .rev-card {
   background: var(--surface-container-lowest);
   border: 1px solid var(--outline-variant);
-  border-radius: 16px; overflow: hidden;
+  border-radius: var(--radius-xl); overflow: hidden;
   display: flex; flex-direction: column;
-  transition: border-color .15s, transform .15s;
+  transition: border-color .2s, transform .2s, box-shadow .2s;
 }
-.rev-card:hover { border-color: rgba(168,85,247,.3); transform: translateY(-2px); }
+.rev-card:hover { border-color: rgba(99,14,212,.25); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(99,14,212,.08); }
+[data-theme="dark"] .rev-card:hover { border-color: rgba(168,85,247,.25); box-shadow: 0 8px 24px rgba(168,85,247,.1); }
 
 /* Cover */
 .rev-cover { position: relative; height: 140px; background: linear-gradient(135deg,#1a0840,#2e1065); }
