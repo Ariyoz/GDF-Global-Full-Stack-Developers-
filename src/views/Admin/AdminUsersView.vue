@@ -142,13 +142,19 @@
 
       <!-- Pagination -->
       <div class="table-pagination">
-        <p class="pagination-info">Showing {{ filteredUsers.length }} user{{ filteredUsers.length !== 1 ? 's' : '' }}</p>
+        <p class="pagination-info">
+          Showing {{ users.length }} of {{ totalUsers }} user{{ totalUsers !== 1 ? 's' : '' }}
+          <span v-if="totalPages > 1"> · Page {{ currentPage }} of {{ totalPages }}</span>
+        </p>
         <div class="pagination-btns">
-          <button class="page-btn" disabled>
+          <button class="page-btn" :disabled="currentPage <= 1" @click="goToPage(currentPage - 1)">
             <span class="material-symbols-outlined">chevron_left</span>
           </button>
-          <button v-for="p in [1,2,3]" :key="p" class="page-btn" :class="{ active: p === 1 }">{{ p }}</button>
-          <button class="page-btn">
+          <button
+            v-for="p in visiblePages" :key="p"
+            class="page-btn" :class="{ active: p === currentPage }"
+            @click="goToPage(p)">{{ p }}</button>
+          <button class="page-btn" :disabled="currentPage >= totalPages" @click="goToPage(currentPage + 1)">
             <span class="material-symbols-outlined">chevron_right</span>
           </button>
         </div>
@@ -276,29 +282,44 @@ const userStats = ref([
 
 const users = ref([])
 const totalUsers = ref(0)
+const currentPage = ref(1)
+const totalPages  = ref(1)
+const PAGE_SIZE   = 50
+
+const visiblePages = computed(() => {
+  const pages = []
+  const start = Math.max(1, currentPage.value - 2)
+  const end   = Math.min(totalPages.value, start + 4)
+  for (let i = start; i <= end; i++) pages.push(i)
+  return pages
+})
 
 async function fetchUsers() {
   loading.value = true
   try {
     const status = activeTab.value === 'suspended' ? 'suspended' : statusFilter.value || undefined
-    const { users: data, total } = await adminService.listUsers({
+    const { users: data, total, pages } = await adminService.listUsers({
       search: searchQuery.value || undefined,
       role: roleFilter.value || undefined,
       status,
+      page: currentPage.value,
+      limit: PAGE_SIZE,
     })
     users.value = data.map(u => ({
       id: u.id,
-      name: u.full_name || u.email,
+      name: u.full_name || u.username || u.email,
       email: u.email,
+      username: u.username,
       role: u.role || 'developer',
+      is_verified: u.is_verified || false,
       joined: new Date(u.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       skillDots: [],
       status: u.status || 'active',
       statusLabel: u.status === 'active' ? 'Active' : u.status === 'suspended' ? 'Suspended' : 'Pending',
     }))
-    totalUsers.value = total
-
-    userStats.value[0].value = String(total)
+    totalUsers.value = total || 0
+    totalPages.value = pages || Math.ceil((total || 0) / PAGE_SIZE) || 1
+    userStats.value[0].value = String(total || 0)
   } catch (err) {
     console.error('Failed to fetch users:', err)
   } finally {
@@ -306,8 +327,17 @@ async function fetchUsers() {
   }
 }
 
+function goToPage(page) {
+  if (page < 1 || page > totalPages.value) return
+  currentPage.value = page
+  fetchUsers()
+}
+
 onMounted(fetchUsers)
-watch([activeTab, roleFilter, statusFilter, searchQuery], fetchUsers)
+watch([activeTab, roleFilter, statusFilter, searchQuery], () => {
+  currentPage.value = 1
+  fetchUsers()
+})
 
 const filteredUsers = computed(() => {
   let list = users.value

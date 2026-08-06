@@ -23,13 +23,18 @@ export const adminService = {
     }
   },
 
-  async listUsers({ page = 1, limit = 20, search, role, status } = {}) {
+  async listUsers({ page = 1, limit = 50, search, role, status } = {}) {
     let url = `${admin.users}?page=${page}&limit=${limit}`
-    if (search) url += `&search=${search}`
-    if (role) url += `&role=${role}`
+    if (search) url += `&search=${encodeURIComponent(search)}`
+    if (role)   url += `&role=${role}`
     if (status) url += `&status_filter=${status}`
     const data = await http.get(url)
-    return { users: data.users || [], total: data.total || data.users?.length || 0 }
+    return {
+      users:  data.users  || [],
+      total:  data.total  || data.users?.length || 0,
+      pages:  data.pages  || 1,
+      page:   data.page   || page,
+    }
   },
 
   async suspendUser(userId, durationHours = 0, reason = '') {

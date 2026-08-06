@@ -221,7 +221,7 @@
             <p class="toggle-label">Delete Account</p>
             <p class="toggle-desc">Permanently delete your account and all data. This cannot be undone.</p>
           </div>
-          <GfdButton variant="danger">Delete Account</GfdButton>
+          <GfdButton variant="danger" :loading="deletingAccount" @click="deleteAccount">Delete Account</GfdButton>
         </div>
       </div>
     </div>
@@ -230,15 +230,41 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/store/auth'
 import { useUiStore }   from '@/store/ui'
+import http from '@/services/http'
 import { useCurrencyStore, CURRENCIES } from '@/store/currency'
 import GfdInput  from '@/components/ui/GfdInput.vue'
 import GfdButton from '@/components/ui/GfdButton.vue'
 
 const authStore     = useAuthStore()
 const uiStore       = useUiStore()
+const router        = useRouter()
+const deletingAccount = ref(false)
+
+async function deleteAccount() {
+  const confirmed = confirm(
+    'Are you absolutely sure? This will permanently delete your account, all your posts, projects, messages, and data. This CANNOT be undone.'
+  )
+  if (!confirmed) return
+
+  const doubleConfirm = confirm('Last chance — delete your account forever?')
+  if (!doubleConfirm) return
+
+  deletingAccount.value = true
+  try {
+    await http.delete('/auth/delete-account')
+    authStore.logout()
+    router.push('/')
+    uiStore.showSuccess('Your account has been permanently deleted.')
+  } catch (e) {
+    uiStore.showError(e?.response?.data?.detail || 'Failed to delete account. Please try again.')
+  } finally {
+    deletingAccount.value = false
+  }
+}
 const currencyStore = useCurrencyStore()
 const { user }      = storeToRefs(authStore)
 
