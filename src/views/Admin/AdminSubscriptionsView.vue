@@ -12,9 +12,15 @@
           <p class="pg-sub">Approve payments and manage verified badges</p>
         </div>
       </div>
-      <button class="subs-refresh" @click="fetchSubscriptions" :disabled="loading">
-        <span class="material-symbols-outlined" :class="{ spin: loading }">refresh</span>
-      </button>
+      <div class="subs-header-actions">
+        <button class="subs-fix-btn" @click="fixOrphanedBadges" :disabled="fixing" title="Remove badges from users with no active subscription">
+          <span class="material-symbols-outlined" style="font-size:16px">auto_fix_high</span>
+          {{ fixing ? 'Fixing...' : 'Fix Orphaned Badges' }}
+        </button>
+        <button class="subs-refresh" @click="fetchSubscriptions" :disabled="loading">
+          <span class="material-symbols-outlined" :class="{ spin: loading }">refresh</span>
+        </button>
+      </div>
     </div>
 
     <!-- Stats row -->
@@ -117,10 +123,16 @@
                 Reject
               </button>
             </template>
-            <button v-else-if="activeTab === 'active'" class="sub-btn sub-btn-reject" @click="revokeSub(sub)">
-              <span class="material-symbols-outlined" style="font-size:16px">remove_circle</span>
-              Revoke Badge
-            </button>
+            <template v-else-if="activeTab === 'active'">
+              <button class="sub-btn sub-btn-reject" @click="revokeSub(sub)">
+                <span class="material-symbols-outlined" style="font-size:16px">remove_circle</span>
+                Revoke Subscription
+              </button>
+              <button v-if="sub.is_verified" class="sub-btn sub-btn-badge" @click="removeBadgeDirect(sub)">
+                <span class="material-symbols-outlined" style="font-size:16px">verified_off</span>
+                Remove Badge
+              </button>
+            </template>
           </div>
 
         </div>
@@ -152,10 +164,39 @@ const uiStore       = useUiStore()
 const subscriptions = ref([])
 const activeTab     = ref('pending')
 const loading       = ref(false)
+const fixing        = ref(false)
 
 const pendingCount   = ref(0)
 const activeCount    = ref(0)
 const cancelledCount = ref(0)
+
+async function fixOrphanedBadges() {
+  if (!confirm('This will remove verified badges from ALL users who have no active subscription. Continue?')) return
+  fixing.value = true
+  try {
+    const result = await http.post('/admin/subscriptions/fix-orphaned-badges')
+    const count = result.fixed_users?.length || 0
+    uiStore.showSuccess(count > 0
+      ? `Fixed ${count} orphaned badge(s): ${result.fixed_users.map(u => u.name).join(', ')}`
+      : 'No orphaned badges found — all verified users have active subscriptions')
+    await fetchSubscriptions()
+  } catch {
+    uiStore.showError('Failed to fix orphaned badges')
+  } finally {
+    fixing.value = false
+  }
+}
+
+async function removeBadgeDirect(sub) {
+  if (!confirm(`Remove verified badge from ${sub.user_name}?`)) return
+  try {
+    await http.patch(`/admin/users/${sub.user_id}/verify`, { is_verified: false })
+    sub.is_verified = false
+    uiStore.showSuccess(`Badge removed from ${sub.user_name}`)
+  } catch {
+    uiStore.showError('Failed to remove badge')
+  }
+}
 
 async function fetchSubscriptions() {
   loading.value = true
@@ -414,7 +455,22 @@ onMounted(async () => {
 .sub-list-enter-from   { opacity: 0; transform: translateY(-8px); }
 .sub-list-leave-to     { opacity: 0; transform: translateX(16px); }
 
-/* ══ Mobile ══════════════════════════════════════════════════════════════════ */
+.subs-header-actions { display: flex; align-items: center; gap: .625rem; }
+
+.subs-fix-btn {
+  display: inline-flex; align-items: center; gap: .375rem;
+  padding: .5rem 1rem; border-radius: 10px;
+  background: rgba(245,158,11,.1); border: 1.5px solid rgba(245,158,11,.3);
+  color: #d97706; font-family: var(--font-headline); font-size: .8rem; font-weight: 700;
+  cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.subs-fix-btn:hover { background: rgba(245,158,11,.2); }
+.subs-fix-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.sub-btn-badge {
+  background: rgba(245,158,11,.08); border-color: rgba(245,158,11,.25); color: #d97706;
+}
+.sub-btn-badge:hover { background: rgba(245,158,11,.18); transform: translateY(-1px); }
 @media (max-width: 600px) {
   .sub-top { flex-wrap: wrap; }
   .sub-status-pill { order: -1; align-self: auto; }
