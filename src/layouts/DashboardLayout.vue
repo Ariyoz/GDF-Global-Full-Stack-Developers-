@@ -4,9 +4,6 @@
     <header class="dash-topnav glass-nav">
       <div class="dash-topnav-inner">
         <div class="dash-topnav-left">
-          <RouterLink to="/" class="dash-back-btn" aria-label="Back to home">
-            <span class="material-symbols-outlined">arrow_back</span>
-          </RouterLink>
           <RouterLink to="/" class="dash-logo">
             <img src="@/assets/icons/icon.png" alt="GFD" class="dash-logo-img" />
             <span class="dash-logo-text">GFD</span>
