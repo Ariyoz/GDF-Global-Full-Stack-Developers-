@@ -662,3 +662,68 @@ button, input, textarea, select {
   -webkit-text-fill-color: var(--on-surface) !important;
   transition: background-color 5000s ease-in-out 0s;
 }
+
+/* ══ Performance Utilities ═══════════════════════════════════════════════════ */
+
+/* Content visibility — skip rendering off-screen sections */
+.section-gfd {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 500px; /* estimated height prevents layout shift */
+}
+
+/* GPU-accelerate elements that animate */
+.animate-fade-in-up,
+.animate-fade-in,
+.glass-card,
+.dev-card,
+.job-card,
+.bento-card,
+.t-card {
+  will-change: transform;
+  transform: translateZ(0); /* promote to own compositing layer */
+}
+
+/* Remove will-change after animation completes to free GPU memory */
+.animate-fade-in-up.animated {
+  will-change: auto;
+}
+
+/* Optimize images */
+img {
+  content-visibility: auto;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Prevent layout shifts on font load */
+html {
+  font-display: optional;
+}
+
+/* Optimize scrolling performance */
+.msgs-area,
+.conv-list,
+.notif-list,
+.more-sheet,
+.compose-sheet,
+.sidebar-nav {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Hardware accelerate the nav pill for smooth animations */
+.nav-pill,
+.mobile-bottom-nav {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}

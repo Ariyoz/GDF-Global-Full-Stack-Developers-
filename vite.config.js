@@ -21,30 +21,38 @@ export default defineConfig({
   },
 
   build: {
-    assetsInlineLimit: 8192,    // inline small assets — fewer HTTP requests
+    assetsInlineLimit: 4096,   // only inline very small assets
     cssCodeSplit: true,
     sourcemap: false,
     target: 'es2020',
     rollupOptions: {
       output: {
+        // Smart code splitting — keep critical path small
         manualChunks(id) {
           if (!id.includes('node_modules')) return
-          if (id.includes('vue') || id.includes('vue-router') || id.includes('pinia')) return 'vue-core'
-          if (id.includes('axios')) return 'axios'
+
+          // Vue core — always needed
+          if (id.includes('/vue/') || id.includes('/vue-router/') || id.includes('/pinia/')) {
+            return 'vue-core'
+          }
+          // Axios — needed for all API calls
+          if (id.includes('/axios/')) return 'axios'
+          // Capacitor — mobile only, load separately
           if (id.includes('@capacitor')) return 'capacitor'
+          // Everything else stays in vendor
+          return 'vendor'
         },
         chunkFileNames:  'assets/js/[name]-[hash].js',
         entryFileNames:  'assets/js/[name]-[hash].js',
         assetFileNames:  'assets/[ext]/[name]-[hash].[ext]',
       },
-      // Tree-shake unused exports
+      // Safer treeshake — don't strip side effects in unknown modules
       treeshake: {
-        moduleSideEffects: false,
+        moduleSideEffects: 'no-external',
         propertyReadSideEffects: false,
       },
     },
-    // Increase chunk warning threshold
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 1200,
   },
 
   optimizeDeps: {
@@ -52,7 +60,6 @@ export default defineConfig({
     exclude: ['@capacitor/core'],
   },
 
-  // Faster HMR in dev
   server: {
     hmr: { overlay: false },
   },

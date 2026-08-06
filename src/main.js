@@ -6,8 +6,6 @@ import router from './router'
 // ── Global Styles ──
 import './styles/main.css'
 
-// NOTE: Bootstrap removed — using Tailwind + custom CSS only (saves ~230KB)
-
 // ── Apply saved theme BEFORE mount to prevent flash ──
 ;(function () {
   const stored = localStorage.getItem('gfd_theme')
@@ -37,24 +35,29 @@ app.directive('click-outside', {
 
 app.mount('#app')
 
-// ── Initialize auth then pre-warm notification count ──
+// ── Initialize auth synchronously from localStorage (no network) ──
+// then defer non-critical work to after first frame
 import { useAuthStore } from './store/auth'
 import { useNotificationsStore } from './store/notifications'
 
 const authStore = useAuthStore()
 
-// init() returns void in some builds — always wrap safely
+// init() reads localStorage — fast and synchronous in effect
 const initResult = authStore.init()
+
 const afterInit = () => {
   if (authStore.isAuthenticated) {
-    const notifsStore = useNotificationsStore()
-    notifsStore.fetchUnreadCount()
+    // Defer notification count — not needed for initial render
+    const schedule = window.requestIdleCallback || ((fn) => setTimeout(fn, 200))
+    schedule(() => {
+      const notifsStore = useNotificationsStore()
+      notifsStore.fetchUnreadCount()
+    })
   }
 }
 
 if (initResult && typeof initResult.then === 'function') {
   initResult.then(afterInit).catch(() => {})
 } else {
-  // init is synchronous or void — check after a tick
-  setTimeout(afterInit, 100)
+  setTimeout(afterInit, 0)
 }
