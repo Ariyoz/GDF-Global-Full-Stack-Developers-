@@ -57,9 +57,13 @@ http.interceptors.request.use(
       } catch { /* leave as-is if not JSON */ }
     }
 
-    // For FormData, remove manually set Content-Type so browser sets it with boundary
+    // For FormData — delete Content-Type at ALL levels so Axios doesn't
+    // override the browser's multipart/form-data boundary header
     if (config.data instanceof FormData) {
       delete config.headers['Content-Type']
+      delete config.headers.post?.['Content-Type']
+      // Also clear from the common defaults that Axios merges in
+      if (config.headers.common) delete config.headers.common['Content-Type']
     }
 
     // Deduplicate identical GET requests within 300ms

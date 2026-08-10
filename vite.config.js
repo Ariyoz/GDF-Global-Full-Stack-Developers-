@@ -25,7 +25,6 @@ export default defineConfig({
     cssCodeSplit: true,
     sourcemap: false,
     target: 'es2020',
-    // Let Vite 8 use its default minifier (Oxc via rolldown) — don't force esbuild
     reportCompressedSize: false,
     rollupOptions: {
       output: {
