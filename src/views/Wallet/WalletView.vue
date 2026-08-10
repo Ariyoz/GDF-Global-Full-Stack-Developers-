@@ -587,11 +587,7 @@
           </button>
         </div>
 
-        <!-- ── Notice bar ── -->
-        <div class="crypto-notice">
-          <span class="material-symbols-outlined" style="font-size:16px;color:#f59e0b">info</span>
-          <span>Deposits are processed via <strong>NOWPayments</strong>. Send only the correct coin on the correct network.</span>
-        </div>
+        <!-- ── Notice bar hidden — internal provider detail not shown to users ── -->
 
         <!-- ── Coin Cards ── -->
         <div class="coin-list">
@@ -919,6 +915,73 @@
 
     </div><!-- end crypto tab -->
 
+    <!-- ══ PIN MODAL ══ -->
+    <PinModal
+      v-model="showPinModal"
+      :subtitle="pinModalSub"
+      @verified="onPinVerified"
+      @cancel="showPinModal = false; pinCallback = null"
+      @forgot="showPinModal = false; uiStore.showError('Contact support to reset your PIN.')"
+    />
+
+    <!-- ══ SET PIN MODAL ══ -->
+    <Transition name="modal">
+      <div v-if="showSetPinModal" class="modal-overlay" @click.self="showSetPinModal = false">
+        <div class="modal-box" style="max-width:400px">
+          <div class="modal-hdr">
+            <div class="modal-hdr-icon" style="background:rgba(99,14,212,.1)">
+              <span class="material-symbols-outlined" style="color:var(--primary);font-size:20px">lock</span>
+            </div>
+            <h3 class="modal-title">Create Transaction PIN</h3>
+            <button class="modal-close" @click="showSetPinModal = false">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p class="modal-sub">A 4–6 digit PIN is required to send money or crypto. Set yours once and use it every time.</p>
+            <div class="field-group">
+              <label class="field-label">New PIN (4–6 digits)</label>
+              <input v-model="newPin" type="password" inputmode="numeric" maxlength="6"
+                class="modal-inp-plain" placeholder="Enter PIN" autocomplete="new-password" />
+            </div>
+            <div class="field-group">
+              <label class="field-label">Confirm PIN</label>
+              <input v-model="confirmPin" type="password" inputmode="numeric" maxlength="6"
+                class="modal-inp-plain" placeholder="Re-enter PIN" autocomplete="new-password" />
+            </div>
+            <div class="pin-tip">
+              <span class="material-symbols-outlined" style="font-size:15px;color:#f59e0b">info</span>
+              Never share your PIN. GFD staff will never ask for it.
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-ghost" @click="showSetPinModal = false">Cancel</button>
+            <button class="btn-primary"
+              :disabled="newPin.length < 4 || newPin !== confirmPin || settingPin"
+              @click="createPin">
+              <span v-if="settingPin" class="btn-spinner"></span>
+              <span class="material-symbols-outlined" v-else style="font-size:18px">lock</span>
+              {{ settingPin ? 'Creating…' : 'Create PIN' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- ══ KYC banner (shown when not verified) ══ -->
+    <Transition name="slide-up">
+      <div v-if="activeTab === 'ngn' && !kycBannerDismissed" class="kyc-banner">
+        <span class="material-symbols-outlined" style="font-size:18px;color:#f59e0b">verified_user</span>
+        <div class="kyc-banner-text">
+          <strong>Verify your identity</strong> to unlock higher limits and full wallet access.
+        </div>
+        <RouterLink to="/kyc" class="kyc-banner-btn">Verify Now</RouterLink>
+        <button class="kyc-banner-close" @click="kycBannerDismissed = true">
+          <span class="material-symbols-outlined" style="font-size:16px">close</span>
+        </button>
+      </div>
+    </Transition>
+
   </div><!-- end wallet-view -->
 </template>
 
@@ -926,6 +989,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import CoinIcon from '@/components/CoinIcon.vue'
+import PinModal from '@/components/PinModal.vue'
 import { walletService } from '@/services/wallet.service'
 import { useUiStore } from '@/store/ui'
 import { useCurrencyStore } from '@/store/currency'
@@ -965,6 +1029,17 @@ const paying            = ref(false)
 const withdrawing       = ref(false)
 const transferring      = ref(false)
 const verifyBanner      = ref('')
+
+// ── PIN state ─────────────────────────────────────────────────────────────────
+const showPinModal   = ref(false)
+const pinModalSub    = ref('')
+const pinCallback    = ref(null)   // function to call after PIN verified
+const hasPinSet      = ref(false)
+const showSetPinModal = ref(false)
+const newPin         = ref('')
+const confirmPin     = ref('')
+const settingPin     = ref(false)
+const kycBannerDismissed = ref(false)
 
 const liveBanks        = ref([])
 const banksLoading     = ref(false)
@@ -1269,45 +1344,95 @@ async function verifyFromUrl() {
   window.history.replaceState({}, '', url.toString())
 }
 
+// ── PIN helpers ───────────────────────────────────────────────────────────────
+async function checkPinStatus() {
+  try {
+    const data = await walletService.getPinStatus()
+    hasPinSet.value = data.has_pin
+  } catch { hasPinSet.value = false }
+}
+
+function requirePin(subtitle, callback) {
+  if (!hasPinSet.value) {
+    showSetPinModal.value = true
+    return
+  }
+  pinModalSub.value = subtitle
+  pinCallback.value = callback
+  showPinModal.value = true
+}
+
+function onPinVerified(token) {
+  showPinModal.value = false
+  if (pinCallback.value) {
+    pinCallback.value(token)
+    pinCallback.value = null
+  }
+}
+
+async function createPin() {
+  if (newPin.value.length < 4 || newPin.value !== confirmPin.value) {
+    uiStore.showError('PINs must match and be at least 4 digits')
+    return
+  }
+  settingPin.value = true
+  try {
+    await walletService.createPin(newPin.value, confirmPin.value)
+    hasPinSet.value = true
+    showSetPinModal.value = false
+    newPin.value = ''
+    confirmPin.value = ''
+    uiStore.showSuccess('Transaction PIN created!')
+  } catch (e) {
+    uiStore.showError(e?.response?.data?.detail || 'Could not create PIN')
+  } finally { settingPin.value = false }
+}
+
 // ── Transfer ─────────────────────────────────────────────────────────────────
 async function submitTransfer() {
   if (!canTransfer.value) return
-  transferring.value = true
-  try {
-    const result = await walletService.sendMoney({
-      recipient: tr.value.recipient.trim(),
-      amount:    tr.value.amount,
-      note:      tr.value.note.trim(),
-    })
-    uiStore.showSuccess(result.message || `₦${tr.value.amount.toLocaleString()} sent!`)
-    showTransferModal.value = false
-    tr.value = { recipient: '', amount: 0, note: '' }
-    await loadWallet()
-    if (showTxModal.value) { histPage.value = 1; histTxs.value = []; await loadHist() }
-  } catch (e) {
-    uiStore.showError(e?.response?.data?.detail || 'Transfer failed. Please try again.')
-  } finally { transferring.value = false }
+  requirePin('Confirm sending ₦' + tr.value.amount.toLocaleString() + ' to @' + tr.value.recipient, async (pinToken) => {
+    transferring.value = true
+    try {
+      const result = await walletService.sendMoney({
+        recipient:  tr.value.recipient.trim(),
+        amount:     tr.value.amount,
+        note:       tr.value.note.trim(),
+        pin_token:  pinToken,
+      })
+      uiStore.showSuccess(result.message || `₦${tr.value.amount.toLocaleString()} sent!`)
+      showTransferModal.value = false
+      tr.value = { recipient: '', amount: 0, note: '' }
+      await loadWallet()
+      if (showTxModal.value) { histPage.value = 1; histTxs.value = []; await loadHist() }
+    } catch (e) {
+      uiStore.showError(e?.response?.data?.detail || 'Transfer failed.')
+    } finally { transferring.value = false }
+  })
 }
 
 // ── Withdraw ─────────────────────────────────────────────────────────────────
 async function submitWithdraw() {
   if (!canWithdraw.value) return
-  withdrawing.value = true
-  try {
-    const result = await walletService.requestWithdrawal({
-      amount:        wd.value.amount,
-      bankName:      wd.value.bank_name,
-      bankCode:      wd.value.bank_code || '',
-      accountNumber: wd.value.account_number,
-      accountName:   wd.value.account_name,
-    })
-    uiStore.showSuccess(result.message || 'Withdrawal request submitted! Funds within 24 hours.')
-    showWithdrawModal.value = false
-    wd.value = { amount: 0, bank_code: '', bank_name: '', account_number: '', account_name: '', verified: false }
-    await loadWallet()
-  } catch (e) {
-    uiStore.showError(e?.response?.data?.detail || 'Withdrawal failed. Please try again.')
-  } finally { withdrawing.value = false }
+  requirePin('Confirm withdrawal of ₦' + wd.value.amount.toLocaleString(), async (pinToken) => {
+    withdrawing.value = true
+    try {
+      const result = await walletService.requestWithdrawal({
+        amount:        wd.value.amount,
+        bankName:      wd.value.bank_name,
+        bankCode:      wd.value.bank_code || '',
+        accountNumber: wd.value.account_number,
+        accountName:   wd.value.account_name,
+        pin_token:     pinToken,
+      })
+      uiStore.showSuccess(result.message || 'Withdrawal submitted! Funds within 24 hours.')
+      showWithdrawModal.value = false
+      wd.value = { amount: 0, bank_code: '', bank_name: '', account_number: '', account_name: '', verified: false }
+      await loadWallet()
+    } catch (e) {
+      uiStore.showError(e?.response?.data?.detail || 'Withdrawal failed.')
+    } finally { withdrawing.value = false }
+  })
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1439,8 +1564,6 @@ function openSendModal(coin) {
 
 async function submitSend() {
   if (!canSend.value) return
-
-  // Extra client-side address sanity check
   const addr = sendForm.value.to_address.trim()
   const coin = sendCoin.value.coin
   const minLen = { btc:26, eth:42, sol:32, usdt:30, usdc:42 }
@@ -1448,27 +1571,26 @@ async function submitSend() {
     uiStore.showError('Invalid address — too short for ' + sendCoin.value.network)
     return
   }
-
-  sending.value = true
-  try {
-    // Generate idempotency key so double-taps can't double-send
-    const idempotency = `${Date.now()}-${Math.random().toString(36).slice(2)}`
-    const result = await walletService.sendCrypto({
-      coin:            sendCoin.value.coin,
-      amount:          sendForm.value.amount,
-      to_address:      addr,
-      network:         sendCoin.value.network,
-      idempotency_key: idempotency,
-    })
-    uiStore.showSuccess(result.message || `${sendForm.value.amount} ${sendCoin.value.symbol} send queued!`)
-    showSendModal.value = false
-    sendForm.value = { to_address: '', amount: 0 }
-    await loadCrypto()
-  } catch (e) {
-    uiStore.showError(e?.response?.data?.detail || 'Send failed. Please try again.')
-  } finally {
-    sending.value = false
-  }
+  requirePin(`Confirm sending ${sendForm.value.amount} ${sendCoin.value.symbol}`, async (pinToken) => {
+    sending.value = true
+    try {
+      const idempotency = `${Date.now()}-${Math.random().toString(36).slice(2)}`
+      const result = await walletService.sendCrypto({
+        coin:            sendCoin.value.coin,
+        amount:          sendForm.value.amount,
+        to_address:      addr,
+        network:         sendCoin.value.network,
+        idempotency_key: idempotency,
+        pin_token:       pinToken,
+      })
+      uiStore.showSuccess(result.message || `${sendForm.value.amount} ${sendCoin.value.symbol} send queued!`)
+      showSendModal.value = false
+      sendForm.value = { to_address: '', amount: 0 }
+      await loadCrypto()
+    } catch (e) {
+      uiStore.showError(e?.response?.data?.detail || 'Send failed. Please try again.')
+    } finally { sending.value = false }
+  })
 }
 
 // ── Mount ─────────────────────────────────────────────────────────────────────
@@ -1476,6 +1598,7 @@ onMounted(async () => {
   await wakeAndLoad()
   loadBanks()
   loadVirtualAccount()
+  checkPinStatus()
   if (route.query.ref || route.query.reference || route.query.trxref)
     await verifyFromUrl()
 })
@@ -1863,6 +1986,16 @@ onMounted(async () => {
 
 /* hero coin dots with SVG */
 .ch-coin-dot  { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+/* PIN tip in set-pin modal */
+.pin-tip { display: flex; align-items: center; gap: .4rem; font-size: .8rem; color: var(--on-surface-variant); padding: .75rem 1rem; border-radius: 10px; background: rgba(245,158,11,.07); border: 1px solid rgba(245,158,11,.2); }
+
+/* KYC banner */
+.kyc-banner { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: .75rem; background: var(--surface-container-highest); border: 1.5px solid rgba(245,158,11,.4); border-radius: 16px; padding: .875rem 1.25rem; font-size: .83rem; color: var(--on-surface); box-shadow: 0 8px 32px rgba(0,0,0,.2); z-index: 600; max-width: 480px; width: calc(100vw - 2rem); }
+.kyc-banner-text { flex: 1; line-height: 1.4; }
+.kyc-banner-text strong { font-weight: 700; }
+.kyc-banner-btn { padding: .4rem .875rem; border-radius: 8px; background: var(--primary); color: #fff; font-size: .78rem; font-weight: 700; text-decoration: none; font-family: var(--font-headline); white-space: nowrap; flex-shrink: 0; }
+.kyc-banner-close { background: none; border: none; cursor: pointer; color: var(--on-surface-variant); display: flex; align-items: center; flex-shrink: 0; padding: .2rem; }
 
 /* skeleton */
 .crypto-hero-skel   { width: 100%; }

@@ -120,7 +120,26 @@ export const walletService = {
     return http.get('/crypto/prices')
   },
 
-  async sendCrypto({ coin, amount, to_address, network }) {
-    return http.post('/crypto/send', { coin, amount, to_address, network }, { timeout: 30000 })
+  async sendCrypto({ coin, amount, to_address, network, idempotency_key, pin_token }) {
+    return http.post('/crypto/send', { coin, amount, to_address, network, idempotency_key, pin_token }, { timeout: 30000 })
+  },
+
+  // ── Transaction PIN ───────────────────────────────────────────────────────
+  async getPinStatus() {
+    return http.get('/wallet/pin/status')
+  },
+  async createPin(pin, confirm_pin) {
+    return http.post('/wallet/pin/create', { pin, confirm_pin })
+  },
+  async verifyPin(pin) {
+    return http.post('/wallet/pin/verify', { pin })
+  },
+  async changePin(old_pin, new_pin, confirm_pin) {
+    return http.post('/wallet/pin/change', { old_pin, new_pin, confirm_pin })
+  },
+
+  // ── KYC ──────────────────────────────────────────────────────────────────
+  async getKycStatus() {
+    return http.get('/kyc/status')
   },
 }

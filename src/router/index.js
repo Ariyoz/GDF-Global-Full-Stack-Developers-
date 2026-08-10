@@ -152,6 +152,12 @@ const routes = [
     children: [{ path: '', name: 'wallet', component: WalletView }],
   },
   {
+    path: '/kyc',
+    component: DashboardLayout,
+    meta: { requiresAuth: true },
+    children: [{ path: '', name: 'kyc', component: () => import('@/views/Wallet/KycView.vue') }],
+  },
+  {
     path: '/settings',
     component: DashboardLayout,
     meta: { requiresAuth: true },
@@ -200,6 +206,7 @@ const routes = [
       { path: 'projects',     name: 'admin-projects',     component: AdminProjectsView },
       { path: 'wallet',       name: 'admin-wallet',       component: AdminWalletView },
       { path: 'crypto',       name: 'admin-crypto',       component: AdminCryptoView },
+      { path: 'kyc',          name: 'admin-kyc',          component: () => import('@/views/Admin/AdminKycView.vue') },
       { path: 'settings',     name: 'admin-settings',     component: AdminSettingsView },
     ],
   },

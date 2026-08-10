@@ -55,6 +55,10 @@
             <span class="nav-link-icon" style="font-size:18px;width:24px;display:flex;align-items:center;justify-content:center">₿</span>
             <span class="nav-link-label">Crypto</span>
           </RouterLink>
+          <RouterLink to="/admin/kyc" class="nav-link" :class="{ active: $route.path === '/admin/kyc' }" @click="$emit('navigate')">
+            <span class="nav-link-icon material-symbols-outlined">verified_user</span>
+            <span class="nav-link-label">KYC</span>
+          </RouterLink>
           <RouterLink to="/admin/projects" class="nav-link" :class="{ active: $route.path === '/admin/projects' }" @click="$emit('navigate')">
             <span class="nav-link-icon material-symbols-outlined">folder_open</span>
             <span class="nav-link-label">Projects</span>
