@@ -39,11 +39,11 @@
                   <div class="mock-card mc-dev">
                     <div class="mc-cover" />
                     <div class="mc-avatar">
-                      <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face&auto=format" alt="" class="mc-av-img" />
+                      <img src="https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=80&h=80&fit=crop&crop=face&auto=format" alt="" class="mc-av-img" />
                     </div>
                     <div class="mc-body">
                       <div class="mc-name-row">
-                        <span class="mc-name">Alex Morgan</span>
+                        <span class="mc-name">Chidi Okonkwo</span>
                         <span class="mc-verified material-symbols-outlined">verified</span>
                       </div>
                       <span class="mc-role">Full-Stack Developer</span>
@@ -86,9 +86,9 @@
                 <p class="ob-p">Browse GitHub-verified developer profiles, check skills and ratings, then hire in minutes.</p>
                 <div class="ob-trust-row">
                   <div class="trust-av-stack">
-                    <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=40&h=40&fit=crop&crop=face&auto=format" class="trust-av" alt="" />
-                    <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=40&h=40&fit=crop&crop=face&auto=format" class="trust-av" alt="" />
-                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face&auto=format" class="trust-av" alt="" />
+                    <img src="https://images.unsplash.com/photo-1531384441138-2736e62e0919?w=40&h=40&fit=crop&crop=face&auto=format" class="trust-av" alt="" />
+                    <img src="https://images.unsplash.com/photo-1589156280159-27698a70f29e?w=40&h=40&fit=crop&crop=face&auto=format" class="trust-av" alt="" />
+                    <img src="https://images.unsplash.com/photo-1564564321837-a57b7070ac4f?w=40&h=40&fit=crop&crop=face&auto=format" class="trust-av" alt="" />
                     <div class="trust-av trust-av-count">+2k</div>
                   </div>
                   <span class="trust-text">2,000+ developers ready to hire</span>
@@ -204,7 +204,7 @@
                           <span class="material-symbols-outlined" style="font-size:13px">send</span>
                         </div>
                         <div class="mw-tx-info">
-                          <span class="mw-tx-name">Sent to James</span>
+                          <span class="mw-tx-name">Sent to Emeka</span>
                           <span class="mw-tx-date">Yesterday</span>
                         </div>
                         <span class="mw-tx-amt mw-neg">-₦5,000</span>
