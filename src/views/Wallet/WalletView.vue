@@ -550,11 +550,41 @@
               <p class="ch-sub">Across {{ cryptoBalances.filter(c => c.balance > 0).length }} asset{{ cryptoBalances.filter(c => c.balance > 0).length !== 1 ? 's' : '' }}</p>
             </div>
             <div class="ch-coins-preview">
-              <span v-for="c in cryptoBalances.slice(0,5)" :key="c.coin"
-                class="ch-coin-dot" :style="{ background: c.color + '22', color: c.color }"
-                :title="c.name">{{ c.icon }}</span>
+              <div v-for="c in cryptoBalances.slice(0,5)" :key="c.coin"
+                class="ch-coin-dot" :style="{ background: c.color + '22', border: '2px solid ' + c.color + '44' }"
+                :title="c.name">
+                <CoinIcon :coin="c.coin" :size="22" />
+              </div>
             </div>
           </div>
+        </div>
+
+        <!-- ── Quick Actions ── -->
+        <div class="crypto-quick-actions">
+          <button class="cqa-btn" @click="showCoinPicker = true">
+            <div class="cqa-ico" style="background:rgba(22,163,74,.12);color:#16a34a">
+              <span class="material-symbols-outlined">arrow_downward</span>
+            </div>
+            <span class="cqa-lbl">Receive</span>
+          </button>
+          <button class="cqa-btn" @click="showSendCoinPicker = true">
+            <div class="cqa-ico" style="background:rgba(99,14,212,.1);color:var(--primary)">
+              <span class="material-symbols-outlined">arrow_upward</span>
+            </div>
+            <span class="cqa-lbl">Send</span>
+          </button>
+          <button class="cqa-btn" @click="showCryptoHistoryModal = true">
+            <div class="cqa-ico" style="background:rgba(245,158,11,.1);color:#f59e0b">
+              <span class="material-symbols-outlined">receipt_long</span>
+            </div>
+            <span class="cqa-lbl">History</span>
+          </button>
+          <button class="cqa-btn" @click="loadCrypto">
+            <div class="cqa-ico" style="background:rgba(59,130,246,.1);color:#3b82f6">
+              <span class="material-symbols-outlined" :class="{ spin: cryptoLoading }">refresh</span>
+            </div>
+            <span class="cqa-lbl">Refresh</span>
+          </button>
         </div>
 
         <!-- ── Notice bar ── -->
@@ -576,7 +606,15 @@
                 <span class="coin-name">{{ coin.name }}</span>
                 <span class="coin-network">{{ coin.network }}</span>
               </div>
-              <span class="coin-symbol">{{ coin.symbol }}</span>
+              <div class="coin-price-row">
+                <span class="coin-symbol">{{ coin.symbol }}</span>
+                <span class="coin-live-price" v-if="livePrices[coin.coin]">
+                  ${{ livePrices[coin.coin].usd >= 1 ? livePrices[coin.coin].usd.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2}) : livePrices[coin.coin].usd.toFixed(4) }}
+                  <span :class="livePrices[coin.coin].change_24h >= 0 ? 'chg-up' : 'chg-dn'">
+                    {{ livePrices[coin.coin].change_24h >= 0 ? '▲' : '▼' }}{{ Math.abs(livePrices[coin.coin].change_24h).toFixed(2) }}%
+                  </span>
+                </span>
+              </div>
             </div>
             <div class="coin-balance-col">
               <span class="coin-balance">{{ fmtCoinAmount(coin.balance, coin.coin) }} {{ coin.symbol }}</span>
@@ -633,6 +671,112 @@
         </div>
 
       </template>
+
+      <!-- ══ CRYPTO HISTORY MODAL ══ -->
+      <Transition name="modal">
+        <div v-if="showCryptoHistoryModal" class="modal-overlay" @click.self="showCryptoHistoryModal = false">
+          <div class="modal-box" style="max-width:560px">
+            <div class="modal-hdr">
+              <div class="modal-hdr-icon" style="background:rgba(245,158,11,.1)">
+                <span class="material-symbols-outlined" style="color:#f59e0b;font-size:20px">receipt_long</span>
+              </div>
+              <h3 class="modal-title">Crypto History</h3>
+              <button class="modal-close" @click="showCryptoHistoryModal = false">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div class="modal-body" style="padding-top:.5rem;max-height:60vh;overflow-y:auto">
+              <div v-if="cryptoTxLoading" class="tx-empty" style="padding:2rem 0">
+                <div class="btn-spinner" style="border-color:rgba(99,14,212,.15);border-top-color:var(--primary);width:24px;height:24px"></div>
+              </div>
+              <div v-else-if="!cryptoTxs.length" class="tx-empty">
+                <div class="tx-empty-icon"><span class="material-symbols-outlined">currency_bitcoin</span></div>
+                <p class="tx-empty-title">No transactions yet</p>
+                <p class="tx-empty-sub">Deposit or send crypto to get started</p>
+              </div>
+              <template v-else>
+                <div v-for="tx in cryptoTxs" :key="tx.id" class="tx-row">
+                  <div class="tx-ico-wrap" :style="{ background: coinColor(tx.coin) + '18' }">
+                    <CoinIcon :coin="tx.coin" :size="26" />
+                  </div>
+                  <div class="tx-info">
+                    <p class="tx-name" style="text-transform:capitalize">{{ tx.type }} · {{ tx.symbol }}</p>
+                    <p class="tx-date">{{ fmtDate(tx.created_at) }}{{ tx.tx_hash ? ' · ' + tx.tx_hash.slice(0,14) + '…' : '' }}</p>
+                  </div>
+                  <div class="tx-right">
+                    <span class="tx-amt" :class="tx.type === 'deposit' ? 'pos' : 'neg'">
+                      {{ tx.type === 'deposit' ? '+' : '-' }}{{ fmtCoinAmount(tx.amount, tx.coin) }} {{ tx.symbol }}
+                    </span>
+                    <span class="tx-badge" :class="tx.status">{{ tx.status }}</span>
+                  </div>
+                </div>
+              </template>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-ghost" @click="showCryptoHistoryModal = false">Close</button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+
+      <!-- ══ COIN PICKER (for Receive) ══ -->
+      <Transition name="modal">
+        <div v-if="showCoinPicker" class="modal-overlay" @click.self="showCoinPicker = false">
+          <div class="modal-box" style="max-width:380px">
+            <div class="modal-hdr">
+              <div class="modal-hdr-icon" style="background:rgba(22,163,74,.1)">
+                <span class="material-symbols-outlined" style="color:#16a34a;font-size:20px">arrow_downward</span>
+              </div>
+              <h3 class="modal-title">Choose Coin to Receive</h3>
+              <button class="modal-close" @click="showCoinPicker = false">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div class="modal-body" style="padding-top:.5rem">
+              <button v-for="coin in cryptoBalances" :key="coin.coin"
+                class="coin-picker-row" @click="showCoinPicker=false; selectCoin(coin)">
+                <CoinIcon :coin="coin.coin" :size="32" />
+                <div class="cp-info">
+                  <span class="cp-name">{{ coin.name }}</span>
+                  <span class="cp-net">{{ coin.network }}</span>
+                </div>
+                <span class="material-symbols-outlined" style="font-size:18px;color:var(--on-surface-variant);opacity:.5">chevron_right</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+
+      <!-- ══ SEND COIN PICKER ══ -->
+      <Transition name="modal">
+        <div v-if="showSendCoinPicker" class="modal-overlay" @click.self="showSendCoinPicker = false">
+          <div class="modal-box" style="max-width:380px">
+            <div class="modal-hdr">
+              <div class="modal-hdr-icon" style="background:rgba(99,14,212,.1)">
+                <span class="material-symbols-outlined" style="color:var(--primary);font-size:20px">arrow_upward</span>
+              </div>
+              <h3 class="modal-title">Choose Coin to Send</h3>
+              <button class="modal-close" @click="showSendCoinPicker = false">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div class="modal-body" style="padding-top:.5rem">
+              <button v-for="coin in cryptoBalances.filter(c=>c.balance>0)" :key="coin.coin"
+                class="coin-picker-row" @click="showSendCoinPicker=false; openSendModal(coin)">
+                <CoinIcon :coin="coin.coin" :size="32" />
+                <div class="cp-info">
+                  <span class="cp-name">{{ coin.name }}</span>
+                  <span class="cp-net">{{ fmtCoinAmount(coin.balance, coin.coin) }} {{ coin.symbol }}</span>
+                </div>
+                <span class="material-symbols-outlined" style="font-size:18px;color:var(--on-surface-variant);opacity:.5">chevron_right</span>
+              </button>
+              <p v-if="!cryptoBalances.some(c=>c.balance>0)" class="tx-empty-sub" style="text-align:center;padding:1.5rem 0">
+                No balance to send. Deposit first.
+              </p>
+            </div>
+          </div>
+        </div>
+      </Transition>
 
       <!-- ══ SEND MODAL ══ -->
       <Transition name="modal">
@@ -1196,6 +1340,11 @@ const sendCoin      = ref(null)
 const sending       = ref(false)
 const sendForm      = ref({ to_address: '', amount: 0 })
 
+// Modal state
+const showCryptoHistoryModal = ref(false)
+const showCoinPicker         = ref(false)
+const showSendCoinPicker     = ref(false)
+
 const SEND_MIN  = { btc: 0.00001, eth: 0.0001, sol: 0.01, usdt: 1, usdc: 1 }
 const SEND_FEES = { btc: 0.00005, eth: 0.0005,  sol: 0.001, usdt: 1, usdc: 1 }
 function sendMinAmount(coin) { return SEND_MIN[coin?.toLowerCase()] ?? 0 }
@@ -1678,6 +1827,29 @@ onMounted(async () => {
 /* max button */
 .inp-max-btn { padding: .4rem .75rem; margin-right: .375rem; border-radius: 8px; border: 1.5px solid var(--primary); background: rgba(99,14,212,.08); color: var(--primary); font-size: .75rem; font-weight: 800; cursor: pointer; font-family: var(--font-headline); transition: all .15s; flex-shrink: 0; }
 .inp-max-btn:hover { background: rgba(99,14,212,.15); }
+
+/* coin price row */
+.coin-price-row  { display: flex; align-items: center; gap: .4rem; margin-top: .1rem; }
+.coin-live-price { font-size: .72rem; color: var(--on-surface-variant); display: flex; align-items: center; gap: .2rem; }
+
+/* crypto quick actions */
+.crypto-quick-actions { display: grid; grid-template-columns: repeat(4,1fr); gap: .625rem; }
+.cqa-btn  { display: flex; flex-direction: column; align-items: center; gap: .5rem; padding: .875rem .5rem; border-radius: 16px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); cursor: pointer; transition: all .2s cubic-bezier(0.34,1.56,0.64,1); }
+.cqa-btn:hover:not(:disabled) { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99,14,212,.1); }
+.cqa-btn:disabled { opacity: .4; cursor: not-allowed; }
+.cqa-ico  { width: 44px; height: 44px; border-radius: 13px; display: flex; align-items: center; justify-content: center; }
+.cqa-ico .material-symbols-outlined { font-size: 22px; }
+.cqa-lbl  { font-family: var(--font-headline); font-size: .78rem; font-weight: 700; color: var(--on-surface); }
+
+/* coin picker */
+.coin-picker-row  { display: flex; align-items: center; gap: .875rem; padding: .875rem 1rem; border-radius: 14px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); cursor: pointer; transition: all .15s; width: 100%; margin-bottom: .4rem; }
+.coin-picker-row:hover { border-color: var(--primary); background: color-mix(in srgb,var(--primary) 4%,var(--surface-container-lowest)); }
+.cp-info  { flex: 1; display: flex; flex-direction: column; gap: .1rem; text-align: left; }
+.cp-name  { font-family: var(--font-headline); font-size: .9rem; font-weight: 700; color: var(--on-surface); }
+.cp-net   { font-size: .75rem; color: var(--on-surface-variant); }
+
+/* hero coin dots with SVG */
+.ch-coin-dot  { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 
 /* skeleton */
 .crypto-hero-skel   { width: 100%; }
