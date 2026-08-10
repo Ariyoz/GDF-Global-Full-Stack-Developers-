@@ -29,6 +29,10 @@
                 :src="t.avatar"
                 :alt="t.name"
                 class="t-av-img"
+                loading="lazy"
+                decoding="async"
+                width="44"
+                height="44"
                 @error="$event.target.style.display='none'"
               />
               <div class="t-av-fallback" :style="`background:${t.bg}`">

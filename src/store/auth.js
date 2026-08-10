@@ -142,8 +142,9 @@ export const useAuthStore = defineStore('auth', () => {
       profile.value = { id: data.user_id, email, role: data.role }
       persistSession()
 
-      fetchProfile().catch(() => {})
+      // Single profile fetch — not two
       websocketService.connect(data.access_token)
+      fetchProfile().catch(() => {})
 
       return data
     } catch (err) {
