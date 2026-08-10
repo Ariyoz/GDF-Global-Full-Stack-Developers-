@@ -200,6 +200,93 @@
       </div>
     </div>
 
+    <!-- Wallet & PIN Tab -->
+    <div v-if="activeTab === 'wallet'" class="tab-content">
+
+      <!-- KYC Status Card -->
+      <div class="glass-card-static settings-card">
+        <h3 class="settings-section-title">Identity Verification (KYC)</h3>
+        <p class="toggle-desc" style="margin-top:-.5rem">Verify your identity to unlock higher transaction limits.</p>
+        <div class="kyc-status-row">
+          <div class="kyc-status-ico" :class="kycStatusClass">
+            <span class="material-symbols-outlined" style="font-size:22px">{{ kycStatusIcon }}</span>
+          </div>
+          <div style="flex:1">
+            <p class="toggle-label">{{ kycStatusLabel }}</p>
+            <p class="toggle-desc">{{ kycStatusDesc }}</p>
+          </div>
+          <RouterLink to="/kyc" class="btn-primary kyc-action-btn" v-if="!kycVerified">
+            {{ kycStatusAction }}
+          </RouterLink>
+          <span v-else class="chip chip-success">Verified ✓</span>
+        </div>
+      </div>
+
+      <!-- Create PIN -->
+      <div v-if="!pinStatus.has_pin" class="glass-card-static settings-card">
+        <h3 class="settings-section-title">Create Transaction PIN</h3>
+        <p class="toggle-desc" style="margin-top:-.5rem">A 4–6 digit PIN is required to send money and crypto.</p>
+        <div class="form-stack">
+          <div class="form-field-wrap">
+            <label class="field-label-sm">New PIN (4–6 digits)</label>
+            <div class="pin-input-wrap">
+              <input v-model="pinForm.pin" :type="showPinDigits ? 'text' : 'password'"
+                inputmode="numeric" maxlength="6" class="pfx-input"
+                style="padding:.65rem .875rem;width:100%;flex:1;border-radius:var(--radius-lg)"
+                placeholder="Enter PIN" autocomplete="new-password" />
+              <button class="pin-eye-btn" @click="showPinDigits = !showPinDigits" type="button">
+                <span class="material-symbols-outlined" style="font-size:18px">{{ showPinDigits ? 'visibility_off' : 'visibility' }}</span>
+              </button>
+            </div>
+          </div>
+          <div class="form-field-wrap">
+            <label class="field-label-sm">Confirm PIN</label>
+            <input v-model="pinForm.confirm_pin" type="password" inputmode="numeric" maxlength="6"
+              class="country-sel" placeholder="Re-enter PIN" autocomplete="new-password" />
+          </div>
+        </div>
+        <div class="pin-hint-box">
+          <span class="material-symbols-outlined" style="font-size:15px;color:#f59e0b">info</span>
+          Never share your PIN. GFD staff will never ask for it.
+        </div>
+        <div class="form-actions">
+          <GfdButton variant="primary" :loading="pinLoading"
+            :disabled="pinForm.pin.length < 4 || pinForm.pin !== pinForm.confirm_pin"
+            @click="createPinSubmit">Create PIN</GfdButton>
+        </div>
+      </div>
+
+      <!-- Change PIN (when already set) -->
+      <div v-else class="glass-card-static settings-card">
+        <h3 class="settings-section-title">Change Transaction PIN</h3>
+        <div class="pin-set-badge">
+          <span class="material-symbols-outlined" style="font-size:18px;color:#16a34a">check_circle</span>
+          Transaction PIN is active
+        </div>
+        <div class="form-stack" style="margin-top:.5rem">
+          <div class="form-field-wrap">
+            <label class="field-label-sm">Current PIN</label>
+            <input v-model="pinChangeForm.old_pin" type="password" inputmode="numeric" maxlength="6"
+              class="country-sel" placeholder="Current PIN" autocomplete="current-password" />
+          </div>
+          <div class="form-field-wrap">
+            <label class="field-label-sm">New PIN (4–6 digits)</label>
+            <input v-model="pinChangeForm.new_pin" type="password" inputmode="numeric" maxlength="6"
+              class="country-sel" placeholder="New PIN" autocomplete="new-password" />
+          </div>
+          <div class="form-field-wrap">
+            <label class="field-label-sm">Confirm New PIN</label>
+            <input v-model="pinChangeForm.confirm_pin" type="password" inputmode="numeric" maxlength="6"
+              class="country-sel" placeholder="Confirm new PIN" autocomplete="new-password" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <GfdButton variant="primary" :loading="pinLoading" @click="changePinSubmit">Change PIN</GfdButton>
+        </div>
+      </div>
+
+    </div>
+
     <!-- Privacy Tab -->
     <div v-if="activeTab === 'privacy'" class="tab-content">      <div class="glass-card-static settings-card">
         <h3 class="settings-section-title">Profile Visibility</h3>
@@ -238,6 +325,89 @@ import http from '@/services/http'
 import { useCurrencyStore, CURRENCIES } from '@/store/currency'
 import GfdInput  from '@/components/ui/GfdInput.vue'
 import GfdButton from '@/components/ui/GfdButton.vue'
+import { walletService } from '@/services/wallet.service'
+
+// ── KYC status ────────────────────────────────────────────────────────────────
+const kycData = ref(null)
+const kycVerified = computed(() => kycData.value?.status === 'approved')
+const kycStatusClass = computed(() => ({
+  'kyc-ico-approved': kycData.value?.status === 'approved',
+  'kyc-ico-pending':  kycData.value?.status === 'pending',
+  'kyc-ico-rejected': kycData.value?.status === 'rejected',
+  'kyc-ico-none':     !kycData.value || kycData.value?.status === 'not_submitted',
+}))
+const kycStatusIcon = computed(() => ({
+  approved: 'verified_user', pending: 'hourglass_top',
+  rejected: 'cancel', not_submitted: 'badge',
+}[kycData.value?.status] || 'badge'))
+const kycStatusLabel = computed(() => ({
+  approved: 'Identity Verified', pending: 'Under Review',
+  rejected: 'Rejected — Resubmit', not_submitted: 'Not Verified',
+}[kycData.value?.status] || 'Not Verified'))
+const kycStatusDesc = computed(() => kycData.value?.message || 'Submit your ID to unlock higher limits.')
+const kycStatusAction = computed(() => ({
+  rejected: 'Resubmit', not_submitted: 'Verify Now',
+}[kycData.value?.status] || 'Verify Now'))
+
+async function loadKycStatus() {
+  try { kycData.value = await walletService.getKycStatus() } catch { /* silent */ }
+}
+
+// ── PIN state ─────────────────────────────────────────────────────────────────
+const pinStatus      = ref({ has_pin: false, is_locked: false })
+const pinForm        = ref({ pin: '', confirm_pin: '' })
+const pinChangeForm  = ref({ old_pin: '', new_pin: '', confirm_pin: '' })
+const pinLoading     = ref(false)
+const showPinDigits  = ref(false)
+
+async function loadPinStatus() {
+  try { pinStatus.value = await walletService.getPinStatus() } catch { /* silent */ }
+}
+
+async function createPinSubmit() {
+  if (pinForm.value.pin.length < 4 || pinForm.value.pin !== pinForm.value.confirm_pin) {
+    uiStore.showError('PINs must match and be 4–6 digits')
+    return
+  }
+  pinLoading.value = true
+  try {
+    await walletService.createPin(pinForm.value.pin, pinForm.value.confirm_pin)
+    uiStore.showSuccess('Transaction PIN created!')
+    pinForm.value = { pin: '', confirm_pin: '' }
+    await loadPinStatus()
+  } catch (e) {
+    uiStore.showError(e?.response?.data?.detail || 'Could not create PIN')
+  } finally { pinLoading.value = false }
+}
+
+async function changePinSubmit() {
+  if (!pinChangeForm.value.old_pin || pinChangeForm.value.new_pin.length < 4) {
+    uiStore.showError('Fill in all PIN fields')
+    return
+  }
+  if (pinChangeForm.value.new_pin !== pinChangeForm.value.confirm_pin) {
+    uiStore.showError('New PINs do not match')
+    return
+  }
+  pinLoading.value = true
+  try {
+    await walletService.changePin(
+      pinChangeForm.value.old_pin,
+      pinChangeForm.value.new_pin,
+      pinChangeForm.value.confirm_pin
+    )
+    uiStore.showSuccess('PIN changed successfully!')
+    pinChangeForm.value = { old_pin: '', new_pin: '', confirm_pin: '' }
+  } catch (e) {
+    uiStore.showError(e?.response?.data?.detail || 'Could not change PIN')
+  } finally { pinLoading.value = false }
+}
+
+// Load PIN status when wallet tab is opened
+import { watch } from 'vue'
+watch(activeTab, (v) => {
+  if (v === 'wallet') { loadPinStatus(); loadKycStatus() }
+})
 
 const authStore     = useAuthStore()
 const uiStore       = useUiStore()
@@ -277,11 +447,12 @@ const userInitials = computed(() => {
 })
 
 const tabs = [
-  { value: 'profile',       label: 'Profile',       icon: 'person' },
-  { value: 'security',      label: 'Security',      icon: 'lock' },
-  { value: 'notifications', label: 'Notifications', icon: 'notifications' },
-  { value: 'preferences',   label: 'Preferences',   icon: 'tune' },
-  { value: 'privacy',       label: 'Privacy',       icon: 'shield' },
+  { value: 'profile',       label: 'Profile',         icon: 'person' },
+  { value: 'security',      label: 'Security',        icon: 'lock' },
+  { value: 'wallet',        label: 'Wallet & PIN',    icon: 'account_balance_wallet' },
+  { value: 'notifications', label: 'Notifications',   icon: 'notifications' },
+  { value: 'preferences',   label: 'Preferences',     icon: 'tune' },
+  { value: 'privacy',       label: 'Privacy',         icon: 'shield' },
 ]
 
 // ── Currency preference ──
@@ -715,4 +886,19 @@ function revokeSession(session) {
 .curr-name { font-size: .72rem; color: var(--on-surface-variant); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .curr-country { font-size: .67rem; color: var(--on-surface-variant); opacity: .75; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .curr-check { font-size: 18px; color: var(--primary); position: absolute; top: .5rem; right: .5rem; }
+
+/* ── PIN & KYC in Settings ── */
+.kyc-status-row    { display:flex; align-items:center; gap:.875rem; padding:.875rem 1rem; border-radius:14px; background:var(--surface-container-low); border:1.5px solid var(--outline-variant); }
+.kyc-status-ico    { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.kyc-ico-approved  { background:rgba(22,163,74,.1); color:#16a34a; }
+.kyc-ico-pending   { background:rgba(245,158,11,.1); color:#f59e0b; }
+.kyc-ico-rejected  { background:rgba(239,68,68,.1);  color:#ef4444; }
+.kyc-ico-none      { background:var(--surface-container); color:var(--on-surface-variant); }
+.kyc-action-btn    { padding:.45rem 1rem; font-size:.82rem; text-decoration:none; border-radius:10px; white-space:nowrap; flex-shrink:0; }
+.chip-success      { padding:.3rem .875rem; border-radius:999px; background:rgba(22,163,74,.1); color:#16a34a; font-size:.75rem; font-weight:700; border:1px solid rgba(22,163,74,.2); }
+.pin-input-wrap    { display:flex; align-items:center; background:var(--surface-container-low); border:1px solid var(--outline-variant); border-radius:var(--radius-lg); overflow:hidden; }
+.pin-input-wrap:focus-within { border-color:var(--primary); }
+.pin-eye-btn       { padding:0 .75rem; background:none; border:none; cursor:pointer; color:var(--on-surface-variant); display:flex; align-items:center; }
+.pin-hint-box      { display:flex; align-items:center; gap:.4rem; padding:.75rem 1rem; border-radius:10px; background:rgba(245,158,11,.07); border:1px solid rgba(245,158,11,.2); font-size:.8rem; color:var(--on-surface-variant); }
+.pin-set-badge     { display:flex; align-items:center; gap:.4rem; font-size:.85rem; font-weight:600; color:#16a34a; background:rgba(22,163,74,.08); padding:.625rem 1rem; border-radius:10px; border:1px solid rgba(22,163,74,.2); }
 </style>

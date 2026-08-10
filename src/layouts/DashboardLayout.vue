@@ -396,6 +396,7 @@ const navItems = [
   { to: '/dashboard/requests', icon: 'inbox',                   label: 'Requests' },
   { to: '/messaging',          icon: 'chat',                    label: 'Messages' },
   { to: '/wallet',             icon: 'account_balance_wallet',  label: 'Wallet' },
+  { to: '/kyc',               icon: 'verified_user',           label: 'KYC Verify' },
   { to: '/settings',           icon: 'settings',                label: 'Settings' },
   ...(isAdmin.value ? [
     { to: '/admin',          icon: 'shield',  label: 'Admin Panel' },
@@ -414,6 +415,7 @@ const moreNavItems = [
   { to: '/dashboard/analytics', icon: 'analytics',              label: 'Analytics'  },
   { to: '/dashboard/requests',  icon: 'inbox',                  label: 'Requests'   },
   { to: '/wallet',              icon: 'account_balance_wallet', label: 'Wallet'     },
+  { to: '/kyc',                 icon: 'verified_user',          label: 'KYC'        },
   { to: '/notifications',       icon: 'notifications',          label: 'Notifs'     },
   { to: '/courses',             icon: 'school',                 label: 'Courses'    },
   { to: '/messaging',           icon: 'chat',                   label: 'Messages'   },
