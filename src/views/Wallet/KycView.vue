@@ -293,7 +293,6 @@ async function submitKyc() {
     if (files.value.back) fd.append('id_back', files.value.back)
 
     await http.post('/kyc/submit', fd, {
-      headers: { 'Content-Type': 'multipart/form-data' },
       timeout: 60000,
     })
     uiStore.showSuccess('KYC submitted! We\'ll review within 1–2 business days.')

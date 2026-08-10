@@ -6,6 +6,8 @@
     :height="size"
     class="coin-logo-img"
     :style="{ width: size + 'px', height: size + 'px', borderRadius: '50%' }"
+    loading="lazy"
+    decoding="async"
     @error="onError"
     :key="coin"
   />

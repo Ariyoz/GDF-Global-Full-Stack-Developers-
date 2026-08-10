@@ -46,13 +46,20 @@ http.interceptors.request.use(
     }
 
     // Sanitize outgoing JSON bodies (defence against stored XSS via API)
-    if (config.data && ['post', 'put', 'patch'].includes(config.method)) {
+    // Skip FormData — never touch it, browser handles Content-Type + boundary
+    if (config.data && !(config.data instanceof FormData) &&
+        ['post', 'put', 'patch'].includes(config.method)) {
       try {
         const parsed = typeof config.data === 'string'
           ? JSON.parse(config.data)
           : config.data
         config.data = sanitizePayload(parsed)
       } catch { /* leave as-is if not JSON */ }
+    }
+
+    // For FormData, remove manually set Content-Type so browser sets it with boundary
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type']
     }
 
     // Deduplicate identical GET requests within 300ms
