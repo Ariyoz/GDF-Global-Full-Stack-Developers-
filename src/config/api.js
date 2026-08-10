@@ -125,6 +125,15 @@ export const API_ENDPOINTS = {
     file:   '/uploads/file',
   },
 
+  // Crypto Wallet
+  crypto: {
+    coins:          '/crypto/coins',
+    balance:        '/crypto/balance',
+    transactions:   '/crypto/transactions',
+    depositAddress: (coin) => `/crypto/deposit-address/${coin}`,
+    webhook:        '/crypto/webhook/nowpayments',
+  },
+
   // Admin
   admin: {
     analytics:     '/admin/analytics',

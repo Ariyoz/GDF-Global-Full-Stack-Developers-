@@ -5,7 +5,7 @@
     <div class="page-hdr">
       <div>
         <h2 class="pg-title">Wallet</h2>
-        <p class="pg-sub">Manage your GFD earnings and payments</p>
+        <p class="pg-sub">Manage your GFD earnings, payments and crypto</p>
       </div>
       <div class="hdr-actions">
         <RouterLink to="/settings" class="curr-chip" title="Change currency">
@@ -13,11 +13,28 @@
           <span class="curr-chip-code">{{ currencyStore.current.code }}</span>
           <span class="material-symbols-outlined" style="font-size:14px;opacity:.6">tune</span>
         </RouterLink>
-        <button class="icon-only" @click="loadWallet" :disabled="loading">
-          <span class="material-symbols-outlined" :class="{ spin: loading }">refresh</span>
+        <button class="icon-only" @click="activeTab === 'ngn' ? loadWallet() : loadCrypto()" :disabled="loading || cryptoLoading">
+          <span class="material-symbols-outlined" :class="{ spin: loading || cryptoLoading }">refresh</span>
         </button>
       </div>
     </div>
+
+    <!-- ══ Wallet Tabs ══ -->
+    <div class="wallet-tabs">
+      <button class="wallet-tab" :class="{ active: activeTab === 'ngn' }" @click="activeTab = 'ngn'">
+        <span class="material-symbols-outlined" style="font-size:18px">account_balance_wallet</span>
+        <span>NGN Wallet</span>
+        <span class="tab-currency">₦</span>
+      </button>
+      <button class="wallet-tab" :class="{ active: activeTab === 'crypto' }" @click="activeTab = 'crypto'; loadCrypto()">
+        <span class="wallet-tab-crypto-icons">₿</span>
+        <span>Crypto Wallet</span>
+        <span class="tab-badge-new">NEW</span>
+      </button>
+    </div>
+
+    <!-- ══ NGN Wallet Tab ══ -->
+    <div v-show="activeTab === 'ngn'">
 
     <!-- ══ Hero Balance Card ══ -->
     <div class="balance-card">
@@ -495,7 +512,201 @@
       </div>
     </Transition>
 
-  </div>
+    </div><!-- end NGN tab -->
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- ══ CRYPTO WALLET TAB ══════════════════════════════════════════════════ -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <div v-show="activeTab === 'crypto'" class="crypto-tab">
+
+      <!-- Skeleton loader -->
+      <template v-if="cryptoLoading && !cryptoBalances.length">
+        <div class="crypto-hero-skel">
+          <div class="shimmer" style="height:140px;border-radius:20px;width:100%"></div>
+        </div>
+        <div v-for="i in 5" :key="i" class="coin-row-skel">
+          <div class="shimmer" style="width:44px;height:44px;border-radius:12px;flex-shrink:0"></div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:.35rem">
+            <div class="shimmer" style="height:12px;width:40%;border-radius:4px"></div>
+            <div class="shimmer" style="height:10px;width:25%;border-radius:4px"></div>
+          </div>
+          <div class="shimmer" style="width:72px;height:22px;border-radius:6px"></div>
+        </div>
+      </template>
+
+      <template v-else>
+
+        <!-- ── Crypto Total Value Card ── -->
+        <div class="crypto-hero">
+          <div class="ch-blob ch-blob-1"></div>
+          <div class="ch-blob ch-blob-2"></div>
+          <div class="ch-content">
+            <div class="ch-left">
+              <p class="ch-label">
+                <span style="font-size:16px">₿</span>
+                Total Crypto Value
+              </p>
+              <p class="ch-amount">${{ fmtCryptoUsd(cryptoTotalUsd) }}</p>
+              <p class="ch-sub">Across {{ cryptoBalances.filter(c => c.balance > 0).length }} asset{{ cryptoBalances.filter(c => c.balance > 0).length !== 1 ? 's' : '' }}</p>
+            </div>
+            <div class="ch-coins-preview">
+              <span v-for="c in cryptoBalances.slice(0,5)" :key="c.coin"
+                class="ch-coin-dot" :style="{ background: c.color + '22', color: c.color }"
+                :title="c.name">{{ c.icon }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Notice bar ── -->
+        <div class="crypto-notice">
+          <span class="material-symbols-outlined" style="font-size:16px;color:#f59e0b">info</span>
+          <span>Deposits are processed via <strong>NOWPayments</strong>. Send only the correct coin on the correct network.</span>
+        </div>
+
+        <!-- ── Coin Cards ── -->
+        <div class="coin-list">
+          <div v-for="coin in cryptoBalances" :key="coin.coin"
+            class="coin-card"
+            :class="{ 'coin-card-active': selectedCoin?.coin === coin.coin }"
+            @click="selectCoin(coin)">
+            <div class="coin-icon-wrap" :style="{ background: coin.color + '18' }">
+              <span class="coin-icon" :style="{ color: coin.color }">{{ coin.icon }}</span>
+            </div>
+            <div class="coin-info">
+              <div class="coin-name-row">
+                <span class="coin-name">{{ coin.name }}</span>
+                <span class="coin-network">{{ coin.network }}</span>
+              </div>
+              <span class="coin-symbol">{{ coin.symbol }}</span>
+            </div>
+            <div class="coin-balance-col">
+              <span class="coin-balance">{{ fmtCoinAmount(coin.balance, coin.coin) }} {{ coin.symbol }}</span>
+              <span class="coin-usd" v-if="coin.balance > 0">≈ ${{ fmtCryptoUsd(coin.balance * coinUsdPrice(coin.coin)) }}</span>
+              <span class="coin-usd zero" v-else>$0.00</span>
+            </div>
+            <span class="material-symbols-outlined coin-chevron">chevron_right</span>
+          </div>
+        </div>
+
+        <!-- ── Crypto Transactions ── -->
+        <div class="tx-card" style="margin-top:.25rem">
+          <div class="tx-hdr">
+            <h3 class="tx-title">Crypto History</h3>
+            <span class="tx-count" v-if="cryptoTxs.length">{{ cryptoTxs.length }} records</span>
+          </div>
+          <div v-if="cryptoTxLoading" class="tx-empty" style="padding:2rem 0">
+            <div class="btn-spinner" style="border-color:rgba(99,14,212,.15);border-top-color:var(--primary);width:24px;height:24px"></div>
+          </div>
+          <div v-else-if="!cryptoTxs.length" class="tx-empty">
+            <div class="tx-empty-icon"><span class="material-symbols-outlined">currency_bitcoin</span></div>
+            <p class="tx-empty-title">No transactions yet</p>
+            <p class="tx-empty-sub">Deposit crypto to get started</p>
+          </div>
+          <template v-else>
+            <div v-for="tx in cryptoTxs" :key="tx.id" class="tx-row">
+              <div class="tx-ico-wrap" :style="{ background: coinColor(tx.coin) + '18' }">
+                <span class="tx-ico" :style="{ color: coinColor(tx.coin), fontSize:'18px' }">{{ coinIcon(tx.coin) }}</span>
+              </div>
+              <div class="tx-info">
+                <p class="tx-name" style="text-transform:capitalize">{{ tx.type }} · {{ tx.symbol }}</p>
+                <p class="tx-date">{{ fmtDate(tx.created_at) }}{{ tx.tx_hash ? ' · ' + tx.tx_hash.slice(0,12) + '…' : '' }}</p>
+              </div>
+              <div class="tx-right">
+                <span class="tx-amt pos">+{{ fmtCoinAmount(tx.amount, tx.coin) }} {{ tx.symbol }}</span>
+                <span class="tx-badge" :class="tx.status">{{ tx.status }}</span>
+              </div>
+            </div>
+          </template>
+        </div>
+
+      </template>
+
+      <!-- ══ DEPOSIT MODAL ══ -->
+      <Transition name="modal">
+        <div v-if="showDepositModal && selectedCoin" class="modal-overlay" @click.self="showDepositModal = false">
+          <div class="modal-box">
+            <div class="modal-hdr">
+              <div class="modal-hdr-icon" :style="{ background: selectedCoin.color + '18' }">
+                <span style="font-size:22px;line-height:1" :style="{ color: selectedCoin.color }">{{ selectedCoin.icon }}</span>
+              </div>
+              <h3 class="modal-title">Deposit {{ selectedCoin.symbol }}</h3>
+              <button class="modal-close" @click="showDepositModal = false">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div class="modal-body">
+
+              <!-- Loading address -->
+              <div v-if="depositAddrLoading" class="deposit-loading">
+                <div class="btn-spinner" style="border-color:rgba(99,14,212,.15);border-top-color:var(--primary);width:28px;height:28px"></div>
+                <p style="font-size:.875rem;color:var(--on-surface-variant)">Generating deposit address…</p>
+              </div>
+
+              <template v-else-if="depositAddr">
+                <!-- QR Code -->
+                <div class="qr-wrap">
+                  <img :src="depositAddr.qr_code" alt="QR Code" class="qr-img" />
+                </div>
+
+                <!-- Network badge -->
+                <div class="deposit-network-row">
+                  <span class="material-symbols-outlined" style="font-size:16px;color:#f59e0b">warning</span>
+                  <span>Send only <strong>{{ depositAddr.symbol }}</strong> on the <strong>{{ depositAddr.network }}</strong> network</span>
+                </div>
+
+                <!-- Address box -->
+                <div class="deposit-addr-box">
+                  <div class="dep-addr-label">Deposit Address</div>
+                  <div class="dep-addr-row">
+                    <code class="dep-addr-code">{{ depositAddr.address }}</code>
+                    <button class="dep-copy-btn" @click="copyDepositAddr" :class="{ copied: addrCopied }">
+                      <span class="material-symbols-outlined" style="font-size:16px">{{ addrCopied ? 'check' : 'content_copy' }}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Info rows -->
+                <div class="deposit-info-grid">
+                  <div class="dep-info-row">
+                    <span class="dep-info-lbl">Coin</span>
+                    <span class="dep-info-val">{{ depositAddr.name }} ({{ depositAddr.symbol }})</span>
+                  </div>
+                  <div class="dep-info-row">
+                    <span class="dep-info-lbl">Network</span>
+                    <span class="dep-info-val">{{ depositAddr.network }}</span>
+                  </div>
+                  <div class="dep-info-row" v-if="depositAddr.warning">
+                    <span class="dep-info-lbl">Note</span>
+                    <span class="dep-info-val" style="color:#f59e0b">{{ depositAddr.warning }}</span>
+                  </div>
+                </div>
+
+                <div class="deposit-warning-box">
+                  <span class="material-symbols-outlined" style="font-size:18px;flex-shrink:0">error_outline</span>
+                  <p>Sending the wrong coin or using the wrong network will result in permanent loss of funds. Always double-check before sending.</p>
+                </div>
+              </template>
+
+              <div v-else class="tx-empty" style="padding:2rem 0">
+                <p style="color:var(--on-surface-variant);font-size:.875rem">Could not load deposit address. Try again.</p>
+              </div>
+            </div>
+
+            <div class="modal-footer">
+              <button class="btn-ghost" @click="showDepositModal = false">Close</button>
+              <button class="btn-primary" @click="copyDepositAddr" v-if="depositAddr && !depositAddrLoading">
+                <span class="material-symbols-outlined" style="font-size:16px">{{ addrCopied ? 'check' : 'content_copy' }}</span>
+                {{ addrCopied ? 'Copied!' : 'Copy Address' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+
+    </div><!-- end crypto tab -->
+
+  </div><!-- end wallet-view -->
 </template>
 
 <script setup>
@@ -518,6 +729,9 @@ function fmtWallet(ngnAmount) {
 function fmtNgn(n) {
   return '₦' + Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
+
+// ── Tab ────────────────────────────────────────────────────────────────────
+const activeTab = ref('ngn')
 
 // ── State ──────────────────────────────────────────────────────────────────
 const loading        = ref(false)
@@ -882,6 +1096,100 @@ async function submitWithdraw() {
   } finally { withdrawing.value = false }
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// ── CRYPTO STATE ──────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+
+const cryptoLoading     = ref(false)
+const cryptoTxLoading   = ref(false)
+const cryptoLoaded      = ref(false)
+const cryptoBalances    = ref([])
+const cryptoTxs         = ref([])
+const selectedCoin      = ref(null)
+const showDepositModal  = ref(false)
+const depositAddr       = ref(null)
+const depositAddrLoading = ref(false)
+const addrCopied        = ref(false)
+
+// Approximate USD prices (static fallback — replace with live feed if desired)
+const COIN_PRICES = { btc: 67000, eth: 3500, sol: 145, usdt: 1, usdc: 1 }
+
+function coinUsdPrice(coin) {
+  return COIN_PRICES[coin?.toLowerCase()] || 1
+}
+
+const cryptoTotalUsd = computed(() =>
+  cryptoBalances.value.reduce((sum, c) => sum + (c.balance * coinUsdPrice(c.coin)), 0)
+)
+
+function fmtCryptoUsd(n) {
+  return Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+function fmtCoinAmount(n, coin) {
+  const decimals = ['btc', 'eth', 'sol'].includes(coin?.toLowerCase()) ? 6 : 2
+  return Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: decimals })
+}
+
+const COIN_META = {
+  usdt: { icon: '💵', color: '#26A17B' },
+  usdc: { icon: '💙', color: '#2775CA' },
+  btc:  { icon: '₿',  color: '#F7931A' },
+  eth:  { icon: '⟠',  color: '#627EEA' },
+  sol:  { icon: '◎',  color: '#9945FF' },
+}
+
+function coinIcon(coin) { return COIN_META[coin?.toLowerCase()]?.icon || '🪙' }
+function coinColor(coin) { return COIN_META[coin?.toLowerCase()]?.color || '#888' }
+
+// ── Load crypto balances + transactions ───────────────────────────────────────
+async function loadCrypto() {
+  if (cryptoLoading.value) return
+  cryptoLoading.value = true
+  cryptoTxLoading.value = true
+  try {
+    const [balData, txData] = await Promise.allSettled([
+      walletService.getCryptoBalance(),
+      walletService.getCryptoTransactions(),
+    ])
+    if (balData.status === 'fulfilled') {
+      cryptoBalances.value = balData.value.balances || []
+    }
+    if (txData.status === 'fulfilled') {
+      cryptoTxs.value = txData.value.transactions || []
+    }
+    cryptoLoaded.value = true
+  } finally {
+    cryptoLoading.value = false
+    cryptoTxLoading.value = false
+  }
+}
+
+// ── Select coin → open deposit modal ─────────────────────────────────────────
+async function selectCoin(coin) {
+  selectedCoin.value = coin
+  showDepositModal.value = true
+  depositAddr.value = null
+  addrCopied.value = false
+  depositAddrLoading.value = true
+  try {
+    depositAddr.value = await walletService.getCryptoDepositAddress(coin.coin)
+  } catch (e) {
+    uiStore.showError(e?.response?.data?.detail || 'Could not load deposit address.')
+    depositAddr.value = null
+  } finally {
+    depositAddrLoading.value = false
+  }
+}
+
+async function copyDepositAddr() {
+  const addr = depositAddr.value?.address
+  if (!addr) return
+  await navigator.clipboard.writeText(addr).catch(() => {})
+  addrCopied.value = true
+  setTimeout(() => addrCopied.value = false, 2500)
+}
+
 // ── Mount ─────────────────────────────────────────────────────────────────────
 onMounted(async () => {
   await wakeAndLoad()
@@ -1166,4 +1474,91 @@ onMounted(async () => {
 .modal-enter-from, .modal-leave-to { opacity: 0; transform: translateY(24px); }
 .slide-up-enter-active, .slide-up-leave-active { transition: all .3s ease; }
 .slide-up-enter-from, .slide-up-leave-to { opacity: 0; transform: translateX(-50%) translateY(20px); }
+
+/* ══ Wallet Tabs ══════════════════════════════════════════════════════════ */
+.wallet-tabs        { display: flex; gap: .5rem; background: var(--surface-container-low); padding: .4rem; border-radius: 16px; border: 1.5px solid var(--outline-variant); }
+.wallet-tab         { flex: 1; display: flex; align-items: center; justify-content: center; gap: .45rem; padding: .65rem 1rem; border-radius: 12px; border: none; background: transparent; cursor: pointer; font-family: var(--font-headline); font-size: .85rem; font-weight: 700; color: var(--on-surface-variant); transition: all .2s; }
+.wallet-tab.active  { background: var(--surface-container-highest); color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+.wallet-tab:hover:not(.active) { color: var(--on-surface); }
+.tab-currency       { font-size: .85rem; font-weight: 800; opacity: .5; }
+.wallet-tab-crypto-icons { font-size: 1rem; }
+.tab-badge-new      { font-size: .58rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; padding: .1rem .45rem; border-radius: 999px; background: rgba(249,115,22,.15); color: #f97316; border: 1px solid rgba(249,115,22,.25); }
+
+/* ══ Crypto Tab ══════════════════════════════════════════════════════════ */
+.crypto-tab         { display: flex; flex-direction: column; gap: 1.25rem; }
+
+/* hero card */
+.crypto-hero {
+  position: relative; overflow: hidden;
+  background: linear-gradient(135deg, #0f1f0a 0%, #1a3a0e 45%, #0a1f1a 100%);
+  border-radius: 22px; padding: 1.75rem;
+  border: 1px solid rgba(74,222,128,.2);
+  box-shadow: 0 16px 48px rgba(0,0,0,.35);
+}
+.ch-blob { position: absolute; border-radius: 50%; pointer-events: none; }
+.ch-blob-1 { width: 240px; height: 240px; top: -80px; right: -40px; background: radial-gradient(circle, rgba(34,197,94,.3) 0%, transparent 70%); }
+.ch-blob-2 { width: 140px; height: 140px; bottom: -50px; left: 8%; background: radial-gradient(circle, rgba(99,14,212,.25) 0%, transparent 70%); }
+.ch-content    { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+.ch-left       { display: flex; flex-direction: column; }
+.ch-label      { display: flex; align-items: center; gap: .4rem; font-size: .7rem; color: rgba(255,255,255,.45); text-transform: uppercase; letter-spacing: .08em; font-family: var(--font-headline); }
+.ch-amount     { font-family: var(--font-headline); font-size: clamp(1.8rem,6vw,2.75rem); font-weight: 800; color: #fff; letter-spacing: -.03em; line-height: 1.1; margin-top: .25rem; }
+.ch-sub        { font-size: .72rem; color: rgba(255,255,255,.35); margin-top: .35rem; }
+.ch-coins-preview { display: flex; gap: .4rem; flex-wrap: wrap; }
+.ch-coin-dot   { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; border: 2px solid rgba(255,255,255,.1); }
+
+/* notice */
+.crypto-notice {
+  display: flex; align-items: flex-start; gap: .6rem;
+  padding: .875rem 1rem; border-radius: 12px;
+  background: rgba(245,158,11,.07); border: 1px solid rgba(245,158,11,.2);
+  font-size: .8rem; color: var(--on-surface-variant); line-height: 1.4;
+}
+.crypto-notice strong { color: var(--on-surface); }
+
+/* coin list */
+.coin-list  { display: flex; flex-direction: column; gap: .5rem; }
+.coin-card  {
+  display: flex; align-items: center; gap: .875rem;
+  padding: 1rem 1.25rem; border-radius: 16px;
+  background: var(--surface-container-lowest);
+  border: 1.5px solid var(--outline-variant);
+  cursor: pointer; transition: all .2s cubic-bezier(0.34,1.56,0.64,1);
+}
+.coin-card:hover, .coin-card-active { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 4%, var(--surface-container-lowest)); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99,14,212,.1); }
+.coin-icon-wrap  { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.coin-icon       { font-size: 1.4rem; line-height: 1; }
+.coin-info       { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .15rem; }
+.coin-name-row   { display: flex; align-items: center; gap: .5rem; }
+.coin-name       { font-family: var(--font-headline); font-size: .9rem; font-weight: 700; color: var(--on-surface); }
+.coin-network    { font-size: .65rem; font-weight: 700; padding: .1rem .45rem; border-radius: 999px; background: var(--surface-container); color: var(--on-surface-variant); border: 1px solid var(--outline-variant); }
+.coin-symbol     { font-size: .75rem; color: var(--on-surface-variant); font-weight: 600; }
+.coin-balance-col { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; }
+.coin-balance    { font-family: var(--font-headline); font-size: .9rem; font-weight: 700; color: var(--on-surface); }
+.coin-usd        { font-size: .73rem; color: #16a34a; margin-top: .1rem; }
+.coin-usd.zero   { color: var(--on-surface-variant); opacity: .45; }
+.coin-chevron    { font-size: 18px; color: var(--on-surface-variant); opacity: .45; flex-shrink: 0; }
+
+/* skeleton */
+.crypto-hero-skel   { width: 100%; }
+.coin-row-skel      { display: flex; align-items: center; gap: .875rem; padding: 1rem 1.25rem; border-radius: 16px; background: var(--surface-container-lowest); border: 1.5px solid var(--outline-variant); }
+
+/* ── Deposit Modal ── */
+.deposit-loading    { display: flex; flex-direction: column; align-items: center; gap: .875rem; padding: 2.5rem 0; }
+.qr-wrap            { display: flex; justify-content: center; padding: .5rem 0; }
+.qr-img             { width: 180px; height: 180px; border-radius: 16px; border: 4px solid var(--surface-container); background: #fff; }
+.deposit-network-row { display: flex; align-items: center; gap: .45rem; padding: .75rem 1rem; border-radius: 10px; background: rgba(245,158,11,.07); border: 1px solid rgba(245,158,11,.2); font-size: .82rem; color: var(--on-surface-variant); }
+.deposit-network-row strong { color: var(--on-surface); }
+.deposit-addr-box   { background: var(--surface-container); border: 1.5px solid var(--outline-variant); border-radius: 14px; padding: .875rem 1rem; }
+.dep-addr-label     { font-size: .7rem; text-transform: uppercase; letter-spacing: .07em; color: var(--on-surface-variant); margin-bottom: .4rem; font-family: var(--font-headline); }
+.dep-addr-row       { display: flex; align-items: center; gap: .625rem; }
+.dep-addr-code      { flex: 1; font-family: monospace; font-size: .8rem; color: var(--on-surface); word-break: break-all; line-height: 1.4; }
+.dep-copy-btn       { width: 34px; height: 34px; border-radius: 8px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-low); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: all .15s; color: var(--on-surface-variant); }
+.dep-copy-btn:hover { border-color: var(--primary); color: var(--primary); }
+.dep-copy-btn.copied { border-color: #22c55e; color: #22c55e; background: rgba(34,197,94,.08); }
+.deposit-info-grid  { display: flex; flex-direction: column; gap: .5rem; background: var(--surface-container-low); border-radius: 12px; padding: .875rem 1rem; }
+.dep-info-row       { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.dep-info-lbl       { font-size: .78rem; color: var(--on-surface-variant); }
+.dep-info-val       { font-size: .82rem; font-weight: 600; color: var(--on-surface); text-align: right; }
+.deposit-warning-box { display: flex; align-items: flex-start; gap: .625rem; padding: .875rem 1rem; border-radius: 12px; background: rgba(239,68,68,.06); border: 1px solid rgba(239,68,68,.18); color: var(--on-surface-variant); font-size: .8rem; line-height: 1.45; }
+.deposit-warning-box .material-symbols-outlined { color: #ef4444; margin-top: .05rem; }
 </style>

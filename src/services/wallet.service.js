@@ -97,4 +97,22 @@ export const walletService = {
   async rejectRequest(requestId) {
     return http.post(`/wallet/requests/${requestId}/reject`, {})
   },
+
+  // ── Crypto wallet ─────────────────────────────────────────────────────────
+
+  async getCryptoBalance() {
+    return http.get('/crypto/balance')
+  },
+
+  async getCryptoTransactions() {
+    return http.get('/crypto/transactions')
+  },
+
+  async getCryptoDepositAddress(coin) {
+    return http.get(`/crypto/deposit-address/${coin.toLowerCase()}`)
+  },
+
+  async listSupportedCoins() {
+    return http.get('/crypto/coins')
+  },
 }
