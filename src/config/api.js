@@ -131,7 +131,12 @@ export const API_ENDPOINTS = {
     balance:        '/crypto/balance',
     transactions:   '/crypto/transactions',
     depositAddress: (coin) => `/crypto/deposit-address/${coin}`,
+    prices:         '/crypto/prices',
+    send:           '/crypto/send',
     webhook:        '/crypto/webhook/nowpayments',
+    adminOverview:  '/crypto/admin/overview',
+    adminTxs:       '/crypto/admin/transactions',
+    adminComplete:  (id) => `/crypto/admin/transactions/${id}/complete`,
   },
 
   // Admin

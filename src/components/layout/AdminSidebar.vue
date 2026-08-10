@@ -51,6 +51,10 @@
             <span class="nav-link-icon material-symbols-outlined">account_balance_wallet</span>
             <span class="nav-link-label">Wallet</span>
           </RouterLink>
+          <RouterLink to="/admin/crypto" class="nav-link" :class="{ active: $route.path === '/admin/crypto' }" @click="$emit('navigate')">
+            <span class="nav-link-icon" style="font-size:18px;width:24px;display:flex;align-items:center;justify-content:center">₿</span>
+            <span class="nav-link-label">Crypto</span>
+          </RouterLink>
           <RouterLink to="/admin/projects" class="nav-link" :class="{ active: $route.path === '/admin/projects' }" @click="$emit('navigate')">
             <span class="nav-link-icon material-symbols-outlined">folder_open</span>
             <span class="nav-link-label">Projects</span>

@@ -567,10 +567,9 @@
         <div class="coin-list">
           <div v-for="coin in cryptoBalances" :key="coin.coin"
             class="coin-card"
-            :class="{ 'coin-card-active': selectedCoin?.coin === coin.coin }"
             @click="selectCoin(coin)">
             <div class="coin-icon-wrap" :style="{ background: coin.color + '18' }">
-              <span class="coin-icon" :style="{ color: coin.color }">{{ coin.icon }}</span>
+              <CoinIcon :coin="coin.coin" :size="32" />
             </div>
             <div class="coin-info">
               <div class="coin-name-row">
@@ -581,10 +580,24 @@
             </div>
             <div class="coin-balance-col">
               <span class="coin-balance">{{ fmtCoinAmount(coin.balance, coin.coin) }} {{ coin.symbol }}</span>
-              <span class="coin-usd" v-if="coin.balance > 0">≈ ${{ fmtCryptoUsd(coin.balance * coinUsdPrice(coin.coin)) }}</span>
+              <span class="coin-usd" v-if="coin.balance > 0">
+                ≈ ${{ fmtCryptoUsd(coin.balance * livePrices[coin.coin]?.usd) }}
+                <span :class="livePrices[coin.coin]?.change_24h >= 0 ? 'chg-up' : 'chg-dn'"
+                  v-if="livePrices[coin.coin]?.change_24h !== 0">
+                  {{ livePrices[coin.coin]?.change_24h >= 0 ? '+' : '' }}{{ livePrices[coin.coin]?.change_24h?.toFixed(2) }}%
+                </span>
+              </span>
               <span class="coin-usd zero" v-else>$0.00</span>
             </div>
-            <span class="material-symbols-outlined coin-chevron">chevron_right</span>
+            <div class="coin-actions-col">
+              <button class="coin-action-btn deposit-btn" @click.stop="selectCoin(coin)" title="Deposit">
+                <span class="material-symbols-outlined" style="font-size:16px">arrow_downward</span>
+              </button>
+              <button class="coin-action-btn send-btn" @click.stop="openSendModal(coin)" title="Send"
+                :disabled="coin.balance <= 0">
+                <span class="material-symbols-outlined" style="font-size:16px">arrow_upward</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -605,7 +618,7 @@
           <template v-else>
             <div v-for="tx in cryptoTxs" :key="tx.id" class="tx-row">
               <div class="tx-ico-wrap" :style="{ background: coinColor(tx.coin) + '18' }">
-                <span class="tx-ico" :style="{ color: coinColor(tx.coin), fontSize:'18px' }">{{ coinIcon(tx.coin) }}</span>
+                <CoinIcon :coin="tx.coin" :size="26" />
               </div>
               <div class="tx-info">
                 <p class="tx-name" style="text-transform:capitalize">{{ tx.type }} · {{ tx.symbol }}</p>
@@ -621,13 +634,69 @@
 
       </template>
 
+      <!-- ══ SEND MODAL ══ -->
+      <Transition name="modal">
+        <div v-if="showSendModal && sendCoin" class="modal-overlay" @click.self="showSendModal = false">
+          <div class="modal-box">
+            <div class="modal-hdr">
+              <div class="modal-hdr-icon" :style="{ background: sendCoin.color + '18' }">
+                <CoinIcon :coin="sendCoin.coin" :size="28" />
+              </div>
+              <h3 class="modal-title">Send {{ sendCoin.symbol }}</h3>
+              <button class="modal-close" @click="showSendModal = false">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="avail-balance">
+                Available: <strong>{{ fmtCoinAmount(sendCoin.balance, sendCoin.coin) }} {{ sendCoin.symbol }}</strong>
+                <span v-if="livePrices[sendCoin.coin]"> · ≈ ${{ fmtCryptoUsd(sendCoin.balance * livePrices[sendCoin.coin]?.usd) }}</span>
+              </div>
+              <div class="field-group">
+                <label class="field-label">Destination Address</label>
+                <input v-model="sendForm.to_address" type="text" class="modal-inp-plain"
+                  :placeholder="`${sendCoin.network} address`" autocomplete="off" spellcheck="false" />
+              </div>
+              <div class="field-group">
+                <label class="field-label">Amount ({{ sendCoin.symbol }})</label>
+                <div class="input-group">
+                  <span class="inp-prefix">{{ sendCoin.symbol }}</span>
+                  <input v-model.number="sendForm.amount" type="number" class="modal-inp"
+                    :placeholder="`Min ${sendMinAmount(sendCoin.coin)}`" :max="sendCoin.balance" min="0" step="any" />
+                  <button class="inp-max-btn" @click="sendForm.amount = sendCoin.balance">MAX</button>
+                </div>
+              </div>
+              <div class="send-summary" v-if="sendForm.amount > 0 && sendForm.to_address">
+                <div class="ss-row"><span>Amount</span><strong>{{ sendForm.amount }} {{ sendCoin.symbol }}</strong></div>
+                <div class="ss-row"><span>Network Fee</span><strong>~{{ sendFeeAmount(sendCoin.coin) }} {{ sendCoin.symbol }}</strong></div>
+                <div class="ss-row ss-total"><span>You send</span><strong>{{ fmtCoinAmount(sendForm.amount, sendCoin.coin) }} {{ sendCoin.symbol }}</strong></div>
+              </div>
+              <div class="deposit-warning-box">
+                <span class="material-symbols-outlined" style="font-size:18px;flex-shrink:0">error_outline</span>
+                <p>Only send to a <strong>{{ sendCoin.network }}</strong> address. Sending to the wrong network will result in permanent loss of funds.</p>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-ghost" @click="showSendModal = false">Cancel</button>
+              <button class="btn-primary modal-pay-btn"
+                :disabled="!canSend || sending"
+                @click="submitSend">
+                <span v-if="sending" class="btn-spinner"></span>
+                <span class="material-symbols-outlined" v-else style="font-size:18px">arrow_upward</span>
+                {{ sending ? 'Sending…' : `Send ${sendCoin.symbol}` }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+
       <!-- ══ DEPOSIT MODAL ══ -->
       <Transition name="modal">
         <div v-if="showDepositModal && selectedCoin" class="modal-overlay" @click.self="showDepositModal = false">
           <div class="modal-box">
             <div class="modal-hdr">
               <div class="modal-hdr-icon" :style="{ background: selectedCoin.color + '18' }">
-                <span style="font-size:22px;line-height:1" :style="{ color: selectedCoin.color }">{{ selectedCoin.icon }}</span>
+                <CoinIcon :coin="selectedCoin.coin" :size="28" />
               </div>
               <h3 class="modal-title">Deposit {{ selectedCoin.symbol }}</h3>
               <button class="modal-close" @click="showDepositModal = false">
@@ -712,6 +781,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import CoinIcon from '@/components/CoinIcon.vue'
 import { walletService } from '@/services/wallet.service'
 import { useUiStore } from '@/store/ui'
 import { useCurrencyStore } from '@/store/currency'
@@ -1100,26 +1170,46 @@ async function submitWithdraw() {
 // ── CRYPTO STATE ──────────────────────────────────────────────────────────────
 // ══════════════════════════════════════════════════════════════════════════════
 
-const cryptoLoading     = ref(false)
-const cryptoTxLoading   = ref(false)
-const cryptoLoaded      = ref(false)
-const cryptoBalances    = ref([])
-const cryptoTxs         = ref([])
-const selectedCoin      = ref(null)
-const showDepositModal  = ref(false)
-const depositAddr       = ref(null)
+const cryptoLoading      = ref(false)
+const cryptoTxLoading    = ref(false)
+const cryptoLoaded       = ref(false)
+const cryptoBalances     = ref([])
+const cryptoTxs          = ref([])
+const selectedCoin       = ref(null)
+const showDepositModal   = ref(false)
+const depositAddr        = ref(null)
 const depositAddrLoading = ref(false)
-const addrCopied        = ref(false)
+const addrCopied         = ref(false)
 
-// Approximate USD prices (static fallback — replace with live feed if desired)
-const COIN_PRICES = { btc: 67000, eth: 3500, sol: 145, usdt: 1, usdc: 1 }
+// Live prices from CoinGecko
+const livePrices = ref({
+  btc:  { usd: 67000, change_24h: 0 },
+  eth:  { usd: 3500,  change_24h: 0 },
+  sol:  { usd: 145,   change_24h: 0 },
+  usdt: { usd: 1,     change_24h: 0 },
+  usdc: { usd: 1,     change_24h: 0 },
+})
 
-function coinUsdPrice(coin) {
-  return COIN_PRICES[coin?.toLowerCase()] || 1
-}
+// Send state
+const showSendModal = ref(false)
+const sendCoin      = ref(null)
+const sending       = ref(false)
+const sendForm      = ref({ to_address: '', amount: 0 })
+
+const SEND_MIN  = { btc: 0.00001, eth: 0.0001, sol: 0.01, usdt: 1, usdc: 1 }
+const SEND_FEES = { btc: 0.00005, eth: 0.0005,  sol: 0.001, usdt: 1, usdc: 1 }
+function sendMinAmount(coin) { return SEND_MIN[coin?.toLowerCase()] ?? 0 }
+function sendFeeAmount(coin) { return SEND_FEES[coin?.toLowerCase()] ?? 0 }
+
+const canSend = computed(() =>
+  sendForm.value.to_address.trim().length > 10 &&
+  sendForm.value.amount > 0 &&
+  sendForm.value.amount <= (sendCoin.value?.balance || 0) &&
+  sendForm.value.amount >= sendMinAmount(sendCoin.value?.coin)
+)
 
 const cryptoTotalUsd = computed(() =>
-  cryptoBalances.value.reduce((sum, c) => sum + (c.balance * coinUsdPrice(c.coin)), 0)
+  cryptoBalances.value.reduce((sum, c) => sum + (c.balance * (livePrices.value[c.coin]?.usd || 1)), 0)
 )
 
 function fmtCryptoUsd(n) {
@@ -1131,16 +1221,16 @@ function fmtCoinAmount(n, coin) {
   return Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: decimals })
 }
 
-const COIN_META = {
-  usdt: { icon: '💵', color: '#26A17B' },
-  usdc: { icon: '💙', color: '#2775CA' },
-  btc:  { icon: '₿',  color: '#F7931A' },
-  eth:  { icon: '⟠',  color: '#627EEA' },
-  sol:  { icon: '◎',  color: '#9945FF' },
-}
+const COIN_COLORS = { usdt: '#26A17B', usdc: '#2775CA', btc: '#F7931A', eth: '#627EEA', sol: '#9945FF' }
+function coinColor(coin) { return COIN_COLORS[coin?.toLowerCase()] || '#888' }
 
-function coinIcon(coin) { return COIN_META[coin?.toLowerCase()]?.icon || '🪙' }
-function coinColor(coin) { return COIN_META[coin?.toLowerCase()]?.color || '#888' }
+// ── Load live prices ──────────────────────────────────────────────────────────
+async function loadLivePrices() {
+  try {
+    const data = await walletService.getCryptoPrices()
+    if (data?.prices) livePrices.value = { ...livePrices.value, ...data.prices }
+  } catch { /* silent — fallback prices stay */ }
+}
 
 // ── Load crypto balances + transactions ───────────────────────────────────────
 async function loadCrypto() {
@@ -1159,6 +1249,7 @@ async function loadCrypto() {
       cryptoTxs.value = txData.value.transactions || []
     }
     cryptoLoaded.value = true
+    loadLivePrices()
   } finally {
     cryptoLoading.value = false
     cryptoTxLoading.value = false
@@ -1188,6 +1279,34 @@ async function copyDepositAddr() {
   await navigator.clipboard.writeText(addr).catch(() => {})
   addrCopied.value = true
   setTimeout(() => addrCopied.value = false, 2500)
+}
+
+// ── Send crypto ───────────────────────────────────────────────────────────────
+function openSendModal(coin) {
+  sendCoin.value = coin
+  sendForm.value = { to_address: '', amount: 0 }
+  showSendModal.value = true
+}
+
+async function submitSend() {
+  if (!canSend.value) return
+  sending.value = true
+  try {
+    const result = await walletService.sendCrypto({
+      coin:       sendCoin.value.coin,
+      amount:     sendForm.value.amount,
+      to_address: sendForm.value.to_address.trim(),
+      network:    sendCoin.value.network,
+    })
+    uiStore.showSuccess(result.message || `${sendForm.value.amount} ${sendCoin.value.symbol} send queued!`)
+    showSendModal.value = false
+    sendForm.value = { to_address: '', amount: 0 }
+    await loadCrypto()
+  } catch (e) {
+    uiStore.showError(e?.response?.data?.detail || 'Send failed. Please try again.')
+  } finally {
+    sending.value = false
+  }
 }
 
 // ── Mount ─────────────────────────────────────────────────────────────────────
@@ -1537,6 +1656,28 @@ onMounted(async () => {
 .coin-usd        { font-size: .73rem; color: #16a34a; margin-top: .1rem; }
 .coin-usd.zero   { color: var(--on-surface-variant); opacity: .45; }
 .coin-chevron    { font-size: 18px; color: var(--on-surface-variant); opacity: .45; flex-shrink: 0; }
+
+/* coin action buttons */
+.coin-actions-col  { display: flex; flex-direction: column; gap: .3rem; flex-shrink: 0; }
+.coin-action-btn   { width: 30px; height: 30px; border-radius: 8px; border: 1.5px solid var(--outline-variant); background: var(--surface-container); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .15s; color: var(--on-surface-variant); }
+.deposit-btn:hover { border-color: #16a34a; color: #16a34a; background: rgba(22,163,74,.08); }
+.send-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); background: rgba(99,14,212,.08); }
+.coin-action-btn:disabled { opacity: .3; cursor: not-allowed; }
+
+/* price change chips */
+.chg-up { font-size: .68rem; font-weight: 700; color: #16a34a; margin-left: .25rem; }
+.chg-dn { font-size: .68rem; font-weight: 700; color: #ef4444; margin-left: .25rem; }
+
+/* send modal summary */
+.send-summary { background: var(--surface-container-low); border-radius: 12px; padding: .875rem 1rem; display: flex; flex-direction: column; gap: .5rem; }
+.ss-row { display: flex; align-items: center; justify-content: space-between; font-size: .85rem; color: var(--on-surface-variant); }
+.ss-row strong { color: var(--on-surface); font-weight: 700; }
+.ss-total { border-top: 1px solid var(--outline-variant); padding-top: .5rem; margin-top: .15rem; }
+.ss-total span, .ss-total strong { color: var(--on-surface); font-weight: 700; font-family: var(--font-headline); }
+
+/* max button */
+.inp-max-btn { padding: .4rem .75rem; margin-right: .375rem; border-radius: 8px; border: 1.5px solid var(--primary); background: rgba(99,14,212,.08); color: var(--primary); font-size: .75rem; font-weight: 800; cursor: pointer; font-family: var(--font-headline); transition: all .15s; flex-shrink: 0; }
+.inp-max-btn:hover { background: rgba(99,14,212,.15); }
 
 /* skeleton */
 .crypto-hero-skel   { width: 100%; }

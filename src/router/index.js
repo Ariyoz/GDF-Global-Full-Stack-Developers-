@@ -64,6 +64,7 @@ const AdminAnalyticsView    = () => import('@/views/Admin/AdminAnalyticsView.vue
 const AdminSubscriptionsView = () => import('@/views/Admin/AdminSubscriptionsView.vue')
 const AdminProjectsView      = () => import('@/views/Admin/AdminProjectsView.vue')
 const AdminWalletView        = () => import('@/views/Admin/AdminWalletView.vue')
+const AdminCryptoView        = () => import('@/views/Admin/AdminCryptoView.vue')
 
 // ── Error ──
 const NotFoundView = () => import('@/views/NotFound.vue')
@@ -135,7 +136,7 @@ const routes = [
   },
   {
     path: '/jobs',
-    component: DashboardLayout,
+    component: DefaultLayout,
     children: [{ path: '', name: 'jobs', component: () => import('@/views/Jobs/JobsView.vue') }],
   },
   {
@@ -198,6 +199,7 @@ const routes = [
       { path: 'subscriptions', name: 'admin-subscriptions', component: AdminSubscriptionsView },
       { path: 'projects',     name: 'admin-projects',     component: AdminProjectsView },
       { path: 'wallet',       name: 'admin-wallet',       component: AdminWalletView },
+      { path: 'crypto',       name: 'admin-crypto',       component: AdminCryptoView },
       { path: 'settings',     name: 'admin-settings',     component: AdminSettingsView },
     ],
   },

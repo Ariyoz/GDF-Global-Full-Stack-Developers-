@@ -115,4 +115,12 @@ export const walletService = {
   async listSupportedCoins() {
     return http.get('/crypto/coins')
   },
+
+  async getCryptoPrices() {
+    return http.get('/crypto/prices')
+  },
+
+  async sendCrypto({ coin, amount, to_address, network }) {
+    return http.post('/crypto/send', { coin, amount, to_address, network }, { timeout: 30000 })
+  },
 }
