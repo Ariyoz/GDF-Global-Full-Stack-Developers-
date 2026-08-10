@@ -21,45 +21,33 @@ export default defineConfig({
   },
 
   build: {
-    assetsInlineLimit: 2048,     // inline only <2KB assets
+    assetsInlineLimit: 2048,
     cssCodeSplit: true,
     sourcemap: false,
     target: 'es2020',
-    minify: 'esbuild',
-    reportCompressedSize: false, // faster builds
+    // Let Vite 8 use its default minifier (Oxc via rolldown) — don't force esbuild
+    reportCompressedSize: false,
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (!id.includes('node_modules')) return
-
-          // Vue ecosystem — always needed first
           if (id.includes('/vue/') || id.includes('/vue-demi/')) return 'vue'
-          if (id.includes('/vue-router/'))  return 'vue-router'
-          if (id.includes('/pinia/'))       return 'pinia'
-
-          // HTTP client
-          if (id.includes('/axios/'))       return 'axios'
-
-          // Capacitor — mobile only, isolated chunk
-          if (id.includes('@capacitor'))    return 'capacitor'
-
-          // Tailwind runtime (if any)
-          if (id.includes('tailwindcss'))   return 'tailwind'
-
+          if (id.includes('/vue-router/')) return 'vue-router'
+          if (id.includes('/pinia/'))      return 'pinia'
+          if (id.includes('/axios/'))      return 'axios'
+          if (id.includes('@capacitor'))   return 'capacitor'
           return 'vendor'
         },
-        chunkFileNames:  'assets/js/[name]-[hash].js',
-        entryFileNames:  'assets/js/[name]-[hash].js',
-        assetFileNames:  'assets/[ext]/[name]-[hash].[ext]',
-        compact: true,
+        chunkFileNames: 'assets/js/[name]-[hash].js',
+        entryFileNames: 'assets/js/[name]-[hash].js',
+        assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
       },
       treeshake: {
         moduleSideEffects: 'no-external',
         propertyReadSideEffects: false,
-        unknownGlobalSideEffects: false,
       },
     },
-    chunkSizeWarningLimit: 800,
+    chunkSizeWarningLimit: 1000,
   },
 
   optimizeDeps: {
@@ -69,20 +57,5 @@ export default defineConfig({
 
   server: {
     hmr: { overlay: true },
-    warmup: {
-      clientFiles: [
-        './src/main.js',
-        './src/App.vue',
-        './src/layouts/DashboardLayout.vue',
-        './src/views/Home/HomeView.vue',
-        './src/views/Auth/LoginView.vue',
-      ],
-    },
-  },
-
-  // Enable gzip/brotli hints for Vercel/Netlify deployments
-  esbuild: {
-    drop: ['console', 'debugger'], // strip all console.log in prod
-    legalComments: 'none',
   },
 })

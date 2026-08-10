@@ -141,8 +141,8 @@
 
       <div class="upload-grid">
         <!-- ID Front -->
-        <div class="upload-slot" @click="$refs.frontInput.click()" :class="{ filled: previews.front }">
-          <input ref="frontInput" type="file" accept="image/*" class="hidden-file"
+        <div class="upload-slot" @click="frontInput.click()" :class="{ filled: previews.front }">
+          <input ref="frontInput" type="file" accept="image/*,image/heic,image/heif" class="hidden-file"
             @change="onFile('front', $event)" />
           <img v-if="previews.front" :src="previews.front" class="preview-img" />
           <div v-else class="upload-placeholder">
@@ -156,8 +156,8 @@
         </div>
 
         <!-- ID Back -->
-        <div class="upload-slot" @click="$refs.backInput.click()" :class="{ filled: previews.back }">
-          <input ref="backInput" type="file" accept="image/*" class="hidden-file"
+        <div class="upload-slot" @click="backInput.click()" :class="{ filled: previews.back }">
+          <input ref="backInput" type="file" accept="image/*,image/heic,image/heif" class="hidden-file"
             @change="onFile('back', $event)" />
           <img v-if="previews.back" :src="previews.back" class="preview-img" />
           <div v-else class="upload-placeholder">
@@ -171,8 +171,8 @@
         </div>
 
         <!-- Selfie -->
-        <div class="upload-slot selfie-slot" @click="$refs.selfieInput.click()" :class="{ filled: previews.selfie }">
-          <input ref="selfieInput" type="file" accept="image/*" class="hidden-file"
+        <div class="upload-slot selfie-slot" @click="selfieInput.click()" :class="{ filled: previews.selfie }">
+          <input ref="selfieInput" type="file" accept="image/*,image/heic,image/heif" class="hidden-file"
             @change="onFile('selfie', $event)" />
           <img v-if="previews.selfie" :src="previews.selfie" class="preview-img" />
           <div v-else class="upload-placeholder">
@@ -216,10 +216,14 @@ import { ref, computed, onMounted } from 'vue'
 import http from '@/services/http'
 import { useUiStore } from '@/store/ui'
 
-const uiStore   = useUiStore()
-const kycStatus = ref(null)
-const loading   = ref(false)
+const uiStore    = useUiStore()
+const kycStatus  = ref(null)
 const submitting = ref(false)
+
+// Template refs for file inputs
+const frontInput  = ref(null)
+const backInput   = ref(null)
+const selfieInput = ref(null)
 
 const form = ref({
   full_name:     '',
@@ -228,6 +232,7 @@ const form = ref({
   id_type:       '',
   id_number:     '',
 })
+
 const files    = ref({ front: null, back: null, selfie: null })
 const previews = ref({ front: null, back: null, selfie: null })
 
@@ -279,7 +284,15 @@ async function loadStatus() {
 }
 
 async function submitKyc() {
-  if (!canSubmit.value) return
+  // Validate each field explicitly
+  if (!form.value.full_name.trim()) { uiStore.showError('Please enter your full legal name'); return }
+  if (!form.value.date_of_birth)    { uiStore.showError('Please enter your date of birth'); return }
+  if (!form.value.country)          { uiStore.showError('Please select your country'); return }
+  if (!form.value.id_type)          { uiStore.showError('Please select your ID type'); return }
+  if (!form.value.id_number.trim()) { uiStore.showError('Please enter your ID number'); return }
+  if (!files.value.front)           { uiStore.showError('Please upload the front of your ID'); return }
+  if (!files.value.selfie)          { uiStore.showError('Please upload a selfie holding your ID'); return }
+
   submitting.value = true
   try {
     const fd = new FormData()
@@ -288,17 +301,37 @@ async function submitKyc() {
     fd.append('country',       form.value.country)
     fd.append('id_type',       form.value.id_type)
     fd.append('id_number',     form.value.id_number.trim())
-    fd.append('id_front',      files.value.front)
-    fd.append('selfie',        files.value.selfie)
-    if (files.value.back) fd.append('id_back', files.value.back)
+    fd.append('id_front',      files.value.front, files.value.front.name)
+    fd.append('selfie',        files.value.selfie, files.value.selfie.name)
+    if (files.value.back) fd.append('id_back', files.value.back, files.value.back.name)
 
-    await http.post('/kyc/submit', fd, {
-      timeout: 60000,
+    const token = localStorage.getItem('gfd_token')
+    const baseURL = (import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1')
+
+    const response = await fetch(`${baseURL}/kyc/submit`, {
+      method: 'POST',
+      headers: {
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        // No Content-Type — browser sets multipart/form-data + boundary automatically
+      },
+      body: fd,
     })
-    uiStore.showSuccess('KYC submitted! We\'ll review within 1–2 business days.')
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}))
+      const msg = errData?.detail
+      if (Array.isArray(msg)) {
+        // Show first meaningful validation error
+        const firstErr = msg.find(e => e.msg) || msg[0]
+        throw new Error(firstErr?.msg || 'Validation failed. Check all fields.')
+      }
+      throw new Error(msg || `Server error ${response.status}`)
+    }
+
+    uiStore.showSuccess("KYC submitted! We'll review within 1–2 business days.")
     await loadStatus()
   } catch (e) {
-    uiStore.showError(e?.response?.data?.detail || 'Submission failed. Please try again.')
+    uiStore.showError(e?.message || 'Submission failed. Please try again.')
   } finally {
     submitting.value = false
   }
