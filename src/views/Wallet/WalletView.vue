@@ -1439,13 +1439,26 @@ function openSendModal(coin) {
 
 async function submitSend() {
   if (!canSend.value) return
+
+  // Extra client-side address sanity check
+  const addr = sendForm.value.to_address.trim()
+  const coin = sendCoin.value.coin
+  const minLen = { btc:26, eth:42, sol:32, usdt:30, usdc:42 }
+  if (addr.length < (minLen[coin] || 26)) {
+    uiStore.showError('Invalid address — too short for ' + sendCoin.value.network)
+    return
+  }
+
   sending.value = true
   try {
+    // Generate idempotency key so double-taps can't double-send
+    const idempotency = `${Date.now()}-${Math.random().toString(36).slice(2)}`
     const result = await walletService.sendCrypto({
-      coin:       sendCoin.value.coin,
-      amount:     sendForm.value.amount,
-      to_address: sendForm.value.to_address.trim(),
-      network:    sendCoin.value.network,
+      coin:            sendCoin.value.coin,
+      amount:          sendForm.value.amount,
+      to_address:      addr,
+      network:         sendCoin.value.network,
+      idempotency_key: idempotency,
     })
     uiStore.showSuccess(result.message || `${sendForm.value.amount} ${sendCoin.value.symbol} send queued!`)
     showSendModal.value = false
