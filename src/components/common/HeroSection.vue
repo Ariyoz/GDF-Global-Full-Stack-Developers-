@@ -127,9 +127,9 @@ onMounted(async () => {
       if (res.ok) {
         const d = await res.json()
         STATS.value = [
-          { value: String(d.developers || 0), label: 'Developers' },
-          { value: String(d.companies_hiring || 0), label: 'Companies' },
-          { value: String(d.projects_delivered || 0), label: 'Projects' },
+          { value: d.developers > 0 ? d.developers + '+' : '0', label: 'Developers' },
+          { value: d.companies_hiring > 0 ? d.companies_hiring + '+' : '0', label: 'Companies' },
+          { value: d.projects_delivered > 0 ? d.projects_delivered + '+' : '0', label: 'Projects' },
           { value: '5+', label: 'Countries' },
         ]
         return true

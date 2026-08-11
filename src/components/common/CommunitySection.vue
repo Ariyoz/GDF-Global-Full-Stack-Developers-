@@ -136,9 +136,9 @@ onMounted(async () => {
     if (res.ok) {
       const data = await res.json()
       communityStats.value = [
-        { value: String(data.developers || 0), label: 'Active Developers' },
-        { value: String(data.companies_hiring || 0), label: 'Companies Hiring' },
-        { value: String(data.projects_delivered || 0), label: 'Projects Delivered' },
+        { value: data.developers > 0 ? data.developers + '+' : '0', label: 'Active Developers' },
+        { value: data.companies_hiring > 0 ? data.companies_hiring + '+' : '0', label: 'Companies Hiring' },
+        { value: data.projects_delivered > 0 ? data.projects_delivered + '+' : '0', label: 'Projects Delivered' },
         { value: '5+', label: 'Countries' },
       ]
     }
