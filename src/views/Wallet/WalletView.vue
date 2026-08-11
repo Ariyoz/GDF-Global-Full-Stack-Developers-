@@ -968,15 +968,15 @@
       </div>
     </Transition>
 
-    <!-- ══ KYC banner (shown when not verified) ══ -->
+    <!-- ══ KYC banner (only shown when not submitted / rejected) ══ -->
     <Transition name="slide-up">
-      <div v-if="activeTab === 'ngn' && !kycBannerDismissed" class="kyc-banner">
+      <div v-if="showKycBanner" class="kyc-banner">
         <span class="material-symbols-outlined" style="font-size:18px;color:#f59e0b">verified_user</span>
         <div class="kyc-banner-text">
           <strong>Verify your identity</strong> to unlock higher limits and full wallet access.
         </div>
         <RouterLink to="/kyc" class="kyc-banner-btn">Verify Now</RouterLink>
-        <button class="kyc-banner-close" @click="kycBannerDismissed = true">
+        <button class="kyc-banner-close" @click="dismissKycBanner">
           <span class="material-symbols-outlined" style="font-size:16px">close</span>
         </button>
       </div>
@@ -1039,7 +1039,38 @@ const showSetPinModal = ref(false)
 const newPin         = ref('')
 const confirmPin     = ref('')
 const settingPin     = ref(false)
-const kycBannerDismissed = ref(false)
+const kycBannerDismissed = ref(
+  localStorage.getItem('gfd_kyc_banner_dismissed') === '1'
+)
+const kycStatus = ref(null) // 'not_submitted' | 'pending' | 'approved' | 'rejected'
+
+// Banner should only show when user hasn't submitted or was rejected
+const showKycBanner = computed(() =>
+  activeTab.value === 'ngn' &&
+  !kycBannerDismissed.value &&
+  kycStatus.value !== null &&
+  kycStatus.value !== 'approved' &&
+  kycStatus.value !== 'pending'
+)
+
+async function loadKycStatus() {
+  try {
+    const data = await walletService.getKycStatus()
+    kycStatus.value = data?.status || 'not_submitted'
+    // If approved/pending, auto-hide banner permanently
+    if (kycStatus.value === 'approved' || kycStatus.value === 'pending') {
+      kycBannerDismissed.value = true
+      localStorage.setItem('gfd_kyc_banner_dismissed', '1')
+    }
+  } catch {
+    kycStatus.value = 'not_submitted'
+  }
+}
+
+function dismissKycBanner() {
+  kycBannerDismissed.value = true
+  localStorage.setItem('gfd_kyc_banner_dismissed', '1')
+}
 
 const liveBanks        = ref([])
 const banksLoading     = ref(false)
@@ -1599,6 +1630,7 @@ onMounted(async () => {
   loadBanks()
   loadVirtualAccount()
   checkPinStatus()
+  loadKycStatus()
   if (route.query.ref || route.query.reference || route.query.trxref)
     await verifyFromUrl()
 })

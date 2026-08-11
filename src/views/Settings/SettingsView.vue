@@ -25,15 +25,25 @@
         <h3 class="settings-section-title">Profile Information</h3>
 
         <div class="avatar-upload">
-          <div class="upload-avatar">
-            <span class="upload-initials">{{ userInitials }}</span>
+          <div class="upload-avatar" @click="$refs.avatarFileInput.click()" style="cursor:pointer;position:relative">
+            <img v-if="user?.avatar || authStore.profile?.avatar"
+              :src="user?.avatar || authStore.profile?.avatar"
+              class="upload-avatar-img" alt="Avatar" />
+            <span v-else class="upload-initials">{{ userInitials }}</span>
+            <div class="avatar-overlay">
+              <span class="material-symbols-outlined" style="font-size:18px;color:#fff">photo_camera</span>
+            </div>
           </div>
+          <input ref="avatarFileInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif"
+            style="display:none" @change="uploadAvatar" />
           <div class="upload-info">
             <p class="upload-label">Profile Photo</p>
             <p class="upload-hint">JPG, PNG or GIF. Max 2MB.</p>
-            <button class="btn-outline upload-btn">
-              <span class="material-symbols-outlined" style="font-size:16px;">upload</span>
-              Upload Photo
+            <button class="btn-outline upload-btn" :disabled="uploadingAvatar"
+              @click="$refs.avatarFileInput.click()">
+              <span v-if="uploadingAvatar" class="btn-spinner" style="width:14px;height:14px;border-width:2px"></span>
+              <span v-else class="material-symbols-outlined" style="font-size:16px">upload</span>
+              {{ uploadingAvatar ? 'Uploading…' : 'Upload Photo' }}
             </button>
           </div>
         </div>
@@ -316,7 +326,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/store/auth'
@@ -404,7 +414,6 @@ async function changePinSubmit() {
 }
 
 // Load PIN status when wallet tab is opened
-import { watch } from 'vue'
 watch(activeTab, (v) => {
   if (v === 'wallet') { loadPinStatus(); loadKycStatus() }
 })
@@ -440,11 +449,28 @@ const { user }      = storeToRefs(authStore)
 
 const activeTab = ref('profile')
 const saving    = ref(false)
+const uploadingAvatar = ref(false)
 
 const userInitials = computed(() => {
-  const name = user.value?.name || 'GFD'
+  const name = authStore.profile?.full_name || user.value?.full_name || user.value?.name || 'GFD'
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 })
+
+async function uploadAvatar(e) {
+  const file = e.target.files?.[0]
+  if (!file) return
+  if (file.size > 2 * 1024 * 1024) { uiStore.showError('Image too large. Max 2MB.'); return }
+  uploadingAvatar.value = true
+  try {
+    await authStore.uploadAvatar(file)
+    uiStore.showSuccess('Profile photo updated!')
+  } catch (err) {
+    uiStore.showError(err?.response?.data?.detail || 'Upload failed. Please try again.')
+  } finally {
+    uploadingAvatar.value = false
+    e.target.value = ''
+  }
+}
 
 const tabs = [
   { value: 'profile',       label: 'Profile',         icon: 'person' },
@@ -572,7 +598,7 @@ async function saveProfile() {
   }
 }
 
-function changePassword() {
+async function changePassword() {
   if (!security.value.current || !security.value.newPass) {
     uiStore.showError('Please fill in all password fields.')
     return
@@ -581,11 +607,26 @@ function changePassword() {
     uiStore.showError('Passwords do not match.')
     return
   }
-  uiStore.showSuccess('Password updated successfully!')
-  security.value = { current: '', newPass: '', confirm: '', twoFA: security.value.twoFA }
+  if (security.value.newPass.length < 8) {
+    uiStore.showError('New password must be at least 8 characters.')
+    return
+  }
+  try {
+    await http.post('/auth/change-password', {
+      current_password: security.value.current,
+      new_password:     security.value.newPass,
+    })
+    uiStore.showSuccess('Password updated successfully!')
+    security.value = { current: '', newPass: '', confirm: '', twoFA: security.value.twoFA }
+  } catch (e) {
+    uiStore.showError(e?.response?.data?.detail || 'Failed to update password. Check your current password.')
+  }
 }
 
-function revokeSession(session) {
+async function revokeSession(session) {
+  try {
+    await http.post('/auth/logout', { refresh_token: session.token || '' })
+  } catch { /* silent — remove from UI regardless */ }
   sessions.value = sessions.value.filter(s => s.id !== session.id)
   uiStore.showSuccess('Session revoked.')
 }
@@ -685,7 +726,16 @@ function revokeSession(session) {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
 }
+.upload-avatar-img { width:100%; height:100%; object-fit:cover; border-radius:var(--radius-xl); }
+.avatar-overlay {
+  position:absolute; inset:0; background:rgba(0,0,0,.45);
+  display:flex; align-items:center; justify-content:center;
+  border-radius:var(--radius-xl); opacity:0; transition:opacity .15s;
+}
+.upload-avatar:hover .avatar-overlay { opacity:1; }
 
 .upload-initials {
   font-family: var(--font-headline);

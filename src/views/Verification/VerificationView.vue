@@ -49,7 +49,8 @@
               <span v-if="step.completed" class="vstep-status completed">Completed</span>
               <span v-else-if="step.active" class="vstep-status active">In Progress</span>
               <span v-else class="vstep-status pending">Pending</span>
-              <button v-if="step.action && !step.completed" class="btn-primary vstep-btn" @click="step.active = true">
+              <button v-if="step.action && !step.completed" class="btn-primary vstep-btn"
+                @click="handleStepAction(step)">
                 {{ step.action }}
               </button>
             </div>
@@ -110,7 +111,21 @@ const trustItems = [
 
 function startVerification() {
   const nextStep = verifySteps.value.find(s => !s.completed)
-  if (nextStep) nextStep.active = true
+  if (nextStep) handleStepAction(nextStep)
+}
+
+function handleStepAction(step) {
+  step.active = true
+  if (step.action === 'Upload ID') {
+    router.push('/kyc')
+  } else if (step.action === 'Connect GitHub') {
+    const backendUrl = (import.meta.env.VITE_API_BASE_URL || 'https://gfd-backend.onrender.com/api/v1').replace('/api/v1', '')
+    const clientId = 'Ov23liIFAyUPGivCRcp1'
+    const redirectUri = encodeURIComponent(`${backendUrl}/api/v1/auth/github/callback`)
+    window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=read:user,user:email`
+  } else if (step.action === 'Take Assessment') {
+    router.push('/dashboard')
+  }
 }
 </script>
 
