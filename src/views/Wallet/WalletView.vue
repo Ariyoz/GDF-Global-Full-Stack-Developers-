@@ -1696,26 +1696,27 @@ onMounted(async () => {
 .quick-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: .75rem;
+  gap: .625rem;
 }
-@media (max-width: 360px) { .quick-grid { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 360px) { .quick-grid { grid-template-columns: repeat(2,1fr); gap: .5rem; } }
 .quick-btn {
-  display: flex; flex-direction: column; align-items: center; gap: .625rem;
-  padding: 1.125rem .5rem;
+  display: flex; flex-direction: column; align-items: center; gap: .5rem;
+  padding: 1rem .375rem .875rem;
   background: var(--surface-container-lowest);
   border: 1.5px solid var(--outline-variant);
   border-radius: 18px;
   cursor: pointer;
   transition: all .2s cubic-bezier(0.34,1.56,0.64,1);
+  min-height: 88px;
 }
 .quick-btn:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(99,14,212,.12); }
-.qb-ico { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; }
+.qb-ico { width: 44px; height: 44px; border-radius: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .qb-ico .material-symbols-outlined { font-size: 22px; }
 .qb-purple { background: rgba(99,14,212,.1); color: var(--primary); }
 .qb-blue   { background: rgba(59,130,246,.1); color: #3b82f6; }
 .qb-green  { background: rgba(22,163,74,.1);  color: #16a34a; }
 .qb-amber  { background: rgba(245,158,11,.1); color: #f59e0b; }
-.qb-lbl    { font-family: var(--font-headline); font-size: .8rem; font-weight: 700; color: var(--on-surface); }
+.qb-lbl    { font-family: var(--font-headline); font-size: .78rem; font-weight: 700; color: var(--on-surface); text-align: center; line-height: 1.2; white-space: nowrap; }
 
 /* ══ DVA Card ════════════════════════════════════════════════════════════════ */
 .dva-card {
@@ -1970,12 +1971,12 @@ onMounted(async () => {
 
 /* crypto quick actions */
 .crypto-quick-actions { display: grid; grid-template-columns: repeat(4,1fr); gap: .625rem; }
-.cqa-btn  { display: flex; flex-direction: column; align-items: center; gap: .5rem; padding: .875rem .5rem; border-radius: 16px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); cursor: pointer; transition: all .2s cubic-bezier(0.34,1.56,0.64,1); }
+.cqa-btn  { display: flex; flex-direction: column; align-items: center; gap: .5rem; padding: 1rem .375rem .875rem; border-radius: 16px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); cursor: pointer; transition: all .2s cubic-bezier(0.34,1.56,0.64,1); min-height: 88px; }
 .cqa-btn:hover:not(:disabled) { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99,14,212,.1); }
 .cqa-btn:disabled { opacity: .4; cursor: not-allowed; }
-.cqa-ico  { width: 44px; height: 44px; border-radius: 13px; display: flex; align-items: center; justify-content: center; }
+.cqa-ico  { width: 44px; height: 44px; border-radius: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .cqa-ico .material-symbols-outlined { font-size: 22px; }
-.cqa-lbl  { font-family: var(--font-headline); font-size: .78rem; font-weight: 700; color: var(--on-surface); }
+.cqa-lbl  { font-family: var(--font-headline); font-size: .78rem; font-weight: 700; color: var(--on-surface); text-align: center; white-space: nowrap; }
 
 /* coin picker */
 .coin-picker-row  { display: flex; align-items: center; gap: .875rem; padding: .875rem 1rem; border-radius: 14px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); cursor: pointer; transition: all .15s; width: 100%; margin-bottom: .4rem; }
