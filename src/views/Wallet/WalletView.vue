@@ -1696,18 +1696,20 @@ onMounted(async () => {
 .quick-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: .625rem;
+  gap: .75rem;
+  margin-top: .25rem;
 }
-@media (max-width: 360px) { .quick-grid { grid-template-columns: repeat(2,1fr); gap: .5rem; } }
+@media (max-width: 360px) { .quick-grid { grid-template-columns: repeat(2,1fr); gap: .625rem; } }
 .quick-btn {
-  display: flex; flex-direction: column; align-items: center; gap: .5rem;
-  padding: 1rem .375rem .875rem;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .625rem;
+  padding: 1.25rem .5rem 1rem;
   background: var(--surface-container-lowest);
   border: 1.5px solid var(--outline-variant);
-  border-radius: 18px;
+  border-radius: 22px;
   cursor: pointer;
   transition: all .2s cubic-bezier(0.34,1.56,0.64,1);
-  min-height: 88px;
+  min-height: 96px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
 }
 .quick-btn:hover { border-color: var(--primary); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(99,14,212,.12); }
 .qb-ico { width: 44px; height: 44px; border-radius: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -1970,8 +1972,8 @@ onMounted(async () => {
 .coin-live-price { font-size: .72rem; color: var(--on-surface-variant); display: flex; align-items: center; gap: .2rem; }
 
 /* crypto quick actions */
-.crypto-quick-actions { display: grid; grid-template-columns: repeat(4,1fr); gap: .625rem; }
-.cqa-btn  { display: flex; flex-direction: column; align-items: center; gap: .5rem; padding: 1rem .375rem .875rem; border-radius: 16px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); cursor: pointer; transition: all .2s cubic-bezier(0.34,1.56,0.64,1); min-height: 88px; }
+.crypto-quick-actions { display: grid; grid-template-columns: repeat(4,1fr); gap: .75rem; margin-top: .25rem; }
+.cqa-btn  { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .625rem; padding: 1.25rem .5rem 1rem; border-radius: 22px; border: 1.5px solid var(--outline-variant); background: var(--surface-container-lowest); cursor: pointer; transition: all .2s cubic-bezier(0.34,1.56,0.64,1); min-height: 96px; box-shadow: 0 2px 8px rgba(0,0,0,.04); }
 .cqa-btn:hover:not(:disabled) { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(99,14,212,.1); }
 .cqa-btn:disabled { opacity: .4; cursor: not-allowed; }
 .cqa-ico  { width: 44px; height: 44px; border-radius: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
